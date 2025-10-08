@@ -1,0 +1,17 @@
+*Type.ts
+venv
+env
+.venv
+__pycache__/
+staticfiles
+.env
+*.code-workspace
+frontend/.cache/
+.mypy_cache
+frontend/dist/
+*Type.ts
+.yalc
+.python-version
+dist/
+node_modules/
+pnpm-lock.yaml
