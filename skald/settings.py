@@ -15,6 +15,9 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 
 def str_to_bool(input):
@@ -183,7 +186,7 @@ USE_TZ = True
 TIME_ZONE = "UTC"
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://app.<my_app>.com",
+    "https://app.useskald.com",
     "http://localhost:8000",
     "http://localhost:3000",
     "http://localhost:5173",
@@ -201,3 +204,7 @@ CSRF_COOKIE_SECURE = USE_SECURE_SETTINGS
 DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.<my_app>.com"
 
 APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
+
+# Voyage - embeddings
+VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
+VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")

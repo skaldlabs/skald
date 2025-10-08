@@ -34,6 +34,8 @@ dependencies = [
     "chonkie>=1.1.1",
     "openai>=1.107.0",
     "openai-agents>=0.2.11",
+    "pgvector>=0.4.1",
+    "voyageai>=0.3.5",
 ]
 
 [project.optional-dependencies]

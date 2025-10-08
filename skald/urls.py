@@ -4,7 +4,8 @@ from django.urls import path, re_path
 from django.views.generic import TemplateView
 from rest_framework_extensions.routers import ExtendedDefaultRouter
 
-from .api.user import UserViewSet
+from .api.memo_api import MemoViewSet
+from .api.user_api import UserViewSet
 
 
 class Router(ExtendedDefaultRouter):
@@ -17,7 +18,7 @@ class Router(ExtendedDefaultRouter):
 
 router = Router()
 router.register(r"api/user", UserViewSet, basename="user")
-
+router.register(r"api/memo", MemoViewSet, basename="memo")
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="index.html"), name="app-root"),
