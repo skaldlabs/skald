@@ -1,23 +1,94 @@
 import { keywordExtractorAgent } from "./agents/keywordExtractorAgent"
+import { KnowledgeBaseUpdateAction, knowledgeBaseUpdateAgent } from "./agents/knowledgeBaseUpdateAgent/knowledgeBaseUpdateAgent"
 import { memoSummaryAgent } from "./agents/memoSummaryAgent"
 import { memoTagsAgent } from "./agents/memoTagsAgent"
-import { createMemoChunkKeywords, createMemoSummary, createMemoTags, fetchMemo, fetchMemoChunks, FetchMemoChunksResult, FetchMemoResult } from "./db/memo"
+import { createMemoChunk, createMemoChunkKeywords, createMemoSummary, createMemoTags, fetchMemo, fetchMemoChunks, FetchMemoChunksResult, FetchMemoResult, updateMemo } from "./db/memo"
 import { generateVectorEmbeddingForStorage } from "./vectorEmbeddings/voyage"
+import { Chunk, RecursiveChunker } from "@chonkiejs/core"
 
+// Initialize chunker with the same configuration as Python version
+// RecursiveChunker in TypeScript doesn't have recipes yet, so we'll use the default markdown-friendly configuration
+let chunker: RecursiveChunker | null = null
+
+const initChunker = async (): Promise<RecursiveChunker> => {
+    if (!chunker) {
+        chunker = await RecursiveChunker.create({ 
+            chunkSize: 4096, 
+            minCharactersPerChunk: 128 
+        })
+    }
+    return chunker
+}
 
 export const processMemo = async (memoUuid: string) => {
     const startTime = Date.now()
     const memo = await fetchMemo(memoUuid)
-    const memoChunks = await fetchMemoChunks(memoUuid)
-    const promises = [
-        _extractTagsFromMemo(memo),
-        _extractKeywordsFromChunks(memoChunks),
-        _generateMemoSummary(memo)
-    ]
 
-    await Promise.all(promises)
+    console.log(`Time taken to process memo: ${Date.now() - startTime}ms`)
+
+    const knowledgeBaseUpdateStartTime = Date.now()
+
+    const actions = await _knowledgeBaseUpdate(memo)
+    console.log(actions)
+    for (const action of actions) {
+        if (action.action === 'INSERT' && action.content === 'provided_content_unchanged') {
+            await updateMemo(memo.uuid, [{
+                column: 'pending',
+                value: false
+            }])
+            const promises = [
+                _createMemoChunks(memo.uuid, memo.content),
+                _extractTagsFromMemo(memo),
+                _generateMemoSummary(memo)
+            ]
+
+            await Promise.all(promises)
+        }
+    }
+    const knowledgeBaseUpdateEndTime = Date.now()
+    console.log(`Time taken to update knowledge base: ${knowledgeBaseUpdateEndTime - knowledgeBaseUpdateStartTime}ms`)
     const endTime = Date.now()
-    console.log(`Time taken to fetch memo: ${endTime - startTime}ms`)
+    console.log(`Total time taken to process memo: ${endTime - startTime}ms`)
+
+    // if there's an INSERT action, create the memo chunks and set pending to False
+}
+
+const _chunkMemoContent = async (content: string) => {
+    const chunkerInstance = await initChunker()
+    return chunkerInstance.chunk(content)
+}
+
+const _createMemoChunk = async (memoUuid: string, chunkContent: string, chunkIndex: number) => {
+    const vectorEmbedding = await generateVectorEmbeddingForStorage(chunkContent)
+    const memoChunkUuid = await createMemoChunk({
+        memo_uuid: memoUuid,
+        chunk_content: chunkContent,
+        chunk_index: chunkIndex,
+        embedding: vectorEmbedding
+    })
+    const keywords = await keywordExtractorAgent.extractKeywords(chunkContent)
+    await createMemoChunkKeywords(memoChunkUuid, keywords.keywords)
+}
+
+const _createMemoChunks = async (memoUuid: string, content: string): Promise<void> => {
+    const chunks = await _chunkMemoContent(content)
+    const chunkPromises = []
+    
+    for (let index = 0; index < chunks.length; index++) {
+        const chunk = chunks[index]
+
+        chunkPromises.push(
+            _createMemoChunk(memoUuid, chunk.text, index)
+        )
+    }
+        
+    await Promise.all(chunkPromises)
+}
+
+
+const _knowledgeBaseUpdate = async (memo: FetchMemoResult): Promise<KnowledgeBaseUpdateAction[]> => {
+    const actions = await knowledgeBaseUpdateAgent.determineActions(memo.uuid, memo.content, memo.title)
+    return actions.actions
 }
 
 const _extractTagsFromMemo = async (memo: FetchMemoResult) => {

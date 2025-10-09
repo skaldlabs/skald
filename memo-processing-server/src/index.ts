@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { createClient } from 'redis';
-import { exampleUsage } from './agents/examples/keywordExtractorExample';
 import { processMemo } from './processMemo';
 
 // Load environment variables from the main repo's .env file

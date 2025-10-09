@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@chonkiejs/core':
+        specifier: ^0.0.4
+        version: 0.0.4
       '@langchain/core':
         specifier: ^0.3.78
         version: 0.3.78(openai@5.12.2(zod@4.1.12))
@@ -50,6 +53,9 @@ packages:
 
   '@cfworker/json-schema@4.1.1':
     resolution: {integrity: sha512-gAmrUZSGtKc3AiBL71iNWxDsyUC5uMaKKGdvzYsBoTW/xi42JQHl7eKV2OYzCUqvc+D2RCcf7EXY2iCyFIk6og==}
+
+  '@chonkiejs/core@0.0.4':
+    resolution: {integrity: sha512-9pC4/XS0jzP5ZsokBgDC/r8VVi/AaP3kFvTEOa5S6rGcWN0FQTVXYaifVjtex0yZLCc5+X8ByzAVZIzNx8dWJQ==}
 
   '@esbuild/aix-ppc64@0.25.10':
     resolution: {integrity: sha512-0NFWnA+7l41irNuaSVlLfgNT12caWJVLzp5eAVhZ0z1qpxbockccEt3s+149rE64VUI3Ml2zt8Nv5JVc4QXTsw==}
@@ -695,6 +701,8 @@ packages:
 snapshots:
 
   '@cfworker/json-schema@4.1.1': {}
+
+  '@chonkiejs/core@0.0.4': {}
 
   '@esbuild/aix-ppc64@0.25.10':
     optional: true

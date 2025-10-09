@@ -87,6 +87,27 @@ export const createMemo = async (params: CreateMemoParams): Promise<string> => {
     return uuid
 }
 
+export interface UpdateMemoParams {
+    title?: string | null
+    metadata?: Record<string, any> | null
+    client_reference_id?: string | null
+    source?: string | null
+    expiration_date?: Date | null
+    pending?: boolean
+}
+
+export const updateMemo = async (memoUuid: string, updates: { column: string, value: any }[]): Promise<void> => {
+    // update this to use params and values
+    const updateString = updates.map(update => `${update.column} = ${update.value}`).join(', ')
+    const result = await runQuery(`
+        UPDATE skald_memo SET ${updateString} WHERE uuid = $1
+    `, [memoUuid])
+
+    if (result.error) {
+        throw new Error(result.error)
+    }
+}
+
 export interface CreateMemoContentParams {
     memo_uuid: string
     content: string
@@ -205,6 +226,74 @@ export const fetchAllMemoTags = async (): Promise<string[]> => {
     }
 
     return result.rows.map(row => row.tag)
+}
+
+export interface MemoTitleAndUuid {
+    title: string
+    uuid: string
+}
+
+export const getMemoTitlesByTag = async (tag: string): Promise<MemoTitleAndUuid[]> => {
+    const result = await runQuery<MemoTitleAndUuid>(`
+        SELECT DISTINCT skald_memo.title, skald_memo.uuid
+        FROM skald_memo
+        JOIN skald_memotag ON skald_memo.uuid = skald_memotag.memo_id
+        WHERE skald_memotag.tag = $1 AND skald_memo.pending = false AND skald_memo.archived = false
+    `, [tag])
+
+    if (result.error) {
+        throw new Error(result.error)
+    }
+
+    return result.rows || []
+}
+
+export const getMemoMetadata = async (memoUuid: string): Promise<Record<string, any>> => {
+    const result = await runQuery<{ metadata: Record<string, any> }>(`
+        SELECT metadata FROM skald_memo WHERE uuid = $1 AND archived = false AND pending = false
+    `, [memoUuid])
+
+    if (result.error) {
+        throw new Error(result.error)
+    }
+
+    if (!result.rows || result.rows.length === 0) {
+        throw new Error('Memo not found')
+    }
+
+    return result.rows[0].metadata
+}
+
+export const getMemoContent = async (memoUuid: string): Promise<string> => {
+    const result = await runQuery<{ content: string }>(`
+        SELECT content FROM skald_memocontent WHERE memo_id = $1
+    `, [memoUuid])
+
+    if (result.error) {
+        throw new Error(result.error)
+    }
+
+    if (!result.rows || result.rows.length === 0) {
+        return ''
+    }
+
+    return result.rows[0].content
+}
+
+export const keywordSearch = async (query: string): Promise<MemoTitleAndUuid[]> => {
+    const result = await runQuery<MemoTitleAndUuid>(`
+        SELECT DISTINCT skald_memo.title, skald_memo.uuid
+        FROM skald_memo
+        JOIN skald_memochunk ON skald_memo.uuid = skald_memochunk.memo_id
+        JOIN skald_memochunkkeyword ON skald_memochunk.uuid = skald_memochunkkeyword.memo_chunk_id
+        WHERE skald_memochunkkeyword.keyword ILIKE $1
+    `, [`%${query}%`])
+
+    if (result.error) {
+        throw new Error(result.error)
+    }
+
+    return result.rows || []
 }
 
 

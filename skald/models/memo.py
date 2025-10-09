@@ -15,6 +15,8 @@ class Memo(models.Model):
     archived = models.BooleanField(default=False)
     content_hash = models.CharField(max_length=255)
     
+    pending = models.BooleanField(default=True)
+    
     # can be code, document, etc
     type = models.CharField(max_length=255, blank=True, null=True)
     

@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@chonkiejs/core": "^0.0.4",
     "@langchain/core": "^0.3.78",
     "@langchain/langgraph": "^0.4.9",
     "@langchain/openai": "^0.6.14",
