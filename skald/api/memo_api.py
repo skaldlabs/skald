@@ -25,6 +25,8 @@ class MemoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Memo
+        
+        # eventually allow users to pass in their own last_updated_at field
         fields = ["id", "created_at", "updated_at", "title", "summary", "content_length", "metadata", "client_reference_id"]
         read_only_fields = ["id", "created_at", "updated_at", "content_length"]
 
