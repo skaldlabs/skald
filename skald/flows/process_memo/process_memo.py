@@ -5,6 +5,9 @@ import hashlib
 from typing import TypedDict, NotRequired
 from datetime import datetime
 import time
+import json
+import redis
+import os
 
 from chonkie import RecursiveChunker
 import asyncio
@@ -15,6 +18,16 @@ from skald.flows.process_memo.memo_agents.memo_tags_agent import memo_tags_agent
 from skald.flows.process_memo.memo_agents.knowledge_base_update_agent import knowledge_base_update_agent
 from django.db import transaction
 from openai.types.responses import ResponseTextDeltaEvent
+
+# Initialize Redis client
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+
+redis_client = redis.Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    decode_responses=True
+)
 
 class MemoData(TypedDict):
     content: str
@@ -70,7 +83,6 @@ def _create_memo_chunks(memo: Memo, content: str):
             chunk_index=index,
             embedding=vector_embedding,
         )
-        _create_memo_chunk_keywords(memo_chunk_object, chunk.text)
     
 def _create_memo_summary(memo: Memo, content: str):
     document_summary_agent_result = asyncio.run(Runner.run(memo_summary_agent, content))
@@ -128,23 +140,15 @@ def create_new_memo(memo_data: MemoData) -> Memo:
         # time each step
         start_time = time.time()
         memo = _create_memo_object(memo_data)
-        end_time = time.time()
-        print(f"Time taken for create_memo_object: {end_time - start_time} seconds")
-        start_time = time.time()
         _create_memo_chunks(memo, memo_data['content'])
         end_time = time.time()
-        print(f"Time taken for create_memo_chunks: {end_time - start_time} seconds")
-        start_time = time.time()
-        summary =_create_memo_summary(memo, memo_data['content'])
-        end_time = time.time()
-        print(f"Time taken for create_memo_summary: {end_time - start_time} seconds")
-        start_time = time.time()
-        tags =_create_memo_tags(memo, memo_data['content'])
-        end_time = time.time()
-        print(f"Time taken for create_memo_tags: {end_time - start_time} seconds")
-        start_time = time.time()
-        asyncio.run(_run_knowledge_base_update_agent(memo, memo_data['content'], tags, summary))
-        end_time = time.time()
-        print(f"Time taken for run_knowledge_base_update_agent: {end_time - start_time} seconds")
+        print(f"Time taken: {end_time - start_time} seconds")
+        
+    # Publish to Redis pub/sub after successful transaction
+    message = json.dumps({
+        'memo_uuid': str(memo.uuid),
+    })
+    redis_client.publish('process_memo', message)
+    print(f"Published memo {memo.uuid} to process_memo channel")
             
     return memo

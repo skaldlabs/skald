@@ -1,12 +1,29 @@
 import { randomUUID } from "crypto"
-import { runQuery } from "./db"
+import { runQuery, runBatchInsert } from "./db"
 import { Memo, MemoContent, MemoChunk, MemoChunkKeyword, MemoSummary, MemoTag } from "./models"
 
-export type FetchMemoResult = Pick<Memo, 'uuid' | 'title' | 'created_at' | 'updated_at'>
+
+export interface FetchMemoResult {
+    uuid: string
+    title: string
+    created_at: Date
+    updated_at: Date
+    content: string
+}
+
+export interface FetchMemoChunksResult {
+    uuid: string
+    memo_id: string
+    chunk_content: string
+    chunk_index: number
+}
 
 export const fetchMemo = async (memoUuid: string): Promise<FetchMemoResult> => {
     const result = await runQuery<FetchMemoResult>(`
-        SELECT uuid, title, created_at, updated_at FROM skald_memo WHERE uuid = $1
+        SELECT skald_memo.uuid AS uuid, title, created_at, updated_at, skald_memocontent.content AS content
+        FROM skald_memo 
+        JOIN skald_memocontent ON skald_memo.uuid = skald_memocontent.memo_id
+        WHERE skald_memo.uuid = $1
     `, [memoUuid])
 
     if (result.error) {
@@ -18,6 +35,18 @@ export const fetchMemo = async (memoUuid: string): Promise<FetchMemoResult> => {
     }
 
     return result.rows[0]
+}
+
+export const fetchMemoChunks = async (memoUuid: string): Promise<FetchMemoChunksResult[]> => {
+    const result = await runQuery<FetchMemoChunksResult>(`
+        SELECT uuid, memo_id, chunk_content, chunk_index FROM skald_memochunk WHERE memo_id = $1
+    `, [memoUuid])
+
+    if (result.error) {
+        throw new Error(result.error)
+    }
+
+    return result.rows || []
 }
 
 export interface CreateMemoParams {
@@ -109,18 +138,13 @@ export interface CreateMemoChunkKeywordParams {
     keyword: string
 }
 
-export const createMemoChunkKeyword = async (params: CreateMemoChunkKeywordParams): Promise<string> => {
-    const uuid = randomUUID()
-    const result = await runQuery(`
-        INSERT INTO skald_memochunkkeyword (uuid, memo_chunk_id, keyword)
-        VALUES ($1, $2, $3)
-    `, [uuid, params.memo_chunk_uuid, params.keyword])
+export const createMemoChunkKeywords = async (memoChunkUuid: string, keywords: string[]): Promise<void> => {
+    const result = await runBatchInsert('skald_memochunkkeyword', ['uuid', 'memo_chunk_id', 'keyword'], keywords.map(keyword => [randomUUID(), memoChunkUuid, keyword]))
 
     if (result.error) {
         throw new Error(result.error)
     }
 
-    return uuid
 }
 
 export interface CreateMemoSummaryParams {
@@ -129,16 +153,16 @@ export interface CreateMemoSummaryParams {
     embedding: number[]
 }
 
-export const createMemoSummary = async (params: CreateMemoSummaryParams): Promise<string> => {
+export const createMemoSummary = async (memoUuid: string, summary: string, embedding: number[]): Promise<string> => {
     const uuid = randomUUID()
     const result = await runQuery(`
         INSERT INTO skald_memosummary (uuid, memo_id, summary, embedding)
         VALUES ($1, $2, $3, $4)
     `, [
         uuid,
-        params.memo_uuid,
-        params.summary,
-        JSON.stringify(params.embedding)
+        memoUuid,
+        summary,
+        JSON.stringify(embedding)
     ])
 
     if (result.error) {
@@ -153,18 +177,18 @@ export interface CreateMemoTagParams {
     tag: string
 }
 
-export const createMemoTag = async (params: CreateMemoTagParams): Promise<string> => {
-    const uuid = randomUUID()
-    const result = await runQuery(`
-        INSERT INTO skald_memotag (uuid, memo_id, tag)
-        VALUES ($1, $2, $3)
-    `, [uuid, params.memo_uuid, params.tag])
+export const createMemoTags = async (memoUuid: string, tags: string[]): Promise<void> => {
+    const result = await runBatchInsert('skald_memotag', ['uuid', 'memo_id', 'tag'], tags.map(tag => [randomUUID(), memoUuid, tag]))
+
 
     if (result.error) {
         throw new Error(result.error)
     }
 
-    return uuid
+    if (result.insertedCount !== tags.length) {
+        throw new Error('Failed to create memo tags')
+    }
+
 }
 
 export const fetchAllMemoTags = async (): Promise<string[]> => {

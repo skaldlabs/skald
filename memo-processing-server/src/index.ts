@@ -3,13 +3,15 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 import { createClient } from 'redis';
 import { exampleUsage } from './agents/examples/keywordExtractorExample';
+import { processMemo } from './processMemo';
 
 // Load environment variables from the main repo's .env file
 config({ path: resolve(__dirname, '../../.env') });
 
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379');
-const CHANNEL_NAME = process.env.CHANNEL_NAME || 'memo-processing';
+const CHANNEL_NAME = process.env.CHANNEL_NAME || 'process_memo';
+
 
 async function main() {
   // Create Redis subscriber client
@@ -31,7 +33,7 @@ async function main() {
 
   // Subscribe to channel
   await subscriber.subscribe(CHANNEL_NAME, (message) => {
-    exampleUsage();
+    processMemo(JSON.parse(message).memo_uuid)
     console.log('Received message:', message);
   });
 

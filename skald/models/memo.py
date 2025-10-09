@@ -9,7 +9,6 @@ class Memo(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=255)
-    summary = models.TextField()
     content_length = models.IntegerField()
     metadata = models.JSONField(default=dict)
     expiration_date = models.DateTimeField(blank=True, null=True)
