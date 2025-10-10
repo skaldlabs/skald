@@ -3,34 +3,47 @@ from pgvector.django import CosineDistance
 from typing import TypedDict
 
 
+class MemoChunkWithDistance(TypedDict):
+    chunk: MemoChunk
+    distance: float
+
+
+class MemoSummaryWithDistance(TypedDict):
+    summary: MemoSummary
+    distance: float
+
 
 def memo_chunk_vector_search(
-    embedding_vector: list[float], top_k: int = 10, similarity_threshold: float = 0.5
-) -> list[MemoChunk]:
+    embedding_vector: list[float], top_k: int = 10, similarity_threshold: float = 0.5, tags: list[str] = None
+) -> list[MemoChunkWithDistance]:
     # search for the most similar memos in the knowledge base using the Memo model and the MemoChunk model
-    memo_chunks = (
-        MemoChunk.objects.annotate(
-            distance=CosineDistance("embedding", embedding_vector)
-        )
-        .filter(distance__lte=similarity_threshold)
-        .order_by("distance")[:top_k]
-    )
+    query = MemoChunk.objects.annotate(
+        distance=CosineDistance("embedding", embedding_vector)
+    ).filter(distance__lte=similarity_threshold)
     
-    return memo_chunks
+    # Filter by tags if provided
+    if tags is not None:
+        query = query.filter(memo__memotag__tag__in=tags).distinct()
     
-
+    memo_chunks = query.order_by("distance")[:top_k]
+    
+    return [{"chunk": chunk, "distance": chunk.distance} for chunk in memo_chunks]
+    
 
 
 def memo_summary_vector_search(
-    embedding_vector: list[float], top_k: int = 10, similarity_threshold: float = 0.5
-) -> list[MemoSummary]:
+    embedding_vector: list[float], top_k: int = 10, distance_threshold: float = 0.5, tags: list[str] = None
+) -> list[MemoSummaryWithDistance]:
     # search for the most similar memos in the knowledge base using the Memo model and the MemoSummary model
-    memo_summaries = (
-        MemoSummary.objects.annotate(
-            distance=CosineDistance("embedding", embedding_vector)
-        )
-        .filter(distance__lte=similarity_threshold)
-        .order_by("distance")[:top_k]
-    )
-    return memo_summaries
+    query = MemoSummary.objects.annotate(
+        distance=CosineDistance("embedding", embedding_vector)
+    ).filter(distance__lte=distance_threshold)
+    
+    # Filter by tags if provided
+    if tags is not None:
+        query = query.filter(memo__memotag__tag__in=tags).distinct()
+    
+    memo_summaries = query.order_by("distance")[:top_k]
+    
+    return [{"summary": summary, "distance": summary.distance} for summary in memo_summaries]
     

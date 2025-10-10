@@ -85,13 +85,13 @@ export interface MemoSummarySearchResult {
  * Search for the most similar memo summaries in the knowledge base using cosine distance
  * @param embeddingVector - The embedding vector to search with
  * @param topK - The maximum number of results to return (default: 10)
- * @param similarityThreshold - The maximum cosine distance threshold (default: 0.5)
+ * @param distanceThreshold - The maximum cosine distance threshold (default: 0.5). The lower the threshold, the more similar the results will be.
  * @returns Array of memo summaries with their cosine distances
  */
 export const memoSummaryVectorSearch = async (
   embeddingVector: number[],
   topK: number = 10,
-  similarityThreshold: number = 0.5
+  distanceThreshold: number = 0.5
 ): Promise<MemoSummaryWithDistance[]> => {
   const result = await runQuery<MemoSummaryWithDistance>(`
     SELECT 
@@ -104,7 +104,7 @@ export const memoSummaryVectorSearch = async (
     WHERE (embedding <=> $1::vector) <= $2
     ORDER BY distance
     LIMIT $3
-  `, [JSON.stringify(embeddingVector), similarityThreshold, topK]);
+  `, [JSON.stringify(embeddingVector), distanceThreshold, topK]);
 
   if (result.error) {
     throw new Error(result.error);
@@ -113,10 +113,17 @@ export const memoSummaryVectorSearch = async (
   return result.rows || [];
 };
 
+/**
+ * Search for the most similar memo summaries in the knowledge base using cosine distance
+ * @param embeddingVector - The embedding vector to search with
+ * @param topK - The maximum number of results to return (default: 10)
+ * @param distanceThreshold - The maximum cosine distance threshold (default: 0.5). The lower the threshold, the more similar the results will be.
+ * @returns Array of memo summaries with their cosine distances
+ */
 export const memoSummaryVectorSearchWithMemoInfo = async (
   embeddingVector: number[],
   topK: number = 10,
-  similarityThreshold: number = 0.5
+  distanceThreshold: number = 0.5
 ): Promise<MemoSummarySearchResult[]> => {
   const result = await runQuery<MemoSummarySearchResult>(`
     SELECT 
@@ -129,7 +136,7 @@ export const memoSummaryVectorSearchWithMemoInfo = async (
     WHERE (skald_memosummary.embedding <=> $1::vector) <= $2
     ORDER BY distance
     LIMIT $3
-  `, [JSON.stringify(embeddingVector), similarityThreshold, topK]);
+  `, [JSON.stringify(embeddingVector), distanceThreshold, topK]);
 
   if (result.error) {
     throw new Error(result.error);

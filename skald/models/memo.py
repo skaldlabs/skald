@@ -26,6 +26,15 @@ class Memo(models.Model):
     # client's can give us their own reference id for the memo, which matches with a record in their own system
     client_reference_id = models.CharField(max_length=255, blank=True, null=True)
     
+    
+    @property
+    def content(self) -> str:
+        return MemoContent.objects.get(memo=self).content
+    
+    @property
+    def summary(self) -> str:
+        return MemoSummary.objects.get(memo=self).summary
+    
 class MemoSummary(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     memo = models.ForeignKey(Memo, on_delete=models.CASCADE)
