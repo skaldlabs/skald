@@ -5,6 +5,7 @@ A Node.js TypeScript server that listens to Redis pub/sub messages.
 ## Setup
 
 Install dependencies:
+
 ```bash
 npm install
 # or
@@ -14,11 +15,13 @@ pnpm install
 ## Running
 
 ### Development (with hot reload)
+
 ```bash
 npm run dev
 ```
 
 ### Production
+
 ```bash
 npm run build
 npm start
@@ -29,6 +32,8 @@ npm start
 - `REDIS_HOST` - Redis server host (default: localhost)
 - `REDIS_PORT` - Redis server port (default: 6379)
 - `CHANNEL_NAME` - Redis pub/sub channel name (default: memo-processing)
+- `VOYAGE_API_KEY` - VoyageAI API key
+- `OPENAI_API_KEY` - OpenAI API key
 
 ## Testing
 
@@ -39,4 +44,3 @@ redis-cli PUBLISH memo-processing "test message"
 ```
 
 The server will log "hello" and the received message.
-
