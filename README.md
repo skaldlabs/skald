@@ -68,3 +68,5 @@ When a new memo gets added, we run various agents concurrently that process the 
 Note that if you look at `skald/models/memo.py` you will see a bunch of other stuff. Maybe these shouldn't have been added from the start but yeah there's a lot of stuff not being used yet like "archived", relationships, expiration, etc.
 
 Lastly, the UI has not been touched yet.
+
+There are no projects and no organizations, all the data gets lumped into one. 
