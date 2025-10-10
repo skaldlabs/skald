@@ -1,73 +1,70 @@
-# Fullstack Template
+# Skald 2.0
 
-## Objective
+## How to run
 
-My goal with this repo is having a solid starting point for all my frontend applications that allows me to get up and running quickly while writing code in an environment that follows the opinions and code conventions that I subscribe to.
+### Pre-requisites
 
-The only tool in this toolset that I don't have production experience with is Vite, but its speed won me over so I'll give this project a try using it.
+- Create a Langchain account and get your secret key
+- Make sure you've created a db called `skald2` locally (or use another name and change the config on the servers)
 
-The other goal here is to have a very opinionated codebase that makes it easier for AI agents to write code on top of while making it easier for a human (in this case, me) to also edit code alongside them. 
+    ```sh
+    createdb skald2
+    psql -d skald2
+    skald2=# CREATE EXTENSION vector;
+    ```
 
-Opinionated codebases tend to yield more structured output from AI agents.
 
-## Tools & Frameworks:
+### Environment variables
 
-### Core
-
-- Django
-- Postgres
-- React
-- Vite
-- Zustand
-- Antd
-
-### Extra
-
-- Prettier
-- Black
-- Isort
-- Eslint
-
-## Backend
-
-The backend is setup with a Django app using the `myapp` name. Replace this name everywhere with the app name you'd like to use.
-
-Once you've done this, you need to create the initial migration. Create a local Postgres database and update the relevant config so you can run:
-
-```sh
-python manage.py makemigrations myapp
+```
+VOYAGE_API_KEY=<your Voyage API key>
+OPENAI_API_KEY=<your OpenAI API key>
+LANGSMITH_TRACING=true
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_API_KEY=<your LangSmith API key>
+LANGSMITH_PROJECT=<langsmith_project_name>
 ```
 
-And after that:
+The LangSmith vars will be given to you during LangChain onboarding.
+
+
+### Django server
+
+From the root dir you can run commands like:
 
 ```sh
+python manage.py makemigrations
 python manage.py migrate
+python manage.py runserver
 ```
 
-To run the server use:
 
-```sh
-DEBUG=1 python manage.py runserver
-```
+### Memo processing server
 
-And to create a super user that you can use to access the admin dashboard at `/admin/`, run:
-
-```sh
-python manage.py createsuperuser
-```
-
-## Frontend
-
-The frontend is a React app that uses Vite as a framework and Zustand for state management.
-
-To run it, make sure you have Node >= v18 and run:
+From inside `memo-processing-server`, run:
 
 ```sh
 pnpm install
-```
-
-And then:
-
-```sh
 pnpm run dev
 ```
+
+## Overview
+
+We currently have one working endpoint which is `POST /api/memo`. This endpoint will receive the memo from the client and create it with pending=True.
+
+pending=True denotes that it hasn't gone through the knowledge base update process yet.
+
+Django will then publish a message to a Redis Pub Sub channel which sends the memo UUID to the Node server for processing. Note that this is for dev only!!! In production we can't do this because messages get lost, and because it won't work if we scale horizontally. In prod we'll be using a queue.
+
+From here on out, there certainly will be bugs. The Memo Processing Server will then trigger the knowledge base update agent, which runs actions by itself. Why? I initially had it outputting in the right format and there were bugs because it was including markdown in JSON. This is highly experimental and one could very easily say that it plain sucks. I have a ton of ideas to make it better.
+
+When a new memo gets added, we run various agents concurrently that process the data, these being:
+
+- Tags extractor: extracts tags from the content
+- Summary extractor: summarizes the content, also creates an embedding for the summary
+- Chunk and vectorize: Generates chunks from the content and vectorizes them
+- Chunk keywords extractor: Extracts keywords from chunks
+
+Note that if you look at `skald/models/memo.py` you will see a bunch of other stuff. Maybe these shouldn't have been added from the start but yeah there's a lot of stuff not being used yet like "archived", relationships, expiration, etc.
+
+Lastly, the UI has not been touched yet.
