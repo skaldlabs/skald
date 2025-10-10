@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto"
-import { runQuery, runBatchInsert } from "./db"
+import { runQuery, insertData } from "./db"
 import { Memo, MemoContent, MemoChunk, MemoChunkKeyword, MemoSummary, MemoTag } from "./models"
 
 
@@ -9,6 +9,7 @@ export interface FetchMemoResult {
     created_at: Date
     updated_at: Date
     content: string
+    pending: boolean
 }
 
 export interface FetchMemoChunksResult {
@@ -59,32 +60,73 @@ export interface CreateMemoParams {
     content_hash: string
 }
 
-export const createMemo = async (params: CreateMemoParams): Promise<string> => {
+export const createMemo = async (params: CreateMemoParams): Promise<Pick<FetchMemoResult, 'uuid' | 'title' | 'created_at' | 'updated_at'>> => {
     const uuid = randomUUID()
-    const result = await runQuery(`
-        INSERT INTO skald_memo (
-            uuid, title, metadata, client_reference_id, source, 
-            expiration_date, content_length, content_hash, summary, archived
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-    `, [
+    const result = await insertData<FetchMemoResult>('skald_memo', [{
         uuid,
-        params.title,
-        params.metadata ?? {},
-        params.client_reference_id ?? null,
-        params.source ?? null,
-        params.expiration_date ?? null,
-        params.content_length,
-        params.content_hash,
-        '', // summary defaults to empty string
-        false // archived defaults to false
-    ])
+        title: params.title,
+        metadata: params.metadata ?? {},
+        client_reference_id: params.client_reference_id ?? null,
+        source: params.source ?? null,
+        expiration_date: params.expiration_date ?? null,
+        content_length: params.content_length,
+        content_hash: params.content_hash,
+        archived: false,
+        pending: false,
+        created_at: new Date(),
+        updated_at: new Date(),
+    }], { returnColumns: ['uuid', 'title', 'created_at', 'updated_at'] })
 
-    if (result.error) {
-        throw new Error(result.error)
+    if (result.error || !result.rows) {
+        throw new Error(result.error ?? 'Failed to create memo')
     }
 
-    return uuid
+    return result.rows[0]
+}
+
+// TODO: we need to figure out a way to make this more efficient, 
+// maybe by baking in ON DELETE CASCADE to the fkeys at the db level
+export const deleteMemo = async (memoUuid: string): Promise<boolean> => {
+    const selectMemoChunkUuidsResult = await runQuery<{ memo_chunk_uuid: string }>(`
+        SELECT uuid AS memo_chunk_uuid FROM skald_memochunk WHERE memo_id = $1
+    `, [memoUuid])
+
+    if (selectMemoChunkUuidsResult.error) {
+        throw new Error(selectMemoChunkUuidsResult.error)
+    }
+
+    const deleteMemoChunksPromises = []
+    for (const memoChunkUuid of (selectMemoChunkUuidsResult.rows || [])) {
+        deleteMemoChunksPromises.push(
+            runQuery(`
+                DELETE FROM skald_memochunkkeyword WHERE memo_chunk_id = $1;
+            `, [memoChunkUuid.memo_chunk_uuid]),
+            runQuery(`
+                DELETE FROM skald_memochunk WHERE uuid = $1;
+            `, [memoChunkUuid.memo_chunk_uuid])
+        )
+    }
+
+    await Promise.all(deleteMemoChunksPromises)
+
+    await runQuery(`
+        DELETE FROM skald_memosummary WHERE memo_id = $1;
+    `, [memoUuid])
+    await runQuery(`
+        DELETE FROM skald_memotag WHERE memo_id = $1;
+    `, [memoUuid])
+    await runQuery(`
+        DELETE FROM skald_memocontent WHERE memo_id = $1;
+    `, [memoUuid])
+    await runQuery(`
+        DELETE FROM skald_memorelationship WHERE memo_id = $1;
+    `, [memoUuid])
+    await runQuery(`
+        DELETE FROM skald_memo WHERE uuid = $1;
+    `, [memoUuid])
+    
+    
+    return true
 }
 
 export interface UpdateMemoParams {
@@ -115,16 +157,18 @@ export interface CreateMemoContentParams {
 
 export const createMemoContent = async (params: CreateMemoContentParams): Promise<string> => {
     const uuid = randomUUID()
-    const result = await runQuery(`
-        INSERT INTO skald_memocontent (uuid, memo_id, content)
-        VALUES ($1, $2, $3)
-    `, [uuid, params.memo_uuid, params.content])
+    const result = await insertData<MemoContent>('skald_memocontent', [{
+        uuid,
+        memo_id: params.memo_uuid,
+        content: params.content
+    }], { returnColumns: ['uuid'] })
 
-    if (result.error) {
-        throw new Error(result.error)
+    if (result.error || !result.rows) {
+        throw new Error(result.error ?? 'Failed to create memo content')
     }
 
-    return uuid
+    return result.rows[0].uuid
+
 }
 
 export interface CreateMemoChunkParams {
@@ -160,7 +204,11 @@ export interface CreateMemoChunkKeywordParams {
 }
 
 export const createMemoChunkKeywords = async (memoChunkUuid: string, keywords: string[]): Promise<void> => {
-    const result = await runBatchInsert('skald_memochunkkeyword', ['uuid', 'memo_chunk_id', 'keyword'], keywords.map(keyword => [randomUUID(), memoChunkUuid, keyword]))
+    const result = await insertData('skald_memochunkkeyword', keywords.map(keyword => ({
+        uuid: randomUUID(),
+        memo_chunk_id: memoChunkUuid,
+        keyword
+    })))
 
     if (result.error) {
         throw new Error(result.error)
@@ -199,7 +247,11 @@ export interface CreateMemoTagParams {
 }
 
 export const createMemoTags = async (memoUuid: string, tags: string[]): Promise<void> => {
-    const result = await runBatchInsert('skald_memotag', ['uuid', 'memo_id', 'tag'], tags.map(tag => [randomUUID(), memoUuid, tag]))
+    const result = await insertData('skald_memotag', tags.map(tag => ({
+        uuid: randomUUID(),
+        memo_id: memoUuid,
+        tag
+    })))
 
 
     if (result.error) {

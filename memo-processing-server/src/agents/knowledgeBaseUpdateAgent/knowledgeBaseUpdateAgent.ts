@@ -3,13 +3,14 @@ import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 
 import { KNOWLEDGE_BASE_UPDATE_AGENT_INSTRUCTIONS } from "./prompts";
-import { getMemoTitlesByTagTool, getMemoMetadataTool, getMemoContentTool, keywordSearchTool, summaryVectorSearchTool, vectorSearchTool } from "./tools";
+import { getMemoTitlesByTagTool, getMemoMetadataTool, getMemoContentTool, keywordSearchTool, summaryVectorSearchTool, vectorSearchTool, updateActionTool, deleteActionTool, createInsertActionTool } from "./tools";
+import { FetchMemoResult } from "../../db/memo";
 // Output schemas
 const KnowledgeBaseUpdateActionSchema = z.object({
     action: z.enum(["INSERT", "DELETE", "UPDATE"]).describe("The action to perform on the knowledge base"),
     memo_uuid: z.string().nullable().describe("The UUID of the memo to update or delete (null for INSERT)"),
     reason: z.string().describe("A short and concise reason for this action"),
-    content: z.string().describe("The full raw content for INSERT/UPDATE actions, empty for DELETE"),
+    error: z.string().nullable().describe("The error message if performing an action failed"),
 });
 
 const KnowledgeBaseUpdateAgentOutputSchema = z.object({
@@ -21,11 +22,8 @@ export type KnowledgeBaseUpdateAgentOutput = z.infer<typeof KnowledgeBaseUpdateA
 
 
 
-/**
- * Creates a knowledge base update agent that manages memo conflicts and updates
- * @returns An agent that can determine necessary actions to keep the knowledge base up to date
- */
-export function createKnowledgeBaseUpdateAgent() {
+// TODO: run the entire agent in a transaction?
+export function createKnowledgeBaseUpdateAgent(memo: FetchMemoResult) {
     const llm = new ChatOpenAI({
         model: "gpt-5-nano",
         // temperature: 0,
@@ -40,6 +38,9 @@ export function createKnowledgeBaseUpdateAgent() {
             keywordSearchTool,
             summaryVectorSearchTool,
             vectorSearchTool,
+            createInsertActionTool(memo),
+            deleteActionTool,
+            updateActionTool,
         ],
     });
 
@@ -100,5 +101,4 @@ export function createKnowledgeBaseUpdateAgent() {
     };
 }
 
-export const knowledgeBaseUpdateAgent = createKnowledgeBaseUpdateAgent();
 

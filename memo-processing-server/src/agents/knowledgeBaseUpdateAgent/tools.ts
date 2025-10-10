@@ -4,13 +4,20 @@ import {
     getMemoTitlesByTag,
     getMemoMetadata,
     getMemoContent,
-    keywordSearch
+    keywordSearch,
+    updateMemo,
+    deleteMemo
 } from "../../db/memo";
 import {
     memoChunkVectorSearchWithMemoInfo,
     memoSummaryVectorSearchWithMemoInfo
 } from "../../vectorEmbeddings/vectorSearch";
 import { generateVectorEmbeddingForSearch } from "../../vectorEmbeddings/voyage";
+import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from "./memoOperations";
+import { FetchMemoResult } from "../../db/memo";
+import { handleNewMemoCreation } from "./knowledgeBaseUpdateUtils";
+
+
 
 const getMemoTitlesByTagSchema = z.object({
     tag: z.string().describe("The tag to search for"),
@@ -116,5 +123,81 @@ export const vectorSearchTool = tool(
         name: "vector_search",
         schema: vectorSearchSchema,
         description: "Perform a vector search on the knowledge base for memos that are similar to the given query",
+    }
+);
+
+const insertActionSchema = z.object({
+    content: z.string().describe("The full raw content of the memo to insert"),
+    title: z.string().describe("The title of the memo to insert"),
+});
+
+export const createInsertActionTool = (memo: FetchMemoResult) => {
+    return tool(
+        async (input): Promise<string> => {
+            console.log('insert_action called! input:', input);
+            const parsed = insertActionSchema.parse(input);
+            const content = parsed.content;
+            if (content === 'provided_content_unchanged') {
+                await updateMemo(memo.uuid, [{
+                    column: 'pending',
+                    value: false
+                }])
+                const promises = [
+                    createMemoChunks(memo.uuid, memo.content),
+                    extractTagsFromMemo(memo),
+                    generateMemoSummary(memo)
+                ]
+    
+                await Promise.all(promises)
+                return memo.uuid
+            }
+
+            const newMemoUuid = await handleNewMemoCreation(parsed.title, content)
+            return newMemoUuid
+        },
+        {
+            name: "insert_action",
+            schema: insertActionSchema,
+            description: "Insert a new memo into the knowledge base",
+        }
+    );
+};
+
+const deleteActionSchema = z.object({
+    memo_uuid: z.string().describe("The UUID of the memo to delete"),
+});
+
+export const deleteActionTool = tool(
+    async (input): Promise<string> => {
+        const parsed = deleteActionSchema.parse(input);
+        console.log('delete_action called! memo_uuid:', parsed.memo_uuid);
+        await deleteMemo(parsed.memo_uuid);
+        return parsed.memo_uuid;
+    },
+    {
+        name: "delete_action",
+        schema: deleteActionSchema,
+        description: "Delete a memo from the knowledge base",
+    }
+);
+
+export const updateActionSchema = z.object({
+    memo_uuid: z.string().describe("The UUID of the memo to update"),
+    content: z.string().describe("The full raw content of the memo to update"),
+    title: z.string().describe("The title of the memo to update"),
+});
+
+export const updateActionTool = tool(
+    async (input): Promise<string> => {
+        const parsed = updateActionSchema.parse(input);
+        console.log('update_action called! memo_uuid:', parsed.memo_uuid, 'content:', parsed.content, 'title:', parsed.title);
+        await deleteMemo(parsed.memo_uuid)
+        await handleNewMemoCreation(parsed.title, parsed.content)
+        return parsed.memo_uuid;
+    },
+    {
+        name: "update_action",
+        schema: updateActionSchema,
+        description: "Update a memo in the knowledge base",
     }
 );

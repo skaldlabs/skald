@@ -12,9 +12,14 @@ interface DBResult<T> {
 }
 
 
-interface BatchInsertResult {
+interface BatchInsertResult<T> {
     error: string | null
     insertedCount: number
+    rows: T[] | null
+}
+
+interface BatchInsertOptions {
+    returnColumns?: string[]
 }
 
 export const runQuery = async <T> (query: string, params: any[]): Promise<DBResult<T>> => {
@@ -36,15 +41,23 @@ export const runQuery = async <T> (query: string, params: any[]): Promise<DBResu
 }
 
 
-export const runBatchInsert = async (
+export const insertData = async <T>(
     tableName: string,
-    columns: string[],
-    values: any[][]
-): Promise<BatchInsertResult> => {
+    records: Record<string, any>[],
+    options?: BatchInsertOptions
+): Promise<BatchInsertResult<T>> => {
     try {
-        if (values.length === 0) {
-            return { error: null, insertedCount: 0 }
+        if (records.length === 0) {
+            return { error: null, insertedCount: 0, rows: [] }
         }
+
+        // Extract columns from the first record
+        const columns = Object.keys(records[0])
+        
+        // Convert records to array of values
+        const values = records.map(record => 
+            columns.map(column => record[column])
+        )
 
         const client = await pool.connect()
         
@@ -56,7 +69,12 @@ export const runBatchInsert = async (
             return `(${rowPlaceholders})`
         }).join(', ')
 
-        const query = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES ${placeholders}`
+        // Build RETURNING clause
+        const returningClause = options?.returnColumns && options.returnColumns.length > 0
+            ? `RETURNING ${options.returnColumns.join(', ')}`
+            : 'RETURNING *'
+
+        const query = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES ${placeholders} ${returningClause}`
         const flatParams = values.flat()
 
         const result = await client.query(query, flatParams)
@@ -64,13 +82,15 @@ export const runBatchInsert = async (
 
         return {
             error: null,
-            insertedCount: result.rowCount || 0
+            insertedCount: result.rowCount || 0,
+            rows: result.rows as T[]
         }
     } catch (error) {
         console.error(error)
         return {
             error: error instanceof Error ? error.message : 'Unknown error',
-            insertedCount: 0
+            insertedCount: 0,
+            rows: null
         }
     }
 }
