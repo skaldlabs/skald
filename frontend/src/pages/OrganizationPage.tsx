@@ -7,8 +7,8 @@ export const OrganizationPage = () => {
     const user = useAuthStore((state) => state.user)
 
     if (
-        !user?.access_levels?.organization_access_levels?.[user?.current_organization_id] ||
-        user.access_levels.organization_access_levels[user.current_organization_id] < OrganizationAccessLevel.OWNER
+        !user?.access_levels?.organization_access_levels?.[user?.current_organization_uuid] ||
+        user.access_levels.organization_access_levels[user.current_organization_uuid] < OrganizationAccessLevel.OWNER
     ) {
         return <Navigate to="/" />
     }

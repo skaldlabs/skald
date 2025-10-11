@@ -17,20 +17,20 @@ export enum OrganizationAccessLevel {
 
 interface UserDetailsResponse {
     email: string
-    default_organization: number
+    default_organization: string
     email_verified: boolean
     organization_name: string
     is_superuser: boolean
     name: string
     access_levels: {
         organization_access_levels: {
-            [key: number]: OrganizationAccessLevel
+            [key: string]: OrganizationAccessLevel
         }
     }
 }
 
 export interface UserDetails extends UserDetailsResponse {
-    current_organization_id: number
+    current_organization_uuid: string
 }
 
 interface AuthState {
@@ -70,7 +70,7 @@ export const useAuthStore = create<AuthState>((set) => {
                     isAuthenticated: true,
                     user: {
                         ...userDetails,
-                        current_organization_id: userDetails.default_organization,
+                        current_organization_uuid: userDetails.default_organization,
                         organization_name: userDetails.organization_name,
                     },
                 })
@@ -89,7 +89,7 @@ export const useAuthStore = create<AuthState>((set) => {
 
             const user = {
                 ...response.data.user,
-                current_organization_id: response.data.user.default_organization,
+                current_organization_uuid: response.data.user.default_organization,
             }
 
             storage.set(STORAGE_KEYS.TOKEN, response.data.token)
@@ -100,7 +100,7 @@ export const useAuthStore = create<AuthState>((set) => {
                 default_organization: user.default_organization,
                 email_verified: user.email_verified,
                 organization_name: user.organization_name,
-                current_organization_id: user.current_organization_id,
+                current_organization_uuid: user.current_organization_uuid,
             })
 
             return true
@@ -120,7 +120,7 @@ export const useAuthStore = create<AuthState>((set) => {
                 default_organization: user.default_organization,
                 email_verified: user.email_verified,
                 organization_name: user.organization_name,
-                current_organization_id: user.current_organization_id,
+                current_organization_uuid: user.current_organization_uuid,
             })
 
             return true

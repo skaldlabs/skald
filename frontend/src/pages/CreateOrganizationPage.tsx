@@ -42,7 +42,6 @@ export const CreateOrganizationPage = () => {
         if (!response.error) {
             toast.success('Organization created successfully!')
             await initializeAuth()
-            localStorage.setItem('first_access', '1')
         } else {
             toast.error('Failed to create organization. Please try again.')
         }

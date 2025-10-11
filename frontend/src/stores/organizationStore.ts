@@ -1,25 +1,8 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
-import { Team, useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '@/stores/authStore'
 import { toast } from 'sonner'
 // import * as Sentry from '@sentry/react'
-
-interface OrganizationSettings {
-    credential_openai_api_key: string | null
-    credential_anthropic_api_key: string | null
-    credential_voyage_api_key: string | null
-    self_hosted_llm_chat_url: string | null
-    self_hosted_llm_auth_headers: Record<string, string> | null
-    self_hosted_embeddings_model_url: string | null
-    self_hosted_embeddings_auth_headers: Record<string, string> | null
-    writing_guidelines: string[] | null
-    onboarded: boolean | null
-}
-
-interface OrganizationResponse extends OrganizationSettings {
-    id: string
-    name: string
-}
 
 interface OrganizationMember {
     email: string
@@ -27,12 +10,11 @@ interface OrganizationMember {
     name: string
     role: string // role is the access level of the member
     position: string // position is the job/position the member holds at their company
-    teams: Team[]
 }
 
 interface OrganizationInvite {
     id: string
-    organization_id: string
+    organization_uuid: string
     organization_name: string
 }
 
@@ -44,17 +26,12 @@ export interface SentInvite {
     invited_by_email: string
 }
 
-type OrganizationSettingValue = string | number | boolean | Record<string, string> | string[] | null
-
 interface OrganizationState {
-    credentials: OrganizationSettings
     members: OrganizationMember[]
     loading: boolean
     error: string | null
     pendingInvites: OrganizationInvite[]
     sentInvites: SentInvite[]
-    fetchOrganizationSettings: () => Promise<void>
-    updateOrganizationSetting: (field: keyof OrganizationSettings, value: OrganizationSettingValue) => Promise<void>
     fetchMembers: () => Promise<void>
     inviteMember: (email: string) => Promise<void>
     removeMember: (email: string) => Promise<void>
@@ -66,58 +43,13 @@ interface OrganizationState {
 }
 
 export const useOrganizationStore = create<OrganizationState>((set) => ({
-    credentials: {
-        credential_openai_api_key: null,
-        credential_anthropic_api_key: null,
-        credential_voyage_api_key: null,
-        self_hosted_llm_chat_url: null,
-        self_hosted_llm_auth_headers: null,
-        self_hosted_embeddings_model_url: null,
-        self_hosted_embeddings_auth_headers: null,
-        default_llm: null,
-        llm_temperature: null,
-        writing_guidelines: null,
-        onboarded: true,
-    },
     members: [],
     loading: false,
     error: null,
     pendingInvites: [],
     sentInvites: [],
-    fetchOrganizationSettings: async () => {
-        set({ loading: true, error: null })
-        const organizationId = useAuthStore.getState().user?.current_organization_id
-        const response = await api.get<OrganizationResponse>(`/organization/${organizationId}/`)
-
-        if (response.error || !response.data) {
-            // Sentry.captureException(new Error(`Failed to fetch credentials: ${response.error}`))
-            set({ loading: false, error: response.error || 'Failed to fetch organization settings' })
-            return
-        }
-
-        set({ credentials: response.data, loading: false, error: null })
-    },
-    updateOrganizationSetting: async (field: keyof OrganizationSettings, value: OrganizationSettingValue) => {
-        const organizationId = useAuthStore.getState().user?.current_organization_id
-        const response = await api.post(`/organization/${organizationId}/update_credential/`, {
-            field,
-            value,
-        })
-
-        if (response.error) {
-            toast.error(`Failed to update credential: ${response.error}`)
-            return
-        }
-
-        set((state) => ({
-            credentials: {
-                ...state.credentials,
-                [field]: value,
-            },
-        }))
-    },
     fetchMembers: async () => {
-        const organizationId = useAuthStore.getState().user?.current_organization_id
+        const organizationId = useAuthStore.getState().user?.current_organization_uuid
         if (!organizationId) {
             return
         }
@@ -141,7 +73,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
         })
     },
     inviteMember: async (email: string) => {
-        const organizationId = useAuthStore.getState().user?.current_organization_id
+        const organizationId = useAuthStore.getState().user?.current_organization_uuid
         if (!organizationId) {
             return
         }
@@ -165,7 +97,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
         toast.success('Invitation sent successfully')
     },
     removeMember: async (email: string) => {
-        const organizationId = useAuthStore.getState().user?.current_organization_id
+        const organizationId = useAuthStore.getState().user?.current_organization_uuid
         if (!organizationId) {
             return
         }
@@ -228,7 +160,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
         await useAuthStore.getState().initializeAuth()
     },
     fetchSentInvites: async () => {
-        const organizationId = useAuthStore.getState().user?.current_organization_id
+        const organizationId = useAuthStore.getState().user?.current_organization_uuid
         if (!organizationId) {
             return
         }
@@ -252,7 +184,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
         })
     },
     cancelInvite: async (inviteId: string) => {
-        const organizationId = useAuthStore.getState().user?.current_organization_id
+        const organizationId = useAuthStore.getState().user?.current_organization_uuid
         if (!organizationId) {
             return
         }
@@ -276,7 +208,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
         toast.success('Invite cancelled successfully')
     },
     resendInvite: async (inviteId: string) => {
-        const organizationId = useAuthStore.getState().user?.current_organization_id
+        const organizationId = useAuthStore.getState().user?.current_organization_uuid
         if (!organizationId) {
             return
         }

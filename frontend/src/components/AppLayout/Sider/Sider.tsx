@@ -67,7 +67,7 @@ export const Sider = () => {
             label: 'Organization',
             hasAccess: () =>
                 !!user &&
-                user?.access_levels.organization_access_levels[user?.current_organization_id] >=
+                user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
                     OrganizationAccessLevel.SUPER_ADMIN,
         },
     ]

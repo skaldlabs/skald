@@ -212,9 +212,9 @@ export const api = {
 
 export const getOrgPath = () => {
     const user = useAuthStore.getState().user
-    if (!user?.current_organization_id) {
+    if (!user?.current_organization_uuid) {
         // this should not happen but we handle it nevertheless
         throw new Error('No organization ID found')
     }
-    return `/organization/${user.current_organization_id}`
+    return `/organization/${user.current_organization_uuid}`
 }
