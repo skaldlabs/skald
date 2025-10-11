@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script to push mock Odin documentation to the Skald memo API.
-Reads all markdown files from mock_data/odin-docs and creates memos.
+Script to push mock documentation to the Skald memo API.
+Reads all markdown files from mock_data/odin-docs and/or mock_data/wikipedia and creates memos.
 """
 
 import os
@@ -9,6 +9,7 @@ import requests
 from pathlib import Path
 from typing import Optional
 import sys
+import time
 
 
 def read_markdown_file(file_path: Path) -> tuple[str, str]:
@@ -88,24 +89,54 @@ def get_category_from_path(file_path: Path, base_dir: Path) -> str:
     return "general"
 
 
-def push_all_docs(base_url: str = "http://localhost:8000", docs_dir: str = "mock_data/odin-docs"):
+def get_source_and_tags_from_path(file_path: Path, base_dir: Path) -> tuple[str, list[str]]:
     """
-    Push all markdown files from the docs directory to the memo API.
+    Determine source and tags based on the directory structure.
+    """
+    relative_path = file_path.relative_to(base_dir)
+    
+    # Check if it's from odin-docs or wikipedia
+    if "odin-docs" in str(file_path):
+        source = "odin-docs-import"
+        tags = ["odin-docs"]
+        if len(relative_path.parts) > 1:
+            tags.append(relative_path.parts[0])  # Add category as tag
+    elif "wikipedia" in str(file_path):
+        source = "wikipedia-import"
+        tags = ["wikipedia", "encyclopedia"]
+    else:
+        source = "unknown-import"
+        tags = ["imported"]
+    
+    return source, tags
+
+
+def push_docs_from_directory(base_url: str, docs_dir: str, sleep_delay: float = 0.0) -> tuple[int, int]:
+    """
+    Push all markdown files from a specific directory to the memo API.
+    
+    Args:
+        base_url: Base URL of the API
+        docs_dir: Directory containing markdown files
+        sleep_delay: Delay in seconds between requests to prevent rate limiting
+    
+    Returns:
+        tuple of (success_count, fail_count)
     """
     docs_path = Path(docs_dir)
 
     if not docs_path.exists():
-        print(f"Error: Directory {docs_dir} does not exist")
-        sys.exit(1)
+        print(f"Warning: Directory {docs_dir} does not exist, skipping...")
+        return 0, 0
 
     # Find all markdown files
     md_files = list(docs_path.rglob("*.md"))
 
     if not md_files:
         print(f"No markdown files found in {docs_dir}")
-        sys.exit(1)
+        return 0, 0
 
-    print(f"Found {len(md_files)} markdown files")
+    print(f"Found {len(md_files)} markdown files in {docs_dir}")
     print(f"Pushing to {base_url}/api/v1/memo/\n")
 
     success_count = 0
@@ -118,13 +149,14 @@ def push_all_docs(base_url: str = "http://localhost:8000", docs_dir: str = "mock
         # Extract metadata
         category = get_category_from_path(md_file, docs_path)
         relative_path = str(md_file.relative_to(docs_path))
+        
+        # Get source and tags based on path
+        source, tags = get_source_and_tags_from_path(md_file, docs_path)
 
         metadata = {
             "file_path": relative_path,
             "category": category,
         }
-
-        tags = [category, "odin-docs"]
 
         # Create memo
         success = create_memo(
@@ -134,24 +166,58 @@ def push_all_docs(base_url: str = "http://localhost:8000", docs_dir: str = "mock
             metadata=metadata,
             reference_id=relative_path,
             tags=tags,
-            source="odin-docs-import",
+            source=source,
         )
 
         if success:
             success_count += 1
         else:
             fail_count += 1
+        
+        # Add delay between requests to prevent rate limiting
+        if sleep_delay > 0:
+            time.sleep(sleep_delay)
 
-    print(f"\n{'='*50}")
-    print(f"Results: {success_count} successful, {fail_count} failed")
-    print(f"{'='*50}")
+    return success_count, fail_count
+
+
+def push_all_docs(base_url: str = "http://localhost:8000", 
+                  include_odin: bool = True, 
+                  include_wikipedia: bool = True,
+                  sleep_delay: float = 0.0):
+    """
+    Push all markdown files from the specified directories to the memo API.
+    """
+    total_success = 0
+    total_fail = 0
+    
+    print(f"Pushing documentation to {base_url}/api/v1/memo/")
+    print("="*60)
+    
+    if include_odin:
+        print("\n📚 Processing Odin Documentation...")
+        success, fail = push_docs_from_directory(base_url, "mock_data/odin-docs", sleep_delay)
+        total_success += success
+        total_fail += fail
+        print(f"Odin docs: {success} successful, {fail} failed")
+    
+    if include_wikipedia:
+        print("\n🌍 Processing Wikipedia Articles...")
+        success, fail = push_docs_from_directory(base_url, "mock_data/wikipedia", sleep_delay)
+        total_success += success
+        total_fail += fail
+        print(f"Wikipedia: {success} successful, {fail} failed")
+
+    print(f"\n{'='*60}")
+    print(f"TOTAL RESULTS: {total_success} successful, {total_fail} failed")
+    print(f"{'='*60}")
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Push mock Odin documentation to Skald memo API"
+        description="Push mock documentation to Skald memo API"
     )
     parser.add_argument(
         "--url",
@@ -159,11 +225,36 @@ if __name__ == "__main__":
         help="Base URL of the Skald API (default: http://localhost:8000)",
     )
     parser.add_argument(
-        "--docs-dir",
-        default="mock_data/odin-docs",
-        help="Directory containing markdown files (default: mock_data/odin-docs)",
+        "--odin",
+        action="store_true",
+        help="Include Odin documentation (mock_data/odin-docs)",
+    )
+    parser.add_argument(
+        "--wikipedia",
+        action="store_true",
+        help="Include Wikipedia articles (mock_data/wikipedia)",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Include both Odin docs and Wikipedia articles (default if no specific options)",
+    )
+    parser.add_argument(
+        "--sleep",
+        type=float,
+        default=0.0,
+        help="Delay in seconds between requests to prevent rate limiting (default: 0.0)",
     )
 
     args = parser.parse_args()
 
-    push_all_docs(base_url=args.url, docs_dir=args.docs_dir)
+    # Determine what to include
+    include_odin = args.odin or args.all or (not args.odin and not args.wikipedia and not args.all)
+    include_wikipedia = args.wikipedia or args.all or (not args.odin and not args.wikipedia and not args.all)
+
+    # If specific options were provided, only include those
+    if args.odin or args.wikipedia:
+        include_odin = args.odin
+        include_wikipedia = args.wikipedia
+
+    push_all_docs(base_url=args.url, include_odin=include_odin, include_wikipedia=include_wikipedia, sleep_delay=args.sleep)
