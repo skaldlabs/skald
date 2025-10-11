@@ -8,12 +8,6 @@ interface AuthResponse {
     token: string
     user: UserDetails
 }
-
-export interface Team {
-    id: number
-    name: string
-}
-
 // keep in sync with skald.models.user.OrganizationMembershipRole
 export enum OrganizationAccessLevel {
     MEMBER = 1,
@@ -27,23 +21,16 @@ interface UserDetailsResponse {
     email_verified: boolean
     organization_name: string
     is_superuser: boolean
-    stripe_subscription_active: boolean
     name: string
-    position: string
-    teams: Team[]
     access_levels: {
         organization_access_levels: {
             [key: number]: OrganizationAccessLevel
-        }
-        team_access_levels: {
-            [key: number]: number
         }
     }
 }
 
 export interface UserDetails extends UserDetailsResponse {
     current_organization_id: number
-    tiptap_collab_jwt: string | null
 }
 
 interface AuthState {
@@ -64,14 +51,6 @@ const fetchUserDetails = async () => {
     return response.data || null
 }
 
-const fetchTiptapTokens = async (): Promise<{ collab_token: string } | null> => {
-    const response = await api.get<{ collab_token: string }>('/user/collaboration_token/')
-    if (response.error) {
-        return null
-    }
-    return response.data || null
-}
-
 export const useAuthStore = create<AuthState>((set) => {
     return {
         firstLoad: true,
@@ -86,7 +65,6 @@ export const useAuthStore = create<AuthState>((set) => {
             }
 
             const userDetails = await fetchUserDetails()
-            const tiptapTokens = await fetchTiptapTokens()
             if (userDetails) {
                 set({
                     isAuthenticated: true,
@@ -94,7 +72,6 @@ export const useAuthStore = create<AuthState>((set) => {
                         ...userDetails,
                         current_organization_id: userDetails.default_organization,
                         organization_name: userDetails.organization_name,
-                        tiptap_collab_jwt: tiptapTokens?.collab_token || null,
                     },
                 })
             } else {
@@ -109,12 +86,10 @@ export const useAuthStore = create<AuthState>((set) => {
                 toast.error(`Error logging in: ${response.error}`)
                 return false
             }
-            const tiptapTokens = await fetchTiptapTokens()
 
             const user = {
                 ...response.data.user,
                 current_organization_id: response.data.user.default_organization,
-                tiptap_collab_jwt: tiptapTokens?.collab_token || null,
             }
 
             storage.set(STORAGE_KEYS.TOKEN, response.data.token)

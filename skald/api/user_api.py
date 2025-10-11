@@ -1,17 +1,11 @@
-
-
-
-
-
-
-
 from django.contrib.auth import authenticate, get_user_model, login, logout
-from django.contrib.auth.models import User
 from rest_framework import serializers, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
+from skald.utils.error_utils import format_validation_error
 
 User = get_user_model()
 
@@ -19,9 +13,12 @@ User = get_user_model()
 class InternalUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username", "password", "email"]
+        fields = ["email", "password"]
 
         extra_kwargs = {"password": {"write_only": True}}
+
+    def validate_email(self, value):
+        return value.lower().strip()
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
@@ -29,13 +26,46 @@ class InternalUserSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    organization_name = serializers.SerializerMethodField()
+    access_levels = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["username", "email", "password"]
-        read_only_fields = ["username", "email"]
+        fields = [
+            "email",
+            "password",
+            "default_organization",
+            "email_verified",
+            "organization_name",
+            "is_superuser",
+            "name",
+            "access_levels",
+        ]
+        read_only_fields = [
+            "email",
+            "default_organization",
+            "email_verified",
+        ]
 
         extra_kwargs = {"password": {"write_only": True}}
+
+    def get_organization_name(self, obj):
+        if obj.default_organization:
+            return obj.default_organization.name
+        return None
+
+    def get_access_levels(self, obj):
+        # get the access levels of the user in every organization they're a member of
+        # then also get the access levels of the user in every team they're a member of
+        organization_access_levels = {}
+        team_access_levels = {}
+        for organization in obj.organizationmembership_set.all():
+            organization_access_levels[int(organization.organization.id)] = (
+                organization.access_level
+            )
+        return {
+            "organization_access_levels": organization_access_levels,
+        }
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
@@ -67,9 +97,12 @@ class UserViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             user = serializer.save()
             token, _ = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"token": token.key, "user": UserSerializer(user).data},
+                status=status.HTTP_201_CREATED,
+            )
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return format_validation_error(serializer.errors)
 
     @action(detail=False, methods=["post"])
     def change_password(self, request):
@@ -89,13 +122,16 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def login(self, request):
-        username = request.data.get("username")
+        email = request.data.get("email", "").lower().strip()
         password = request.data.get("password")
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, username=email, password=password)
         if user:
             login(request, user)
             token, _ = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_200_OK)
+            return Response(
+                {"token": token.key, "user": UserSerializer(user).data},
+                status=status.HTTP_200_OK,
+            )
         else:
             return Response(
                 {"error": "Invalid Credentials"}, status=status.HTTP_400_BAD_REQUEST
@@ -112,8 +148,5 @@ class UserViewSet(viewsets.ModelViewSet):
         user = request.user
         return Response(
             status=200,
-            data={
-                "email": user.email,
-                "username": user.username,
-            },
+            data=UserSerializer(user).data,
         )

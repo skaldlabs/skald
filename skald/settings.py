@@ -160,6 +160,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_TOKEN_VALIDITY = timedelta(days=30)
 
+EMAIL_VERIFICATION_ENABLED = str_to_bool(os.getenv("EMAIL_VERIFICATION_ENABLED", True))
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 

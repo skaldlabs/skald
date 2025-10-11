@@ -37,6 +37,8 @@ dependencies = [
     "pgvector>=0.4.1",
     "voyageai>=0.3.5",
     "redis>=6.4.0",
+    "posthog>=6.7.6",
+    "resend>=2.16.0",
 ]
 
 [project.optional-dependencies]

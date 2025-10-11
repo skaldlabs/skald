@@ -1,7 +1,6 @@
 // Constants for localStorage keys
 export const STORAGE_KEYS = {
     TOKEN: 'token',
-    ONBOARDING_DISMISSED: 'skald_onboarding_dismissed',
 }
 
 /**
@@ -76,25 +75,9 @@ export const storage = {
     },
 
     /**
-     * Check if onboarding has been dismissed
-     */
-    isOnboardingDismissed: (): boolean => {
-        const value = storage.get<string | boolean>(STORAGE_KEYS.ONBOARDING_DISMISSED)
-        return value === true || value === 'true'
-    },
-
-    /**
-     * Set onboarding as dismissed
-     */
-    setOnboardingDismissed: (isDismissed = true) => {
-        storage.set(STORAGE_KEYS.ONBOARDING_DISMISSED, isDismissed)
-    },
-
-    /**
      * Clean up user-related data on logout
      */
     cleanupOnLogout: (): void => {
         storage.remove(STORAGE_KEYS.TOKEN)
-        storage.remove(STORAGE_KEYS.ONBOARDING_DISMISSED)
     },
 }
