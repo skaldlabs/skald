@@ -69,4 +69,22 @@ Note that if you look at `skald/models/memo.py` you will see a bunch of other st
 
 Lastly, the UI has not been touched yet.
 
-There are no projects and no organizations, all the data gets lumped into one. 
+There are no projects and no organizations, all the data gets lumped into one.
+
+## Mock Data Import
+
+Import mock documentation and Wikipedia articles:
+
+```sh
+# Import both Odin docs and Wikipedia articles
+python push_mock_docs.py --all
+
+# Import only Odin documentation
+python push_mock_docs.py --odin
+
+# Import only Wikipedia articles  
+python push_mock_docs.py --wikipedia
+
+# Add delay between requests to prevent rate limiting
+python push_mock_docs.py --all --sleep 1.0
+``` 

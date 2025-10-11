@@ -7,6 +7,7 @@ from rest_framework_extensions.routers import ExtendedDefaultRouter
 from skald.api.email_verification_api import VerifyEmailViewSet
 from skald.api.organization_api import OrganizationViewSet
 
+from .api.chat_api import ChatView
 from .api.memo_api import MemoViewSet
 from .api.search_api import SearchView
 from .api.user_api import UserViewSet
@@ -36,9 +37,12 @@ organizations_router = router.register(
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="index.html"), name="app-root"),
+    path("chat/", TemplateView.as_view(template_name="chat.html"), name="chat-ui"),
     path("admin/", admin.site.urls),
     path("api/v1/search", SearchView.as_view(), name="search"),
     path("api/v1/search/", SearchView.as_view(), name="search"),
+    path("api/v1/chat", ChatView.as_view(), name="chat"),
+    path("api/v1/chat/", ChatView.as_view(), name="chat"),
     *router.urls,
 ] + staticfiles_urlpatterns()
 

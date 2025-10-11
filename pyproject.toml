@@ -39,6 +39,8 @@ dependencies = [
     "redis>=6.4.0",
     "posthog>=6.7.6",
     "resend>=2.16.0",
+    "langchain>=0.3.27",
+    "langchain-openai>=0.3.35",
 ]
 
 [project.optional-dependencies]
