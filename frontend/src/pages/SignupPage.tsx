@@ -1,28 +1,54 @@
-import { useState } from 'react'
-import { Form, Input, Button, Card, message } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
+import { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { Mail, Lock } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+
+interface SignupFormData {
+    email: string
+    password: string
+    confirm: string
+}
 
 export const SignupPage = () => {
     const [loading, setLoading] = useState(false)
     const signup = useAuthStore((state) => state.signup)
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
 
-    const onFinish = async (values: { username: string; email: string; password: string; confirm: string }) => {
+    const form = useForm<SignupFormData>({
+        defaultValues: {
+            email: '',
+            password: '',
+            confirm: '',
+        },
+    })
+
+    const emailFromQuery = searchParams.get('email')
+
+    useEffect(() => {
+        if (emailFromQuery) {
+            form.setValue('email', emailFromQuery)
+        }
+    }, [emailFromQuery, form])
+
+    const onSubmit = async (values: SignupFormData) => {
         if (values.password !== values.confirm) {
-            message.error('Passwords do not match!')
+            toast.error('Passwords do not match!')
             return
         }
 
         setLoading(true)
         try {
-            const success = await signup(values.username, values.email, values.password)
+            const success = await signup(values.email, values.password)
             if (success) {
-                message.success('Signup successful!')
-                navigate('/')
-            } else {
-                message.error('Signup failed. Please try again.')
+                toast.success('Signup successful! Please verify your email.')
+                navigate('/verify-email')
             }
         } finally {
             setLoading(false)
@@ -30,62 +56,114 @@ export const SignupPage = () => {
     }
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '100vh',
-                background: '#f0f2f5',
-            }}
-        >
-            <Card style={{ width: 400, boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
-                <h1 style={{ textAlign: 'center', marginBottom: 24 }}>Create Account</h1>
-                <Form name="signup" onFinish={onFinish} size="large">
-                    <Form.Item
-                        name="username"
-                        rules={[
-                            { required: true, message: 'Please input your username!' },
-                            { min: 3, message: 'Username must be at least 3 characters!' },
-                        ]}
-                    >
-                        <Input prefix={<UserOutlined />} placeholder="Username" />
-                    </Form.Item>
+        <div className="flex justify-center items-center min-h-screen bg-background">
+            <Card className="w-full max-w-md">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-2xl text-center">Create an Account</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                rules={{
+                                    required: 'Email is required',
+                                    pattern: {
+                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                        message: 'Please enter a valid email address',
+                                    },
+                                }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    {...field}
+                                                    type="email"
+                                                    placeholder="Enter your email"
+                                                    className="pl-10"
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <Form.Item
-                        name="email"
-                        rules={[
-                            { required: true, message: 'Please input your email!' },
-                            { type: 'email', message: 'Please enter a valid email!' },
-                        ]}
-                    >
-                        <Input prefix={<MailOutlined />} placeholder="Email" />
-                    </Form.Item>
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                rules={{
+                                    required: 'Password is required',
+                                    minLength: {
+                                        value: 8,
+                                        message: 'Password must be at least 8 characters',
+                                    },
+                                }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Password</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    {...field}
+                                                    type="password"
+                                                    placeholder="Enter your password"
+                                                    className="pl-10"
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <Form.Item
-                        name="password"
-                        rules={[
-                            { required: true, message: 'Please input your password!' },
-                            { min: 8, message: 'Password must be at least 8 characters!' },
-                        ]}
-                    >
-                        <Input.Password prefix={<LockOutlined />} placeholder="Password" />
-                    </Form.Item>
+                            <FormField
+                                control={form.control}
+                                name="confirm"
+                                rules={{
+                                    required: 'Please confirm your password',
+                                    validate: (value) => {
+                                        const password = form.getValues('password')
+                                        return value === password || 'Passwords do not match'
+                                    },
+                                }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Confirm Password</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    {...field}
+                                                    type="password"
+                                                    placeholder="Confirm your password"
+                                                    className="pl-10"
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <Form.Item name="confirm" rules={[{ required: true, message: 'Please confirm your password!' }]}>
-                        <Input.Password prefix={<LockOutlined />} placeholder="Confirm Password" />
-                    </Form.Item>
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading ? 'Creating account...' : 'Sign Up'}
+                            </Button>
+                        </form>
+                    </Form>
 
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit" loading={loading} style={{ width: '100%' }}>
-                            Sign up
-                        </Button>
-                    </Form.Item>
-
-                    <div style={{ textAlign: 'center' }}>
-                        Already have an account? <Link to="/login">Log in</Link>
+                    <div className="text-center mt-4 text-sm text-muted-foreground">
+                        Already have an account?{' '}
+                        <Link to="/login" className="text-primary hover:underline">
+                            Log in
+                        </Link>
                     </div>
-                </Form>
+                </CardContent>
             </Card>
         </div>
     )
