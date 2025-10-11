@@ -160,7 +160,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_TOKEN_VALIDITY = timedelta(days=30)
 
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", None)
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+EMAIL_DOMAIN = os.getenv("EMAIL_DOMAIN", "useskald.com")
+
 EMAIL_VERIFICATION_ENABLED = str_to_bool(os.getenv("EMAIL_VERIFICATION_ENABLED", True))
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -210,3 +217,7 @@ APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 # Voyage - embeddings
 VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
 VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
+
+# Posthog
+POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", None)
+POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")

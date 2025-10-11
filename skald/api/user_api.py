@@ -60,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
         organization_access_levels = {}
         team_access_levels = {}
         for organization in obj.organizationmembership_set.all():
-            organization_access_levels[int(organization.organization.id)] = (
+            organization_access_levels[int(organization.organization.uuid)] = (
                 organization.access_level
             )
         return {

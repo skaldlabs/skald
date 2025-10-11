@@ -4,7 +4,6 @@ import re
 import posthog
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
@@ -12,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from skald.api.permissions import OrganizationPermissionMixin, require_access_level
-from skald.models.organization import Organization, SupportedLLM
+from skald.models.organization import Organization
 from skald.models.user import (
     OrganizationMembership,
     OrganizationMembershipInvite,
@@ -59,7 +58,7 @@ class OrganizationInviteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrganizationMembershipInvite
-        fields = ["id", "email", "created_at", "invited_by_name", "invited_by_email"]
+        fields = ["uuid", "email", "created_at", "invited_by_name", "invited_by_email"]
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -67,7 +66,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = [
-            "id",
+            "uuid",
             "name",
             "owner",
         ]
@@ -88,9 +87,9 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Organization.objects.filter(
-            id__in=OrganizationMembership.objects.filter(
+            uuid__in=OrganizationMembership.objects.filter(
                 user=self.request.user
-            ).values_list("organization_id", flat=True)
+            ).values_list("organization_uuid", flat=True)
         )
 
     def create(self, request):
@@ -111,7 +110,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             "organization_created",
             distinct_id=request.user.id,
             properties={
-                "organization_id": org.id,
+                "organization_uuid": org.uuid,
                 "organization_name": org.name,
                 "user_email": request.user.email,
             },
@@ -190,7 +189,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             [
                 {
                     "id": invite.id,
-                    "organization_id": invite.organization.id,
+                    "organization_uuid": invite.organization.uuid,
                     "organization_name": invite.organization.name,
                 }
                 for invite in invites
@@ -230,7 +229,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             "organization_invite_accepted",
             distinct_id=request.user.id,
             properties={
-                "organization_id": membership.organization.id,
+                "organization_uuid": membership.organization.uuid,
                 "organization_name": membership.organization.name,
                 "user_email": request.user.email,
             },
@@ -290,7 +289,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             "organization_member_removed",
             distinct_id=request.user.id,
             properties={
-                "organization_id": org.id,
+                "organization_uuid": org.uuid,
                 "organization_name": org.name,
                 "removed_user_email": email,
                 "removed_by_email": request.user.email,
@@ -345,7 +344,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             "organization_invite_cancelled",
             distinct_id=request.user.id,
             properties={
-                "organization_id": org.id,
+                "organization_uuid": org.uuid,
                 "organization_name": org.name,
                 "invited_email": invite.email,
                 "cancelled_by_email": request.user.email,
@@ -393,7 +392,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
                 "organization_invite_resent",
                 distinct_id=request.user.id,
                 properties={
-                    "organization_id": org.id,
+                    "organization_uuid": org.uuid,
                     "organization_name": org.name,
                     "invited_email": invite.email,
                     "resent_by_email": request.user.email,
