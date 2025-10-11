@@ -4,6 +4,7 @@ from django.http import StreamingHttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, views
+from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -11,12 +12,10 @@ from skald.agents.chat_agent.chat_agent import run_chat_agent, stream_chat_agent
 from skald.agents.chat_agent.preprocessing import prepare_context_for_chat_agent
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class ChatView(views.APIView):
+    authentication_classes = [TokenAuthentication, BasicAuthentication]
     permission_classes = [AllowAny]
-
-    @method_decorator(csrf_exempt)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
 
     def options(self, request, *args, **kwargs):
         """Handle CORS preflight requests."""

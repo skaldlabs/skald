@@ -37,7 +37,10 @@ organizations_router = router.register(
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="index.html"), name="app-root"),
-    path("chat/", TemplateView.as_view(template_name="chat.html"), name="chat-ui"),
+    path("chat", TemplateView.as_view(template_name="chat.html"), name="chat-ui"),
+    path(
+        "chat/", TemplateView.as_view(template_name="chat.html"), name="chat-ui-slash"
+    ),
     path("admin/", admin.site.urls),
     path("api/v1/search", SearchView.as_view(), name="search"),
     path("api/v1/search/", SearchView.as_view(), name="search"),

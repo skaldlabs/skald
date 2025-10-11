@@ -42,6 +42,8 @@ async def _process_rerank_batch_async(
 
 def foo(query: str) -> List[Dict[str, Any]]:
     # Wrap synchronous database operations with sync_to_async
+    from skald.models.memo import MemoSummary
+
     embedding_vector = generate_vector_embedding_for_search(query)
     chunk_results = memo_chunk_vector_search(embedding_vector, VECTOR_SEARCH_TOP_K)
 
@@ -51,7 +53,13 @@ def foo(query: str) -> List[Dict[str, Any]]:
         chunk = chunk_result["chunk"]
         memo = chunk.memo
 
-        rerank_snippet = f"Title: {memo.title}\n\nFull content summary: {memo.summary}\n\nChunk content: {chunk.chunk_content}\n\n"
+        # Try to get summary, use fallback if it doesn't exist
+        try:
+            summary = memo.summary
+        except MemoSummary.DoesNotExist:
+            summary = "[Summary not yet generated]"
+
+        rerank_snippet = f"Title: {memo.title}\n\nFull content summary: {summary}\n\nChunk content: {chunk.chunk_content}\n\n"
         rerank_data.append(rerank_snippet)
 
     # split into batches of 25 to ensure we're under the 32k token limit
