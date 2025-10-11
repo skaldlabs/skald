@@ -5,11 +5,12 @@ Reads all markdown files from mock_data/odin-docs and/or mock_data/wikipedia and
 """
 
 import os
-import requests
-from pathlib import Path
-from typing import Optional
 import sys
 import time
+from pathlib import Path
+from typing import Optional
+
+import requests
 
 
 def read_markdown_file(file_path: Path) -> tuple[str, str]:
@@ -19,20 +20,20 @@ def read_markdown_file(file_path: Path) -> tuple[str, str]:
     Returns:
         tuple of (title, content)
     """
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Try to extract title from first H1 heading
-    lines = content.split('\n')
+    lines = content.split("\n")
     title = None
     for line in lines:
-        if line.startswith('# '):
+        if line.startswith("# "):
             title = line[2:].strip()
             break
 
     # If no H1 found, use filename as title
     if not title:
-        title = file_path.stem.replace('-', ' ').replace('_', ' ').title()
+        title = file_path.stem.replace("-", " ").replace("_", " ").title()
 
     return title, content
 
@@ -89,12 +90,14 @@ def get_category_from_path(file_path: Path, base_dir: Path) -> str:
     return "general"
 
 
-def get_source_and_tags_from_path(file_path: Path, base_dir: Path) -> tuple[str, list[str]]:
+def get_source_and_tags_from_path(
+    file_path: Path, base_dir: Path
+) -> tuple[str, list[str]]:
     """
     Determine source and tags based on the directory structure.
     """
     relative_path = file_path.relative_to(base_dir)
-    
+
     # Check if it's from odin-docs or wikipedia
     if "odin-docs" in str(file_path):
         source = "odin-docs-import"
@@ -107,19 +110,21 @@ def get_source_and_tags_from_path(file_path: Path, base_dir: Path) -> tuple[str,
     else:
         source = "unknown-import"
         tags = ["imported"]
-    
+
     return source, tags
 
 
-def push_docs_from_directory(base_url: str, docs_dir: str, sleep_delay: float = 0.0) -> tuple[int, int]:
+def push_docs_from_directory(
+    base_url: str, docs_dir: str, sleep_delay: float = 0.0
+) -> tuple[int, int]:
     """
     Push all markdown files from a specific directory to the memo API.
-    
+
     Args:
         base_url: Base URL of the API
         docs_dir: Directory containing markdown files
         sleep_delay: Delay in seconds between requests to prevent rate limiting
-    
+
     Returns:
         tuple of (success_count, fail_count)
     """
@@ -149,7 +154,7 @@ def push_docs_from_directory(base_url: str, docs_dir: str, sleep_delay: float = 
         # Extract metadata
         category = get_category_from_path(md_file, docs_path)
         relative_path = str(md_file.relative_to(docs_path))
-        
+
         # Get source and tags based on path
         source, tags = get_source_and_tags_from_path(md_file, docs_path)
 
@@ -173,7 +178,7 @@ def push_docs_from_directory(base_url: str, docs_dir: str, sleep_delay: float = 
             success_count += 1
         else:
             fail_count += 1
-        
+
         # Add delay between requests to prevent rate limiting
         if sleep_delay > 0:
             time.sleep(sleep_delay)
@@ -181,29 +186,35 @@ def push_docs_from_directory(base_url: str, docs_dir: str, sleep_delay: float = 
     return success_count, fail_count
 
 
-def push_all_docs(base_url: str = "http://localhost:8000", 
-                  include_odin: bool = True, 
-                  include_wikipedia: bool = True,
-                  sleep_delay: float = 0.0):
+def push_all_docs(
+    base_url: str = "http://localhost:8000",
+    include_odin: bool = True,
+    include_wikipedia: bool = True,
+    sleep_delay: float = 0.0,
+):
     """
     Push all markdown files from the specified directories to the memo API.
     """
     total_success = 0
     total_fail = 0
-    
+
     print(f"Pushing documentation to {base_url}/api/v1/memo/")
-    print("="*60)
-    
+    print("=" * 60)
+
     if include_odin:
         print("\n📚 Processing Odin Documentation...")
-        success, fail = push_docs_from_directory(base_url, "mock_data/odin-docs", sleep_delay)
+        success, fail = push_docs_from_directory(
+            base_url, "mock_data/odin-docs", sleep_delay
+        )
         total_success += success
         total_fail += fail
         print(f"Odin docs: {success} successful, {fail} failed")
-    
+
     if include_wikipedia:
         print("\n🌍 Processing Wikipedia Articles...")
-        success, fail = push_docs_from_directory(base_url, "mock_data/wikipedia", sleep_delay)
+        success, fail = push_docs_from_directory(
+            base_url, "mock_data/wikipedia", sleep_delay
+        )
         total_success += success
         total_fail += fail
         print(f"Wikipedia: {success} successful, {fail} failed")
@@ -249,12 +260,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Determine what to include
-    include_odin = args.odin or args.all or (not args.odin and not args.wikipedia and not args.all)
-    include_wikipedia = args.wikipedia or args.all or (not args.odin and not args.wikipedia and not args.all)
+    include_odin = (
+        args.odin or args.all or (not args.odin and not args.wikipedia and not args.all)
+    )
+    include_wikipedia = (
+        args.wikipedia
+        or args.all
+        or (not args.odin and not args.wikipedia and not args.all)
+    )
 
     # If specific options were provided, only include those
     if args.odin or args.wikipedia:
         include_odin = args.odin
         include_wikipedia = args.wikipedia
 
-    push_all_docs(base_url=args.url, include_odin=include_odin, include_wikipedia=include_wikipedia, sleep_delay=args.sleep)
+    push_all_docs(
+        base_url=args.url,
+        include_odin=include_odin,
+        include_wikipedia=include_wikipedia,
+        sleep_delay=args.sleep,
+    )

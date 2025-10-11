@@ -1,2 +1,1 @@
 """Agents module for Skald."""
-

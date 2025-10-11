@@ -1,0 +1,203 @@
+@layer base {
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-layout);
+        overscroll-behavior: none;
+    }
+
+    :root {
+        --bg: hsl(0, 0%, 100%);
+        --fg: hsl(265, 10%, 3.9%);
+        --bg-card: hsl(0, 0%, 100%);
+        --fg-card: hsl(265, 10%, 3.9%);
+        --bg-popover: hsl(0, 0%, 100%);
+        --fg-popover: hsl(265, 10%, 3.9%);
+        --bg-primary: hsl(265, 76%, 61%);
+        --fg-primary: hsl(0, 0%, 98%);
+        --bg-secondary: hsl(265, 30%, 95.9%);
+        --fg-secondary: hsl(265, 35%, 10%);
+        --bg-muted: hsl(265, 20%, 95.9%);
+        --fg-muted: hsl(265, 15%, 46.1%);
+        --bg-accent: hsl(265, 40%, 95.9%);
+        --fg-accent: hsl(265, 35%, 10%);
+        --bg-destructive: rgb(239, 68, 68);
+        --fg-destructive: hsl(0, 0%, 98%);
+        --bg-warning: hsl(36, 100%, 50%);
+        --fg-warning: hsl(0, 0%, 98%);
+        --bg-success: hsl(142, 76%, 36%);
+        --fg-success: hsl(0, 0%, 98%);
+        --border: hsl(265, 25%, 90%);
+        --input: hsl(265, 25%, 90%);
+        --ring: hsl(265, 76%, 61%);
+        --radius: 8px;
+        --bg-layout: hsl(220, 12%, 95%);
+        --fg-layout: hsl(265, 10%, 3.9%);
+
+        /* Chart colors */
+        --chart-1: hsla(265, 76%, 61%, 0.8);
+        --chart-2: hsla(160, 76%, 41%, 0.8);
+        --chart-3: hsla(320, 56%, 71%, 0.8);
+        --chart-4: hsla(40, 86%, 51%, 0.8);
+        --chart-5: hsla(280, 66%, 31%, 0.8);
+
+        /* Padding */
+        --padding: 16px;
+        --padding-lg: 24px;
+        --padding-md: 12px;
+        --padding-sm: 8px;
+        --padding-xs: 4px;
+    }
+
+    /* Dark mode variants for legacy variables */
+    .dark {
+        --bg: hsl(0, 0%, 3.9%);
+        --fg: hsl(0, 0%, 98%);
+        --bg-card: hsl(0, 0%, 3.9%);
+        --fg-card: hsl(0, 0%, 98%);
+        --bg-popover: hsl(0, 0%, 3.9%);
+        --fg-popover: hsl(0, 0%, 98%);
+        --bg-primary: hsl(265, 76%, 61%);
+        --fg-primary: hsl(0, 0%, 98%);
+        --bg-secondary: hsl(0, 0%, 14.9%);
+        --fg-secondary: hsl(0, 0%, 98%);
+        --bg-muted: hsl(0, 0%, 14.9%);
+        --fg-muted: hsl(0, 0%, 63.9%);
+        --bg-accent: hsl(0, 0%, 14.9%);
+        --fg-accent: hsl(0, 0%, 98%);
+        --bg-destructive: rgb(239, 68, 68);
+        --fg-destructive: hsl(0, 0%, 98%);
+        --bg-warning: hsl(36, 100%, 50%);
+        --fg-warning: hsl(0, 0%, 98%);
+        --bg-success: hsl(142, 76%, 36%);
+        --fg-success: hsl(0, 0%, 98%);
+        --border: hsl(0, 0%, 14.9%);
+        --input: hsl(0, 0%, 14.9%);
+        --ring: hsl(265, 76%, 61%);
+        --bg-layout: hsl(0, 0%, 3.9%);
+        --fg-layout: hsl(0, 0%, 98%);
+
+        /* Chart colors - darker variants */
+        --chart-1: hsla(265, 76%, 61%, 0.6);
+        --chart-2: hsla(160, 76%, 41%, 0.6);
+        --chart-3: hsla(320, 56%, 71%, 0.6);
+        --chart-4: hsla(40, 86%, 51%, 0.6);
+        --chart-5: hsla(280, 66%, 31%, 0.6);
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 200;
+        letter-spacing: 1.2px;
+        font-weight: 300;
+        color: var(--foreground);
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+
+    h2 {
+        font-size: 24px;
+    }
+
+    h3 {
+        font-size: 20px;
+    }
+
+    h4 {
+        font-size: 16px;
+    }
+
+    h5 {
+        font-size: 14px;
+    }
+
+    h6 {
+        font-size: 12px;
+    }
+
+    .react-markdown {
+
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        p, li {
+            line-height: 2em;
+        }
+
+        h1 {
+            font-size: 40px;
+            font-weight: 600;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+    
+        h2 {
+            font-size: 28px;
+            font-weight: 500;
+            margin-top: 14px;
+            margin-bottom: 6px;
+        }
+    
+        h3 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+        
+        h4 {
+            font-size: 18px;
+            margin-top: 10px;
+            margin-bottom: 4px;
+        }
+    
+        h5 {
+            font-size: 16px;
+
+        }
+    
+        h6 {
+            font-size: 14px;
+
+        }
+
+        /* Restore list styles that Tailwind CSS reset removes */
+        ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        li {
+            margin: 0.5rem 0;
+        }
+
+        /* Nested list styles */
+        ul ul {
+            list-style-type: circle;
+            margin: 0.25rem 0;
+        }
+
+        ol ol {
+            list-style-type: lower-alpha;
+            margin: 0.25rem 0;
+        }
+
+        ul ul ul {
+            list-style-type: square;
+        }
+
+        ol ol ol {
+            list-style-type: lower-roman;
+        }
+    }
+
+
+   
+}
