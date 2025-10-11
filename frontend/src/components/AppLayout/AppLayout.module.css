@@ -11,8 +11,7 @@
 
 .content {
     flex: 1;
-    /* margin: 1.5rem; */
-    /* padding: 2rem; */
+    padding: 2rem;
     background: var(--background);
     backdrop-filter: blur(10px);
     display: flex;
@@ -20,12 +19,6 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    /* border-radius: 12px;
-    box-shadow: 
-        0 4px 6px -1px rgba(0, 0, 0, 0.05),
-        0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(255, 255, 255, 0.8); */
 }
 
 
