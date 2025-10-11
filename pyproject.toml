@@ -37,6 +37,8 @@ dependencies = [
     "pgvector>=0.4.1",
     "voyageai>=0.3.5",
     "redis>=6.4.0",
+    "langchain>=0.3.27",
+    "langchain-openai>=0.3.35",
 ]
 
 [project.optional-dependencies]

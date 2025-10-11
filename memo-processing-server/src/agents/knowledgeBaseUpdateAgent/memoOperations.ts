@@ -13,8 +13,8 @@ let chunker: RecursiveChunker | null = null
 const initChunker = async (): Promise<RecursiveChunker> => {
     if (!chunker) {
         chunker = await RecursiveChunker.create({ 
-            chunkSize: 4096, 
-            minCharactersPerChunk: 128 
+            chunkSize: 1024, 
+            minCharactersPerChunk: 128,
         })
     }
     return chunker

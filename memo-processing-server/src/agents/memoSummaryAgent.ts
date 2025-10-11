@@ -3,13 +3,13 @@ import { z } from "zod";
 
 // Output schema for the memo summary agent
 const MemoSummaryOutputSchema = z.object({
-  summary: z.string().describe("A concise summary of the memo content, maximum three paragraphs"),
+  summary: z.string().describe("A concise summary of the memo content, maximum one paragraph"),
 });
 
 export type MemoSummaryOutput = z.infer<typeof MemoSummaryOutputSchema>;
 
 const MEMO_SUMMARY_AGENT_INSTRUCTIONS = `
-You're an expert assistant that summarizes text content. Given a text, summarize its content in at max three paragraphs.
+You're an expert assistant that summarizes text content. Given a text, summarize its content in at max one paragraph.
 Be concise but make sure to include all the important information.
 If the content follows a format like markdown, include the outline of the document at the end of your summary, covering all headings.
 `;
