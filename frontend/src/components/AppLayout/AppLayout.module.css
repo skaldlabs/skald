@@ -1,0 +1,88 @@
+.layout {
+    min-height: 100vh;
+    background: var(--background);
+}
+
+.mainLayout {
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.content {
+    flex: 1;
+    /* margin: 1.5rem; */
+    /* padding: 2rem; */
+    background: var(--background);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* border-radius: 12px;
+    box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.8); */
+}
+
+
+.siderLogo {
+    font-weight: 200;
+    letter-spacing: 2.5px;
+    font-size: 16px;
+    color: var(--fg-card);
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Sider Layout Styles */
+.siderContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.siderContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.adminSection {
+    margin-top: auto;
+    padding-bottom: 16px;
+}
+
+.adminSeparator {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
+    margin: 16px 16px 8px 16px;
+}
+
+/* Add smooth scrolling to the entire page */
+:global(*) {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar styling */
+:global(::-webkit-scrollbar) {
+    width: 8px;
+    height: 8px;
+}
+
+:global(::-webkit-scrollbar-track) {
+    background: transparent;
+}
+
+:global(::-webkit-scrollbar-thumb) {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+:global(::-webkit-scrollbar-thumb:hover) {
+    background: rgba(0, 0, 0, 0.15);
+}

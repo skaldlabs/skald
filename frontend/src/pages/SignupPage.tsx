@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Form, Input, Button, Card, message } from 'antd'
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore } from '@/stores/authStore'
 import { useNavigate, Link } from 'react-router-dom'
 
 export const SignupPage = () => {

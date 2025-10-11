@@ -1,6 +1,6 @@
 import { Layout } from 'antd'
 import { LogoutOutlined } from '@ant-design/icons'
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const { Header: AntHeader } = Layout
 
