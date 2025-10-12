@@ -218,3 +218,13 @@ export const getOrgPath = () => {
     }
     return `/organization/${user.current_organization_uuid}`
 }
+
+export const getProjectPath = () => {
+    // Import here to avoid circular dependency
+    const { useProjectStore } = require('@/stores/projectStore')
+    const currentProject = useProjectStore.getState().currentProject
+    if (!currentProject?.uuid) {
+        throw new Error('No project selected')
+    }
+    return `/project/${currentProject.uuid}`
+}

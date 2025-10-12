@@ -274,11 +274,6 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        team_memberships = TeamMembership.objects.filter(
-            user=membership.user, team__organization=org
-        )
-        team_memberships.delete()
-
         membership.delete()
 
         if membership.user.default_organization == org:

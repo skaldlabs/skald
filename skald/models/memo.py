@@ -3,6 +3,8 @@ import uuid
 from django.db import models
 from pgvector.django import VectorField
 
+from skald.models.project import Project
+
 
 class Memo(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -25,6 +27,13 @@ class Memo(models.Model):
 
     # client's can give us their own reference id for the memo, which matches with a record in their own system
     client_reference_id = models.CharField(max_length=255, blank=True, null=True)
+
+    # project scope
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="memos",
+    )
 
     @property
     def content(self) -> str:

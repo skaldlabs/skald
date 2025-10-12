@@ -8,3 +8,13 @@ export interface ApiErrorData {
     code?: string
     details?: Record<string, unknown>
 }
+
+// Keep this in sync with the Project serializer in skald/api/project_api.py
+export interface Project {
+    uuid: string
+    name: string
+    organization: string
+    owner: string
+    created_at: string
+    updated_at: string
+}

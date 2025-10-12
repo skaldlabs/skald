@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LayoutDashboard, Users, CheckCircle } from 'lucide-react'
+import { useProjectStore } from '@/stores/projectStore'
 
 interface StatisticCardProps {
     title: string
@@ -27,18 +28,45 @@ const StatisticCard = ({ title, value, icon, suffix }: StatisticCardProps) => {
     )
 }
 
+// Generate consistent "random" values based on project UUID
+const getProjectStats = (projectUuid: string | undefined) => {
+    if (!projectUuid) {
+        return { activeProjects: 0, tasksCompleted: 0, totalTasks: 0, teamMembers: 0 }
+    }
+
+    // Simple hash function to generate consistent values from UUID
+    const hash = projectUuid.split('').reduce((acc, char) => {
+        return char.charCodeAt(0) + ((acc << 5) - acc)
+    }, 0)
+
+    // Generate values based on hash
+    const activeProjects = Math.abs(hash % 15) + 1 // 1-15
+    const totalTasks = Math.abs((hash * 7) % 80) + 20 // 20-99
+    const tasksCompleted = Math.abs((hash * 3) % totalTasks) // 0-totalTasks
+    const teamMembers = Math.abs((hash * 11) % 20) + 3 // 3-22
+
+    return { activeProjects, tasksCompleted, totalTasks, teamMembers }
+}
+
 export const Dashboard = () => {
+    const currentProject = useProjectStore((state) => state.currentProject)
+    const stats = getProjectStats(currentProject?.uuid)
+
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatisticCard title="Active Projects" value={8} icon={<LayoutDashboard className="h-8 w-8" />} />
+                <StatisticCard
+                    title="Active Projects"
+                    value={stats.activeProjects}
+                    icon={<LayoutDashboard className="h-8 w-8" />}
+                />
                 <StatisticCard
                     title="Tasks Completed"
-                    value={24}
-                    suffix="/ 50"
+                    value={stats.tasksCompleted}
+                    suffix={`/ ${stats.totalTasks}`}
                     icon={<CheckCircle className="h-8 w-8" />}
                 />
-                <StatisticCard title="Team Members" value={12} icon={<Users className="h-8 w-8" />} />
+                <StatisticCard title="Team Members" value={stats.teamMembers} icon={<Users className="h-8 w-8" />} />
             </div>
             <Card>
                 <CardHeader>
