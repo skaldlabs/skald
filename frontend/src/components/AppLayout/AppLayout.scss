@@ -1,0 +1,79 @@
+.app-layout {
+    min-height: 100vh;
+    background: var(--background);
+
+    &-main {
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &-content {
+        flex: 1;
+        padding: 2rem;
+        background: var(--background);
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    &-sider-logo {
+        font-weight: 200;
+        letter-spacing: 2.5px;
+        font-size: 16px;
+        color: var(--fg-card);
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Sider Layout Styles */
+    &-sider-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    &-sider-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    &-admin-section {
+        margin-top: auto;
+        padding-bottom: 16px;
+    }
+
+    &-admin-separator {
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
+        margin: 16px 16px 8px 16px;
+    }
+}
+
+/* Global styles for smooth scrolling and scrollbar */
+* {
+    scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.15);
+}

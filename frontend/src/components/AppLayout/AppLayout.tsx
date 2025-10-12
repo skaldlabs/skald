@@ -3,7 +3,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 // import { useEffect } from 'react'
 // import { useSubscriptionStore } from '@/stores/subscriptionStore'
 
-import styles from './AppLayout.module.css'
+import './AppLayout.scss'
 
 export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     // const fetchSubscriptionStatus = useSubscriptionStore((state) => state.fetchSubscriptionStatus)
@@ -13,10 +13,10 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
     // }, [fetchSubscriptionStatus])
 
     return (
-        <div>
+        <div className="app-layout">
             <SidebarProvider>
                 <Sider />
-                <main className={styles.content}>{children}</main>
+                <main className="app-layout-content">{children}</main>
             </SidebarProvider>
         </div>
     )
