@@ -121,6 +121,33 @@
             border-top: 1px solid #e0e0e0;
         }
 
+        .project-selector {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .project-label {
+            font-weight: 600;
+            color: #667eea;
+            white-space: nowrap;
+        }
+
+        .project-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .project-input:focus {
+            border-color: #667eea;
+        }
+
         .chat-input-form {
             display: flex;
             gap: 12px;
@@ -260,6 +287,17 @@
         </div>
         
         <div class="chat-input-container">
+            <div class="project-selector">
+                <label class="project-label" for="projectInput">Project ID:</label>
+                <input 
+                    type="text" 
+                    class="project-input" 
+                    id="projectInput" 
+                    placeholder="Enter project UUID..." 
+                    autocomplete="off"
+                    required
+                />
+            </div>
             <form class="chat-input-form" id="chatForm">
                 <input 
                     type="text" 
@@ -282,6 +320,7 @@
         const chatInput = document.getElementById('chatInput');
         const chatSubmit = document.getElementById('chatSubmit');
         const streamingIndicator = document.getElementById('streamingIndicator');
+        const projectInput = document.getElementById('projectInput');
 
         let isStreaming = false;
 
@@ -355,8 +394,14 @@
             }
         }
 
-        async function sendMessage(query) {
+        async function sendMessage(query, projectId) {
             if (isStreaming) return;
+            
+            // Validate project ID
+            if (!projectId || projectId.trim() === '') {
+                addMessage('Please enter a Project ID before sending a message.', 'system');
+                return;
+            }
             
             // Add user message
             addMessage(query, 'user');
@@ -378,6 +423,7 @@
                     },
                     body: JSON.stringify({
                         query: query,
+                        project_id: projectId,
                         stream: true
                     })
                 });
@@ -475,13 +521,14 @@
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const query = chatInput.value.trim();
+            const projectId = projectInput.value.trim();
             if (query) {
-                sendMessage(query);
+                sendMessage(query, projectId);
             }
         });
 
-        // Focus input on load
-        chatInput.focus();
+        // Focus project input on load
+        projectInput.focus();
     </script>
 </body>
 </html>

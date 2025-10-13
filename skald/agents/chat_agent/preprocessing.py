@@ -41,16 +41,15 @@ async def _process_rerank_batch_async(
     return result
 
 
-def foo(query: str, project) -> List[Dict[str, Any]]:
+def _chunk_vector_search(query: str, project: Project) -> List[Dict[str, Any]]:
     # Wrap synchronous database operations with sync_to_async
     from skald.models.memo import MemoSummary
 
     embedding_vector = generate_vector_embedding_for_search(query)
     chunk_results = memo_chunk_vector_search(
-        embedding_vector, VECTOR_SEARCH_TOP_K, project=project
+        project, embedding_vector, VECTOR_SEARCH_TOP_K
     )
 
-    print("chunk_results", chunk_results)
     rerank_data = []
     for chunk_result in chunk_results:
         chunk = chunk_result["chunk"]
@@ -87,7 +86,7 @@ async def prepare_context_for_chat_agent_async(
         List of reranked results
     """
 
-    rerank_data_batches = await sync_to_async(foo)(query, project)
+    rerank_data_batches = await sync_to_async(_chunk_vector_search)(query, project)
     vc = voyageai.Client()
 
     print("rerank_data_batches", rerank_data_batches)
