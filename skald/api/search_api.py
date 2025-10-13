@@ -88,14 +88,16 @@ class SearchView(ProjectAPIKeyAuthentication, views.APIView):
             "title_startswith": _title_startswith_search,
         }
 
-        results = search_method_to_function[search_method](query, limit, project, tags)
+        results = search_method_to_function[search_method](project, query, limit, tags)
         return Response({"results": results}, status=status.HTTP_200_OK)
 
 
-def _summary_vector_search(query: str, limit: int, project, tags: list[str] = None):
+def _summary_vector_search(
+    project: Project, query: str, limit: int, tags: list[str] = None
+):
     embedding_vector = generate_vector_embedding_for_search(query)
     memo_summary_results = memo_summary_vector_search(
-        embedding_vector, limit, project=project, tags=tags
+        project, embedding_vector, limit, tags=tags
     )
     results = []
     for res in memo_summary_results:
@@ -117,7 +119,7 @@ def _summary_vector_search(query: str, limit: int, project, tags: list[str] = No
 def _chunk_vector_search(query: str, limit: int, project, tags: list[str] = None):
     embedding_vector = generate_vector_embedding_for_search(query)
     memo_chunk_results = memo_chunk_vector_search(
-        embedding_vector, limit, project=project, tags=tags
+        project, embedding_vector, limit, tags=tags
     )
     results = []
     for res in memo_chunk_results:
