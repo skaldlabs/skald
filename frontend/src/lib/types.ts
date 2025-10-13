@@ -17,4 +17,6 @@ export interface Project {
     owner: string
     created_at: string
     updated_at: string
+    has_api_key?: boolean
+    api_key_first_12_digits?: string | null
 }

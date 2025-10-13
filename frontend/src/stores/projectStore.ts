@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { api } from '@/lib/api'
+import { api, getOrgPath } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
 import { toast } from 'sonner'
 import type { Project } from '@/lib/types'
@@ -17,6 +17,7 @@ interface ProjectState {
     deleteProject: (uuid: string) => Promise<void>
     setCurrentProject: (project: Project | null) => void
     initializeCurrentProject: () => Promise<void>
+    generateApiKey: (projectUuid: string) => Promise<string | null>
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
@@ -26,15 +27,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     error: null,
 
     fetchProjects: async () => {
-        const organizationId = useAuthStore.getState().user?.current_organization_uuid
-        if (!organizationId) {
-            return
-        }
-
         set({ loading: true, error: null })
 
-        const response = await api.get<Project[]>('/project/')
-
+        const response = await api.get<Project[]>(`${getOrgPath()}/projects/`)
+        console.log('response', response)
         if (response.error || !response.data) {
             set({
                 loading: false,
@@ -62,7 +58,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
         set({ loading: true, error: null })
 
-        const response = await api.post<Project>('/project/', {
+        const response = await api.post<Project>(`${getOrgPath()}/projects/`, {
             name,
             organization: organizationId,
         })
@@ -95,7 +91,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     updateProject: async (uuid: string, name: string) => {
         set({ loading: true, error: null })
 
-        const response = await api.put(`/project/${uuid}/`, {
+        const response = await api.put(`${getOrgPath()}/projects/${uuid}/`, {
             name,
         })
 
@@ -122,7 +118,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     deleteProject: async (uuid: string) => {
         set({ loading: true, error: null })
 
-        const response = await api.delete(`/project/${uuid}/`)
+        const response = await api.delete(`${getOrgPath()}/projects/${uuid}/`)
 
         if (response.error) {
             set({
@@ -180,5 +176,28 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         if (state.projects.length > 0) {
             get().setCurrentProject(state.projects[0])
         }
+    },
+
+    generateApiKey: async (projectUuid: string) => {
+        const organizationId = useAuthStore.getState().user?.current_organization_uuid
+        if (!organizationId) {
+            toast.error('No organization selected')
+            return null
+        }
+
+        const response = await api.post<{ api_key: string }>(
+            `${getOrgPath()}/projects/${projectUuid}/generate_api_key/`
+        )
+
+        if (response.error || !response.data) {
+            toast.error(`Failed to generate API key: ${response.error}`)
+            return null
+        }
+
+        // Fetch projects to update the has_api_key and first_12_digits fields
+        await get().fetchProjects()
+
+        toast.success('API key generated successfully')
+        return response.data.api_key
     },
 }))

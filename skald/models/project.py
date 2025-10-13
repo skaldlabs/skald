@@ -27,3 +27,17 @@ class Project(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.organization.name})"
+
+    @property
+    def has_api_key(self):
+        return ProjectApiKey.objects.filter(project=self).exists()
+
+
+class ProjectApiKey(models.Model):
+    api_key_hash = models.CharField(max_length=255, unique=True, primary_key=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    first_12_digits = models.CharField(max_length=12)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.project.name} - {self.api_key_hash}"

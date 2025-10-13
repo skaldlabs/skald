@@ -1,13 +1,12 @@
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers, status, viewsets
-from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from skald.models.memo import Memo, MemoChunk, MemoContent, MemoRelationship, MemoTag
-from skald.models.project import Project
+from skald.api.permissions import ProjectApiKeyPermissionMixin
+from skald.models.memo import Memo
 
 
 class CreateMemoRequestSerializer(serializers.Serializer):
@@ -45,19 +44,13 @@ class MemoSerializer(serializers.ModelSerializer):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class MemoViewSet(viewsets.ModelViewSet):
+class MemoViewSet(ProjectApiKeyPermissionMixin, viewsets.ModelViewSet):
     serializer_class = MemoSerializer
-    permission_classes = [AllowAny]  # Default permission for all actions
+    permission_classes = [AllowAny]
+    authentication_classes = [ProjectApiKeyPermissionMixin]
 
     def get_queryset(self):
-        queryset = Memo.objects.all()
-
-        # TODO: instead of pass project_id as a query param, we should infer it from the api_key used to make the request
-        project_id = self.request.query_params.get("project_id")
-        if project_id:
-            queryset = queryset.filter(project__uuid=project_id)
-
-        return queryset
+        return Memo.objects.filter(project=self.get_project())
 
     @csrf_exempt
     def create(self, request):
@@ -65,22 +58,8 @@ class MemoViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         # Data is validated but not used yet
-        # TODO: Instead of passing project_id as a query param, we should infer it from the api_key used to make the request
         validated_data = serializer.validated_data
-        project_id = validated_data.get("project_id")
-
-        # Validate that the project exists and user has access
-        try:
-            project = Project.objects.get(uuid=project_id)
-        except Project.DoesNotExist:
-            return Response(
-                {"detail": "Project not found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # Check if user is a member of the project's organization
-        # For now, we'll skip auth check since permission_classes is AllowAny
-        # In the future, this should be enforced
+        project = self.get_project()
 
         from skald.flows.process_memo.process_memo import create_new_memo
 

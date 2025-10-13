@@ -40,12 +40,14 @@ async def _process_rerank_batch_async(
     return result
 
 
-def foo(query: str) -> List[Dict[str, Any]]:
+def foo(query: str, project) -> List[Dict[str, Any]]:
     # Wrap synchronous database operations with sync_to_async
     from skald.models.memo import MemoSummary
 
     embedding_vector = generate_vector_embedding_for_search(query)
-    chunk_results = memo_chunk_vector_search(embedding_vector, VECTOR_SEARCH_TOP_K)
+    chunk_results = memo_chunk_vector_search(
+        embedding_vector, VECTOR_SEARCH_TOP_K, project=project
+    )
 
     print("chunk_results", chunk_results)
     rerank_data = []
@@ -70,18 +72,21 @@ def foo(query: str) -> List[Dict[str, Any]]:
     return rerank_data_batches
 
 
-async def prepare_context_for_chat_agent_async(query: str) -> List[Dict[str, Any]]:
+async def prepare_context_for_chat_agent_async(
+    query: str, project
+) -> List[Dict[str, Any]]:
     """
     Async version of prepare_context_for_chat_agent that processes rerank batches in parallel.
 
     Args:
         query: The search query
+        project: The project to scope the search to
 
     Returns:
         List of reranked results
     """
 
-    rerank_data_batches = await sync_to_async(foo)(query)
+    rerank_data_batches = await sync_to_async(foo)(query, project)
     vc = voyageai.Client()
 
     print("rerank_data_batches", rerank_data_batches)
@@ -105,13 +110,14 @@ async def prepare_context_for_chat_agent_async(query: str) -> List[Dict[str, Any
     return reranked_results[:POST_RERANK_TOP_K]
 
 
-def prepare_context_for_chat_agent(query: str) -> List[Dict[str, Any]]:
+def prepare_context_for_chat_agent(query: str, project) -> List[Dict[str, Any]]:
     """
     Synchronous wrapper for the async prepare_context_for_chat_agent_async function.
     This maintains backward compatibility with existing code.
 
     Args:
         query: The search query
+        project: The project to scope the search to
 
     Returns:
         List of reranked results
@@ -122,7 +128,7 @@ def prepare_context_for_chat_agent(query: str) -> List[Dict[str, Any]]:
 
     try:
         reranked_results = loop.run_until_complete(
-            prepare_context_for_chat_agent_async(query)
+            prepare_context_for_chat_agent_async(query, project)
         )
 
         return reranked_results

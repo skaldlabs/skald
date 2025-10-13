@@ -29,13 +29,20 @@ router.register(
     r"api/email_verification", VerifyEmailViewSet, basename="email_verification"
 )
 router.register(r"api/v1/memo", MemoViewSet, basename="memo")
-router.register(r"api/project", ProjectViewSet, basename="project")
+# router.register(r"api/project", ProjectViewSet, basename="project")
 
 # the organizations router is for routes that are org-scoped
 organizations_router = router.register(
     r"api/organization", OrganizationViewSet, basename="organization"
 )
 
+# nested routes under organizations - format: /api/organization/{organization_id}/...
+organizations_router.register(
+    r"projects",
+    ProjectViewSet,
+    basename="organization-project",
+    parents_query_lookups=["organization"],
+)
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="index.html"), name="app-root"),

@@ -19,6 +19,7 @@ def memo_chunk_vector_search(
     embedding_vector: list[float],
     top_k: int = 10,
     similarity_threshold: float = 0.9,
+    project=None,
     tags: list[str] = None,
 ) -> list[MemoChunkWithDistance]:
     # search for the most similar memos in the knowledge base using the Memo model and the MemoChunk model
@@ -27,6 +28,10 @@ def memo_chunk_vector_search(
         .annotate(distance=CosineDistance("embedding", embedding_vector))
         .filter(distance__lte=similarity_threshold)
     )
+
+    # Filter by project if provided
+    if project is not None:
+        query = query.filter(memo__project=project)
 
     # Filter by tags if provided
     if tags is not None:
@@ -41,6 +46,7 @@ def memo_summary_vector_search(
     embedding_vector: list[float],
     top_k: int = 10,
     distance_threshold: float = 0.5,
+    project=None,
     tags: list[str] = None,
 ) -> list[MemoSummaryWithDistance]:
     # search for the most similar memos in the knowledge base using the Memo model and the MemoSummary model
@@ -49,6 +55,10 @@ def memo_summary_vector_search(
         .annotate(distance=CosineDistance("embedding", embedding_vector))
         .filter(distance__lte=distance_threshold)
     )
+
+    # Filter by project if provided
+    if project is not None:
+        query = query.filter(memo__project=project)
 
     # Filter by tags if provided
     if tags is not None:
