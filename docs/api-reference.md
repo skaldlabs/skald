@@ -20,11 +20,15 @@ Complete API reference for Skald 2.0. All endpoints return JSON unless otherwise
 
 Skald supports two authentication methods:
 
-1. **Token Authentication** - For authenticated user endpoints
+1. **Token Authentication** - For user-scoped endpoints
    - Header: `Authorization: Token <your-token>`
+   - Used for: User management, organization management, project management
+   - Can also be used for project-scoped endpoints (requires `project_id` in request body)
 
 2. **Project API Key** - For project-scoped endpoints (memos, search, chat)
    - Header: `Authorization: Bearer <project-api-key>`
+   - Used for: Memos, search, chat
+   - Project is automatically inferred from the API key (no `project_id` needed)
 
 ---
 
@@ -637,13 +641,15 @@ Generate a new API key for the project. This will invalidate any existing API ke
 
 ## Memo Management
 
-All memo endpoints require Project API Key authentication.
+All memo endpoints support both authentication methods:
+- **Project API Key** (recommended): Project is automatically inferred, `project_id` not needed
+- **Token Authentication**: Requires `project_id` in request body and organization membership
 
 ### GET /api/v1/memo
 
 List all memos in the project.
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
 **Response:**
 ```json
@@ -665,9 +671,25 @@ List all memos in the project.
 
 Create a new memo. The memo will be automatically processed (summarized, chunked, and indexed for search).
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
-**Request:**
+**Request (using Project API Key):**
+```json
+{
+  "title": "Meeting Notes",
+  "content": "Full content of the memo...",
+  "metadata": {
+    "type": "notes",
+    "author": "John Doe"
+  },
+  "reference_id": "external-id-123",
+  "tags": ["meeting", "q1"],
+  "source": "notion",
+  "expiration_date": "2024-12-31T23:59:59Z"
+}
+```
+
+**Request (using Token Authentication):**
 ```json
 {
   "title": "Meeting Notes",
@@ -687,7 +709,7 @@ Create a new memo. The memo will be automatically processed (summarized, chunked
 **Required Fields:**
 - `title` (string, max 255 chars)
 - `content` (string)
-- `project_id` (UUID)
+- `project_id` (UUID) - **Only required when using Token Authentication**
 
 **Optional Fields:**
 - `metadata` (object): Custom JSON metadata
@@ -707,7 +729,7 @@ Create a new memo. The memo will be automatically processed (summarized, chunked
 
 Get memo details.
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
 **Response:**
 ```json
@@ -727,7 +749,7 @@ Get memo details.
 
 Placeholder endpoint for batch push operations.
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
 **Response:**
 ```json
@@ -740,7 +762,7 @@ Placeholder endpoint for batch push operations.
 
 Placeholder endpoint for pushing memo content updates.
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
 **Response:**
 ```json
@@ -753,7 +775,7 @@ Placeholder endpoint for pushing memo content updates.
 
 Placeholder endpoint for pushing memo tags.
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
 **Response:**
 ```json
@@ -766,7 +788,7 @@ Placeholder endpoint for pushing memo tags.
 
 Placeholder endpoint for pushing memo relationships.
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
 **Response:**
 ```json
@@ -783,13 +805,24 @@ Placeholder endpoint for pushing memo relationships.
 
 Search through memos using various methods.
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
-**Request:**
+**Request (using Project API Key):**
 ```json
 {
   "query": "quarterly goals",
   "search_method": "chunk_vector_search",
+  "limit": 10,
+  "tags": ["meeting", "q1"]
+}
+```
+
+**Request (using Token Authentication):**
+```json
+{
+  "query": "quarterly goals",
+  "search_method": "chunk_vector_search",
+  "project_id": "project-uuid",
   "limit": 10,
   "tags": ["meeting", "q1"]
 }
@@ -802,6 +835,7 @@ Search through memos using various methods.
   - `chunk_vector_search` - Semantic search on memo chunks
   - `title_contains` - Case-insensitive substring match on titles
   - `title_startswith` - Case-insensitive prefix match on titles
+- `project_id` (UUID, optional): **Only required when using Token Authentication**
 - `limit` (integer, optional): Max results to return (1-50, default 10)
 - `tags` (array of strings, optional): Filter by tags
 
@@ -856,9 +890,9 @@ Limit too high (400):
 
 Ask questions about your knowledge base using an AI agent. See [Chat API Documentation](./chat.md) for detailed information.
 
-**Authentication:** Project API Key (required)
+**Authentication:** Project API Key or Token (required)
 
-**Request:**
+**Request (using Project API Key):**
 ```json
 {
   "query": "What were the main points discussed in the Q1 meeting?",
@@ -866,8 +900,18 @@ Ask questions about your knowledge base using an AI agent. See [Chat API Documen
 }
 ```
 
+**Request (using Token Authentication):**
+```json
+{
+  "query": "What were the main points discussed in the Q1 meeting?",
+  "project_id": "project-uuid",
+  "stream": false
+}
+```
+
 **Parameters:**
 - `query` (string, required): The question to ask
+- `project_id` (UUID, optional): **Only required when using Token Authentication**
 - `stream` (boolean, optional): Enable streaming responses (default: false)
 
 **Response (Non-streaming):**

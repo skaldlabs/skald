@@ -1,10 +1,8 @@
-import { keywordExtractorAgent } from '../keywordExtractorAgent'
 import { memoSummaryAgent } from '../memoSummaryAgent'
 import { memoTagsAgent } from '../memoTagsAgent'
-import { createMemoChunkKeywords, createMemoSummary, createMemoTags, createMemoChunk } from '../../db/memo'
+import { createMemoSummary, createMemoTags, createMemoChunk } from '../../db/memo'
 import { generateVectorEmbeddingForStorage } from '../../vectorEmbeddings/voyage'
-import { Chunk, RecursiveChunker } from '@chonkiejs/core'
-import { FetchMemoResult } from '../../db/memo'
+import { RecursiveChunker } from '@chonkiejs/core'
 
 // Initialize chunker with the same configuration as Python version
 // RecursiveChunker in TypeScript doesn't have recipes yet, so we'll use the default markdown-friendly configuration
@@ -25,37 +23,41 @@ const _chunkMemoContent = async (content: string) => {
     return chunkerInstance.chunk(content)
 }
 
-const _createMemoChunk = async (memoUuid: string, chunkContent: string, chunkIndex: number) => {
+const _createMemoChunk = async (
+    memoUuid: string,
+    projectId: string,
+    chunkContent: string,
+    chunkIndex: number
+): Promise<void> => {
     const vectorEmbedding = await generateVectorEmbeddingForStorage(chunkContent)
-    const memoChunkUuid = await createMemoChunk({
+    await createMemoChunk({
         memo_uuid: memoUuid,
+        project_id: projectId,
         chunk_content: chunkContent,
         chunk_index: chunkIndex,
         embedding: vectorEmbedding,
     })
-    const keywords = await keywordExtractorAgent.extractKeywords(chunkContent)
-    await createMemoChunkKeywords(memoChunkUuid, keywords.keywords)
 }
 
-export const createMemoChunks = async (memoUuid: string, content: string): Promise<void> => {
+export const createMemoChunks = async (memoUuid: string, projectId: string, content: string): Promise<void> => {
     const chunks = await _chunkMemoContent(content)
     const chunkPromises = []
 
     for (let index = 0; index < chunks.length; index++) {
         const chunk = chunks[index]
 
-        chunkPromises.push(_createMemoChunk(memoUuid, chunk.text, index))
+        chunkPromises.push(_createMemoChunk(memoUuid, projectId, chunk.text, index))
     }
 
     await Promise.all(chunkPromises)
 }
-export const extractTagsFromMemo = async (memo: { uuid: string; content: string }) => {
+export const extractTagsFromMemo = async (memo: { uuid: string; project_id: string; content: string }) => {
     const tags = await memoTagsAgent.extractTags(memo.content)
-    await createMemoTags(memo.uuid, tags.tags)
+    await createMemoTags(memo.uuid, memo.project_id, tags.tags)
 }
 
-export const generateMemoSummary = async (memo: { uuid: string; content: string }) => {
+export const generateMemoSummary = async (memo: { uuid: string; project_id: string; content: string }) => {
     const summary = await memoSummaryAgent.summarize(memo.content)
     const embedding = await generateVectorEmbeddingForStorage(summary.summary)
-    await createMemoSummary(memo.uuid, summary.summary, embedding)
+    await createMemoSummary(memo.uuid, memo.project_id, summary.summary, embedding)
 }

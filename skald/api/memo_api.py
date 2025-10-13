@@ -4,7 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from skald.api.permissions import ProjectAPIKeyAuthentication, is_user_org_member
+from skald.api.permissions import (
+    IsAuthenticatedOrAuthDisabled,
+    ProjectAPIKeyAuthentication,
+    get_project_for_request,
+)
 from skald.models.memo import Memo
 from skald.models.project import Project
 
@@ -45,7 +49,7 @@ class MemoSerializer(serializers.ModelSerializer):
 
 class MemoViewSet(viewsets.ModelViewSet):
     serializer_class = MemoSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrAuthDisabled]
     authentication_classes = [
         TokenAuthentication,
         BasicAuthentication,
@@ -56,22 +60,11 @@ class MemoViewSet(viewsets.ModelViewSet):
         return Memo.objects.filter(project=self.get_project())
 
     def create(self, request):
+        user = getattr(request, "user", None)
 
-        user = request.user
-
-        if user.id == "PROJECT_API_USER":
-            if user.project is None:
-                return Response(
-                    {"error": "Project not found"}, status=status.HTTP_400_BAD_REQUEST
-                )
-            project = user.project
-        else:
-            project_id = request.data.get("project_id")
-            project = Project.objects.get(uuid=project_id)
-            if not is_user_org_member(user, project.organization):
-                return Response(
-                    {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
-                )
+        project, error_response = get_project_for_request(user, request)
+        if error_response:
+            return error_response
 
         serializer = CreateMemoRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

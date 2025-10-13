@@ -10,7 +10,11 @@ from rest_framework.response import Response
 
 from skald.agents.chat_agent.chat_agent import run_chat_agent, stream_chat_agent
 from skald.agents.chat_agent.preprocessing import prepare_context_for_chat_agent
-from skald.api.permissions import ProjectAPIKeyAuthentication, is_user_org_member
+from skald.api.permissions import (
+    IsAuthenticatedOrAuthDisabled,
+    ProjectAPIKeyAuthentication,
+    get_project_for_request,
+)
 from skald.models.project import Project
 
 
@@ -20,7 +24,7 @@ class ChatView(views.APIView):
         BasicAuthentication,
         ProjectAPIKeyAuthentication,
     ]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrAuthDisabled]
 
     def options(self, request, *args, **kwargs):
         """Handle CORS preflight requests."""
@@ -31,21 +35,11 @@ class ChatView(views.APIView):
         return response
 
     def post(self, request):
-        user = request.user
+        user = getattr(request, "user", None)
 
-        if user.id == "PROJECT_API_USER":
-            if user.project is None:
-                return Response(
-                    {"error": "Project not found"}, status=status.HTTP_400_BAD_REQUEST
-                )
-            project = user.project
-        else:
-            project_id = request.data.get("project_id")
-            project = Project.objects.get(uuid=project_id)
-            if not is_user_org_member(user, project.organization):
-                return Response(
-                    {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
-                )
+        project, error_response = get_project_for_request(user, request)
+        if error_response:
+            return error_response
 
         query = request.data.get("query")
         stream = request.data.get("stream", False)

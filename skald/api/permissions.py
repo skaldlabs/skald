@@ -1,10 +1,13 @@
 import logging
 from functools import wraps
-from typing import Optional
+from typing import Optional, Tuple
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import BasePermission
+from rest_framework.response import Response
 
 from skald.models.organization import Organization
 from skald.models.project import Project, ProjectApiKey
@@ -148,6 +151,13 @@ class ProjectAPIUser(AbstractUser):
     id = "PROJECT_API_USER"
     project: Optional[Project] = None
 
+    class Meta:
+        managed = False
+
+    @property
+    def is_authenticated(self):
+        return True
+
 
 class ProjectAPIKeyAuthentication:
     """
@@ -172,7 +182,6 @@ class ProjectAPIKeyAuthentication:
             project = project_api_key.project
             user = ProjectAPIUser()
             user.project = project
-            user.is_authenticated = True
 
             # mark this request as API key authenticated to exempt CSRF protection
             request._api_key_authenticated = True
@@ -189,3 +198,109 @@ def is_user_org_member(user, organization):
     return OrganizationMembership.objects.filter(
         user=user, organization=organization
     ).exists()
+
+
+def get_project_for_request(
+    user, request
+) -> Tuple[Optional[Project], Optional[Response]]:
+    """
+    Get the project for a request, handling both PROJECT_API_USER and regular users.
+
+    Returns:
+        tuple: (project, error_response) where one will be None
+            - If successful: (project, None)
+            - If error: (None, error_response)
+    """
+    # If auth is disabled, try to get project from request data
+    if settings.DISABLE_AUTH:
+        project_id = request.data.get("project_id")
+        if not project_id:
+            return None, Response(
+                {"error": "project_id is required when authentication is disabled"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            project = Project.objects.get(uuid=project_id)
+            return project, None
+        except Project.DoesNotExist:
+            return None, Response(
+                {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    # Check if this is a ProjectAPIUser (authenticated via API key)
+    if isinstance(user, ProjectAPIUser):
+        # For API key auth, the project is already attached to the user
+        if user.project is None:
+            return None, Response(
+                {"error": "Project not found"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verify that the project_id in the request matches the API key's project
+        project_id = request.data.get("project_id")
+        if project_id and str(user.project.uuid) != str(project_id):
+            return None, Response(
+                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        return user.project, None
+    else:
+        # For regular user authentication
+        project_id = request.data.get("project_id")
+        try:
+            project = Project.objects.get(uuid=project_id)
+        except Project.DoesNotExist:
+            return None, Response(
+                {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not is_user_org_member(user, project.organization):
+            return None, Response(
+                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        return project, None
+
+
+class AuthBypassMixin:
+    """
+    Mixin to bypass authentication when DISABLE_AUTH is True.
+    This should be used in combination with existing permission classes.
+    """
+
+    def get_permissions(self):
+        """Override to conditionally disable authentication"""
+        if settings.DISABLE_AUTH:
+            return []
+        return super().get_permissions()
+
+    def get_authenticators(self):
+        """Override to conditionally disable authentication classes"""
+        if settings.DISABLE_AUTH:
+            return []
+        return super().get_authenticators()
+
+
+class AllowAnyWhenAuthDisabled(BasePermission):
+    """
+    Permission class that allows access when DISABLE_AUTH is True,
+    otherwise delegates to the next permission class.
+    """
+
+    def has_permission(self, request, view):
+        if settings.DISABLE_AUTH:
+            return True
+        # If auth is not disabled, this permission class doesn't grant access
+        # The next permission class in the list will be checked
+        return False
+
+
+class IsAuthenticatedOrAuthDisabled(BasePermission):
+    """
+    Permission class that allows access if user is authenticated OR if DISABLE_AUTH is True.
+    """
+
+    def has_permission(self, request, view):
+        if settings.DISABLE_AUTH:
+            return True
+        return request.user and request.user.is_authenticated

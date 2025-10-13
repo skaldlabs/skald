@@ -6,7 +6,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from skald.api.permissions import OrganizationPermissionMixin, require_access_level
+from skald.api.permissions import (
+    IsAuthenticatedOrAuthDisabled,
+    OrganizationPermissionMixin,
+    require_access_level,
+)
 from skald.models.organization import Organization
 from skald.models.project import Project, ProjectApiKey
 from skald.models.user import OrganizationMembership, OrganizationMembershipRole
@@ -47,7 +51,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrAuthDisabled]
     organization_url_kwarg = "parent_lookup_organization"
     required_access_level = OrganizationMembershipRole.MEMBER
 

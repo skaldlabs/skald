@@ -44,10 +44,12 @@ def _create_memo_object(memo: MemoData, project: Project) -> Memo:
             content_length=len(memo["content"]),
             content_hash=hashlib.sha256(memo["content"].encode()).hexdigest(),
             project=project,
+            pending=False,
         )
         MemoContent.objects.create(
             memo=memo_object,
             content=memo["content"],
+            project=project,
         )
     return memo_object
 

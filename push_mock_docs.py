@@ -42,6 +42,7 @@ def create_memo(
     base_url: str,
     title: str,
     content: str,
+    project_id: str,
     metadata: Optional[dict] = None,
     reference_id: Optional[str] = None,
     tags: Optional[list[str]] = None,
@@ -58,6 +59,7 @@ def create_memo(
     payload = {
         "title": title,
         "content": content,
+        "project_id": project_id,
     }
 
     if metadata:
@@ -115,7 +117,7 @@ def get_source_and_tags_from_path(
 
 
 def push_docs_from_directory(
-    base_url: str, docs_dir: str, sleep_delay: float = 0.0
+    base_url: str, docs_dir: str, project_id: str, sleep_delay: float = 0.0
 ) -> tuple[int, int]:
     """
     Push all markdown files from a specific directory to the memo API.
@@ -123,6 +125,7 @@ def push_docs_from_directory(
     Args:
         base_url: Base URL of the API
         docs_dir: Directory containing markdown files
+        project_id: Project ID to associate memos with
         sleep_delay: Delay in seconds between requests to prevent rate limiting
 
     Returns:
@@ -168,6 +171,7 @@ def push_docs_from_directory(
             base_url=base_url,
             title=title,
             content=content,
+            project_id=project_id,
             metadata=metadata,
             reference_id=relative_path,
             tags=tags,
@@ -188,6 +192,7 @@ def push_docs_from_directory(
 
 def push_all_docs(
     base_url: str = "http://localhost:8000",
+    project_id: str = None,
     include_odin: bool = True,
     include_wikipedia: bool = True,
     sleep_delay: float = 0.0,
@@ -195,16 +200,21 @@ def push_all_docs(
     """
     Push all markdown files from the specified directories to the memo API.
     """
+    if not project_id:
+        print("Error: project_id is required")
+        return
+
     total_success = 0
     total_fail = 0
 
     print(f"Pushing documentation to {base_url}/api/v1/memo/")
+    print(f"Project ID: {project_id}")
     print("=" * 60)
 
     if include_odin:
         print("\n📚 Processing Odin Documentation...")
         success, fail = push_docs_from_directory(
-            base_url, "mock_data/odin-docs", sleep_delay
+            base_url, "mock_data/odin-docs", project_id, sleep_delay
         )
         total_success += success
         total_fail += fail
@@ -213,7 +223,7 @@ def push_all_docs(
     if include_wikipedia:
         print("\n🌍 Processing Wikipedia Articles...")
         success, fail = push_docs_from_directory(
-            base_url, "mock_data/wikipedia", sleep_delay
+            base_url, "mock_data/wikipedia", project_id, sleep_delay
         )
         total_success += success
         total_fail += fail
@@ -256,6 +266,11 @@ if __name__ == "__main__":
         default=0.0,
         help="Delay in seconds between requests to prevent rate limiting (default: 0.0)",
     )
+    parser.add_argument(
+        "--project-id",
+        required=True,
+        help="Project ID to associate memos with (required)",
+    )
 
     args = parser.parse_args()
 
@@ -276,6 +291,7 @@ if __name__ == "__main__":
 
     push_all_docs(
         base_url=args.url,
+        project_id=args.project_id,
         include_odin=include_odin,
         include_wikipedia=include_wikipedia,
         sleep_delay=args.sleep,

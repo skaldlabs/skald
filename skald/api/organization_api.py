@@ -10,7 +10,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from skald.api.permissions import OrganizationPermissionMixin, require_access_level
+from skald.api.permissions import (
+    IsAuthenticatedOrAuthDisabled,
+    OrganizationPermissionMixin,
+    require_access_level,
+)
 from skald.models.organization import Organization
 from skald.models.user import (
     OrganizationMembership,
@@ -82,7 +86,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
     serializer_class = OrganizationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrAuthDisabled]
     organization_url_kwarg = "pk"
 
     def get_queryset(self):

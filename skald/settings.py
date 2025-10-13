@@ -174,6 +174,9 @@ EMAIL_DOMAIN = os.getenv("EMAIL_DOMAIN", "useskald.com")
 
 EMAIL_VERIFICATION_ENABLED = str_to_bool(os.getenv("EMAIL_VERIFICATION_ENABLED", True))
 
+# Authentication bypass for development/testing
+DISABLE_AUTH = str_to_bool(os.getenv("DISABLE_AUTH", False))
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/

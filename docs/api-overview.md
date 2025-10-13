@@ -22,6 +22,22 @@ User → Organization → Project → Memos
 
 ## Authentication Methods
 
+### 0. Authentication Bypass (Development Only)
+
+For development and testing purposes, authentication can be completely disabled by setting the environment variable:
+
+```bash
+DISABLE_AUTH=true
+```
+
+**⚠️ WARNING: Never use this in production!** This bypasses all authentication and authorization checks.
+
+When authentication is disabled:
+- All API endpoints become accessible without authentication
+- You must provide `project_id` in request bodies for project-scoped endpoints
+- No user context is available (`request.user` will be `None`)
+- This is useful for testing API functionality without setting up user accounts
+
 ### 1. Session Authentication (Web UI)
 
 Used for interactive web sessions via the frontend.
@@ -94,8 +110,9 @@ Scoped API keys for programmatic access to project-specific endpoints (memos, se
 - SHA3-256 hashed storage for security
 - One active key per project
 - Only first 12 characters displayed in UI after generation
+- Automatic project scoping (no `project_id` required in requests)
 
-**Implementation**: `skald/api/permissions.py:141-191`
+**Implementation**: `skald/api/permissions.py:154-188`
 
 **API Key Generation**:
 ```python
@@ -140,16 +157,42 @@ Authorization: Bearer sk_proj_a1b2c3d4e5f6789012345678901234567890
 
 **Authentication Flow**:
 1. Client sends request with API key in `Authorization: Bearer` header
-2. Server extracts key from header (`skald/api/permissions.py:148-156`)
+2. Server extracts key from header (`skald/api/permissions.py:161-169`)
 3. Server hashes the key using SHA3-256
 4. Server looks up hash in `ProjectApiKey` table
-5. If found, request is authenticated with project context
-6. If not found, request is rejected
+5. If found, creates `ProjectAPIUser` with attached project (`skald/api/permissions.py:145-152`)
+6. Request is authenticated with automatic project scoping
+7. If not found, authentication fails and request is rejected
+
+**ProjectAPIUser** (`skald/api/permissions.py:145-152`):
+A special user class for API key authentication:
+```python
+class ProjectAPIUser(AbstractUser):
+    id = "PROJECT_API_USER"
+    project: Optional[Project] = None
+```
+- Created for each API key authenticated request
+- Has `is_authenticated = True`
+- Contains reference to the associated project
+- Identified by special `id = "PROJECT_API_USER"` value
 
 **Authenticated Endpoints**:
 - `POST /api/v1/memo/` - Create memo
 - `POST /api/v1/search/` - Search memos
 - `POST /api/v1/chat/` - Chat with knowledge base
+
+**Dual Authentication Support**:
+All project-scoped endpoints support both authentication methods:
+- **Project API Key**: Project is automatically inferred from the API key
+- **Token Authentication**: User must provide `project_id` in request body and have organization membership
+
+**Request Handling** (`skald/api/permissions.py:196-229`):
+```python
+project, error_response = get_project_for_request(user, request)
+```
+This helper function handles both authentication modes:
+- For `ProjectAPIUser`: Uses the attached project from API key
+- For regular users: Validates `project_id` from request body and verifies organization membership
 
 ## Authorization Model
 
@@ -202,25 +245,50 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
 **API Key Scoping**:
 - Each API key is tied to a specific project
-- API calls are automatically scoped to that project's resources
+- API calls using API key authentication are automatically scoped to that project's resources
 - No cross-project access possible with a single API key
+- No `project_id` parameter needed when using API key authentication
 
-**Implementation**: `skald/api/permissions.py:171-191`
+**Implementation**: `skald/api/permissions.py:196-229`
 
 ```python
-def get_project(self):
-    auth_header = self.request.META.get("HTTP_AUTHORIZATION")
-    api_key = auth_header.split(" ")[1]
-    api_key_hash = hash_api_key(api_key)
-    project_api_key = ProjectApiKey.objects.get(api_key_hash=api_key_hash)
-    return project_api_key.project
+def get_project_for_request(user, request) -> Tuple[Optional[Project], Optional[Response]]:
+    """
+    Get the project for a request, handling both PROJECT_API_USER and regular users.
+
+    Returns:
+        tuple: (project, error_response) where one will be None
+            - If successful: (project, None)
+            - If error: (None, error_response)
+    """
+    if user.id == "PROJECT_API_USER":
+        # API key authentication - project attached to user
+        if user.project is None:
+            return None, Response({"error": "Project not found"}, status=400)
+        return user.project, None
+    else:
+        # Regular user authentication - validate project_id and org membership
+        project_id = request.data.get("project_id")
+        try:
+            project = Project.objects.get(uuid=project_id)
+        except Project.DoesNotExist:
+            return None, Response({"error": "Project not found"}, status=404)
+
+        if not is_user_org_member(user, project.organization):
+            return None, Response({"error": "Access denied"}, status=403)
+
+        return project, None
 ```
 
 **Automatic Filtering**:
 ```python
-# skald/api/memo_api.py:52-53
-def get_queryset(self):
-    return Memo.objects.filter(project=self.get_project())
+# skald/api/memo_api.py:58-63
+def create(self, request):
+    user = request.user
+    project, error_response = get_project_for_request(user, request)
+    if error_response:
+        return error_response
+    # ... continue with project
 ```
 
 ## API Endpoints
@@ -617,10 +685,10 @@ No authentication required. Returns server health status.
 
 **Web Endpoints**: CSRF tokens required by default (Django middleware)
 
-**API Endpoints**: CSRF exempted with `@csrf_exempt` decorator
-- `MemoViewSet` (`skald/api/memo_api.py:46`)
-- `SearchView` (`skald/api/search_api.py:36`)
-- `ChatView` (`skald/api/chat_api.py:16`)
+**API Endpoints**:
+- Requests authenticated with Project API Keys are automatically exempted from CSRF protection (`skald/api/permissions.py:180`)
+- The `ProjectAPIKeyAuthentication` class marks requests as `_api_key_authenticated` to bypass CSRF checks
+- Token-authenticated requests follow standard Django CSRF protection
 
 **Justification**: API key authentication provides sufficient protection for programmatic access.
 
@@ -766,23 +834,34 @@ Considerations for future implementation:
 
 ### For Programmatic Access
 
-1. **API Key Security**:
+1. **Choosing Authentication Method**:
+   - **Use Project API Key** for:
+     - External applications and integrations
+     - Simpler API calls (no `project_id` needed in body)
+     - Single-project focused applications
+     - Maximum security isolation
+   - **Use Token Authentication** for:
+     - Multi-project operations in a single session
+     - Internal tools that need user context
+     - Applications that need organization-level access
+
+2. **API Key Security**:
    - Never commit API keys to version control
    - Store keys in environment variables or secret management systems
    - Rotate keys periodically
    - Use separate keys for different environments (dev/staging/prod)
 
-2. **Error Handling**:
+3. **Error Handling**:
    - Handle 401/403 responses gracefully
    - Implement exponential backoff for rate limiting
    - Log authentication failures for monitoring
 
-3. **Project Scoping**:
+4. **Project Scoping**:
    - One API key per project
    - Separate projects for different environments
    - Don't share API keys across applications
 
-4. **HTTPS**:
+5. **HTTPS**:
    - Always use HTTPS in production
    - API keys transmitted in plain text over HTTP are vulnerable
 

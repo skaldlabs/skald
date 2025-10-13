@@ -27,6 +27,22 @@ LANGSMITH_PROJECT=<langsmith_project_name>
 
 The LangSmith vars will be given to you during LangChain onboarding.
 
+#### Authentication Bypass (Development Only)
+
+To disable authentication for development/testing purposes, set:
+
+```
+DISABLE_AUTH=true
+```
+
+**⚠️ WARNING: Never use this in production!** This bypasses all authentication and authorization checks.
+
+When `DISABLE_AUTH=true`:
+- All API endpoints become accessible without authentication
+- You must provide `project_id` in request bodies for project-scoped endpoints
+- No user context is available (`request.user` will be `None`)
+- This is useful for testing API functionality without setting up user accounts
+
 
 ### Django server
 
@@ -77,14 +93,16 @@ Import mock documentation and Wikipedia articles:
 
 ```sh
 # Import both Odin docs and Wikipedia articles
-python push_mock_docs.py --all
+python push_mock_docs.py --all --project-id YOUR_PROJECT_UUID
 
 # Import only Odin documentation
-python push_mock_docs.py --odin
+python push_mock_docs.py --odin --project-id YOUR_PROJECT_UUID
 
 # Import only Wikipedia articles  
-python push_mock_docs.py --wikipedia
+python push_mock_docs.py --wikipedia --project-id YOUR_PROJECT_UUID
 
 # Add delay between requests to prevent rate limiting
-python push_mock_docs.py --all --sleep 1.0
-``` 
+python push_mock_docs.py --all --project-id YOUR_PROJECT_UUID --sleep 1.0
+```
+
+**Note**: You need to provide a valid project UUID. You can get this from your database or create a project first through the API. 

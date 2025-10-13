@@ -47,6 +47,8 @@ class Memo(models.Model):
 class MemoSummary(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     memo = models.ForeignKey(Memo, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+
     summary = models.TextField()
     embedding = VectorField(dimensions=2048)
 
@@ -54,35 +56,24 @@ class MemoSummary(models.Model):
 class MemoContent(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     memo = models.ForeignKey(Memo, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+
     content = models.TextField()
 
 
 class MemoTag(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     memo = models.ForeignKey(Memo, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+
     tag = models.TextField()
-
-
-class MemoRelationship(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    memo = models.ForeignKey(
-        Memo, on_delete=models.CASCADE, related_name="relationships_from"
-    )
-    related_memo = models.ForeignKey(
-        Memo, on_delete=models.CASCADE, related_name="relationships_to"
-    )
-    relationship_type = models.TextField()
 
 
 class MemoChunk(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     memo = models.ForeignKey(Memo, on_delete=models.CASCADE)
+
     chunk_content = models.TextField()
     chunk_index = models.IntegerField()
     embedding = VectorField(dimensions=2048)
-
-
-class MemoChunkKeyword(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    memo_chunk = models.ForeignKey(MemoChunk, on_delete=models.CASCADE)
-    keyword = models.TextField()

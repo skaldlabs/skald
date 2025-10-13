@@ -5,7 +5,11 @@ from rest_framework.authentication import BasicAuthentication, TokenAuthenticati
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from skald.api.permissions import ProjectAPIKeyAuthentication, is_user_org_member
+from skald.api.permissions import (
+    IsAuthenticatedOrAuthDisabled,
+    ProjectAPIKeyAuthentication,
+    get_project_for_request,
+)
 from skald.embeddings.generate_embedding import generate_vector_embedding_for_search
 from skald.embeddings.vector_search import (
     memo_chunk_vector_search,
@@ -32,7 +36,7 @@ SUPPORTED_SEARCH_METHODS = [
 
 
 class SearchView(ProjectAPIKeyAuthentication, views.APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrAuthDisabled]
     authentication_classes = [
         TokenAuthentication,
         BasicAuthentication,
@@ -46,22 +50,11 @@ class SearchView(ProjectAPIKeyAuthentication, views.APIView):
         """
         POST /api/search - Search endpoint
         """
+        user = getattr(request, "user", None)
 
-        user = request.user
-
-        if user.id == "PROJECT_API_USER":
-            if user.project is None:
-                return Response(
-                    {"error": "Project not found"}, status=status.HTTP_400_BAD_REQUEST
-                )
-            project = user.project
-        else:
-            project_id = request.data.get("project_id")
-            project = Project.objects.get(uuid=project_id)
-            if not is_user_org_member(user, project.organization):
-                return Response(
-                    {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
-                )
+        project, error_response = get_project_for_request(user, request)
+        if error_response:
+            return error_response
 
         # get the query from the request
         query = request.data.get("query")
