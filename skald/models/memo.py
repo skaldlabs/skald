@@ -25,7 +25,7 @@ class Memo(models.Model):
     # client provided source. could be a url, a file name, a third-party app name, a repository name, etc
     source = models.CharField(max_length=255, blank=True, null=True)
 
-    # client's can give us their own reference id for the memo, which matches with a record in their own system
+    # clients can give us their own reference id for the memo, which matches with a record in their own system
     client_reference_id = models.CharField(max_length=255, blank=True, null=True)
 
     # project scope

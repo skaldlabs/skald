@@ -55,7 +55,7 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         return Project.objects.filter(organization=self.get_organization())
 
     @require_access_level(OrganizationMembershipRole.MEMBER)
-    def create(self, request):
+    def create(self, request, parent_lookup_organization=None):
         """Create a new project"""
         name = request.data.get("name")
         org = self.get_organization()
@@ -103,7 +103,7 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         return Response(ProjectSerializer(project).data, status=status.HTTP_201_CREATED)
 
     @require_access_level(OrganizationMembershipRole.OWNER)
-    def update(self, request, pk=None):
+    def update(self, request, pk=None, parent_lookup_organization=None):
         """Update a project"""
         project = self.get_object()
 
@@ -136,7 +136,7 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @require_access_level(OrganizationMembershipRole.OWNER)
-    def destroy(self, request, pk=None):
+    def destroy(self, request, pk=None, parent_lookup_organization=None):
         """Delete a project"""
         project = self.get_object()
 
