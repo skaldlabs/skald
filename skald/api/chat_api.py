@@ -5,19 +5,22 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, views
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from skald.agents.chat_agent.chat_agent import run_chat_agent, stream_chat_agent
 from skald.agents.chat_agent.preprocessing import prepare_context_for_chat_agent
-from skald.api.permissions import ProjectApiKeyPermissionMixin
+from skald.api.permissions import ProjectAPIKeyAuthentication, is_user_org_member
+from skald.models.project import Project
 
 
-@method_decorator(csrf_exempt, name="dispatch")
-class ChatView(ProjectApiKeyPermissionMixin, views.APIView):
-    authentication_classes = [TokenAuthentication, BasicAuthentication]
-    permission_classes = [AllowAny]
-    authentication_classes = [ProjectApiKeyPermissionMixin]
+class ChatView(views.APIView):
+    authentication_classes = [
+        TokenAuthentication,
+        BasicAuthentication,
+        ProjectAPIKeyAuthentication,
+    ]
+    permission_classes = [IsAuthenticated]
 
     def options(self, request, *args, **kwargs):
         """Handle CORS preflight requests."""
@@ -28,8 +31,21 @@ class ChatView(ProjectApiKeyPermissionMixin, views.APIView):
         return response
 
     def post(self, request):
-        # Get the project from the API key
-        project = self.get_project()
+        user = request.user
+
+        if user.id == "PROJECT_API_USER":
+            if user.project is None:
+                return Response(
+                    {"error": "Project not found"}, status=status.HTTP_400_BAD_REQUEST
+                )
+            project = user.project
+        else:
+            project_id = request.data.get("project_id")
+            project = Project.objects.get(uuid=project_id)
+            if not is_user_org_member(user, project.organization):
+                return Response(
+                    {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+                )
 
         query = request.data.get("query")
         stream = request.data.get("stream", False)

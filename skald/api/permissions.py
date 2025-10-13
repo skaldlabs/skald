@@ -1,12 +1,14 @@
 import logging
 from functools import wraps
+from typing import Optional
 
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from rest_framework.exceptions import PermissionDenied
 
 from skald.models.organization import Organization
-from skald.models.project import ProjectApiKey
-from skald.models.user import OrganizationMembershipRole
+from skald.models.project import Project, ProjectApiKey
+from skald.models.user import OrganizationMembership, OrganizationMembershipRole
 from skald.utils.api_key_utils import hash_api_key
 
 logger = logging.getLogger(__name__)
@@ -103,8 +105,8 @@ class OrganizationPermissionMixin:
             return False
 
         # Get the user's membership in this organization
-        membership = request.user.organizationmembership_set.filter(
-            organization=org
+        membership = OrganizationMembership.objects.filter(
+            user=request.user, organization=org
         ).first()
 
         if not membership:
@@ -138,9 +140,18 @@ class OrganizationPermissionMixin:
         return self.check_object_organization(obj)
 
 
-class ProjectApiKeyPermissionMixin:
+class ProjectAPIUser(AbstractUser):
     """
-    Mixin to handle project-based permissions.
+    User for project-based API authentication.
+    """
+
+    id = "PROJECT_API_USER"
+    project: Optional[Project] = None
+
+
+class ProjectAPIKeyAuthentication:
+    """
+    Authentication class to handle project-based API key permissions.
     """
 
     def authenticate(self, request):
@@ -159,32 +170,22 @@ class ProjectApiKeyPermissionMixin:
         try:
             project_api_key = ProjectApiKey.objects.get(api_key_hash=api_key_hash)
             project = project_api_key.project
+            user = ProjectAPIUser()
+            user.project = project
+            user.is_authenticated = True
 
-            # Return a tuple of (project, auth)
-            return (project, project_api_key)
+            # mark this request as API key authenticated to exempt CSRF protection
+            request._api_key_authenticated = True
+
+            return (user, project_api_key)
         except ProjectApiKey.DoesNotExist:
             return None
 
     def authenticate_header(self, request):
         return "Bearer"
 
-    def get_project(self):
-        # Get API key from Authorization header
-        auth_header = self.request.META.get("HTTP_AUTHORIZATION")
-        if not auth_header:
-            return None
 
-        # Check if it's a Bearer token
-        if not auth_header.startswith("Bearer "):
-            return None
-
-        api_key = auth_header.split(" ")[1]
-        api_key_hash = hash_api_key(api_key)
-
-        project_api_key = ProjectApiKey.objects.get(api_key_hash=api_key_hash)
-        project = project_api_key.project
-        if not project:
-            logger.debug("Project not found")
-            raise PermissionDenied("Project not found")
-
-        return project
+def is_user_org_member(user, organization):
+    return OrganizationMembership.objects.filter(
+        user=user, organization=organization
+    ).exists()

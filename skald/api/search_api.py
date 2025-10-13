@@ -1,16 +1,18 @@
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers, status, views
-from rest_framework.permissions import AllowAny
+from rest_framework.authentication import BasicAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from skald.api.permissions import ProjectApiKeyPermissionMixin
+from skald.api.permissions import ProjectAPIKeyAuthentication, is_user_org_member
 from skald.embeddings.generate_embedding import generate_vector_embedding_for_search
 from skald.embeddings.vector_search import (
     memo_chunk_vector_search,
     memo_summary_vector_search,
 )
 from skald.models.memo import Memo
+from skald.models.project import Project
 
 
 class SearchResultSerializer(serializers.Serializer):
@@ -29,11 +31,14 @@ SUPPORTED_SEARCH_METHODS = [
 ]
 
 
-class SearchView(ProjectApiKeyPermissionMixin, views.APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = [ProjectApiKeyPermissionMixin]
+class SearchView(ProjectAPIKeyAuthentication, views.APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [
+        TokenAuthentication,
+        BasicAuthentication,
+        ProjectAPIKeyAuthentication,
+    ]
 
-    @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
@@ -42,8 +47,21 @@ class SearchView(ProjectApiKeyPermissionMixin, views.APIView):
         POST /api/search - Search endpoint
         """
 
-        # Get the project from the API key
-        project = self.get_project()
+        user = request.user
+
+        if user.id == "PROJECT_API_USER":
+            if user.project is None:
+                return Response(
+                    {"error": "Project not found"}, status=status.HTTP_400_BAD_REQUEST
+                )
+            project = user.project
+        else:
+            project_id = request.data.get("project_id")
+            project = Project.objects.get(uuid=project_id)
+            if not is_user_org_member(user, project.organization):
+                return Response(
+                    {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+                )
 
         # get the query from the request
         query = request.data.get("query")
