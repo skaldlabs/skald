@@ -51,6 +51,12 @@ urlpatterns = [
     path(
         "chat/", TemplateView.as_view(template_name="chat.html"), name="chat-ui-slash"
     ),
+    path("search", TemplateView.as_view(template_name="search.html"), name="search-ui"),
+    path(
+        "search/",
+        TemplateView.as_view(template_name="search.html"),
+        name="search-ui-slash",
+    ),
     path("admin/", admin.site.urls),
     path("api/health", HealthView.as_view(), name="health"),
     path("api/health/", HealthView.as_view(), name="health-slash"),
