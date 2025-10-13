@@ -15,7 +15,7 @@ interface ProjectState {
     createProject: (name: string) => Promise<Project | null>
     updateProject: (uuid: string, name: string) => Promise<void>
     deleteProject: (uuid: string) => Promise<void>
-    setCurrentProject: (project: Project | null) => void
+    setCurrentProject: (project: Project | null) => Promise<void>
     initializeCurrentProject: () => Promise<void>
     generateApiKey: (projectUuid: string) => Promise<string | null>
 }
@@ -145,10 +145,21 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         toast.success('Project deleted successfully')
     },
 
-    setCurrentProject: (project: Project | null) => {
+    setCurrentProject: async (project: Project | null) => {
         set({ currentProject: project })
+
+        // Update localStorage immediately for fast UI updates
         if (project) {
             localStorage.setItem(CURRENT_PROJECT_KEY, project.uuid)
+
+            // Sync with backend
+            const response = await api.post('/user/set_current_project/', {
+                project_uuid: project.uuid,
+            })
+
+            if (response.error) {
+                console.error('Failed to sync current project with backend:', response.error)
+            }
         } else {
             localStorage.removeItem(CURRENT_PROJECT_KEY)
         }
@@ -162,19 +173,31 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             return
         }
 
-        // Try to load from localStorage
+        // Priority 1: Try to load from backend (user's current_project)
+        const user = useAuthStore.getState().user
+        if (user?.current_project && state.projects.length > 0) {
+            const project = state.projects.find((p) => p.uuid === user.current_project)
+            if (project) {
+                set({ currentProject: project })
+                localStorage.setItem(CURRENT_PROJECT_KEY, project.uuid)
+                return
+            }
+        }
+
+        // Priority 2: Try to load from localStorage
         const storedProjectId = localStorage.getItem(CURRENT_PROJECT_KEY)
         if (storedProjectId && state.projects.length > 0) {
             const project = state.projects.find((p) => p.uuid === storedProjectId)
             if (project) {
                 set({ currentProject: project })
+                await get().setCurrentProject(project)
                 return
             }
         }
 
-        // If no stored project or it doesn't exist, set the first project as current
+        // Priority 3: If no stored project or it doesn't exist, set the first project as current
         if (state.projects.length > 0) {
-            get().setCurrentProject(state.projects[0])
+            await get().setCurrentProject(state.projects[0])
         }
     },
 

@@ -15,12 +15,15 @@ export const ApiKeyManager = ({ project }: ApiKeyManagerProps) => {
     const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null)
     const [isGenerating, setIsGenerating] = useState(false)
     const [copied, setCopied] = useState(false)
+    const [updatedProject, setUpdatedProject] = useState<Project>(project)
 
     const generateApiKey = useProjectStore((state) => state.generateApiKey)
+    const fetchProjects = useProjectStore((state) => state.fetchProjects)
+    const projects = useProjectStore((state) => state.projects)
 
     const handleGenerateApiKey = async () => {
         setIsGenerating(true)
-        const apiKey = await generateApiKey(project.uuid)
+        const apiKey = await generateApiKey(updatedProject.uuid)
         setIsGenerating(false)
 
         if (apiKey) {
@@ -37,11 +40,16 @@ export const ApiKeyManager = ({ project }: ApiKeyManagerProps) => {
     }
 
     const getMaskedApiKey = () => {
-        if (!project?.api_key_first_12_digits) return ''
-        return `${project.api_key_first_12_digits}${'*'.repeat(28)}`
+        if (!updatedProject?.api_key_first_12_digits) return ''
+        return `${updatedProject.api_key_first_12_digits}${'*'.repeat(28)}`
     }
 
-    const handleConfirmCopied = () => {
+    const handleConfirmCopied = async () => {
+        await fetchProjects()
+        const updated_project = projects.find((p) => p.uuid === project.uuid)
+        if (updated_project) {
+            setUpdatedProject(updated_project)
+        }
         setGeneratedApiKey(null)
     }
 
@@ -88,7 +96,7 @@ export const ApiKeyManager = ({ project }: ApiKeyManagerProps) => {
                             </div>
                         </div>
                     </div>
-                ) : project.has_api_key ? (
+                ) : updatedProject.has_api_key ? (
                     // Show masked API key if it exists
                     <div className="space-y-4">
                         <div className="flex gap-2">

@@ -21,14 +21,14 @@ Complete API reference for Skald 2.0. All endpoints return JSON unless otherwise
 Skald supports two authentication methods:
 
 1. **Token Authentication** - For user-scoped endpoints
-   - Header: `Authorization: Token <your-token>`
-   - Used for: User management, organization management, project management
-   - Can also be used for project-scoped endpoints (requires `project_id` in request body)
+    - Header: `Authorization: Token <your-token>`
+    - Used for: User management, organization management, project management
+    - Can also be used for project-scoped endpoints (requires `project_id` in request body)
 
 2. **Project API Key** - For project-scoped endpoints (memos, search, chat)
-   - Header: `Authorization: Bearer <project-api-key>`
-   - Used for: Memos, search, chat
-   - Project is automatically inferred from the API key (no `project_id` needed)
+    - Header: `Authorization: Bearer <project-api-key>`
+    - Used for: Memos, search, chat
+    - Project is automatically inferred from the API key (no `project_id` needed)
 
 ---
 
@@ -41,10 +41,11 @@ Check if the API is running.
 **Authentication:** None
 
 **Response:**
+
 ```json
 {
-  "status": "ok",
-  "message": "API is healthy"
+    "status": "ok",
+    "message": "API is healthy"
 }
 ```
 
@@ -59,28 +60,31 @@ Create a new user account.
 **Authentication:** None
 
 **Request:**
+
 ```json
 {
-  "email": "user@example.com",
-  "password": "secure_password"
+    "email": "user@example.com",
+    "password": "secure_password"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "token": "abc123...",
-  "user": {
-    "email": "user@example.com",
-    "default_organization": null,
-    "email_verified": false,
-    "organization_name": null,
-    "is_superuser": false,
-    "name": null,
-    "access_levels": {
-      "organization_access_levels": {}
+    "token": "abc123...",
+    "user": {
+        "email": "user@example.com",
+        "default_organization": null,
+        "current_project": null,
+        "email_verified": false,
+        "organization_name": null,
+        "is_superuser": false,
+        "name": null,
+        "access_levels": {
+            "organization_access_levels": {}
+        }
     }
-  }
 }
 ```
 
@@ -91,37 +95,41 @@ Authenticate and get access token.
 **Authentication:** None
 
 **Request:**
+
 ```json
 {
-  "email": "user@example.com",
-  "password": "secure_password"
+    "email": "user@example.com",
+    "password": "secure_password"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "token": "abc123...",
-  "user": {
-    "email": "user@example.com",
-    "default_organization": "org-uuid",
-    "email_verified": true,
-    "organization_name": "My Organization",
-    "is_superuser": false,
-    "name": "John Doe",
-    "access_levels": {
-      "organization_access_levels": {
-        "org-uuid": 3
-      }
+    "token": "abc123...",
+    "user": {
+        "email": "user@example.com",
+        "default_organization": "org-uuid",
+        "current_project": "project-uuid",
+        "email_verified": true,
+        "organization_name": "My Organization",
+        "is_superuser": false,
+        "name": "John Doe",
+        "access_levels": {
+            "organization_access_levels": {
+                "org-uuid": 3
+            }
+        }
     }
-  }
 }
 ```
 
 **Error Response (400):**
+
 ```json
 {
-  "error": "Invalid Credentials"
+    "error": "Invalid Credentials"
 }
 ```
 
@@ -140,19 +148,21 @@ Get current user details.
 **Authentication:** Token (required)
 
 **Response:**
+
 ```json
 {
-  "email": "user@example.com",
-  "default_organization": "org-uuid",
-  "email_verified": true,
-  "organization_name": "My Organization",
-  "is_superuser": false,
-  "name": "John Doe",
-  "access_levels": {
-    "organization_access_levels": {
-      "org-uuid": 3
+    "email": "user@example.com",
+    "default_organization": "org-uuid",
+    "current_project": "project-uuid",
+    "email_verified": true,
+    "organization_name": "My Organization",
+    "is_superuser": false,
+    "name": "John Doe",
+    "access_levels": {
+        "organization_access_levels": {
+            "org-uuid": 3
+        }
     }
-  }
 }
 ```
 
@@ -163,19 +173,80 @@ Change the user's password.
 **Authentication:** Token (required)
 
 **Request:**
+
 ```json
 {
-  "old_password": "current_password",
-  "new_password": "new_secure_password"
+    "old_password": "current_password",
+    "new_password": "new_secure_password"
 }
 ```
 
 **Response:** `200 OK`
 
 **Error Response (400):**
+
 ```json
 {
-  "old_password": ["Wrong password."]
+    "old_password": ["Wrong password."]
+}
+```
+
+### POST /api/user/set_current_project
+
+Set the user's currently selected project. This persists the user's project selection across browser sessions.
+
+**Authentication:** Token (required)
+
+**Request:**
+
+```json
+{
+    "project_uuid": "project-uuid"
+}
+```
+
+**Response:**
+
+```json
+{
+    "email": "user@example.com",
+    "default_organization": "org-uuid",
+    "current_project": "project-uuid",
+    "email_verified": true,
+    "organization_name": "My Organization",
+    "is_superuser": false,
+    "name": "John Doe",
+    "access_levels": {
+        "organization_access_levels": {
+            "org-uuid": 3
+        }
+    }
+}
+```
+
+**Error Responses:**
+
+Missing project_uuid (400):
+
+```json
+{
+    "error": "project_uuid is required"
+}
+```
+
+Project not found (404):
+
+```json
+{
+    "error": "Project not found"
+}
+```
+
+Project not in user's organization (403):
+
+```json
+{
+    "error": "Project does not belong to your current organization"
 }
 ```
 
@@ -190,28 +261,31 @@ Send a verification code to the user's email.
 **Authentication:** Token (required)
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "message": "Verification code sent!"
+    "success": true,
+    "message": "Verification code sent!"
 }
 ```
 
 **Error Responses:**
 
 Email already verified (400):
+
 ```json
 {
-  "success": false,
-  "message": "Email already verified."
+    "success": false,
+    "message": "Email already verified."
 }
 ```
 
 Rate limited (400):
+
 ```json
 {
-  "success": false,
-  "message": "Please wait 5 minutes before requesting a new verification code."
+    "success": false,
+    "message": "Please wait 5 minutes before requesting a new verification code."
 }
 ```
 
@@ -222,32 +296,35 @@ Verify email with the code sent.
 **Authentication:** Token (required)
 
 **Request:**
+
 ```json
 {
-  "code": "123456"
+    "code": "123456"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "message": "Email verified successfully!"
+    "success": true,
+    "message": "Email verified successfully!"
 }
 ```
 
 **Error Responses (400):**
+
 ```json
 {
-  "success": false,
-  "message": "Invalid code."
+    "success": false,
+    "message": "Invalid code."
 }
 ```
 
 ```json
 {
-  "success": false,
-  "message": "Code expired or not found."
+    "success": false,
+    "message": "Code expired or not found."
 }
 ```
 
@@ -262,13 +339,14 @@ List all organizations the user is a member of.
 **Authentication:** Token (required)
 
 **Response:**
+
 ```json
 [
-  {
-    "uuid": "org-uuid-1",
-    "name": "My Organization",
-    "owner": "user-id"
-  }
+    {
+        "uuid": "org-uuid-1",
+        "name": "My Organization",
+        "owner": "user-id"
+    }
 ]
 ```
 
@@ -279,18 +357,20 @@ Create a new organization.
 **Authentication:** Token (required)
 
 **Request:**
+
 ```json
 {
-  "name": "New Organization"
+    "name": "New Organization"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "uuid": "org-uuid",
-  "name": "New Organization",
-  "owner": "user-id"
+    "uuid": "org-uuid",
+    "name": "New Organization",
+    "owner": "user-id"
 }
 ```
 
@@ -302,11 +382,12 @@ Get organization details.
 **Permission:** Organization member
 
 **Response:**
+
 ```json
 {
-  "uuid": "org-uuid",
-  "name": "My Organization",
-  "owner": "user-id"
+    "uuid": "org-uuid",
+    "name": "My Organization",
+    "owner": "user-id"
 }
 ```
 
@@ -318,20 +399,21 @@ List all members of the organization.
 **Permission:** Organization member
 
 **Response:**
+
 ```json
 [
-  {
-    "email": "member@example.com",
-    "name": "John Doe",
-    "role": "OWNER",
-    "joined_at": "2024-01-15T10:30:00Z"
-  },
-  {
-    "email": "member2@example.com",
-    "name": "Jane Smith",
-    "role": "MEMBER",
-    "joined_at": "2024-02-20T14:45:00Z"
-  }
+    {
+        "email": "member@example.com",
+        "name": "John Doe",
+        "role": "OWNER",
+        "joined_at": "2024-01-15T10:30:00Z"
+    },
+    {
+        "email": "member2@example.com",
+        "name": "Jane Smith",
+        "role": "MEMBER",
+        "joined_at": "2024-02-20T14:45:00Z"
+    }
 ]
 ```
 
@@ -343,32 +425,36 @@ Invite a new member to the organization.
 **Permission:** Organization member
 
 **Request:**
+
 ```json
 {
-  "email": "newmember@example.com"
+    "email": "newmember@example.com"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "detail": "Invitation sent successfully"
+    "detail": "Invitation sent successfully"
 }
 ```
 
 **Error Responses:**
 
 Invalid email (400):
+
 ```json
 {
-  "detail": "Invalid email address"
+    "detail": "Invalid email address"
 }
 ```
 
 Already a member (400):
+
 ```json
 {
-  "detail": "User is already a member of this organization"
+    "detail": "User is already a member of this organization"
 }
 ```
 
@@ -379,13 +465,14 @@ Get all pending invites for the current user.
 **Authentication:** Token (required)
 
 **Response:**
+
 ```json
 [
-  {
-    "id": 1,
-    "organization_uuid": "org-uuid",
-    "organization_name": "Example Org"
-  }
+    {
+        "id": 1,
+        "organization_uuid": "org-uuid",
+        "organization_name": "Example Org"
+    }
 ]
 ```
 
@@ -396,16 +483,18 @@ Accept an organization invitation.
 **Authentication:** Token (required)
 
 **Response:**
+
 ```json
 {
-  "detail": "Invite accepted successfully"
+    "detail": "Invite accepted successfully"
 }
 ```
 
 **Error Response (404):**
+
 ```json
 {
-  "detail": "No pending invite found"
+    "detail": "No pending invite found"
 }
 ```
 
@@ -417,15 +506,16 @@ Get all pending invites sent by the organization.
 **Permission:** Organization member
 
 **Response:**
+
 ```json
 [
-  {
-    "uuid": "invite-uuid",
-    "email": "invitee@example.com",
-    "created_at": "2024-01-15T10:30:00Z",
-    "invited_by_name": "John Doe",
-    "invited_by_email": "john@example.com"
-  }
+    {
+        "uuid": "invite-uuid",
+        "email": "invitee@example.com",
+        "created_at": "2024-01-15T10:30:00Z",
+        "invited_by_name": "John Doe",
+        "invited_by_email": "john@example.com"
+    }
 ]
 ```
 
@@ -437,16 +527,18 @@ Cancel a pending organization invite.
 **Permission:** Organization owner
 
 **Request:**
+
 ```json
 {
-  "invite_id": "invite-uuid"
+    "invite_id": "invite-uuid"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "detail": "Invite cancelled successfully"
+    "detail": "Invite cancelled successfully"
 }
 ```
 
@@ -458,16 +550,18 @@ Resend an organization invite email.
 **Permission:** Organization owner
 
 **Request:**
+
 ```json
 {
-  "invite_id": "invite-uuid"
+    "invite_id": "invite-uuid"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "detail": "Invitation resent successfully"
+    "detail": "Invitation resent successfully"
 }
 ```
 
@@ -479,32 +573,36 @@ Remove a member from the organization.
 **Permission:** Organization owner
 
 **Request:**
+
 ```json
 {
-  "email": "member@example.com"
+    "email": "member@example.com"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "detail": "Member removed successfully"
+    "detail": "Member removed successfully"
 }
 ```
 
 **Error Responses:**
 
 Self-removal (400):
+
 ```json
 {
-  "detail": "You cannot remove yourself from the organization"
+    "detail": "You cannot remove yourself from the organization"
 }
 ```
 
 Cannot remove owner (400):
+
 ```json
 {
-  "detail": "Cannot remove organization owner"
+    "detail": "Cannot remove organization owner"
 }
 ```
 
@@ -520,18 +618,19 @@ List all projects in an organization.
 **Permission:** Organization member
 
 **Response:**
+
 ```json
 [
-  {
-    "uuid": "project-uuid",
-    "name": "My Project",
-    "organization": "org-uuid",
-    "owner": "user-id",
-    "created_at": "2024-01-15T10:30:00Z",
-    "updated_at": "2024-01-15T10:30:00Z",
-    "has_api_key": true,
-    "api_key_first_12_digits": "sk_proj_abcd"
-  }
+    {
+        "uuid": "project-uuid",
+        "name": "My Project",
+        "organization": "org-uuid",
+        "owner": "user-id",
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:30:00Z",
+        "has_api_key": true,
+        "api_key_first_12_digits": "sk_proj_abcd"
+    }
 ]
 ```
 
@@ -543,23 +642,25 @@ Create a new project.
 **Permission:** Organization member
 
 **Request:**
+
 ```json
 {
-  "name": "New Project"
+    "name": "New Project"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "uuid": "project-uuid",
-  "name": "New Project",
-  "organization": "org-uuid",
-  "owner": "user-id",
-  "created_at": "2024-01-15T10:30:00Z",
-  "updated_at": "2024-01-15T10:30:00Z",
-  "has_api_key": false,
-  "api_key_first_12_digits": null
+    "uuid": "project-uuid",
+    "name": "New Project",
+    "organization": "org-uuid",
+    "owner": "user-id",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z",
+    "has_api_key": false,
+    "api_key_first_12_digits": null
 }
 ```
 
@@ -571,16 +672,17 @@ Get project details.
 **Permission:** Organization member
 
 **Response:**
+
 ```json
 {
-  "uuid": "project-uuid",
-  "name": "My Project",
-  "organization": "org-uuid",
-  "owner": "user-id",
-  "created_at": "2024-01-15T10:30:00Z",
-  "updated_at": "2024-01-15T10:30:00Z",
-  "has_api_key": true,
-  "api_key_first_12_digits": "sk_proj_abcd"
+    "uuid": "project-uuid",
+    "name": "My Project",
+    "organization": "org-uuid",
+    "owner": "user-id",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z",
+    "has_api_key": true,
+    "api_key_first_12_digits": "sk_proj_abcd"
 }
 ```
 
@@ -592,23 +694,25 @@ Update a project.
 **Permission:** Organization owner
 
 **Request:**
+
 ```json
 {
-  "name": "Updated Project Name"
+    "name": "Updated Project Name"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "uuid": "project-uuid",
-  "name": "Updated Project Name",
-  "organization": "org-uuid",
-  "owner": "user-id",
-  "created_at": "2024-01-15T10:30:00Z",
-  "updated_at": "2024-01-16T11:20:00Z",
-  "has_api_key": true,
-  "api_key_first_12_digits": "sk_proj_abcd"
+    "uuid": "project-uuid",
+    "name": "Updated Project Name",
+    "organization": "org-uuid",
+    "owner": "user-id",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-16T11:20:00Z",
+    "has_api_key": true,
+    "api_key_first_12_digits": "sk_proj_abcd"
 }
 ```
 
@@ -629,9 +733,10 @@ Generate a new API key for the project. This will invalidate any existing API ke
 **Permission:** Organization member
 
 **Response:**
+
 ```json
 {
-  "api_key": "sk_proj_abc123xyz789..."
+    "api_key": "sk_proj_abc123xyz789..."
 }
 ```
 
@@ -642,6 +747,7 @@ Generate a new API key for the project. This will invalidate any existing API ke
 ## Memo Management
 
 All memo endpoints support both authentication methods:
+
 - **Project API Key** (recommended): Project is automatically inferred, `project_id` not needed
 - **Token Authentication**: Requires `project_id` in request body and organization membership
 
@@ -652,18 +758,19 @@ List all memos in the project.
 **Authentication:** Project API Key or Token (required)
 
 **Response:**
+
 ```json
 [
-  {
-    "id": 1,
-    "created_at": "2024-01-15T10:30:00Z",
-    "updated_at": "2024-01-15T10:30:00Z",
-    "title": "Meeting Notes",
-    "summary": "Discussion about Q1 goals",
-    "content_length": 1234,
-    "metadata": {"type": "notes"},
-    "client_reference_id": "external-id-123"
-  }
+    {
+        "id": 1,
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:30:00Z",
+        "title": "Meeting Notes",
+        "summary": "Discussion about Q1 goals",
+        "content_length": 1234,
+        "metadata": { "type": "notes" },
+        "client_reference_id": "external-id-123"
+    }
 ]
 ```
 
@@ -674,44 +781,48 @@ Create a new memo. The memo will be automatically processed (summarized, chunked
 **Authentication:** Project API Key or Token (required)
 
 **Request (using Project API Key):**
+
 ```json
 {
-  "title": "Meeting Notes",
-  "content": "Full content of the memo...",
-  "metadata": {
-    "type": "notes",
-    "author": "John Doe"
-  },
-  "reference_id": "external-id-123",
-  "tags": ["meeting", "q1"],
-  "source": "notion",
-  "expiration_date": "2024-12-31T23:59:59Z"
+    "title": "Meeting Notes",
+    "content": "Full content of the memo...",
+    "metadata": {
+        "type": "notes",
+        "author": "John Doe"
+    },
+    "reference_id": "external-id-123",
+    "tags": ["meeting", "q1"],
+    "source": "notion",
+    "expiration_date": "2024-12-31T23:59:59Z"
 }
 ```
 
 **Request (using Token Authentication):**
+
 ```json
 {
-  "title": "Meeting Notes",
-  "content": "Full content of the memo...",
-  "project_id": "project-uuid",
-  "metadata": {
-    "type": "notes",
-    "author": "John Doe"
-  },
-  "reference_id": "external-id-123",
-  "tags": ["meeting", "q1"],
-  "source": "notion",
-  "expiration_date": "2024-12-31T23:59:59Z"
+    "title": "Meeting Notes",
+    "content": "Full content of the memo...",
+    "project_id": "project-uuid",
+    "metadata": {
+        "type": "notes",
+        "author": "John Doe"
+    },
+    "reference_id": "external-id-123",
+    "tags": ["meeting", "q1"],
+    "source": "notion",
+    "expiration_date": "2024-12-31T23:59:59Z"
 }
 ```
 
 **Required Fields:**
+
 - `title` (string, max 255 chars)
 - `content` (string)
 - `project_id` (UUID) - **Only required when using Token Authentication**
 
 **Optional Fields:**
+
 - `metadata` (object): Custom JSON metadata
 - `reference_id` (string, max 255 chars): External reference ID
 - `tags` (array of strings): Tags for categorization
@@ -719,9 +830,10 @@ Create a new memo. The memo will be automatically processed (summarized, chunked
 - `expiration_date` (datetime): When the memo should expire
 
 **Response:**
+
 ```json
 {
-  "ok": true
+    "ok": true
 }
 ```
 
@@ -732,16 +844,17 @@ Get memo details.
 **Authentication:** Project API Key or Token (required)
 
 **Response:**
+
 ```json
 {
-  "id": 1,
-  "created_at": "2024-01-15T10:30:00Z",
-  "updated_at": "2024-01-15T10:30:00Z",
-  "title": "Meeting Notes",
-  "summary": "Discussion about Q1 goals",
-  "content_length": 1234,
-  "metadata": {"type": "notes"},
-  "client_reference_id": "external-id-123"
+    "id": 1,
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z",
+    "title": "Meeting Notes",
+    "summary": "Discussion about Q1 goals",
+    "content_length": 1234,
+    "metadata": { "type": "notes" },
+    "client_reference_id": "external-id-123"
 }
 ```
 
@@ -752,9 +865,10 @@ Placeholder endpoint for batch push operations.
 **Authentication:** Project API Key or Token (required)
 
 **Response:**
+
 ```json
 {
-  "ok": true
+    "ok": true
 }
 ```
 
@@ -765,9 +879,10 @@ Placeholder endpoint for pushing memo content updates.
 **Authentication:** Project API Key or Token (required)
 
 **Response:**
+
 ```json
 {
-  "ok": true
+    "ok": true
 }
 ```
 
@@ -778,9 +893,10 @@ Placeholder endpoint for pushing memo tags.
 **Authentication:** Project API Key or Token (required)
 
 **Response:**
+
 ```json
 {
-  "ok": true
+    "ok": true
 }
 ```
 
@@ -791,9 +907,10 @@ Placeholder endpoint for pushing memo relationships.
 **Authentication:** Project API Key or Token (required)
 
 **Response:**
+
 ```json
 {
-  "ok": true
+    "ok": true
 }
 ```
 
@@ -808,53 +925,58 @@ Search through memos using various methods.
 **Authentication:** Project API Key or Token (required)
 
 **Request (using Project API Key):**
+
 ```json
 {
-  "query": "quarterly goals",
-  "search_method": "chunk_vector_search",
-  "limit": 10,
-  "tags": ["meeting", "q1"]
+    "query": "quarterly goals",
+    "search_method": "chunk_vector_search",
+    "limit": 10,
+    "tags": ["meeting", "q1"]
 }
 ```
 
 **Request (using Token Authentication):**
+
 ```json
 {
-  "query": "quarterly goals",
-  "search_method": "chunk_vector_search",
-  "project_id": "project-uuid",
-  "limit": 10,
-  "tags": ["meeting", "q1"]
+    "query": "quarterly goals",
+    "search_method": "chunk_vector_search",
+    "project_id": "project-uuid",
+    "limit": 10,
+    "tags": ["meeting", "q1"]
 }
 ```
 
 **Parameters:**
+
 - `query` (string, required): The search query
 - `search_method` (string, required): One of:
-  - `summary_vector_search` - Semantic search on memo summaries
-  - `chunk_vector_search` - Semantic search on memo chunks
-  - `title_contains` - Case-insensitive substring match on titles
-  - `title_startswith` - Case-insensitive prefix match on titles
+    - `summary_vector_search` - Semantic search on memo summaries
+    - `chunk_vector_search` - Semantic search on memo chunks
+    - `title_contains` - Case-insensitive substring match on titles
+    - `title_startswith` - Case-insensitive prefix match on titles
 - `project_id` (UUID, optional): **Only required when using Token Authentication**
 - `limit` (integer, optional): Max results to return (1-50, default 10)
 - `tags` (array of strings, optional): Filter by tags
 
 **Response:**
+
 ```json
 {
-  "results": [
-    {
-      "title": "Meeting Notes",
-      "uuid": "memo-uuid",
-      "content_snippet": "Full content of the memo (first 100 chars)...",
-      "summary": "Discussion about Q1 goals",
-      "distance": 0.234
-    }
-  ]
+    "results": [
+        {
+            "title": "Meeting Notes",
+            "uuid": "memo-uuid",
+            "content_snippet": "Full content of the memo (first 100 chars)...",
+            "summary": "Discussion about Q1 goals",
+            "distance": 0.234
+        }
+    ]
 }
 ```
 
 **Notes:**
+
 - `distance` is the vector similarity distance (lower is more similar)
 - `distance` is `null` for non-vector search methods
 - Results are ordered by relevance
@@ -862,23 +984,26 @@ Search through memos using various methods.
 **Error Responses:**
 
 Missing query (400):
+
 ```json
 {
-  "error": "Query is required"
+    "error": "Query is required"
 }
 ```
 
 Invalid search method (400):
+
 ```json
 {
-  "error": "Search method is required and must be one of: title_contains, title_startswith, summary_vector_search, chunk_vector_search"
+    "error": "Search method is required and must be one of: title_contains, title_startswith, summary_vector_search, chunk_vector_search"
 }
 ```
 
 Limit too high (400):
+
 ```json
 {
-  "error": "Limit must be less than or equal to 50"
+    "error": "Limit must be less than or equal to 50"
 }
 ```
 
@@ -893,33 +1018,37 @@ Ask questions about your knowledge base using an AI agent. See [Chat API Documen
 **Authentication:** Project API Key or Token (required)
 
 **Request (using Project API Key):**
+
 ```json
 {
-  "query": "What were the main points discussed in the Q1 meeting?",
-  "stream": false
+    "query": "What were the main points discussed in the Q1 meeting?",
+    "stream": false
 }
 ```
 
 **Request (using Token Authentication):**
+
 ```json
 {
-  "query": "What were the main points discussed in the Q1 meeting?",
-  "project_id": "project-uuid",
-  "stream": false
+    "query": "What were the main points discussed in the Q1 meeting?",
+    "project_id": "project-uuid",
+    "stream": false
 }
 ```
 
 **Parameters:**
+
 - `query` (string, required): The question to ask
 - `project_id` (UUID, optional): **Only required when using Token Authentication**
 - `stream` (boolean, optional): Enable streaming responses (default: false)
 
 **Response (Non-streaming):**
+
 ```json
 {
-  "ok": true,
-  "response": "The main points discussed in the Q1 meeting were:\n1. Revenue targets [[1]]\n2. Hiring plans [[2]]\n3. Product roadmap [[1]][[3]]",
-  "intermediate_steps": []
+    "ok": true,
+    "response": "The main points discussed in the Q1 meeting were:\n1. Revenue targets [[1]]\n2. Hiring plans [[2]]\n3. Product roadmap [[1]][[3]]",
+    "intermediate_steps": []
 }
 ```
 
@@ -942,16 +1071,18 @@ data: {"type": "done"}
 **Error Responses:**
 
 Missing query (400):
+
 ```json
 {
-  "error": "Query is required"
+    "error": "Query is required"
 }
 ```
 
 Agent error (500):
+
 ```json
 {
-  "error": "Agent error: <error details>"
+    "error": "Agent error: <error details>"
 }
 ```
 
@@ -964,21 +1095,27 @@ Responses include inline citations in the format `[[N]]` where N is the result n
 ## Common Error Responses
 
 ### 400 Bad Request
+
 Invalid request parameters or validation errors.
 
 ### 401 Unauthorized
+
 Missing or invalid authentication credentials.
 
 ### 403 Forbidden
+
 User does not have permission to access the resource.
 
 ### 404 Not Found
+
 Resource not found.
 
 ### 500 Internal Server Error
+
 Server-side error occurred.
 
 ### 503 Service Unavailable
+
 External service (e.g., email) temporarily unavailable.
 
 ---
@@ -992,6 +1129,7 @@ Currently, no rate limiting is implemented. Consider implementing rate limiting 
 ## CORS
 
 All API endpoints include CORS headers:
+
 - `Access-Control-Allow-Origin: *`
 - `Access-Control-Allow-Methods: POST, OPTIONS, GET, PUT, DELETE`
 - `Access-Control-Allow-Headers: Content-Type, Authorization`

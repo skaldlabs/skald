@@ -18,6 +18,7 @@ export enum OrganizationAccessLevel {
 interface UserDetailsResponse {
     email: string
     default_organization: string
+    current_project: string | null
     email_verified: boolean
     organization_name: string
     is_superuser: boolean

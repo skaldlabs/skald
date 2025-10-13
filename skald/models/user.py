@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
 from skald.models.organization import Organization
+from skald.models.project import Project
 
 
 class OrganizationMembershipRole(models.IntegerChoices):
@@ -57,6 +58,13 @@ class User(AbstractUser):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+    )
+    current_project = models.ForeignKey(
+        Project,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="current_project_users",
     )
     email_verified = models.BooleanField(default=False)
 

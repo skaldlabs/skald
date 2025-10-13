@@ -22,13 +22,13 @@ Represents a team or company that owns projects and has members.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `created_at` | DateTimeField | Timestamp when organization was created (auto) |
-| `updated_at` | DateTimeField | Timestamp of last update (auto) |
-| `name` | CharField(255) | Organization name |
-| `owner` | ForeignKey(User) | Organization owner (related_name: `owned_organizations`) |
+| Field        | Type             | Description                                              |
+| ------------ | ---------------- | -------------------------------------------------------- |
+| `uuid`       | UUIDField        | Primary key, auto-generated UUID                         |
+| `created_at` | DateTimeField    | Timestamp when organization was created (auto)           |
+| `updated_at` | DateTimeField    | Timestamp of last update (auto)                          |
+| `name`       | CharField(255)   | Organization name                                        |
+| `owner`      | ForeignKey(User) | Organization owner (related_name: `owned_organizations`) |
 
 #### Relationships
 
@@ -48,21 +48,22 @@ Custom user model extending Django's AbstractUser. Uses email instead of usernam
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | AutoField | Primary key (inherited) |
-| `email` | EmailField | User's email address (unique, used for login) |
-| `password` | CharField | Hashed password (inherited) |
-| `first_name` | CharField | First name (inherited) |
-| `last_name` | CharField | Last name (inherited) |
-| `name` | CharField(255) | Full name (blank allowed) |
-| `is_staff` | BooleanField | Django admin access flag (inherited) |
-| `is_superuser` | BooleanField | Superuser flag (inherited) |
-| `is_active` | BooleanField | Account active status (inherited) |
-| `date_joined` | DateTimeField | Account creation timestamp (inherited) |
-| `last_login` | DateTimeField | Last login timestamp (inherited) |
-| `default_organization` | ForeignKey(Organization) | Default organization (nullable) |
-| `email_verified` | BooleanField | Email verification status (default: False) |
+| Field                  | Type                     | Description                                                                  |
+| ---------------------- | ------------------------ | ---------------------------------------------------------------------------- |
+| `id`                   | AutoField                | Primary key (inherited)                                                      |
+| `email`                | EmailField               | User's email address (unique, used for login)                                |
+| `password`             | CharField                | Hashed password (inherited)                                                  |
+| `first_name`           | CharField                | First name (inherited)                                                       |
+| `last_name`            | CharField                | Last name (inherited)                                                        |
+| `name`                 | CharField(255)           | Full name (blank allowed)                                                    |
+| `is_staff`             | BooleanField             | Django admin access flag (inherited)                                         |
+| `is_superuser`         | BooleanField             | Superuser flag (inherited)                                                   |
+| `is_active`            | BooleanField             | Account active status (inherited)                                            |
+| `date_joined`          | DateTimeField            | Account creation timestamp (inherited)                                       |
+| `last_login`           | DateTimeField            | Last login timestamp (inherited)                                             |
+| `default_organization` | ForeignKey(Organization) | Default organization (nullable)                                              |
+| `current_project`      | ForeignKey(Project)      | Currently selected project (nullable, related_name: `current_project_users`) |
+| `email_verified`       | BooleanField             | Email verification status (default: False)                                   |
 
 #### Key Attributes
 
@@ -74,6 +75,7 @@ Custom user model extending Django's AbstractUser. Uses email instead of usernam
 #### Relationships
 
 - **Default Organization**: Many-to-one with Organization (optional)
+- **Current Project**: Many-to-one with Project (optional, related_name: `current_project_users`)
 - **Owned Organizations**: One-to-many with Organization (related_name: `owned_organizations`)
 - **Owned Projects**: One-to-many with Project (related_name: `owned_projects`)
 - **Organization Memberships**: Many-to-many with Organization through OrganizationMembership
@@ -98,11 +100,13 @@ Custom user manager for the User model. Extends Django's BaseUserManager.
 Creates and saves a regular user.
 
 **Parameters:**
+
 - `email` (str): User's email address (required)
 - `password` (str): User's password (optional)
 - `**extra_fields`: Additional user fields
 
 **Behavior:**
+
 - Normalizes email address
 - Auto-verifies email if `EMAIL_VERIFICATION_ENABLED = False`
 - Hashes password before saving
@@ -112,11 +116,13 @@ Creates and saves a regular user.
 Creates and saves a superuser with staff and admin privileges.
 
 **Parameters:**
+
 - `email` (str): Superuser's email address
 - `password` (str): Superuser's password
 - `**extra_fields`: Additional user fields
 
 **Behavior:**
+
 - Sets `is_staff=True` and `is_superuser=True`
 - Validates that both flags are True
 - Calls `create_user()` with superuser flags
@@ -131,13 +137,13 @@ Links users to organizations with role-based access control.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | AutoField | Primary key |
-| `user` | ForeignKey(User) | Member user |
-| `organization` | ForeignKey(Organization) | Organization |
-| `access_level` | IntegerField | Role level (see OrganizationMembershipRole) |
-| `joined_at` | DateTimeField | When user joined (auto) |
+| Field          | Type                     | Description                                 |
+| -------------- | ------------------------ | ------------------------------------------- |
+| `id`           | AutoField                | Primary key                                 |
+| `user`         | ForeignKey(User)         | Member user                                 |
+| `organization` | ForeignKey(Organization) | Organization                                |
+| `access_level` | IntegerField             | Role level (see OrganizationMembershipRole) |
+| `joined_at`    | DateTimeField            | When user joined (auto)                     |
 
 #### Constraints
 
@@ -157,11 +163,11 @@ Enum defining organization access levels.
 
 #### Values
 
-| Role | Value | Description |
-|------|-------|-------------|
-| `MEMBER` | 1 | Regular organization member |
-| `SUPER_ADMIN` | 19 | Administrative privileges |
-| `OWNER` | 20 | Organization owner (highest level) |
+| Role          | Value | Description                        |
+| ------------- | ----- | ---------------------------------- |
+| `MEMBER`      | 1     | Regular organization member        |
+| `SUPER_ADMIN` | 19    | Administrative privileges          |
+| `OWNER`       | 20    | Organization owner (highest level) |
 
 #### Usage
 
@@ -181,14 +187,14 @@ Manages invitations to join organizations.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | UUIDField | Primary key, auto-generated UUID |
-| `organization` | ForeignKey(Organization) | Target organization |
-| `invited_by` | ForeignKey(User) | User who sent the invitation |
-| `email` | EmailField | Invitee's email address |
-| `created_at` | DateTimeField | Invitation creation timestamp (auto) |
-| `accepted_at` | DateTimeField | When invitation was accepted (nullable) |
+| Field          | Type                     | Description                             |
+| -------------- | ------------------------ | --------------------------------------- |
+| `id`           | UUIDField                | Primary key, auto-generated UUID        |
+| `organization` | ForeignKey(Organization) | Target organization                     |
+| `invited_by`   | ForeignKey(User)         | User who sent the invitation            |
+| `email`        | EmailField               | Invitee's email address                 |
+| `created_at`   | DateTimeField            | Invitation creation timestamp (auto)    |
+| `accepted_at`  | DateTimeField            | When invitation was accepted (nullable) |
 
 #### Constraints
 
@@ -211,14 +217,14 @@ Manages email verification codes for user registration.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | AutoField | Primary key |
-| `user` | ForeignKey(User) | User to verify (unique) |
-| `code` | CharField(6) | 6-character verification code |
-| `created_at` | DateTimeField | Code creation timestamp (auto) |
-| `expires_at` | DateTimeField | Code expiration time |
-| `attempts` | IntegerField | Number of verification attempts (default: 0) |
+| Field        | Type             | Description                                  |
+| ------------ | ---------------- | -------------------------------------------- |
+| `id`         | AutoField        | Primary key                                  |
+| `user`       | ForeignKey(User) | User to verify (unique)                      |
+| `code`       | CharField(6)     | 6-character verification code                |
+| `created_at` | DateTimeField    | Code creation timestamp (auto)               |
+| `expires_at` | DateTimeField    | Code expiration time                         |
+| `attempts`   | IntegerField     | Number of verification attempts (default: 0) |
 
 #### Indexes
 
@@ -241,14 +247,14 @@ Represents a project within an organization. Projects scope memos and API keys.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `created_at` | DateTimeField | Project creation timestamp (auto) |
-| `updated_at` | DateTimeField | Last update timestamp (auto) |
-| `name` | CharField(255) | Project name |
+| Field          | Type                     | Description                                    |
+| -------------- | ------------------------ | ---------------------------------------------- |
+| `uuid`         | UUIDField                | Primary key, auto-generated UUID               |
+| `created_at`   | DateTimeField            | Project creation timestamp (auto)              |
+| `updated_at`   | DateTimeField            | Last update timestamp (auto)                   |
+| `name`         | CharField(255)           | Project name                                   |
 | `organization` | ForeignKey(Organization) | Parent organization (related_name: `projects`) |
-| `owner` | ForeignKey(User) | Project owner (related_name: `owned_projects`) |
+| `owner`        | ForeignKey(User)         | Project owner (related_name: `owned_projects`) |
 
 #### Properties
 
@@ -297,12 +303,12 @@ Stores hashed API keys for project authentication.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `api_key_hash` | CharField(255) | Primary key, hashed API key (unique) |
-| `project` | ForeignKey(Project) | Associated project |
-| `first_12_digits` | CharField(12) | First 12 characters for display |
-| `created_at` | DateTimeField | Key creation timestamp (auto) |
+| Field             | Type                | Description                          |
+| ----------------- | ------------------- | ------------------------------------ |
+| `api_key_hash`    | CharField(255)      | Primary key, hashed API key (unique) |
+| `project`         | ForeignKey(Project) | Associated project                   |
+| `first_12_digits` | CharField(12)       | First 12 characters for display      |
+| `created_at`      | DateTimeField       | Key creation timestamp (auto)        |
 
 #### Methods
 
@@ -330,22 +336,22 @@ Main model representing a piece of knowledge/content in the system.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `created_at` | DateTimeField | Memo creation timestamp (auto) |
-| `updated_at` | DateTimeField | Last update timestamp (auto) |
-| `title` | CharField(255) | Memo title |
-| `content_length` | IntegerField | Length of content in characters |
-| `metadata` | JSONField | Flexible metadata storage (default: {}) |
-| `expiration_date` | DateTimeField | Optional expiration date (nullable) |
-| `archived` | BooleanField | Archive status (default: False) |
-| `content_hash` | CharField(255) | Hash of content for deduplication |
-| `pending` | BooleanField | Processing status (default: True) |
-| `type` | CharField(255) | Content type (e.g., "code", "document") (nullable) |
-| `source` | CharField(255) | Content source (URL, filename, etc.) (nullable) |
-| `client_reference_id` | CharField(255) | External system reference ID (nullable) |
-| `project` | ForeignKey(Project) | Parent project (related_name: `memos`) |
+| Field                 | Type                | Description                                        |
+| --------------------- | ------------------- | -------------------------------------------------- |
+| `uuid`                | UUIDField           | Primary key, auto-generated UUID                   |
+| `created_at`          | DateTimeField       | Memo creation timestamp (auto)                     |
+| `updated_at`          | DateTimeField       | Last update timestamp (auto)                       |
+| `title`               | CharField(255)      | Memo title                                         |
+| `content_length`      | IntegerField        | Length of content in characters                    |
+| `metadata`            | JSONField           | Flexible metadata storage (default: {})            |
+| `expiration_date`     | DateTimeField       | Optional expiration date (nullable)                |
+| `archived`            | BooleanField        | Archive status (default: False)                    |
+| `content_hash`        | CharField(255)      | Hash of content for deduplication                  |
+| `pending`             | BooleanField        | Processing status (default: True)                  |
+| `type`                | CharField(255)      | Content type (e.g., "code", "document") (nullable) |
+| `source`              | CharField(255)      | Content source (URL, filename, etc.) (nullable)    |
+| `client_reference_id` | CharField(255)      | External system reference ID (nullable)            |
+| `project`             | ForeignKey(Project) | Parent project (related_name: `memos`)             |
 
 #### Properties
 
@@ -391,6 +397,7 @@ def summary(self) -> str:
 #### Workflow States
 
 The `pending` field tracks processing status:
+
 - `True`: Memo is being processed (chunking, embedding generation, summarization)
 - `False`: Memo is fully processed and searchable
 
@@ -404,15 +411,16 @@ Stores the full content of a memo in a separate table for performance.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `memo` | ForeignKey(Memo) | Parent memo |
-| `content` | TextField | Full memo content (unlimited length) |
+| Field     | Type             | Description                          |
+| --------- | ---------------- | ------------------------------------ |
+| `uuid`    | UUIDField        | Primary key, auto-generated UUID     |
+| `memo`    | ForeignKey(Memo) | Parent memo                          |
+| `content` | TextField        | Full memo content (unlimited length) |
 
 #### Design Rationale
 
 Content is separated from the main Memo model to:
+
 - Improve query performance when content isn't needed
 - Reduce table size for index operations
 - Allow efficient pagination of memo lists
@@ -427,16 +435,17 @@ Stores AI-generated summaries and their vector embeddings.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `memo` | ForeignKey(Memo) | Parent memo |
-| `summary` | TextField | AI-generated summary text |
+| Field       | Type              | Description                       |
+| ----------- | ----------------- | --------------------------------- |
+| `uuid`      | UUIDField         | Primary key, auto-generated UUID  |
+| `memo`      | ForeignKey(Memo)  | Parent memo                       |
+| `summary`   | TextField         | AI-generated summary text         |
 | `embedding` | VectorField(2048) | 2048-dimensional vector embedding |
 
 #### Vector Search
 
 The `embedding` field enables semantic search:
+
 - Generated using Voyage AI
 - 2048 dimensions
 - Uses pgvector for efficient similarity search
@@ -452,20 +461,22 @@ Associates tags with memos for categorization and filtering.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `memo` | ForeignKey(Memo) | Tagged memo |
-| `tag` | TextField | Tag text |
+| Field  | Type             | Description                      |
+| ------ | ---------------- | -------------------------------- |
+| `uuid` | UUIDField        | Primary key, auto-generated UUID |
+| `memo` | ForeignKey(Memo) | Tagged memo                      |
+| `tag`  | TextField        | Tag text                         |
 
 #### Usage
 
 Tags enable:
+
 - Categorization of memos
 - Filtering in search queries
 - Organizing knowledge base by topic/project/category
 
 **Example:**
+
 ```python
 # Add tags to a memo
 MemoTag.objects.create(memo=memo, tag="python")
@@ -482,16 +493,17 @@ Defines directed relationships between memos.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `memo` | ForeignKey(Memo) | Source memo (related_name: `relationships_from`) |
-| `related_memo` | ForeignKey(Memo) | Target memo (related_name: `relationships_to`) |
-| `relationship_type` | TextField | Type of relationship |
+| Field               | Type             | Description                                      |
+| ------------------- | ---------------- | ------------------------------------------------ |
+| `uuid`              | UUIDField        | Primary key, auto-generated UUID                 |
+| `memo`              | ForeignKey(Memo) | Source memo (related_name: `relationships_from`) |
+| `related_memo`      | ForeignKey(Memo) | Target memo (related_name: `relationships_to`)   |
+| `relationship_type` | TextField        | Type of relationship                             |
 
 #### Relationship Types
 
 Common relationship types (examples):
+
 - `"references"` - Memo A references Memo B
 - `"supersedes"` - Memo A supersedes/replaces Memo B
 - `"related_to"` - General relation
@@ -500,10 +512,12 @@ Common relationship types (examples):
 #### Direction
 
 Relationships are directional:
-- `memo` ’ `related_memo` represents one direction
+
+- `memo` ï¿½ `related_memo` represents one direction
 - To create bidirectional, create two relationships
 
 **Example:**
+
 ```python
 # "Meeting Notes" references "Project Spec"
 MemoRelationship.objects.create(
@@ -523,17 +537,18 @@ Stores content chunks with vector embeddings for granular semantic search.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `memo` | ForeignKey(Memo) | Parent memo |
-| `chunk_content` | TextField | Content of this chunk |
-| `chunk_index` | IntegerField | Position in sequence of chunks (0-indexed) |
-| `embedding` | VectorField(2048) | 2048-dimensional vector embedding |
+| Field           | Type              | Description                                |
+| --------------- | ----------------- | ------------------------------------------ |
+| `uuid`          | UUIDField         | Primary key, auto-generated UUID           |
+| `memo`          | ForeignKey(Memo)  | Parent memo                                |
+| `chunk_content` | TextField         | Content of this chunk                      |
+| `chunk_index`   | IntegerField      | Position in sequence of chunks (0-indexed) |
+| `embedding`     | VectorField(2048) | 2048-dimensional vector embedding          |
 
 #### Chunking Strategy
 
 Memos are split into chunks to:
+
 - Enable finding specific passages within large documents
 - Improve search precision (vs searching entire documents)
 - Provide context snippets in search results
@@ -545,6 +560,7 @@ Memos are split into chunks to:
 - See `vector_search.py:18` for chunk search implementation
 
 **Example Workflow:**
+
 1. Large memo is ingested
 2. Content is split into logical chunks
 3. Each chunk is embedded using Voyage AI
@@ -561,15 +577,16 @@ Stores extracted keywords from memo chunks.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `uuid` | UUIDField | Primary key, auto-generated UUID |
-| `memo_chunk` | ForeignKey(MemoChunk) | Parent chunk |
-| `keyword` | TextField | Extracted keyword |
+| Field        | Type                  | Description                      |
+| ------------ | --------------------- | -------------------------------- |
+| `uuid`       | UUIDField             | Primary key, auto-generated UUID |
+| `memo_chunk` | ForeignKey(MemoChunk) | Parent chunk                     |
+| `keyword`    | TextField             | Extracted keyword                |
 
 #### Use Cases
 
 Keywords can be used for:
+
 - Traditional keyword-based search
 - Tag cloud generation
 - Content analysis and categorization
@@ -735,6 +752,7 @@ erDiagram
 ### 1. UUID Primary Keys
 
 Most models use UUID primary keys for:
+
 - Distributed system compatibility
 - Security (non-sequential IDs)
 - Easy merging of data from multiple sources
@@ -744,18 +762,21 @@ Most models use UUID primary keys for:
 ### 2. Timestamp Tracking
 
 Most models include:
+
 - `created_at` - Auto-set on creation
 - `updated_at` - Auto-updated on modification
 
 ### 3. Soft Deletion
 
 The `Memo.archived` field enables soft deletion:
+
 - Memos aren't physically deleted
 - Archived memos can be filtered out or restored
 
 ### 4. Content Separation
 
 Large text fields are separated:
+
 - `Memo` stores metadata only
 - `MemoContent` stores full content
 - `MemoSummary` stores summary + embedding
@@ -765,6 +786,7 @@ This improves query performance when content isn't needed.
 ### 5. Vector Embeddings
 
 Vector fields use pgvector extension:
+
 - 2048 dimensions (Voyage AI embeddings)
 - Enables semantic similarity search
 - Cosine distance for similarity calculation
@@ -772,11 +794,13 @@ Vector fields use pgvector extension:
 ### 6. Hierarchical Scoping
 
 Data is scoped hierarchically:
+
 ```
-Organization ’ Project ’ Memo
+Organization ï¿½ Project ï¿½ Memo
 ```
 
 This enables:
+
 - Multi-tenancy
 - Access control
 - Data isolation
@@ -784,6 +808,7 @@ This enables:
 ### 7. Flexible Metadata
 
 `Memo.metadata` JSON field allows:
+
 - Client-specific data storage
 - No schema changes needed
 - Queryable using PostgreSQL JSON operators

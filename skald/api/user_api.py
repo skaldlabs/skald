@@ -35,6 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "password",
             "default_organization",
+            "current_project",
             "email_verified",
             "organization_name",
             "is_superuser",
@@ -44,6 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "email",
             "default_organization",
+            "current_project",
             "email_verified",
         ]
 
@@ -60,9 +62,9 @@ class UserSerializer(serializers.ModelSerializer):
         organization_access_levels = {}
         team_access_levels = {}
         for organization in obj.organizationmembership_set.all():
-            organization_access_levels[str(organization.organization.uuid)] = (
-                organization.access_level
-            )
+            organization_access_levels[
+                str(organization.organization.uuid)
+            ] = organization.access_level
         return {
             "organization_access_levels": organization_access_levels,
         }
@@ -148,5 +150,40 @@ class UserViewSet(viewsets.ModelViewSet):
         user = request.user
         return Response(
             status=200,
+            data=UserSerializer(user).data,
+        )
+
+    @action(methods=["POST"], detail=False)
+    def set_current_project(self, request):
+        from skald.models.project import Project
+
+        user = request.user
+        project_uuid = request.data.get("project_uuid")
+
+        if not project_uuid:
+            return Response(
+                {"error": "project_uuid is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            project = Project.objects.get(uuid=project_uuid)
+        except Project.DoesNotExist:
+            return Response(
+                {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Validate that the project belongs to the user's current organization
+        if project.organization.uuid != user.default_organization.uuid:
+            return Response(
+                {"error": "Project does not belong to your current organization"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        user.current_project = project
+        user.save()
+
+        return Response(
+            status=status.HTTP_200_OK,
             data=UserSerializer(user).data,
         )
