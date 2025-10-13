@@ -16,6 +16,7 @@ alwaysApply: true
 - Use the api.ts util for all API requests.
 - Build using modular components that make sense as independent units. 
 - Do not create files with multiple components, unless there is a main component and a very small supporting component that won't be used elsewhere.
+- Pages defined in pages/ should have minimal code. They should at most contain some higher level state and reference child components. 
 
 ## Backend
 
