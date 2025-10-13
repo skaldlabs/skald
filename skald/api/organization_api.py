@@ -16,6 +16,7 @@ from skald.api.permissions import (
     require_access_level,
 )
 from skald.models.organization import Organization
+from skald.models.project import Project
 from skald.models.user import (
     OrganizationMembership,
     OrganizationMembershipInvite,
@@ -66,7 +67,6 @@ class OrganizationInviteSerializer(serializers.ModelSerializer):
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Organization
         fields = [
@@ -109,6 +109,12 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         request.user.default_organization = org
         request.user.save()
+
+        Project.objects.create(
+            name=f"{org.name.split(' ')[0]} Default Project",
+            organization=org,
+            owner=request.user,
+        )
 
         posthog.capture(
             "organization_created",

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useOrganizationStore } from '@/stores/organizationStore'
 import { Button } from '@/components/ui/button'
-import { PendingInvites } from '@/components/PendingInvites/PendingInvites'
-import { CreateOrganizationForm } from '@/components/CreateOrganizationForm/CreateOrganizationForm'
+import { PendingInvites } from '@/components/Organization/PendingInvites/PendingInvites'
+import { CreateOrganizationForm } from '@/components/Organization/CreateOrganizationForm/CreateOrganizationForm'
 
 export const CreateOrganizationPage = () => {
     const pendingInvites = useOrganizationStore((state) => state.pendingInvites)
