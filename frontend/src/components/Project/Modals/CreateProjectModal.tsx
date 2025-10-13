@@ -30,7 +30,7 @@ export const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps)
         if (newProject) {
             onClose()
             setNewProjectName('')
-            navigate('/dashboard')
+            navigate('/projects/get-started')
         }
     }
 

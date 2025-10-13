@@ -1,10 +1,9 @@
 import { AppLayout } from '@/components/AppLayout/AppLayout'
-import { Dashboard } from '@/components/Dashboard/Dashboard'
 
-export const DashboardPage = () => {
+export const GettingStartedPage = () => {
     return (
         <AppLayout>
-            <Dashboard />
+            <div>Getting Started</div>
         </AppLayout>
     )
 }

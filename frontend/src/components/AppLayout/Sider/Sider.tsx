@@ -1,4 +1,4 @@
-import { MessageSquare, BarChart3, LogOut, Hotel, Search, Sun, Moon, Puzzle } from 'lucide-react'
+import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { OrganizationAccessLevel, useAuthStore, UserDetails } from '@/stores/authStore'
 import {
@@ -7,14 +7,14 @@ import {
     SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarHeader,
 } from '@/components/ui/sidebar'
 import { useTheme } from '@/components/ThemeProvider'
-import { ProjectSelector } from '@/components/AppLayout/ProjectSelector'
+import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
+import { useProjectStore } from '@/stores/projectStore'
 
 interface MenuItem {
     key: string
@@ -30,33 +30,32 @@ export const Sider = () => {
     const user = useAuthStore((state) => state.user)
     const logout = useAuthStore((state) => state.logout)
     const { theme, toggleTheme } = useTheme()
+    const currentProject = useProjectStore((state) => state.currentProject)
 
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
             {
-                key: '/get-started',
-                icon: <BarChart3 className="h-4 w-4" />,
+                key: '/projects/get-started',
+                icon: <Rocket className="h-4 w-4" />,
                 label: 'Get Started',
                 hasAccess: () => true,
             },
             {
-                key: '/settings',
-                icon: <Puzzle className="h-4 w-4" />,
-                label: 'Settings',
+                key: `/projects/${currentProject?.uuid}/memos`,
+                icon: <Files className="h-4 w-4" />,
+                label: 'Memos',
                 hasAccess: () => true,
             },
-        ],
-        Playground: [
             {
-                key: '/chat',
+                key: `/projects/${currentProject?.uuid}/playground`,
                 icon: <MessageSquare className="h-4 w-4" />,
-                label: 'Chat',
+                label: 'Playground',
                 hasAccess: () => true,
             },
             {
-                key: '/search',
-                icon: <Search className="h-4 w-4" />,
-                label: 'Search',
+                key: `/projects/${currentProject?.uuid}/settings`,
+                icon: <Settings className="h-4 w-4" />,
+                label: 'Settings',
                 hasAccess: () => true,
             },
         ],
@@ -85,8 +84,8 @@ export const Sider = () => {
 
     return (
         <Sidebar className="border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <SidebarHeader className="border-b">
-                <ProjectSelector />
+            <SidebarHeader className="border-b p-2">
+                <ProjectSwitcher />
             </SidebarHeader>
             <SidebarContent className="px-3 py-2">
                 {Object.entries(mainMenuItems).map(([groupName, items]) => {
@@ -96,9 +95,6 @@ export const Sider = () => {
 
                     return (
                         <SidebarGroup key={groupName}>
-                            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-2 py-1">
-                                {groupName}
-                            </SidebarGroupLabel>
                             <SidebarGroupContent>
                                 <SidebarMenu>
                                     {accessibleItems.map((item) => (
@@ -122,9 +118,6 @@ export const Sider = () => {
 
             <SidebarFooter className="border-t px-3 py-2">
                 <SidebarGroup>
-                    <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-2 py-1">
-                        Configuration
-                    </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {configMenuItems

@@ -1,4 +1,5 @@
 import { Page } from '@/components/AppLayout/Page'
+import { OrganizationDashboard } from '@/components/Organization/OrganizationDashboard'
 // import { OrganizationDashboard } from '@/components/Organization/OrganizationDashboard'
 import { OrganizationAccessLevel, useAuthStore } from '@/stores/authStore'
 import { Navigate } from 'react-router-dom'
@@ -15,8 +16,7 @@ export const OrganizationPage = () => {
 
     return (
         <Page pageTitle="Organization">
-            {/* <OrganizationDashboard /> */}
-            hi there
+            <OrganizationDashboard />
         </Page>
     )
 }

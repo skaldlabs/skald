@@ -17,7 +17,7 @@ export const ProjectList = ({ onEditProject, onDeleteProject }: ProjectListProps
 
     const handleSelectProject = (project: Project) => {
         setCurrentProject(project)
-        navigate('/dashboard')
+        navigate(`/projects/${project.uuid}/memos`)
     }
 
     if (projects.length === 0) {
