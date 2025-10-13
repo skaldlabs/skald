@@ -1,23 +1,26 @@
-import { KnowledgeBaseUpdateAction, createKnowledgeBaseUpdateAgent } from "./agents/knowledgeBaseUpdateAgent/knowledgeBaseUpdateAgent"
-import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from "./agents/knowledgeBaseUpdateAgent/memoOperations"
-import { deleteMemo, fetchMemo, FetchMemoResult, updateMemo } from "./db/memo"
-
+import {
+    KnowledgeBaseUpdateAction,
+    createKnowledgeBaseUpdateAgent,
+} from './agents/knowledgeBaseUpdateAgent/knowledgeBaseUpdateAgent'
+import {
+    createMemoChunks,
+    extractTagsFromMemo,
+    generateMemoSummary,
+} from './agents/knowledgeBaseUpdateAgent/memoOperations'
+import { deleteMemo, fetchMemo, FetchMemoResult, updateMemo } from './db/memo'
 
 export const processMemo = async (memoUuid: string) => {
     const memo = await fetchMemo(memoUuid)
-    await updateMemo(memo.uuid, [{
-        column: 'pending',
-        value: false
-    }])
-    const promises = [
-        createMemoChunks(memo.uuid, memo.content),
-        extractTagsFromMemo(memo),
-        generateMemoSummary(memo)
-    ]
+    await updateMemo(memo.uuid, [
+        {
+            column: 'pending',
+            value: false,
+        },
+    ])
+    const promises = [createMemoChunks(memo.uuid, memo.content), extractTagsFromMemo(memo), generateMemoSummary(memo)]
 
     await Promise.all(promises)
 }
-
 
 const _knowledgeBaseUpdate = async (memo: FetchMemoResult): Promise<KnowledgeBaseUpdateAction[]> => {
     const knowledgeBaseUpdateAgent = createKnowledgeBaseUpdateAgent(memo)
@@ -29,4 +32,3 @@ const _knowledgeBaseUpdate = async (memo: FetchMemoResult): Promise<KnowledgeBas
     }
     return actions.actions
 }
-

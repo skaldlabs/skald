@@ -4,19 +4,20 @@ from django.http import StreamingHttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, views
+from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from skald.agents.chat_agent.chat_agent import run_chat_agent, stream_chat_agent
 from skald.agents.chat_agent.preprocessing import prepare_context_for_chat_agent
+from skald.api.permissions import ProjectApiKeyPermissionMixin
 
 
-class ChatView(views.APIView):
+@method_decorator(csrf_exempt, name="dispatch")
+class ChatView(ProjectApiKeyPermissionMixin, views.APIView):
+    authentication_classes = [TokenAuthentication, BasicAuthentication]
     permission_classes = [AllowAny]
-
-    @method_decorator(csrf_exempt)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+    authentication_classes = [ProjectApiKeyPermissionMixin]
 
     def options(self, request, *args, **kwargs):
         """Handle CORS preflight requests."""
@@ -27,6 +28,9 @@ class ChatView(views.APIView):
         return response
 
     def post(self, request):
+        # Get the project from the API key
+        project = self.get_project()
+
         query = request.data.get("query")
         stream = request.data.get("stream", False)
 
@@ -35,7 +39,7 @@ class ChatView(views.APIView):
                 {"error": "Query is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        reranked_results = prepare_context_for_chat_agent(query)
+        reranked_results = prepare_context_for_chat_agent(query, project)
         context_str = ""
         for i, result in enumerate(reranked_results):
             context_str += f"Result {i+1}: {result.document}\n\n"

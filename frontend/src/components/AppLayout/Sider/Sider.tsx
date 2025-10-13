@@ -11,8 +11,10 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarHeader,
 } from '@/components/ui/sidebar'
 import { useTheme } from '@/components/ThemeProvider'
+import { ProjectSelector } from '@/components/AppLayout/ProjectSelector'
 
 interface MenuItem {
     key: string
@@ -83,6 +85,9 @@ export const Sider = () => {
 
     return (
         <Sidebar className="border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <SidebarHeader className="border-b">
+                <ProjectSelector />
+            </SidebarHeader>
             <SidebarContent className="px-3 py-2">
                 {Object.entries(mainMenuItems).map(([groupName, items]) => {
                     const accessibleItems = items.filter((item) => item.hasAccess(user))

@@ -5,7 +5,9 @@ from django.conf import settings
 from rest_framework.exceptions import PermissionDenied
 
 from skald.models.organization import Organization
+from skald.models.project import ProjectApiKey
 from skald.models.user import OrganizationMembershipRole
+from skald.utils.api_key_utils import hash_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +71,7 @@ class OrganizationPermissionMixin:
             logger.debug("Organization ID not provided in URL")
             raise PermissionDenied("Organization ID not provided in URL")
 
-        org = Organization.objects.filter(id=org_id).first()
+        org = Organization.objects.filter(uuid=org_id).first()
         if not org:
             logger.debug("Organization not found")
             raise PermissionDenied("Organization not found")
@@ -121,7 +123,7 @@ class OrganizationPermissionMixin:
     def check_object_organization(self, obj):
         """Check if the object belongs to the user's organization"""
         try:
-            return obj.organization_id == self.get_organization().id
+            return obj.organization_id == self.get_organization().uuid
         except PermissionDenied:
             return False
 
@@ -134,3 +136,55 @@ class OrganizationPermissionMixin:
         if not self.check_organization_permission(request, obj):
             return False
         return self.check_object_organization(obj)
+
+
+class ProjectApiKeyPermissionMixin:
+    """
+    Mixin to handle project-based permissions.
+    """
+
+    def authenticate(self, request):
+        # Get API key from Authorization header
+        auth_header = request.META.get("HTTP_AUTHORIZATION")
+        if not auth_header:
+            return None
+
+        # Check if it's a Bearer token
+        if not auth_header.startswith("Bearer "):
+            return None
+
+        api_key = auth_header.split(" ")[1]
+        api_key_hash = hash_api_key(api_key)
+
+        try:
+            project_api_key = ProjectApiKey.objects.get(api_key_hash=api_key_hash)
+            project = project_api_key.project
+
+            # Return a tuple of (project, auth)
+            return (project, project_api_key)
+        except ProjectApiKey.DoesNotExist:
+            return None
+
+    def authenticate_header(self, request):
+        return "Bearer"
+
+    def get_project(self):
+        # Get API key from Authorization header
+        auth_header = self.request.META.get("HTTP_AUTHORIZATION")
+        if not auth_header:
+            return None
+
+        # Check if it's a Bearer token
+        if not auth_header.startswith("Bearer "):
+            return None
+
+        api_key = auth_header.split(" ")[1]
+        api_key_hash = hash_api_key(api_key)
+
+        project_api_key = ProjectApiKey.objects.get(api_key_hash=api_key_hash)
+        project = project_api_key.project
+        if not project:
+            logger.debug("Project not found")
+            raise PermissionDenied("Project not found")
+
+        return project

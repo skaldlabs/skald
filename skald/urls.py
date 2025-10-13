@@ -6,6 +6,7 @@ from rest_framework_extensions.routers import ExtendedDefaultRouter
 
 from skald.api.email_verification_api import VerifyEmailViewSet
 from skald.api.organization_api import OrganizationViewSet
+from skald.api.project_api import ProjectViewSet
 
 from .api.chat_api import ChatView
 from .api.memo_api import MemoViewSet
@@ -28,16 +29,27 @@ router.register(
     r"api/email_verification", VerifyEmailViewSet, basename="email_verification"
 )
 router.register(r"api/v1/memo", MemoViewSet, basename="memo")
+# router.register(r"api/project", ProjectViewSet, basename="project")
 
 # the organizations router is for routes that are org-scoped
 organizations_router = router.register(
     r"api/organization", OrganizationViewSet, basename="organization"
 )
 
+# nested routes under organizations - format: /api/organization/{organization_id}/...
+organizations_router.register(
+    r"projects",
+    ProjectViewSet,
+    basename="organization-project",
+    parents_query_lookups=["organization"],
+)
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="index.html"), name="app-root"),
-    path("chat/", TemplateView.as_view(template_name="chat.html"), name="chat-ui"),
+    path("chat", TemplateView.as_view(template_name="chat.html"), name="chat-ui"),
+    path(
+        "chat/", TemplateView.as_view(template_name="chat.html"), name="chat-ui-slash"
+    ),
     path("admin/", admin.site.urls),
     path("api/v1/search", SearchView.as_view(), name="search"),
     path("api/v1/search/", SearchView.as_view(), name="search"),
