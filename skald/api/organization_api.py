@@ -63,7 +63,7 @@ class OrganizationInviteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrganizationMembershipInvite
-        fields = ["uuid", "email", "created_at", "invited_by_name", "invited_by_email"]
+        fields = ["id", "email", "created_at", "invited_by_name", "invited_by_email"]
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -93,7 +93,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         return Organization.objects.filter(
             uuid__in=OrganizationMembership.objects.filter(
                 user=self.request.user
-            ).values_list("organization_uuid", flat=True)
+            ).values_list("organization_id", flat=True)
         )
 
     def create(self, request):

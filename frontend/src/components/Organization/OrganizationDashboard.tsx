@@ -1,3 +1,9 @@
+import { OrganizationMembers } from '@/components/Organization/OrganizationMembers'
+
 export const OrganizationDashboard = () => {
-    return <div>Organization Settings</div>
+    return (
+        <>
+            <OrganizationMembers />
+        </>
+    )
 }
