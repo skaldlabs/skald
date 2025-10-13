@@ -6,6 +6,7 @@ from asgiref.sync import sync_to_async
 
 from skald.embeddings.generate_embedding import generate_vector_embedding_for_search
 from skald.embeddings.vector_search import memo_chunk_vector_search
+from skald.models.project import Project
 
 DEFAULT_VOYAGE_RERANK_MODEL = "rerank-2.5"
 VECTOR_SEARCH_TOP_K = 100
@@ -110,7 +111,9 @@ async def prepare_context_for_chat_agent_async(
     return reranked_results[:POST_RERANK_TOP_K]
 
 
-def prepare_context_for_chat_agent(query: str, project) -> List[Dict[str, Any]]:
+def prepare_context_for_chat_agent(
+    query: str, project: Project
+) -> List[Dict[str, Any]]:
     """
     Synchronous wrapper for the async prepare_context_for_chat_agent_async function.
     This maintains backward compatibility with existing code.
