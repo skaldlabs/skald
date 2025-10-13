@@ -9,6 +9,7 @@ from skald.api.organization_api import OrganizationViewSet
 from skald.api.project_api import ProjectViewSet
 
 from .api.chat_api import ChatView
+from .api.health_api import HealthView
 from .api.memo_api import MemoViewSet
 from .api.search_api import SearchView
 from .api.user_api import UserViewSet
@@ -51,6 +52,8 @@ urlpatterns = [
         "chat/", TemplateView.as_view(template_name="chat.html"), name="chat-ui-slash"
     ),
     path("admin/", admin.site.urls),
+    path("api/health", HealthView.as_view(), name="health"),
+    path("api/health/", HealthView.as_view(), name="health-slash"),
     path("api/v1/search", SearchView.as_view(), name="search"),
     path("api/v1/search/", SearchView.as_view(), name="search"),
     path("api/v1/chat", ChatView.as_view(), name="chat"),

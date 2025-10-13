@@ -134,6 +134,11 @@ DATABASES = {
     )
 }
 
+# Use skald2_test for testing
+DATABASES["default"]["TEST"] = {
+    "NAME": "skald2_test",
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
