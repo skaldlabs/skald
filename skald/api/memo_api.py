@@ -63,8 +63,10 @@ class MemoViewSet(viewsets.ModelViewSet):
         user = getattr(request, "user", None)
 
         project, error_response = get_project_for_request(user, request)
-        if error_response:
-            return error_response
+        if project is None or error_response:
+            return error_response or Response(
+                {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = CreateMemoRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

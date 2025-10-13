@@ -38,8 +38,10 @@ class ChatView(views.APIView):
         user = getattr(request, "user", None)
 
         project, error_response = get_project_for_request(user, request)
-        if error_response:
-            return error_response
+        if project is None or error_response:
+            return error_response or Response(
+                {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         query = request.data.get("query")
         stream = request.data.get("stream", False)

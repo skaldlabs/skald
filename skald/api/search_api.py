@@ -52,8 +52,10 @@ class SearchView(ProjectAPIKeyAuthentication, views.APIView):
         user = getattr(request, "user", None)
 
         project, error_response = get_project_for_request(user, request)
-        if error_response:
-            return error_response
+        if project is None or error_response:
+            return error_response or Response(
+                {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         # get the query from the request
         query = request.data.get("query")
@@ -115,7 +117,9 @@ def _summary_vector_search(
     return results
 
 
-def _chunk_vector_search(query: str, limit: int, project, tags: list[str] = None):
+def _chunk_vector_search(
+    project: Project, query: str, limit: int, tags: list[str] = None
+):
     embedding_vector = generate_vector_embedding_for_search(query)
     memo_chunk_results = memo_chunk_vector_search(
         project, embedding_vector, limit, tags=tags
@@ -137,7 +141,9 @@ def _chunk_vector_search(query: str, limit: int, project, tags: list[str] = None
     return results
 
 
-def _title_startswith_search(query: str, limit: int, project, tags: list[str] = None):
+def _title_startswith_search(
+    project: Project, query: str, limit: int, tags: list[str] = None
+):
     memos = Memo.objects.filter(project=project)
     if tags is not None:
         memos = memos.filter(memotag__tag__in=tags)
@@ -157,7 +163,9 @@ def _title_startswith_search(query: str, limit: int, project, tags: list[str] = 
     return results
 
 
-def _title_contains_search(query: str, limit: int, project, tags: list[str] = None):
+def _title_contains_search(
+    project: Project, query: str, limit: int, tags: list[str] = None
+):
     memos = Memo.objects.filter(project=project)
     if tags is not None:
         memos = memos.filter(memotag__tag__in=tags)
