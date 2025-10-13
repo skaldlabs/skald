@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Optional, Tuple
 
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AnonymousUser
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
@@ -143,7 +143,7 @@ class OrganizationPermissionMixin:
         return self.check_object_organization(obj)
 
 
-class ProjectAPIUser(AbstractUser):
+class ProjectAPIUser(AnonymousUser):
     """
     User for project-based API authentication.
     """
