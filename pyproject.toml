@@ -50,7 +50,9 @@ dev = [
     "pyflakes>=3.2.0",
     "pycodestyle>=2.12.1",
     "mccabe>=0.7.0",
-
+    "pytest>=8.0.0",
+    "pytest-django>=4.8.0",
+    "pytest-cov>=5.0.0",
 ]
 
 [build-system]
@@ -70,3 +72,10 @@ multi_line_output = 3
 dev = [
     "ruff>=0.9.5",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "skald.settings"
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --reuse-db"
