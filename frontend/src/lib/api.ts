@@ -6,6 +6,7 @@ import axios, {
     type InternalAxiosRequestConfig,
 } from 'axios'
 import type { ApiStreamData, ApiErrorData } from '@/lib/types'
+import { useProjectStore } from '@/stores/projectStore'
 
 axios.defaults.withCredentials = true
 
@@ -220,8 +221,6 @@ export const getOrgPath = () => {
 }
 
 export const getProjectPath = () => {
-    // Import here to avoid circular dependency
-    const { useProjectStore } = require('@/stores/projectStore')
     const currentProject = useProjectStore.getState().currentProject
     if (!currentProject?.uuid) {
         throw new Error('No project selected')

@@ -51,6 +51,7 @@ export const ProjectSettingsPage = () => {
     const handleCopyApiKey = (key: string) => {
         navigator.clipboard.writeText(key)
         setCopied(true)
+        console.log('copied', copied)
         toast.success('API key copied to clipboard')
         setTimeout(() => setCopied(false), 2000)
     }
