@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Users, UserPlus, UserCog, UserMinus } from 'lucide-react'
+import { Users, UserPlus, UserMinus } from 'lucide-react'
 import { useOrganizationStore } from '@/stores/organizationStore'
 
 import { OrganizationAccessLevel, useAuthStore } from '@/stores/authStore'
