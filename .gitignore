@@ -143,3 +143,4 @@ dist
 
 notes/
 fetch_wikipedia_articles.py
+.coverage
