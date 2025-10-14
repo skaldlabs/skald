@@ -88,6 +88,8 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",)
+    + (("rest_framework.renderers.BrowsableAPIRenderer",) if DEBUG else ()),
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -210,9 +212,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
 USE_SECURE_SETTINGS = not DEBUG
+
+if USE_SECURE_SETTINGS:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 SECURE_SSL_REDIRECT = USE_SECURE_SETTINGS
 SESSION_COOKIE_SECURE = USE_SECURE_SETTINGS
