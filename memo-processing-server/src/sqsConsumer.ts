@@ -17,7 +17,7 @@ const initSQSClient = () => {
     }
 
     return new SQSClient({
-        region: process.env.AWS_REGION,
+        region: process.env.AWS_REGION || 'us-east-2',
     })
 }
 

@@ -45,10 +45,9 @@ async function main() {
         await runRedisPubSub()
     } else {
         const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
-        const AWS_REGION = process.env.AWS_REGION || 'us-east-2'
 
-        if (!SQS_QUEUE_URL || !AWS_REGION) {
-            throw new Error('SQS_QUEUE_URL and AWS_REGION environment variables are required')
+        if (!SQS_QUEUE_URL) {
+            throw new Error('SQS_QUEUE_URL environment variable is required')
         }
 
         console.log('Running in production mode with SQS')
