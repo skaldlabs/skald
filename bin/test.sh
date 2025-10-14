@@ -18,6 +18,7 @@ DB_USER="${DB_USER:-postgres}"
 DB_PASSWORD="${DB_PASSWORD:-12345678}"
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
+export USE_SQS="${USE_SQS:-false}"
 
 echo -e "${BLUE}Running Skald tests...${NC}"
 echo -e "${BLUE}Using database: ${DB_NAME}${NC}"
