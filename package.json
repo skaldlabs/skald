@@ -11,7 +11,8 @@
         "build": "tsc -b && vite build",
         "lint": "eslint frontend",
         "preview": "vite preview",
-        "prepare": "husky"
+        "prepare": "husky",
+        "deploy": "pnpm run build && fly deploy -c ui.fly.toml -a skald-platform-ui"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": ["prettier --write --ignore-unknown"],
