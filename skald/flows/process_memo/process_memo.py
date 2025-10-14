@@ -20,8 +20,6 @@ from skald.settings import (
     USE_SQS,
 )
 
-redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
-
 logger = logging.getLogger(__name__)
 
 # Initialize SQS client if in production mode
@@ -72,6 +70,7 @@ def _create_memo_object(memo: MemoData, project: Project) -> Memo:
 def _publish_to_redis(memo_uuid: str) -> None:
     """Publish memo to Redis pub/sub channel (development mode)"""
     message = json.dumps({"memo_uuid": str(memo_uuid)})
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
     redis_client.publish(REDIS_MEMO_PROCESSING_PUB_SUB_CHANNEL, message)
     logger.info(f"Published memo {memo_uuid} to Redis process_memo channel")
 
