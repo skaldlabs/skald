@@ -41,6 +41,7 @@ dependencies = [
     "resend>=2.16.0",
     "langchain>=0.3.27",
     "langchain-openai>=0.3.35",
+    "gevent>=25.9.1",
 ]
 
 [project.optional-dependencies]
