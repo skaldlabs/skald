@@ -38,7 +38,7 @@ NODE_ENV=production npm start
 - `NODE_ENV` - Set to `development` for Redis mode (default: production)
 - `REDIS_HOST` - Redis server host (default: localhost)
 - `REDIS_PORT` - Redis server port (default: 6379)
-- `CHANNEL_NAME` - Redis pub/sub channel name (default: memo-processing)
+- `CHANNEL_NAME` - Redis pub/sub channel name (default: process_memo)
 
 ### Production (SQS)
 
@@ -60,13 +60,14 @@ Both Redis and SQS expect messages in the following JSON format:
 
 ```json
 {
-  "memo_uuid": "uuid-of-the-memo-to-process"
+    "memo_uuid": "uuid-of-the-memo-to-process"
 }
 ```
 
 ## SQS Configuration
 
 The SQS consumer:
+
 - Polls up to 10 messages at a time
 - Processes messages concurrently using Promise.allSettled
 - Uses long polling (20 seconds) for efficiency

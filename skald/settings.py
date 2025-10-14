@@ -296,5 +296,5 @@ REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 
 # channel for communicating with the memo processing server
 REDIS_MEMO_PROCESSING_PUB_SUB_CHANNEL = os.getenv(
-    "REDIS_PUB_SUB_CHANNEL_NAME", "memo-processing"
+    "REDIS_PUB_SUB_CHANNEL_NAME", "process_memo"
 )
