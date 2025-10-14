@@ -9,8 +9,8 @@ from skald.api.permissions import (
     ProjectAPIKeyAuthentication,
     get_project_for_request,
 )
+from skald.flows.process_memo.process_memo import create_new_memo
 from skald.models.memo import Memo
-from skald.models.project import Project
 
 
 class CreateMemoRequestSerializer(serializers.Serializer):
@@ -61,23 +61,15 @@ class MemoViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         user = getattr(request, "user", None)
-
         project, error_response = get_project_for_request(user, request)
         if project is None or error_response:
             return error_response or Response(
                 {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
             )
-
         serializer = CreateMemoRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        # Data is validated but not used yet
         validated_data = serializer.validated_data
-
-        from skald.flows.process_memo.process_memo import create_new_memo
-
         created_memo = create_new_memo(validated_data, project)
-
         return Response({"ok": True}, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["post"])

@@ -1,7 +1,6 @@
 import hashlib
 import json
 import logging
-import time
 from datetime import datetime
 from typing import NotRequired, TypedDict
 
@@ -86,20 +85,11 @@ def _publish_to_sqs(memo_uuid: str) -> None:
 
 
 def create_new_memo(memo_data: MemoData, project: Project) -> Memo:
-    start_time = time.time()
     memo = _create_memo_object(memo_data, project)
-    end_time = time.time()
-    logger.info(f"Time taken to create memo object: {end_time - start_time} seconds")
 
-    start_time = time.time()
     if USE_SQS:
         _publish_to_sqs(memo.uuid)
     else:
         _publish_to_redis(memo.uuid)
-
-    end_time = time.time()
-    logger.info(
-        f"Time taken to publish memo to {USE_SQS and 'SQS' or 'Redis'} process_memo channel: {end_time - start_time} seconds"
-    )
 
     return memo
