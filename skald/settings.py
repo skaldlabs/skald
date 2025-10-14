@@ -221,8 +221,44 @@ SECURE_SSL_REDIRECT = USE_SECURE_SETTINGS
 SESSION_COOKIE_SECURE = USE_SECURE_SETTINGS
 CSRF_COOKIE_SECURE = USE_SECURE_SETTINGS
 
+
+# Logging
+
+# django log level propagates down to things like db and file operations
+DJANGO_LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "WARNING")
+
+# app log level defines skald-specific logs from our code
+APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL", "DEBUG")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": False,
+        },
+        "skald": {
+            "handlers": ["console"],
+            "level": APP_LOG_LEVEL,
+            "propagate": False,
+        },
+    },
+}
+
+
 # Host from where the UI is served rather than the API
-DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.<my_app>.com"
+DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.useskald.com"
 
 APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 
@@ -233,3 +269,18 @@ VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 # Posthog
 POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", None)
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
+
+# mechanism for communicating with the memo processing server
+USE_SQS = str_to_bool(os.getenv("USE_SQS", DEBUG))
+
+SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-2")
+
+# redis
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+
+# channel for communicating with the memo processing server
+REDIS_MEMO_PROCESSING_PUB_SUB_CHANNEL = os.getenv(
+    "REDIS_PUB_SUB_CHANNEL_NAME", "memo-processing"
+)

@@ -8,9 +8,15 @@ import { runSQSConsumer } from './sqsConsumer'
 // Load environment variables from the main repo's .env file
 config({ path: resolve(__dirname, '../../.env') })
 
+const USE_SQS = process.env.USE_SQS === 'true' || process.env.NODE_ENV === 'production'
+
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')
 const CHANNEL_NAME = process.env.CHANNEL_NAME || 'process_memo'
+
+// SQS configuration
+const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
+const AWS_REGION = process.env.AWS_REGION || 'us-east-2'
 
 const runRedisPubSub = async () => {
     const subscriber = createClient({
@@ -33,10 +39,14 @@ const runRedisPubSub = async () => {
 }
 
 async function main() {
-    if (process.env.NODE_ENV === 'development') {
+    if (!USE_SQS) {
         console.log('Running in development mode with Redis pub/sub')
         await runRedisPubSub()
     } else {
+        if (!SQS_QUEUE_URL || !AWS_REGION) {
+            throw new Error('SQS_QUEUE_URL and AWS_REGION environment variables are required')
+        }
+
         console.log('Running in production mode with SQS')
         await runSQSConsumer()
     }
