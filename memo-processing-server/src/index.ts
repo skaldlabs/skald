@@ -1,3 +1,4 @@
+import './sentry'
 import 'dotenv/config'
 import { config } from 'dotenv'
 import { resolve } from 'path'

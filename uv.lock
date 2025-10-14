@@ -2333,6 +2333,24 @@ wheels = [
 ]
 
 [[package]]
+name = "sentry-sdk"
+version = "2.41.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/47/aea50a61d85bc07a34e6e7145aad7bd96c5671a86a32618059bad0cbc73b/sentry_sdk-2.41.0.tar.gz", hash = "sha256:e7af3f4d7f8bac4c56fbaf95adb0d111f061cce58d5df91cfcd4e69782759b10", size = 343942 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/58/175d0e4d93f62075a01f8aebe904b412c34a94a4517e5045d0a1d512aad0/sentry_sdk-2.41.0-py2.py3-none-any.whl", hash = "sha256:343cde6540574113d13d178d1b2093e011ac21dd55abd3a1ec7e540f0d18a5bd", size = 370606 },
+]
+
+[package.optional-dependencies]
+django = [
+    { name = "django" },
+]
+
+[[package]]
 name = "setuptools"
 version = "80.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2392,6 +2410,7 @@ dependencies = [
     { name = "redis" },
     { name = "requests" },
     { name = "resend" },
+    { name = "sentry-sdk", extra = ["django"] },
     { name = "setuptools" },
     { name = "sgmllib3k" },
     { name = "sqlparse" },
@@ -2459,6 +2478,7 @@ requires-dist = [
     { name = "redis", specifier = ">=6.4.0" },
     { name = "requests", specifier = ">=2.31.0" },
     { name = "resend", specifier = ">=2.16.0" },
+    { name = "sentry-sdk", extras = ["django"], specifier = ">=2.41.0" },
     { name = "setuptools", specifier = ">=69.1.1" },
     { name = "sgmllib3k", specifier = ">=1.0.0" },
     { name = "sqlparse", specifier = ">=0.4.4" },

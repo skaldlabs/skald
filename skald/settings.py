@@ -15,7 +15,15 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+import sentry_sdk
 from dotenv import load_dotenv
+
+sentry_sdk.init(
+    dsn="https://d9311bc8f81f566a5bcedac72e22427d@o4509092419076096.ingest.de.sentry.io/4510188083216464",
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
 
 load_dotenv(override=True)
 
