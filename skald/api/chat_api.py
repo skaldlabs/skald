@@ -18,7 +18,6 @@ from skald.api.permissions import (
 from skald.models.project import Project
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class ChatView(views.APIView):
     authentication_classes = [
         TokenAuthentication,
