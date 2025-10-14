@@ -7,7 +7,11 @@ import { processMemo } from './processMemo'
 import { runSQSConsumer } from './sqsConsumer'
 
 // Load environment variables from the main repo's .env file
-config({ path: resolve(__dirname, '../../.env') })
+if (process.env.NODE_ENV === 'development') {
+    config({ path: resolve(__dirname, '../../.env') })
+} else {
+    config({ path: resolve(__dirname, '.env') })
+}
 
 const USE_SQS = process.env.USE_SQS === 'true' || process.env.NODE_ENV === 'production'
 
