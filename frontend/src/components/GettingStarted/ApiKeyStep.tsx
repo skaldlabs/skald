@@ -2,31 +2,22 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Eye, EyeOff, Copy, Check } from 'lucide-react'
-import { useProjectStore } from '@/stores/projectStore'
-import './GettingStarted.scss'
+import { useOnboardingStore } from '@/stores/onboardingStore'
+import '@/components/GettingStarted/GettingStarted.scss'
 
-interface ApiKeyStepProps {
-    onApiKeyGenerated?: (apiKey: string) => void
-}
+export const ApiKeyStep = () => {
+    const apiKey = useOnboardingStore((state) => state.apiKey)
+    const isGeneratingApiKey = useOnboardingStore((state) => state.isGeneratingApiKey)
+    const generateApiKey = useOnboardingStore((state) => state.generateApiKey)
 
-export const ApiKeyStep = ({ onApiKeyGenerated }: ApiKeyStepProps) => {
-    const { currentProject, generateApiKey } = useProjectStore()
-    const [apiKey, setApiKey] = useState<string | null>(null)
     const [isVisible, setIsVisible] = useState(false)
     const [isCopied, setIsCopied] = useState(false)
-    const [isGenerating, setIsGenerating] = useState(false)
 
     const handleGenerateApiKey = async () => {
-        if (!currentProject) return
-
-        setIsGenerating(true)
-        const key = await generateApiKey(currentProject.uuid)
-        if (key) {
-            setApiKey(key)
+        await generateApiKey()
+        if (apiKey) {
             setIsVisible(true)
-            onApiKeyGenerated?.(key)
         }
-        setIsGenerating(false)
     }
 
     const handleCopy = async () => {
@@ -68,8 +59,8 @@ export const ApiKeyStep = ({ onApiKeyGenerated }: ApiKeyStepProps) => {
                         </Button>
                     </div>
                 ) : (
-                    <Button onClick={handleGenerateApiKey} disabled={isGenerating}>
-                        {isGenerating ? 'Generating...' : 'Generate API Key'}
+                    <Button onClick={handleGenerateApiKey} disabled={isGeneratingApiKey}>
+                        {isGeneratingApiKey ? 'Generating...' : 'Generate API Key'}
                     </Button>
                 )}
             </div>
