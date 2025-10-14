@@ -36,4 +36,4 @@ EXPOSE 8000
 
 ENV PYTHONBUFFERED TRUE
 
-CMD ["./bin/start-prod.sh"]
+CMD ["/app/bin/start-prod.sh"]

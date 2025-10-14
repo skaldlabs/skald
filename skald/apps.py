@@ -8,6 +8,6 @@ class SkaldConfig(AppConfig):
     name = "skald"
 
     def ready(self):
-        posthog.api_key = settings.POSTHOG_API_KEY
+        posthog.api_key = settings.POSTHOG_PUBLIC_API_KEY
         posthog.host = settings.POSTHOG_HOST
         posthog.enable_exception_autocapture = True

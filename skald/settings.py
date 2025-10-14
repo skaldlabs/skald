@@ -277,7 +277,7 @@ VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
 VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 
 # Posthog
-POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", None)
+POSTHOG_PUBLIC_API_KEY = os.getenv("POSTHOG_PUBLIC_API_KEY", None)
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
 
 # mechanism for communicating with the memo processing server
