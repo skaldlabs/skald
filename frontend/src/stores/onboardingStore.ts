@@ -52,8 +52,6 @@ interface OnboardingState {
     createMemo: () => Promise<void>
     setSearchQuery: (query: string) => void
     searchMemos: () => Promise<void>
-    generateSampleMemo: () => void
-    generateSampleSearch: () => void
     reset: () => void
 }
 
@@ -222,18 +220,6 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
             console.error(error)
             set({ isSearching: false })
         }
-    },
-
-    generateSampleMemo: () => {
-        set({
-            memoTitle: 'My First Memo',
-            memoContent:
-                'This is my first memo created using the Skald API. It will be automatically processed, chunked, and made searchable!',
-        })
-    },
-
-    generateSampleSearch: () => {
-        set({ searchQuery: 'first memo' })
     },
 
     reset: () => {

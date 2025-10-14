@@ -16,14 +16,14 @@ export const SearchMemoStep = () => {
     const hasSearched = useOnboardingStore((state) => state.hasSearched)
     const setSearchQuery = useOnboardingStore((state) => state.setSearchQuery)
     const searchMemos = useOnboardingStore((state) => state.searchMemos)
-    const generateSampleSearch = useOnboardingStore((state) => state.generateSampleSearch)
 
     const [activeTab, setActiveTab] = useState('curl')
 
-    const searchMethod = 'summary_vector_search'
+    const searchMethod = 'chunk_vector_search'
 
     const getCurlCommand = () => {
-        const sampleQuery = searchQuery || 'search query'
+        const sampleQuery = searchQuery || 'Promises vs async/await readability'
+        setSearchQuery(sampleQuery)
 
         return `curl -X POST '${domain}/api/v1/search/' \\
   -H 'Authorization: Bearer ${apiKey || 'your_api_key'}' \\
@@ -61,9 +61,6 @@ export const SearchMemoStep = () => {
                         />
                     </div>
                     <div className="button-group">
-                        <Button variant="outline" onClick={generateSampleSearch} disabled={isDisabled}>
-                            Auto-fill sample
-                        </Button>
                         <Button onClick={searchMemos} disabled={isDisabled || isSearching || !searchQuery.trim()}>
                             {isSearching ? 'Searching...' : 'Search memos'}
                         </Button>
