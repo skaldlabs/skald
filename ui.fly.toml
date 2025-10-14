@@ -1,4 +1,5 @@
 app = 'skald-platform-ui'
+primary_region = 'dfw'
 
 [build]
 dockerfile="ui.Dockerfile"

@@ -19,10 +19,6 @@ const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')
 const CHANNEL_NAME = process.env.CHANNEL_NAME || 'process_memo'
 
-// SQS configuration
-const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
-const AWS_REGION = process.env.AWS_REGION || 'us-east-2'
-
 const runRedisPubSub = async () => {
     const subscriber = createClient({
         socket: {
@@ -48,6 +44,9 @@ async function main() {
         console.log('Running in development mode with Redis pub/sub')
         await runRedisPubSub()
     } else {
+        const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
+        const AWS_REGION = process.env.AWS_REGION || 'us-east-2'
+
         if (!SQS_QUEUE_URL || !AWS_REGION) {
             throw new Error('SQS_QUEUE_URL and AWS_REGION environment variables are required')
         }
