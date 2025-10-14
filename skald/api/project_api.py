@@ -1,6 +1,7 @@
 import logging
 
 import posthog
+from django.db import transaction
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -11,6 +12,7 @@ from skald.api.permissions import (
     OrganizationPermissionMixin,
     require_access_level,
 )
+from skald.models.memo import Memo, MemoChunk, MemoContent, MemoSummary, MemoTag
 from skald.models.organization import Organization
 from skald.models.project import Project, ProjectApiKey
 from skald.models.user import OrganizationMembership, OrganizationMembershipRole
@@ -141,7 +143,7 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
     @require_access_level(OrganizationMembershipRole.OWNER)
     def destroy(self, request, pk=None, parent_lookup_organization=None):
-        """Delete a project"""
+        """Delete a project and all its associated data atomically"""
         project = self.get_object()
 
         # Check if user is a member of the project's organization
@@ -159,8 +161,27 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         project_name = project.name
         org_uuid = project.organization.uuid
 
-        # TODO: delete all memos in the project
-        project.delete()
+        # Delete all related data atomically
+        with transaction.atomic():
+            # Get all memos for this project
+            memos = Memo.objects.filter(project=project)
+
+            # Delete all memo-related data
+            # Note: Due to CASCADE foreign keys, these will be deleted automatically,
+            # but we explicitly delete them here for clarity and to ensure atomicity
+            MemoChunk.objects.filter(project=project).delete()
+            MemoTag.objects.filter(project=project).delete()
+            MemoSummary.objects.filter(project=project).delete()
+            MemoContent.objects.filter(memo__in=memos).delete()
+
+            # Delete all memos
+            memos.delete()
+
+            # Delete project API keys
+            ProjectApiKey.objects.filter(project=project).delete()
+
+            # Finally, delete the project itself
+            project.delete()
 
         posthog.capture(
             "project_deleted",
@@ -171,6 +192,10 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
                 "organization_uuid": org_uuid,
                 "user_email": request.user.email,
             },
+        )
+
+        logger.info(
+            f"Project {project_uuid} ({project_name}) and all related data deleted by user {request.user.email}"
         )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
