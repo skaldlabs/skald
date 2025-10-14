@@ -58,7 +58,7 @@ jobs:
           version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: pnpm install
@@ -75,6 +75,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd memo-processing-server && fly deploy --remote-only
+      - run: cd memo-processing-server && flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

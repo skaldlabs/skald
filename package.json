@@ -12,7 +12,7 @@
         "lint": "eslint frontend",
         "preview": "vite preview",
         "prepare": "husky",
-        "deploy": "VITE_API_HOST=https://api.useskald.com pnpm run build && fly deploy -c ui.fly.toml -a skald-platform-ui --remote-only"
+        "deploy": "VITE_API_HOST=https://api.useskald.com pnpm run build && flyctl deploy -c ui.fly.toml -a skald-platform-ui --remote-only"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": ["prettier --write --ignore-unknown"],
