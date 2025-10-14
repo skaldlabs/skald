@@ -3,6 +3,7 @@ import { config } from 'dotenv'
 import { resolve } from 'path'
 import { createClient } from 'redis'
 import { processMemo } from './processMemo'
+import { runSQSConsumer } from './sqsConsumer'
 
 // Load environment variables from the main repo's .env file
 config({ path: resolve(__dirname, '../../.env') })
@@ -33,9 +34,11 @@ const runRedisPubSub = async () => {
 
 async function main() {
     if (process.env.NODE_ENV === 'development') {
+        console.log('Running in development mode with Redis pub/sub')
         await runRedisPubSub()
     } else {
-        await runRedisPubSub()
+        console.log('Running in production mode with SQS')
+        await runSQSConsumer()
     }
 }
 
