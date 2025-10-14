@@ -18,13 +18,6 @@ import dj_database_url
 import sentry_sdk
 from dotenv import load_dotenv
 
-sentry_sdk.init(
-    dsn="https://d9311bc8f81f566a5bcedac72e22427d@o4509092419076096.ingest.de.sentry.io/4510188083216464",
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    send_default_pii=True,
-)
-
 load_dotenv(override=True)
 
 
@@ -46,6 +39,18 @@ def str_to_bool(input):
         raise ValueError("Input string does not represent a boolean value")
 
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = str_to_bool(os.getenv("DEBUG", False))
+
+if not DEBUG:
+    sentry_sdk.init(
+        dsn="https://d9311bc8f81f566a5bcedac72e22427d@o4509092419076096.ingest.de.sentry.io/4510188083216464",
+        # Add data like request headers and IP for users,
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        send_default_pii=True,
+    )
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -57,9 +62,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv(
     "SECRET_KEY", "django-insecure-^dd*jyje2dc7!f-^1=gk(mo5eux*1_113ff*ds5io14(u^sp#w"
 )
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = str_to_bool(os.getenv("DEBUG", False))
 
 # Application definition
 
