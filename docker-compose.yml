@@ -16,6 +16,16 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build: .
     command: ./bin/start-dev.sh
@@ -24,16 +34,36 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:12345678@db/skald2
       - POSTHOG_API_KEY=phc_Mn0nVBv8wLLcJJ4gLWggO35SbrIDOvD14hiKzEtv5zp
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - "8000:8000"
     volumes:
       - .:/app
       - /app/node_modules  # Prevent overwriting node_modules if present
     depends_on:
+      redis:
+        condition: service_healthy
       db:
         condition: service_healthy
     stdin_open: true
     tty: true
+
+  memo-processing-server:
+    build: ./memo-processing-server
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CHANNEL_NAME=memo-processing
+      - DATABASE_URL=postgres://postgres:12345678@db/skald2
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
