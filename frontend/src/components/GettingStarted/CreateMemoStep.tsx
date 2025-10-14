@@ -6,99 +6,26 @@ import { Check } from 'lucide-react'
 import { CodeLanguageTabs } from './CodeLanguageTabs'
 import { CodeBlock } from './CodeBlock'
 import { domain } from '@/lib/api'
-import { toast } from 'sonner'
+import { useOnboardingStore } from '@/stores/onboardingStore'
 import { useProjectStore } from '@/stores/projectStore'
-import './GettingStarted.scss'
+import '@/components/GettingStarted/GettingStarted.scss'
 
-// Helper to get CSRF token from cookies
-const getCsrfToken = (): string | null => {
-    const name = 'csrftoken'
-    let cookieValue = null
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';')
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim()
-            if (cookie.substring(0, name.length + 1) === `${name}=`) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
-                break
-            }
-        }
-    }
-    return cookieValue
-}
-
-interface CreateMemoStepProps {
-    apiKey: string | null
-}
-
-export const CreateMemoStep = ({ apiKey }: CreateMemoStepProps) => {
-    const { currentProject } = useProjectStore()
+export const CreateMemoStep = () => {
+    const currentProject = useProjectStore((state) => state.currentProject)
+    const memoTitle = useOnboardingStore((state) => state.memoTitle)
+    const memoContent = useOnboardingStore((state) => state.memoContent)
+    const apiKey = useOnboardingStore((state) => state.apiKey)
+    const isCreatingMemo = useOnboardingStore((state) => state.isCreatingMemo)
+    const memoCreated = useOnboardingStore((state) => state.memoCreated)
+    const setMemoTitle = useOnboardingStore((state) => state.setMemoTitle)
+    const setMemoContent = useOnboardingStore((state) => state.setMemoContent)
+    const createMemo = useOnboardingStore((state) => state.createMemo)
+    const generateSampleMemo = useOnboardingStore((state) => state.generateSampleMemo)
     const [activeTab, setActiveTab] = useState('curl')
-    const [title, setTitle] = useState('')
-    const [content, setContent] = useState('')
-    const [isCreating, setIsCreating] = useState(false)
-    const [memoCreated, setMemoCreated] = useState(false)
-
-    const generateSampleMemo = () => {
-        setTitle('My First Memo')
-        setContent(
-            'This is my first memo created using the Skald API. It will be automatically processed, chunked, and made searchable!'
-        )
-    }
-
-    const handleCreateMemo = async () => {
-        if (!apiKey || !currentProject) {
-            toast.error('Please generate an API key first')
-            return
-        }
-
-        if (!title.trim() || !content.trim()) {
-            toast.error('Please provide both title and content')
-            return
-        }
-
-        setIsCreating(true)
-        try {
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-            }
-
-            const csrfToken = getCsrfToken()
-            if (csrfToken) {
-                headers['X-CSRFToken'] = csrfToken
-            }
-
-            const response = await fetch(`${domain}/api/v1/memo/`, {
-                method: 'POST',
-                headers,
-                credentials: 'include',
-                body: JSON.stringify({
-                    title,
-                    content,
-                    project_id: currentProject.uuid,
-                }),
-            })
-
-            if (!response.ok) {
-                throw new Error('Failed to create memo')
-            }
-
-            toast.success('Memo created successfully!')
-            setMemoCreated(true)
-            setTitle('')
-            setContent('')
-        } catch (error) {
-            toast.error('Failed to create memo')
-            console.error(error)
-        } finally {
-            setIsCreating(false)
-        }
-    }
 
     const getCurlCommand = () => {
-        const sampleTitle = title || 'My First Memo'
-        const sampleContent = content || 'This is the content of my first memo.'
+        const sampleTitle = memoTitle || 'My First Memo'
+        const sampleContent = memoContent || 'This is the content of my first memo.'
 
         return `curl -X POST '${domain}/api/v1/memo/' \\
   -H 'Authorization: Bearer ${apiKey || 'your_api_key'}' \\
@@ -128,8 +55,8 @@ export const CreateMemoStep = ({ apiKey }: CreateMemoStepProps) => {
                     <div className="form-field">
                         <label>Title</label>
                         <Input
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            value={memoTitle}
+                            onChange={(e) => setMemoTitle(e.target.value)}
                             placeholder="Enter memo title"
                             disabled={isDisabled}
                         />
@@ -137,8 +64,8 @@ export const CreateMemoStep = ({ apiKey }: CreateMemoStepProps) => {
                     <div className="form-field">
                         <label>Content</label>
                         <Textarea
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
+                            value={memoContent}
+                            onChange={(e) => setMemoContent(e.target.value)}
                             placeholder="Enter memo content"
                             rows={4}
                             disabled={isDisabled}
@@ -149,10 +76,10 @@ export const CreateMemoStep = ({ apiKey }: CreateMemoStepProps) => {
                             Auto-fill sample
                         </Button>
                         <Button
-                            onClick={handleCreateMemo}
-                            disabled={isDisabled || isCreating || !title.trim() || !content.trim()}
+                            onClick={createMemo}
+                            disabled={isDisabled || isCreatingMemo || !memoTitle.trim() || !memoContent.trim()}
                         >
-                            {isCreating ? 'Creating...' : 'Create memo'}
+                            {isCreatingMemo ? 'Creating...' : 'Create memo'}
                         </Button>
                     </div>
                 </div>

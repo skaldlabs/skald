@@ -4,6 +4,8 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 3rem 2rem;
+    width: 100%;
+    overflow: hidden;
 
     .page-header {
         margin-bottom: 3rem;
@@ -35,6 +37,9 @@
     background: var(--card);
     border: 2px solid var(--border);
     transition: all 0.3s ease;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 
     &.complete {
         background: hsl(var(--success) / 0.05);
@@ -76,6 +81,9 @@
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
 
         .step-title {
             font-size: 1.5rem;
@@ -130,15 +138,73 @@
             background: var(--background);
             border-radius: 8px;
             border: 1px solid var(--border);
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
 
             .form-field {
                 display: flex;
                 flex-direction: column;
                 gap: 0.5rem;
+                max-width: 100%;
+                min-width: 0;
 
                 label {
                     font-weight: 500;
                     font-size: 0.9rem;
+                }
+
+                input,
+                textarea {
+                    max-width: 100% !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                    word-wrap: break-word !important;
+                    overflow-wrap: break-word !important;
+                    white-space: pre-wrap !important;
+                    word-break: break-word !important;
+                    overflow-x: hidden !important;
+                }
+
+                textarea {
+                    resize: vertical !important;
+                    min-height: 80px !important;
+                    max-width: calc(100% - 2px) !important; // Account for border
+                }
+
+                // Target UI components specifically
+                input[data-slot='input'],
+                textarea {
+                    max-width: 100% !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                    word-wrap: break-word !important;
+                    overflow-wrap: break-word !important;
+                    white-space: pre-wrap !important;
+                    word-break: break-word !important;
+                    overflow-x: hidden !important;
+                }
+
+                // Even more specific targeting
+                .getting-started-step .interactive-section .form-field input,
+                .getting-started-step .interactive-section .form-field textarea {
+                    max-width: 100% !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                    word-wrap: break-word !important;
+                    overflow-wrap: break-word !important;
+                    white-space: pre-wrap !important;
+                    word-break: break-word !important;
+                    overflow-x: hidden !important;
+                    min-width: 0 !important;
+                }
+
+                // Force textarea to respect container width
+                .getting-started-step .interactive-section .form-field textarea {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: 0 !important;
+                    flex-shrink: 1 !important;
                 }
             }
 
