@@ -69,12 +69,22 @@ def _chunk_vector_search(query: str, project: Project) -> List[Dict[str, Any]]:
         rerank_data[i : i + 25] for i in range(0, len(rerank_data), 25)
     ]
 
-    return rerank_data_batches
+    vc = voyageai.Client()
+
+    results = []
+    for batch in rerank_data_batches:
+        rerank_result = vc.rerank(
+            query=query,
+            documents=batch,
+            model=DEFAULT_VOYAGE_RERANK_MODEL,
+            top_k=min(100, len(batch)),
+        )
+        results.extend(rerank_result.results)
+
+    return results
 
 
-async def prepare_context_for_chat_agent_async(
-    query: str, project
-) -> List[Dict[str, Any]]:
+def prepare_context_for_chat_agent(query: str, project) -> List[Dict[str, Any]]:
     """
     Async version of prepare_context_for_chat_agent that processes rerank batches in parallel.
 
@@ -86,53 +96,9 @@ async def prepare_context_for_chat_agent_async(
         List of reranked results
     """
 
-    rerank_data_batches = await sync_to_async(_chunk_vector_search)(query, project)
-    vc = voyageai.Client()
-
-    print("rerank_data_batches", rerank_data_batches)
-
-    # Process all batches in parallel using asyncio.gather
-    batch_tasks = [
-        _process_rerank_batch_async(vc, query, batch) for batch in rerank_data_batches
-    ]
-
-    # Wait for all batches to complete
-    batch_results = await asyncio.gather(*batch_tasks)
-
-    # Flatten the results from all batches
-    reranked_results = []
-    for batch_result in batch_results:
-        reranked_results.extend(batch_result.results)
+    results = _chunk_vector_search(query, project)
 
     # sort all results by relevance score
-    reranked_results.sort(key=lambda x: x.relevance_score, reverse=True)
+    results.sort(key=lambda x: x.relevance_score, reverse=True)
 
-    return reranked_results[:POST_RERANK_TOP_K]
-
-
-def prepare_context_for_chat_agent(
-    query: str, project: Project
-) -> List[Dict[str, Any]]:
-    """
-    Synchronous wrapper for the async prepare_context_for_chat_agent_async function.
-    This maintains backward compatibility with existing code.
-
-    Args:
-        query: The search query
-        project: The project to scope the search to
-
-    Returns:
-        List of reranked results
-    """
-    # Run the async function in a new event loop
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    try:
-        reranked_results = loop.run_until_complete(
-            prepare_context_for_chat_agent_async(query, project)
-        )
-
-        return reranked_results
-    finally:
-        loop.close()
+    return results[:POST_RERANK_TOP_K]
