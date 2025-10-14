@@ -285,7 +285,7 @@ POSTHOG_PUBLIC_API_KEY = os.getenv("POSTHOG_PUBLIC_API_KEY", None)
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
 
 # mechanism for communicating with the memo processing server
-USE_SQS = str_to_bool(os.getenv("USE_SQS", DEBUG))
+USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))
 
 SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-2")
