@@ -1,3 +1,5 @@
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers, status, viewsets
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework.decorators import action
@@ -47,6 +49,7 @@ class MemoSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at", "content_length"]
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class MemoViewSet(viewsets.ModelViewSet):
     serializer_class = MemoSerializer
     permission_classes = [IsAuthenticatedOrAuthDisabled]

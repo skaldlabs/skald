@@ -34,6 +34,7 @@ SUPPORTED_SEARCH_METHODS = [
 ]
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class SearchView(ProjectAPIKeyAuthentication, views.APIView):
     permission_classes = [IsAuthenticatedOrAuthDisabled]
     authentication_classes = [
