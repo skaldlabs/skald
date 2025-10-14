@@ -1,0 +1,286 @@
+@import '@/styles/variables';
+
+.getting-started-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+
+    .page-header {
+        margin-bottom: 3rem;
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 1.125rem;
+            color: var(--muted-foreground);
+        }
+    }
+
+    .steps-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+}
+
+.getting-started-step {
+    display: flex;
+    gap: 1.5rem;
+    padding: 2rem;
+    border-radius: 12px;
+    background: var(--card);
+    border: 2px solid var(--border);
+    transition: all 0.3s ease;
+
+    &.complete {
+        background: hsl(var(--success) / 0.05);
+        border-color: hsl(var(--success) / 0.3);
+
+        .step-indicator {
+            .check-icon {
+                color: hsl(var(--success));
+            }
+        }
+    }
+
+    &.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .step-indicator {
+        flex-shrink: 0;
+        margin-top: 0.25rem;
+
+        .circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--background);
+        }
+
+        .check-icon {
+            width: 24px;
+            height: 24px;
+            color: hsl(var(--success));
+        }
+    }
+
+    .step-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+
+        .step-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            .title-check {
+                width: 20px;
+                height: 20px;
+                color: hsl(var(--success));
+            }
+        }
+
+        .step-description {
+            color: var(--muted-foreground);
+            margin-top: -0.5rem;
+        }
+
+        .api-key-display {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            max-width: 600px;
+
+            .api-key-input {
+                flex: 1;
+                font-family: monospace;
+                font-size: 0.9rem;
+            }
+
+            .icon-button {
+                flex-shrink: 0;
+            }
+        }
+
+        .code-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .interactive-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--background);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+
+            .form-field {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+
+                label {
+                    font-weight: 500;
+                    font-size: 0.9rem;
+                }
+            }
+
+            .button-group {
+                display: flex;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+
+            .search-results {
+                margin-top: 1rem;
+                padding-top: 1rem;
+                border-top: 1px solid var(--border);
+
+                h3 {
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    margin-bottom: 1rem;
+                }
+
+                .no-results {
+                    color: var(--muted-foreground);
+                    font-style: italic;
+                }
+
+                .results-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem;
+
+                    .result-item {
+                        padding: 1rem;
+                        background: var(--card);
+                        border-radius: 6px;
+                        border: 1px solid var(--border);
+
+                        h4 {
+                            font-size: 1rem;
+                            font-weight: 600;
+                            margin-bottom: 0.5rem;
+                        }
+
+                        .result-summary {
+                            font-size: 0.9rem;
+                            color: var(--muted-foreground);
+                            margin-bottom: 0.5rem;
+                        }
+
+                        .result-distance {
+                            font-size: 0.8rem;
+                            color: var(--muted-foreground);
+                            font-family: monospace;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.code-language-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--muted);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+
+    .tab {
+        padding: 0.75rem 1.25rem;
+        background: transparent;
+        border: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+
+        &:hover:not(.disabled) {
+            background: var(--accent);
+            color: var(--foreground);
+        }
+
+        &.active {
+            color: var(--foreground);
+            background: var(--background);
+            border-bottom-color: var(--primary);
+        }
+
+        &.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.code-block-wrapper {
+    position: relative;
+    background: hsl(0, 0%, 10%);
+
+    .code-block-header {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        z-index: 1;
+
+        .copy-button {
+            background: hsl(0, 0%, 20%);
+            color: hsl(0, 0%, 80%);
+            border: 1px solid hsl(0, 0%, 30%);
+
+            &:hover {
+                background: hsl(0, 0%, 25%);
+                color: hsl(0, 0%, 100%);
+            }
+        }
+    }
+
+    .code-block {
+        margin: 0;
+        padding: 1.5rem;
+        padding-top: 3rem;
+        overflow-x: auto;
+        background: hsl(0, 0%, 10%);
+        color: hsl(0, 0%, 90%);
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+
+        code {
+            white-space: pre;
+            word-break: keep-all;
+        }
+    }
+}
+
+// Success color variable (add to your theme if not present)
+:root {
+    --success: 142 76% 36%;
+}
+
+.dark {
+    --success: 142 76% 36%;
+}

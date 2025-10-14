@@ -37,7 +37,7 @@ def _create_memo_object(memo: MemoData, project: Project) -> Memo:
     with transaction.atomic():
         memo_object = Memo.objects.create(
             title=memo["title"],
-            metadata=memo.get("metadata"),
+            metadata=memo.get("metadata", {}),
             client_reference_id=memo.get("reference_id"),
             source=memo.get("source"),
             expiration_date=memo.get("expiration_date"),
