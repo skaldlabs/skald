@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import NotRequired, TypedDict
 
 import redis
-from chonkie import RecursiveChunker
 from django.db import transaction
 
 from skald.models.memo import Memo, MemoContent
@@ -38,11 +37,6 @@ class MemoData(TypedDict):
     tags: NotRequired[list[str] | None]
     source: NotRequired[str | None]
     expiration_date: NotRequired[datetime | None]
-
-
-chunker = RecursiveChunker.from_recipe(
-    "markdown", chunk_size=4096, min_characters_per_chunk=128
-)
 
 
 def _create_memo_object(memo: MemoData, project: Project) -> Memo:
