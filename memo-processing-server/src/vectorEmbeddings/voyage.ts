@@ -1,5 +1,5 @@
 import { VoyageAIClient } from 'voyageai'
-import { EmbedRequestInputType, EmbedResponseDataItem } from 'voyageai/api/types'
+import { EmbedRequestInputType } from 'voyageai/api/types'
 
 const client = new VoyageAIClient({ apiKey: process.env.VOYAGE_API_KEY })
 
