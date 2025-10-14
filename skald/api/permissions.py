@@ -236,13 +236,6 @@ def get_project_for_request(
                 {"error": "Project not found"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Verify that the project_id in the request matches the API key's project
-        project_id = request.data.get("project_id")
-        if project_id and str(user.project.uuid) != str(project_id):
-            return None, Response(
-                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
-            )
-
         return user.project, None
     else:
         # For regular user authentication

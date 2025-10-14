@@ -16,7 +16,6 @@ from skald.models.memo import Memo
 class CreateMemoRequestSerializer(serializers.Serializer):
     content = serializers.CharField(required=True)
     title = serializers.CharField(required=True, max_length=255)
-    project_id = serializers.UUIDField(required=True)
     metadata = serializers.JSONField(required=False, allow_null=True)
     reference_id = serializers.CharField(
         required=False, allow_null=True, max_length=255
