@@ -57,6 +57,7 @@ export const fetchMemoChunks = async (memoUuid: string): Promise<FetchMemoChunks
 }
 
 export interface CreateMemoParams {
+    project_id: string
     title: string
     metadata?: Record<string, any> | null
     client_reference_id?: string | null
@@ -68,13 +69,14 @@ export interface CreateMemoParams {
 
 export const createMemo = async (
     params: CreateMemoParams
-): Promise<Pick<FetchMemoResult, 'uuid' | 'title' | 'created_at' | 'updated_at'>> => {
+): Promise<Pick<FetchMemoResult, 'uuid' | 'project_id' | 'title' | 'created_at' | 'updated_at'>> => {
     const uuid = randomUUID()
     const result = await insertData<FetchMemoResult>(
         'skald_memo',
         [
             {
                 uuid,
+                project_id: params.project_id,
                 title: params.title,
                 metadata: params.metadata ?? {},
                 client_reference_id: params.client_reference_id ?? null,
@@ -88,7 +90,7 @@ export const createMemo = async (
                 updated_at: new Date(),
             },
         ],
-        { returnColumns: ['uuid', 'title', 'created_at', 'updated_at'] }
+        { returnColumns: ['uuid', 'project_id', 'title', 'created_at', 'updated_at'] }
     )
 
     if (result.error || !result.rows) {

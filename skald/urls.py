@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path, re_path
@@ -46,17 +47,6 @@ organizations_router.register(
 )
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="index.html"), name="app-root"),
-    path("chat", TemplateView.as_view(template_name="chat.html"), name="chat-ui"),
-    path(
-        "chat/", TemplateView.as_view(template_name="chat.html"), name="chat-ui-slash"
-    ),
-    path("search", TemplateView.as_view(template_name="search.html"), name="search-ui"),
-    path(
-        "search/",
-        TemplateView.as_view(template_name="search.html"),
-        name="search-ui-slash",
-    ),
     path("admin/", admin.site.urls),
     path("api/health", HealthView.as_view(), name="health"),
     path("api/health/", HealthView.as_view(), name="health-slash"),
@@ -67,6 +57,24 @@ urlpatterns = [
     *router.urls,
 ] + staticfiles_urlpatterns()
 
-urlpatterns += [
-    re_path(r".*", TemplateView.as_view(template_name="index.html"), name="app")
-]
+if settings.DEBUG:
+    # do not serve these in prod
+    urlpatterns += [
+        path("", TemplateView.as_view(template_name="index.html"), name="app-root"),
+        path("chat", TemplateView.as_view(template_name="chat.html"), name="chat-ui"),
+        path(
+            "chat/",
+            TemplateView.as_view(template_name="chat.html"),
+            name="chat-ui-slash",
+        ),
+        path(
+            "search",
+            TemplateView.as_view(template_name="search.html"),
+            name="search-ui",
+        ),
+        path(
+            "search/",
+            TemplateView.as_view(template_name="search.html"),
+            name="search-ui-slash",
+        ),
+    ]

@@ -2,7 +2,33 @@
 
 ## How to run
 
-### Pre-requisites
+### Option 1: Docker Compose (Recommended for Development)
+
+The easiest way to run the project locally with all dependencies:
+
+```sh
+# First time setup - build the image
+docker-compose build
+
+# Start the API and database
+docker-compose up
+
+# Access the API at http://localhost:8000
+```
+
+**Benefits:**
+- ✅ No need to install PostgreSQL locally
+- ✅ Code changes auto-reload (no rebuild needed)
+- ✅ Migrations run automatically on startup
+- ✅ Consistent environment across team
+
+**When you need to rebuild:**
+- Only when you change dependencies in `pyproject.toml`
+- Run: `docker-compose build`
+
+### Option 2: Local Development (Without Docker)
+
+#### Pre-requisites
 
 - Create a Langchain account and get your secret key
 - Make sure you've created a db called `skald2` locally (or use another name and change the config on the servers)
@@ -13,8 +39,7 @@
     skald2=# CREATE EXTENSION vector;
     ```
 
-
-### Environment variables
+#### Environment variables
 
 ```
 VOYAGE_API_KEY=<your Voyage API key>
@@ -44,7 +69,7 @@ When `DISABLE_AUTH=true`:
 - This is useful for testing API functionality without setting up user accounts
 
 
-### Django server
+#### Django server (local development)
 
 From the root dir you can run commands like:
 
@@ -105,4 +130,18 @@ python push_mock_docs.py --wikipedia --project-id YOUR_PROJECT_UUID
 python push_mock_docs.py --all --project-id YOUR_PROJECT_UUID --sleep 1.0
 ```
 
-**Note**: You need to provide a valid project UUID. You can get this from your database or create a project first through the API. 
+**Note**: You need to provide a valid project UUID. You can get this from your database or create a project first through the API.
+
+## Production Deployment
+
+For production, use the standard Docker build without docker-compose:
+
+```sh
+# Build the production image
+docker build -t skald .
+
+# Run with production settings
+docker run --env-file .env -p 8000:8000 skald
+```
+
+This uses gunicorn and bakes the code into the image for optimal performance. 
