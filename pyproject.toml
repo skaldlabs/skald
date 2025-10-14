@@ -42,6 +42,8 @@ dependencies = [
     "langchain>=0.3.27",
     "langchain-openai>=0.3.35",
     "gevent>=25.9.1",
+    "boto3>=1.35.0",
+    "sentry-sdk[django]>=2.41.0",
 ]
 
 [project.optional-dependencies]

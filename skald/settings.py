@@ -15,6 +15,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+import sentry_sdk
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -38,6 +39,18 @@ def str_to_bool(input):
         raise ValueError("Input string does not represent a boolean value")
 
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = str_to_bool(os.getenv("DEBUG", False))
+
+if not DEBUG:
+    sentry_sdk.init(
+        dsn="https://d9311bc8f81f566a5bcedac72e22427d@o4509092419076096.ingest.de.sentry.io/4510188083216464",
+        # Add data like request headers and IP for users,
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        send_default_pii=True,
+    )
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -49,9 +62,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv(
     "SECRET_KEY", "django-insecure-^dd*jyje2dc7!f-^1=gk(mo5eux*1_113ff*ds5io14(u^sp#w"
 )
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = str_to_bool(os.getenv("DEBUG", False))
 
 # Application definition
 
@@ -221,8 +231,44 @@ SECURE_SSL_REDIRECT = USE_SECURE_SETTINGS
 SESSION_COOKIE_SECURE = USE_SECURE_SETTINGS
 CSRF_COOKIE_SECURE = USE_SECURE_SETTINGS
 
+
+# Logging
+
+# django log level propagates down to things like db and file operations
+DJANGO_LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "WARNING")
+
+# app log level defines skald-specific logs from our code
+APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL", "DEBUG")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": False,
+        },
+        "skald": {
+            "handlers": ["console"],
+            "level": APP_LOG_LEVEL,
+            "propagate": False,
+        },
+    },
+}
+
+
 # Host from where the UI is served rather than the API
-DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.<my_app>.com"
+DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.useskald.com"
 
 APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 
@@ -233,3 +279,18 @@ VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 # Posthog
 POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", None)
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
+
+# mechanism for communicating with the memo processing server
+USE_SQS = str_to_bool(os.getenv("USE_SQS", DEBUG))
+
+SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-2")
+
+# redis
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+
+# channel for communicating with the memo processing server
+REDIS_MEMO_PROCESSING_PUB_SUB_CHANNEL = os.getenv(
+    "REDIS_PUB_SUB_CHANNEL_NAME", "memo-processing"
+)
