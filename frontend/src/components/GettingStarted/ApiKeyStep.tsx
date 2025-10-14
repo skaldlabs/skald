@@ -43,7 +43,9 @@ export const ApiKeyStep = ({ onApiKeyGenerated }: ApiKeyStepProps) => {
     return (
         <div className={`getting-started-step ${isComplete ? 'complete' : ''}`}>
             <div className="step-content">
-                <h2 className="step-title">Add an API Key {isComplete && <Check className="title-check" />}</h2>
+                <h2 className="step-title">
+                    Add an API Key to your project {isComplete && <Check className="title-check" />}
+                </h2>
                 <p className="step-description">
                     {apiKey
                         ? 'Use the following generated key to authenticate requests'

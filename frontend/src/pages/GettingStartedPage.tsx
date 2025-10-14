@@ -7,14 +7,13 @@ import '@/components/GettingStarted/GettingStarted.scss'
 
 export const GettingStartedPage = () => {
     const [apiKey, setApiKey] = useState<string | null>(null)
-    const [memoCreated, setMemoCreated] = useState(false)
 
     return (
         <AppLayout>
             <div className="getting-started-container">
                 <div className="page-header">
-                    <h1>Getting Started</h1>
-                    <p>Follow the steps to start using the Skald API</p>
+                    <h1>Create your first memo</h1>
+                    <p>Follow the steps to create your first memo and search it</p>
                 </div>
 
                 <div className="steps-container">

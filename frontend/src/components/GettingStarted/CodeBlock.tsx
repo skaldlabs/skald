@@ -11,6 +11,8 @@ interface CodeBlockProps {
 export const CodeBlock = ({ code, language = 'bash' }: CodeBlockProps) => {
     const [isCopied, setIsCopied] = useState(false)
 
+    console.log('language', language)
+
     const handleCopy = async () => {
         await navigator.clipboard.writeText(code)
         setIsCopied(true)
