@@ -25,6 +25,7 @@ jobs:
               - 'pyproject.toml'
               - 'manage.py'
               - 'fly.toml'
+              - 'bin/start-prod.sh'
             frontend:
               - 'package.json'
               - 'frontend/**'
