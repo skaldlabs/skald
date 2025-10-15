@@ -35,7 +35,7 @@ export const Sider = () => {
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
             {
-                key: '/projects/get-started',
+                key: `/projects/${currentProject?.uuid}/get-started`,
                 icon: <Rocket className="h-4 w-4" />,
                 label: 'Get Started',
                 hasAccess: () => true,

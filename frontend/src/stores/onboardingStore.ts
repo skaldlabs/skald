@@ -1,24 +1,7 @@
 import { create } from 'zustand'
-import { domain } from '@/lib/api'
+import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { useProjectStore } from '@/stores/projectStore'
-
-// Helper to get CSRF token from cookies
-const getCsrfToken = (): string | null => {
-    const name = 'csrftoken'
-    let cookieValue = null
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';')
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim()
-            if (cookie.substring(0, name.length + 1) === `${name}=`) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
-                break
-            }
-        }
-    }
-    return cookieValue
-}
 
 interface SearchResult {
     title: string
@@ -26,6 +9,13 @@ interface SearchResult {
     content_snippet: string
     summary: string
     distance: number | null
+}
+
+interface ChatMessage {
+    id: string
+    content: string
+    role: 'user' | 'assistant'
+    timestamp: Date
 }
 
 interface OnboardingState {
@@ -39,6 +29,12 @@ interface OnboardingState {
     isCreatingMemo: boolean
     memoCreated: boolean
 
+    // Chat state
+    chatQuery: string
+    chatMessages: ChatMessage[]
+    isChatting: boolean
+    hasChatted: boolean
+
     // Search state
     searchQuery: string
     searchResults: SearchResult[]
@@ -51,6 +47,8 @@ interface OnboardingState {
     setMemoTitle: (title: string) => void
     setMemoContent: (content: string) => void
     createMemo: () => Promise<void>
+    setChatQuery: (query: string) => void
+    sendChatMessage: () => Promise<void>
     setSearchQuery: (query: string) => void
     searchMemos: () => Promise<void>
     reset: () => void
@@ -64,6 +62,10 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     memoContent: '',
     isCreatingMemo: false,
     memoCreated: false,
+    chatQuery: '',
+    chatMessages: [],
+    isChatting: false,
+    hasChatted: false,
     searchQuery: '',
     searchResults: [],
     isSearching: false,
@@ -93,6 +95,10 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         }
     },
 
+    setApiKey: (apiKey: string) => {
+        set({ apiKey })
+    },
+
     setMemoTitle: (title: string) => {
         set({ memoTitle: title })
     },
@@ -101,16 +107,17 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         set({ memoContent: content })
     },
 
-    setApiKey: (apiKey: string) => {
-        set({ apiKey })
-    },
-
     createMemo: async () => {
         const { apiKey, memoTitle, memoContent } = get()
         const { currentProject } = useProjectStore.getState()
 
-        if (!apiKey || !currentProject) {
+        if (!apiKey) {
             toast.error('Please generate an API key first')
+            return
+        }
+
+        if (!currentProject) {
+            toast.error('No project selected')
             return
         }
 
@@ -122,29 +129,14 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         set({ isCreatingMemo: true })
 
         try {
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-            }
-
-            const csrfToken = getCsrfToken()
-            if (csrfToken) {
-                headers['X-CSRFToken'] = csrfToken
-            }
-
-            const response = await fetch(`${domain}/api/v1/memo/`, {
-                method: 'POST',
-                headers,
-                credentials: 'include',
-                body: JSON.stringify({
-                    title: memoTitle,
-                    content: memoContent,
-                    project_id: currentProject.uuid,
-                }),
+            const response = await api.post('/v1/memo/', {
+                title: memoTitle,
+                content: memoContent,
+                project_id: currentProject.uuid,
             })
 
-            if (!response.ok) {
-                throw new Error('Failed to create memo')
+            if (response.error) {
+                throw new Error(response.error)
             }
 
             toast.success('Memo created successfully!')
@@ -161,6 +153,88 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         }
     },
 
+    setChatQuery: (query: string) => {
+        set({ chatQuery: query })
+    },
+
+    sendChatMessage: async () => {
+        const { chatQuery, chatMessages } = get()
+        const { currentProject } = useProjectStore.getState()
+
+        if (!currentProject) {
+            toast.error('No project selected')
+            return
+        }
+
+        if (!chatQuery.trim()) {
+            toast.error('Please enter a message')
+            return
+        }
+
+        set({ isChatting: true, hasChatted: true })
+
+        const userMessage: ChatMessage = {
+            id: Date.now().toString(),
+            content: chatQuery,
+            role: 'user',
+            timestamp: new Date(),
+        }
+
+        const assistantMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            content: '',
+            role: 'assistant',
+            timestamp: new Date(),
+        }
+
+        set({
+            chatMessages: [...chatMessages, userMessage, assistantMessage],
+            chatQuery: '',
+        })
+
+        try {
+            let assistantContent = ''
+            let isStreamComplete = false
+
+            const cleanup = api.stream(
+                '/v1/chat/',
+                {
+                    query: chatQuery,
+                    stream: true,
+                    project_id: currentProject.uuid,
+                },
+                (data) => {
+                    if (data.type === 'token') {
+                        assistantContent += data.content
+                        // Update the assistant message in real-time
+                        set((state) => ({
+                            chatMessages: state.chatMessages.map((msg) =>
+                                msg.id === assistantMessage.id ? { ...msg, content: assistantContent } : msg
+                            ),
+                        }))
+                    } else if (data.type === 'done') {
+                        isStreamComplete = true
+                        set({ isChatting: false })
+                        cleanup()
+                    }
+                },
+                (error) => {
+                    // Only show error if the stream didn't complete successfully
+                    if (!isStreamComplete) {
+                        console.error('Chat stream error:', error)
+                        toast.error('Failed to send chat message')
+                        set({ isChatting: false })
+                        cleanup()
+                    }
+                }
+            )
+        } catch (error) {
+            toast.error('Failed to send chat message')
+            console.error(error)
+            set({ isChatting: false })
+        }
+    },
+
     setSearchQuery: (query: string) => {
         set({ searchQuery: query })
     },
@@ -169,8 +243,13 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         const { apiKey, searchQuery } = get()
         const { currentProject } = useProjectStore.getState()
 
-        if (!apiKey || !currentProject) {
+        if (!apiKey) {
             toast.error('Please generate an API key first')
+            return
+        }
+
+        if (!currentProject) {
+            toast.error('No project selected')
             return
         }
 
@@ -182,33 +261,18 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         set({ isSearching: true, hasSearched: true })
 
         try {
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-            }
-
-            const csrfToken = getCsrfToken()
-            if (csrfToken) {
-                headers['X-CSRFToken'] = csrfToken
-            }
-
-            const response = await fetch(`${domain}/api/v1/search/`, {
-                method: 'POST',
-                headers,
-                credentials: 'include',
-                body: JSON.stringify({
-                    query: searchQuery,
-                    search_method: 'summary_vector_search',
-                    limit: 5,
-                }),
+            const response = await api.post('/v1/search/', {
+                query: searchQuery,
+                search_method: 'summary_vector_search',
+                limit: 5,
+                project_id: currentProject.uuid,
             })
 
-            if (!response.ok) {
-                throw new Error('Failed to search memos')
+            if (response.error) {
+                throw new Error(response.error)
             }
 
-            const data = await response.json()
-            const results = data.results || []
+            const results = (response.data as any)?.results || []
 
             set({
                 searchResults: results,
@@ -235,6 +299,10 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
             memoContent: '',
             isCreatingMemo: false,
             memoCreated: false,
+            chatQuery: '',
+            chatMessages: [],
+            isChatting: false,
+            hasChatted: false,
             searchQuery: '',
             searchResults: [],
             isSearching: false,

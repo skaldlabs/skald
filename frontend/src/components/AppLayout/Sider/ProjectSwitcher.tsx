@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronsUpDown, Plus } from 'lucide-react'
 import { useProjectStore } from '@/stores/projectStore'
+import { useOnboardingStore } from '@/stores/onboardingStore'
 import { useNavigate } from 'react-router-dom'
 import {
     DropdownMenu,
@@ -19,6 +20,7 @@ export const ProjectSwitcher = () => {
     const currentProject = useProjectStore((state) => state.currentProject)
     const setCurrentProject = useProjectStore((state) => state.setCurrentProject)
     const fetchProjects = useProjectStore((state) => state.fetchProjects)
+    const resetOnboarding = useOnboardingStore((state) => state.reset)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
     useEffect(() => {
@@ -28,6 +30,7 @@ export const ProjectSwitcher = () => {
     const handleProjectChange = (projectUuid: string) => {
         const project = projects.find((p) => p.uuid === projectUuid)
         if (project) {
+            resetOnboarding()
             setCurrentProject(project)
             navigate(`/projects/${project.uuid}/memos`)
         }

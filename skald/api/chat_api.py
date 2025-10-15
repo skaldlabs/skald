@@ -1,11 +1,8 @@
 import json
 
 from django.http import StreamingHttpResponse
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, views
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from skald.agents.chat_agent.chat_agent import run_chat_agent, stream_chat_agent

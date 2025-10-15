@@ -5,9 +5,14 @@ import { GettingStartedPage } from '@/pages/GettingStartedPage'
 import { MemosPage } from '@/pages/MemosPage'
 import { PlaygroundPage } from '@/pages/PlaygroundPage'
 
+const RootRedirect = () => {
+    return <Navigate to="/projects/get-started" />
+}
+
 export const privateRoutes = [
-    { path: '/', component: () => <Navigate to="/projects/get-started" /> },
+    { path: '/', component: RootRedirect },
     { path: '/projects/get-started', component: () => <GettingStartedPage /> },
+    { path: '/projects/:uuid/get-started', component: () => <GettingStartedPage /> },
     { path: '/organization', component: () => <OrganizationPage /> },
     { path: '/projects/:uuid/settings', component: () => <ProjectSettingsPage /> },
     { path: '/projects/:uuid/memos', component: () => <MemosPage /> },

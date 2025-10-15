@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProjectStore } from '@/stores/projectStore'
+import { useOnboardingStore } from '@/stores/onboardingStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +16,7 @@ interface CreateProjectModalProps {
 export const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
     const navigate = useNavigate()
     const createProject = useProjectStore((state) => state.createProject)
+    const resetOnboarding = useOnboardingStore((state) => state.reset)
     const [newProjectName, setNewProjectName] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -28,9 +30,10 @@ export const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps)
         setIsSubmitting(false)
 
         if (newProject) {
+            resetOnboarding()
             onClose()
             setNewProjectName('')
-            navigate('/projects/get-started')
+            navigate(`/projects/${newProject.uuid}/get-started`)
         }
     }
 
