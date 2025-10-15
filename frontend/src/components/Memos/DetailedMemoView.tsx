@@ -16,32 +16,13 @@ import {
     Code,
     Database,
 } from 'lucide-react'
+import { formatDate } from '@/components/utils/dateUtils'
 
 interface DetailedMemoViewProps {
     memo: DetailedMemo
 }
 
 export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
-    const formatDate = (dateString: string) => {
-        if (!dateString) return 'N/A'
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        })
-    }
-
-    const formatDateShort = (dateString: string) => {
-        if (!dateString) return 'N/A'
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        })
-    }
-
     const getStatusBadge = () => {
         if (memo.archived) {
             return (
