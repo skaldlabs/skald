@@ -1,3 +1,29 @@
+import { ChatMessagesList } from './ChatMessagesList'
+import { ChatInput } from './ChatInput'
+import { useProjectStore } from '@/stores/projectStore'
+import { Info } from 'lucide-react'
+import './Playground.scss'
+
 export const PlaygroundDashboard = () => {
-    return <div>Playground Dashboard</div>
+    const { currentProject } = useProjectStore()
+
+    if (!currentProject) {
+        return (
+            <div className="playground-dashboard">
+                <div className="no-project-alert">
+                    <Info className="h-4 w-4" />
+                    <p>Please select a project to start chatting with your data.</p>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="playground-dashboard">
+            <div className="chat-container">
+                <ChatMessagesList />
+                <ChatInput />
+            </div>
+        </div>
+    )
 }
