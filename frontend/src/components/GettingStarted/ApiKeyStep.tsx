@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Eye, EyeOff, Copy, Check, AlertTriangle } from 'lucide-react'
@@ -16,6 +16,7 @@ import '@/components/GettingStarted/GettingStarted.scss'
 
 export const ApiKeyStep = () => {
     const apiKey = useOnboardingStore((state) => state.apiKey)
+    const setApiKey = useOnboardingStore((state) => state.setApiKey)
     const isGeneratingApiKey = useOnboardingStore((state) => state.isGeneratingApiKey)
     const generateApiKey = useOnboardingStore((state) => state.generateApiKey)
     const currentProject = useProjectStore((state) => state.currentProject)
@@ -26,6 +27,12 @@ export const ApiKeyStep = () => {
 
     const hasExistingApiKey = currentProject?.has_api_key && !apiKey
     const existingApiKeyPrefix = currentProject?.api_key_first_12_digits || ''
+
+    useEffect(() => {
+        if (hasExistingApiKey && existingApiKeyPrefix) {
+            setApiKey(existingApiKeyPrefix + '•'.repeat(20))
+        }
+    }, [hasExistingApiKey, existingApiKeyPrefix, setApiKey])
 
     const handleGenerateApiKey = async () => {
         await generateApiKey()
@@ -46,7 +53,7 @@ export const ApiKeyStep = () => {
 
     const displayValue = apiKey ? (isVisible ? apiKey : '•'.repeat(apiKey.length)) : ''
 
-    const isComplete = !!apiKey || hasExistingApiKey
+    const isComplete = !!apiKey
 
     return (
         <>
@@ -56,14 +63,26 @@ export const ApiKeyStep = () => {
                         Add an API Key to your project {isComplete && <Check className="title-check" />}
                     </h2>
                     <p className="step-description">
-                        {apiKey
-                            ? 'Use the following generated key to authenticate requests'
-                            : hasExistingApiKey
-                              ? 'Your project already has an API key. You can regenerate it if needed.'
+                        {apiKey && apiKey.includes('•')
+                            ? 'Your project already has an API key. You can regenerate it if needed.'
+                            : apiKey
+                              ? 'Use the following generated key to authenticate requests'
                               : 'Generate an API key for your project to get started'}
                     </p>
 
-                    {apiKey ? (
+                    {apiKey && apiKey.includes('•') ? (
+                        <div className="api-key-display">
+                            <Input type="text" value={apiKey} readOnly className="api-key-input" />
+                            <Button
+                                variant="outline"
+                                onClick={handleRegenerateClick}
+                                disabled={isGeneratingApiKey}
+                                style={{ marginLeft: '8px' }}
+                            >
+                                Regenerate
+                            </Button>
+                        </div>
+                    ) : apiKey ? (
                         <div className="api-key-display">
                             <Input type="text" value={displayValue} readOnly className="api-key-input" />
                             <Button
@@ -76,23 +95,6 @@ export const ApiKeyStep = () => {
                             </Button>
                             <Button variant="ghost" size="icon" onClick={handleCopy} className="icon-button">
                                 {isCopied ? <Check size={18} /> : <Copy size={18} />}
-                            </Button>
-                        </div>
-                    ) : hasExistingApiKey ? (
-                        <div className="api-key-display">
-                            <Input
-                                type="text"
-                                value={`${existingApiKeyPrefix}${'•'.repeat(40)}`}
-                                readOnly
-                                className="api-key-input"
-                            />
-                            <Button
-                                variant="outline"
-                                onClick={handleRegenerateClick}
-                                disabled={isGeneratingApiKey}
-                                style={{ marginLeft: '8px' }}
-                            >
-                                Regenerate
                             </Button>
                         </div>
                     ) : (

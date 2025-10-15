@@ -47,6 +47,7 @@ interface OnboardingState {
 
     // Actions
     generateApiKey: () => Promise<void>
+    setApiKey: (apiKey: string) => void
     setMemoTitle: (title: string) => void
     setMemoContent: (content: string) => void
     createMemo: () => Promise<void>
@@ -98,6 +99,10 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
 
     setMemoContent: (content: string) => {
         set({ memoContent: content })
+    },
+
+    setApiKey: (apiKey: string) => {
+        set({ apiKey })
     },
 
     createMemo: async () => {

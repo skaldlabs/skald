@@ -7,11 +7,9 @@ import { CodeLanguageTabs } from './CodeLanguageTabs'
 import { CodeBlock } from './CodeBlock'
 import { domain } from '@/lib/api'
 import { useOnboardingStore } from '@/stores/onboardingStore'
-import { useProjectStore } from '@/stores/projectStore'
 import '@/components/GettingStarted/GettingStarted.scss'
 
 export const CreateMemoStep = () => {
-    const currentProject = useProjectStore((state) => state.currentProject)
     const memoTitle = useOnboardingStore((state) => state.memoTitle)
     const memoContent = useOnboardingStore((state) => state.memoContent)
     const apiKey = useOnboardingStore((state) => state.apiKey)
@@ -26,11 +24,7 @@ export const CreateMemoStep = () => {
         const sampleTitle = memoTitle || 'Using Async Functions in JavaScript'
         const sampleContent =
             memoContent ||
-            `async functions simplify working with promises in JavaScript. They allow you to
-write asynchronous code that looks synchronous, using the 'await' keyword. For
-example, 'const data = await fetch(url)' pauses execution until the promise resolves.
-This makes API calls, database queries, and file operations easier to handle in
-modern web apps.`
+            'async functions simplify working with promises in JavaScript. They allow you to write asynchronous code that looks synchronous, using the await keyword. For example, const data = await fetch(url) pauses execution until the promise resolves. This makes API calls, database queries, and file operations easier to handle in modern web apps.'
 
         setMemoTitle(sampleTitle)
         setMemoContent(sampleContent)
@@ -40,8 +34,7 @@ modern web apps.`
   -H 'Content-Type: application/json' \\
   -d '{
   "title": "${sampleTitle}",
-  "content": "${sampleContent}",
-  "project_id": "${currentProject?.uuid || 'your_project_id'}"
+  "content": "${sampleContent}"
 }'`
     }
 
