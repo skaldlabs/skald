@@ -291,6 +291,10 @@
 
                     .chat-send-button {
                         flex-shrink: 0;
+                        min-width: 40px;
+                        width: auto;
+                        padding: 0 12px;
+                        white-space: nowrap;
                     }
                 }
             }

@@ -58,15 +58,16 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     // Initial state
     apiKey: null,
     isGeneratingApiKey: false,
-    memoTitle: '',
-    memoContent: '',
+    memoTitle: 'Using Async Functions in JavaScript',
+    memoContent:
+        'async functions simplify working with promises in JavaScript. They allow you to write asynchronous code that looks synchronous, using the await keyword. For example, const data = await fetch(url) pauses execution until the promise resolves. This makes API calls, database queries, and file operations easier to handle in modern web apps.',
     isCreatingMemo: false,
     memoCreated: false,
-    chatQuery: '',
+    chatQuery: 'What are the benefits of async functions?',
     chatMessages: [],
     isChatting: false,
     hasChatted: false,
-    searchQuery: '',
+    searchQuery: 'Promises vs async/await readability',
     searchResults: [],
     isSearching: false,
     hasSearched: false,
@@ -142,8 +143,6 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
             toast.success('Memo created successfully!')
             set({
                 memoCreated: true,
-                memoTitle: '',
-                memoContent: '',
                 isCreatingMemo: false,
             })
         } catch (error) {

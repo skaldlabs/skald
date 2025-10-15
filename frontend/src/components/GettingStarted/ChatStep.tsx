@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Check } from 'lucide-react'
+import { Check, Send } from 'lucide-react'
 import { CodeLanguageTabs } from './CodeLanguageTabs'
 import { CodeBlock } from './CodeBlock'
 import { domain } from '@/lib/api'
@@ -28,8 +28,7 @@ export const ChatStep = () => {
     }, [chatMessages])
 
     const getCurlCommand = () => {
-        const sampleQuery = chatQuery || 'What are the benefits of async functions?'
-        setChatQuery(sampleQuery)
+        const sampleQuery = chatQuery || ''
 
         return `curl -X POST '${domain}/api/v1/chat/' \\
   -H 'Authorization: Bearer ${apiKey || 'your_api_key'}' \\
@@ -91,7 +90,7 @@ export const ChatStep = () => {
                                 disabled={isDisabled || isChatting || !chatQuery.trim()}
                                 className="chat-send-button"
                             >
-                                {isChatting ? 'Thinking...' : 'Send'}
+                                {isChatting ? 'Thinking...' : <Send />}
                             </Button>
                         </div>
                     </div>

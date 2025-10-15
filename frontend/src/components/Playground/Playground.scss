@@ -312,12 +312,14 @@
 
 .chat-send-button {
     height: 40px;
-    width: 40px;
-    padding: 0;
+    min-width: 40px;
+    width: auto;
+    padding: 0 12px;
     border-radius: 8px;
     background: #111827;
     border: none;
     color: white;
+    white-space: nowrap;
 
     &:hover:not(:disabled) {
         background: #374151;

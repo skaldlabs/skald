@@ -22,8 +22,7 @@ export const SearchMemoStep = () => {
     const searchMethod = 'chunk_vector_search'
 
     const getCurlCommand = () => {
-        const sampleQuery = searchQuery || 'Promises vs async/await readability'
-        setSearchQuery(sampleQuery)
+        const sampleQuery = searchQuery || ''
 
         return `curl -X POST '${domain}/api/v1/search/' \\
   -H 'Authorization: Bearer ${apiKey || 'your_api_key'}' \\

@@ -21,13 +21,8 @@ export const CreateMemoStep = () => {
     const [activeTab, setActiveTab] = useState('curl')
 
     const getCurlCommand = () => {
-        const sampleTitle = memoTitle || 'Using Async Functions in JavaScript'
-        const sampleContent =
-            memoContent ||
-            'async functions simplify working with promises in JavaScript. They allow you to write asynchronous code that looks synchronous, using the await keyword. For example, const data = await fetch(url) pauses execution until the promise resolves. This makes API calls, database queries, and file operations easier to handle in modern web apps.'
-
-        setMemoTitle(sampleTitle)
-        setMemoContent(sampleContent)
+        const sampleTitle = memoTitle || ''
+        const sampleContent = memoContent || ''
 
         return `curl -X POST '${domain}/api/v1/memo/' \\
   -H 'Authorization: Bearer ${apiKey || 'your_api_key'}' \\
