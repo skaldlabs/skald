@@ -239,7 +239,12 @@ def get_project_for_request(
         return user.project, None
     else:
         # For regular user authentication
-        project_id = request.data.get("project_id")
+        # Prefer project_id from request.data for POST/body requests, otherwise fallback to query params
+        project_id = (
+            request.data.get("project_id") if hasattr(request, "data") else None
+        )
+        if not project_id:
+            project_id = request.query_params.get("project_id")
         try:
             project = Project.objects.get(uuid=project_id)
         except Project.DoesNotExist:
