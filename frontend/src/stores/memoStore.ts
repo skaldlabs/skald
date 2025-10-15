@@ -131,6 +131,15 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             throw new Error('No project selected')
         }
 
+        const currentMemos = get().memos
+        const memoToDelete = currentMemos.find((m) => m.uuid === memoUuid)
+        const updatedMemos = currentMemos.filter((m) => m.uuid !== memoUuid)
+
+        set({
+            memos: updatedMemos,
+            totalCount: Math.max(0, get().totalCount - 1),
+        })
+
         try {
             const body = {
                 project_id: currentProject.uuid,
@@ -138,6 +147,12 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             const response = await api.delete(`/v1/memo/${memoUuid}/`, { data: body })
 
             if (response.error) {
+                if (memoToDelete) {
+                    set({
+                        memos: currentMemos,
+                        totalCount: get().totalCount + 1,
+                    })
+                }
                 toast.error(`Failed to delete memo: ${response.error}`)
                 return false
             }
@@ -145,6 +160,12 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             toast.success('Memo deleted successfully')
             return true
         } catch (error) {
+            if (memoToDelete) {
+                set({
+                    memos: currentMemos,
+                    totalCount: get().totalCount + 1,
+                })
+            }
             const errorMsg = error instanceof Error ? error.message : 'Failed to delete memo'
             toast.error(`Failed to delete memo: ${errorMsg}`)
             return false
