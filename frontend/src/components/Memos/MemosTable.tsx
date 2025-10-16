@@ -55,7 +55,7 @@ export const MemosTable = ({ memos, loading, searchQuery, onViewMemo, onDeleteMe
                 <TableHeader>
                     <TableRow>
                         <TableHead className="w-[30%]">Title</TableHead>
-                        <TableHead className="w-[40%]">Summary</TableHead>
+                        <TableHead className="w-[35%]">Summary</TableHead>
                         <TableHead className="w-[10%]">Length</TableHead>
                         <TableHead className="w-[12%]">Created</TableHead>
                         <TableHead className="w-[8%] text-right">Actions</TableHead>
