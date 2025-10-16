@@ -13,34 +13,6 @@ VECTOR_SEARCH_TOP_K = 100
 POST_RERANK_TOP_K = 50
 
 
-async def _process_rerank_batch_async(
-    vc: voyageai.Client, query: str, batch: List[str]
-) -> List[Dict[str, Any]]:
-    """
-    Process a single rerank batch asynchronously.
-
-    Args:
-        vc: Voyage AI client instance
-        query: The search query
-        batch: List of documents to rerank
-
-    Returns:
-        List of reranked results for this batch
-    """
-    # Run the synchronous rerank call in a thread pool to avoid blocking
-    loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(
-        None,
-        lambda: vc.rerank(
-            query=query,
-            documents=batch,
-            model=DEFAULT_VOYAGE_RERANK_MODEL,
-            top_k=min(100, len(batch)),
-        ),
-    )
-    return result
-
-
 def _chunk_vector_search(query: str, project: Project) -> List[Dict[str, Any]]:
     # Wrap synchronous database operations with sync_to_async
     from skald.models.memo import MemoSummary

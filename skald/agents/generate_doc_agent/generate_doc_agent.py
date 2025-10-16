@@ -5,11 +5,11 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
-from skald.agents.chat_agent.prompts import CHAT_AGENT_INSTRUCTIONS
+from skald.agents.generate_doc_agent.prompts import GENERATE_DOC_AGENT_INSTRUCTIONS
 from skald.agents.streaming import AsyncStreamingCallbackHandler
 
 
-def create_chat_agent(streaming: bool = False, callback_handler=None):
+def create_generate_doc_agent(streaming: bool = False, callback_handler=None):
 
     # Initialize the LLM with optional streaming
     llm_kwargs = {"model": "gpt-4o-mini", "temperature": 0, "streaming": streaming}
@@ -19,15 +19,11 @@ def create_chat_agent(streaming: bool = False, callback_handler=None):
 
     llm = ChatOpenAI(**llm_kwargs)
 
-    # Define the tools
-    # tools = [greet, get_current_time]
-
-    # Create the prompt template
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", CHAT_AGENT_INSTRUCTIONS),
+            ("system", GENERATE_DOC_AGENT_INSTRUCTIONS),
             MessagesPlaceholder(variable_name="chat_history", optional=True),
-            ("human", "{input}"),
+            ("human", "{input}\n\nContext:\n{context}\n\nRules:\n{rules}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ]
     )
@@ -43,44 +39,49 @@ def create_chat_agent(streaming: bool = False, callback_handler=None):
     return agent_executor
 
 
-def run_chat_agent(query: str, context: str = "") -> dict:
+def run_generate_doc_agent(prompt: str, context: str = "", rules: str = "") -> dict:
     """
-    Run the chat agent with a given query and context.
+    Run the chat agent with a given document generation request and context.
 
     Args:
-        query: The user's question or message
+        prompt: The user's document generation request
         context: The context information to use for answering
 
     Returns:
         dict: The agent's response including output and intermediate steps
     """
-    agent_executor = create_chat_agent()
+    agent_executor = create_generate_doc_agent()
 
-    result = agent_executor.invoke({"input": query, "context": context})
+    result = agent_executor.invoke(
+        {"input": prompt, "context": context, "rules": rules}
+    )
 
     return result
 
 
-async def async_stream_chat_agent(
-    query: str, context: str = ""
+async def async_stream_generate_doc_agent(
+    prompt: str, context: str = "", rules: str = ""
 ) -> AsyncIterator[Dict[str, Any]]:
     """
-    Async stream the chat agent response with a given query.
+    Async stream the chat agent response with a given document generation request.
 
     Args:
-        query: The user's question or message
+        prompt: The user's document generation request
         context: The context information to use for answering
+        rules: The rules to use for generating the document
 
     Yields:
         dict: Streaming chunks of the agent's response
     """
     callback_handler = AsyncStreamingCallbackHandler()
-    agent_executor = create_chat_agent(
+    agent_executor = create_generate_doc_agent(
         streaming=True, callback_handler=callback_handler
     )
 
     # Create task for agent execution
-    agent_task = asyncio.create_task(_run_agent_async(agent_executor, query, context))
+    agent_task = asyncio.create_task(
+        _run_agent_async(agent_executor, prompt, context, rules)
+    )
 
     # Stream events as they arrive
     while True:
@@ -115,18 +116,24 @@ async def async_stream_chat_agent(
         yield {"type": "error", "content": str(e)}
 
 
-async def _run_agent_async(agent_executor, query: str, context: str = ""):
+async def _run_agent_async(
+    agent_executor, prompt: str, context: str = "", rules: str = ""
+):
     """Helper to run agent asynchronously."""
-    result = await agent_executor.ainvoke({"input": query, "context": context})
+    result = await agent_executor.ainvoke(
+        {"input": prompt, "context": context, "rules": rules}
+    )
     return result
 
 
-def stream_chat_agent(query: str, context: str = "") -> Iterator[Dict[str, Any]]:
+def stream_generate_doc_agent(
+    prompt: str, context: str = "", rules: str = ""
+) -> Iterator[Dict[str, Any]]:
     """
-    Stream the chat agent response with a given query (sync wrapper).
+    Stream the generate doc agent response with a given document generation request (sync wrapper).
 
     Args:
-        query: The user's question or message
+        prompt: The user's document generation request
         context: The context information to use for answering
 
     Yields:
@@ -137,7 +144,7 @@ def stream_chat_agent(query: str, context: str = "") -> Iterator[Dict[str, Any]]
     asyncio.set_event_loop(loop)
 
     try:
-        async_gen = async_stream_chat_agent(query, context)
+        async_gen = async_stream_generate_doc_agent(prompt, context, rules)
 
         while True:
             try:

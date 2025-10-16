@@ -5,8 +5,11 @@ from rest_framework import status, views
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework.response import Response
 
-from skald.agents.chat_agent.chat_agent import run_chat_agent, stream_chat_agent
 from skald.agents.chat_agent.preprocessing import prepare_context_for_chat_agent
+from skald.agents.generate_doc_agent.generate_doc_agent import (
+    run_generate_doc_agent,
+    stream_generate_doc_agent,
+)
 from skald.api.permissions import (
     IsAuthenticatedOrAuthDisabled,
     ProjectAPIKeyAuthentication,
@@ -14,7 +17,7 @@ from skald.api.permissions import (
 )
 
 
-class ChatView(views.APIView):
+class GenerateDocView(views.APIView):
     authentication_classes = [
         TokenAuthentication,
         BasicAuthentication,
@@ -39,15 +42,16 @@ class ChatView(views.APIView):
                 {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        query = request.data.get("query")
+        prompt = request.data.get("prompt")
+        rules = request.data.get("rules", None)
         stream = request.data.get("stream", False)
 
-        if not query:
+        if not prompt:
             return Response(
-                {"error": "Query is required"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Prompt is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        reranked_results = prepare_context_for_chat_agent(query, project)
+        reranked_results = prepare_context_for_chat_agent(prompt, project)
         context_str = ""
         for i, result in enumerate(reranked_results):
             context_str += f"Result {i+1}: {result.document}\n\n"
@@ -62,7 +66,9 @@ class ChatView(views.APIView):
                     yield f": ping\n\n"
 
                     try:
-                        for chunk in stream_chat_agent(query, context_str):
+                        for chunk in stream_generate_doc_agent(
+                            prompt, context_str, rules or ""
+                        ):
                             # Format as Server-Sent Event
                             data = json.dumps(chunk)
                             yield f"data: {data}\n\n"
@@ -88,7 +94,7 @@ class ChatView(views.APIView):
                 return response
             else:
                 # Non-streaming response
-                result = run_chat_agent(query, context_str)
+                result = run_generate_doc_agent(prompt, context_str, rules or "")
 
                 return Response(
                     {

@@ -10,6 +10,7 @@ from skald.api.organization_api import OrganizationViewSet
 from skald.api.project_api import ProjectViewSet
 
 from .api.chat_api import ChatView
+from .api.generate_doc_api import GenerateDocView
 from .api.health_api import HealthView
 from .api.memo_api import MemoViewSet
 from .api.search_api import SearchView
@@ -54,6 +55,8 @@ urlpatterns = [
     path("api/v1/search/", SearchView.as_view(), name="search"),
     path("api/v1/chat", ChatView.as_view(), name="chat"),
     path("api/v1/chat/", ChatView.as_view(), name="chat"),
+    path("api/v1/generate", GenerateDocView.as_view(), name="generate_doc"),
+    path("api/v1/generate/", GenerateDocView.as_view(), name="generate_doc"),
     *router.urls,
 ] + staticfiles_urlpatterns()
 
