@@ -178,8 +178,12 @@ class ProjectAPIUser(AbstractUser):
 
 **Authenticated Endpoints**:
 - `POST /api/v1/memo/` - Create memo
+- `GET /api/v1/memo/` - List memos
+- `GET /api/v1/memo/{uuid}/` - Get memo details
+- `DELETE /api/v1/memo/{uuid}/` - Delete memo
 - `POST /api/v1/search/` - Search memos
 - `POST /api/v1/chat/` - Chat with knowledge base
+- `POST /api/v1/generate/` - Generate documents
 
 **Dual Authentication Support**:
 All project-scoped endpoints support both authentication methods:
@@ -629,6 +633,63 @@ data: {"type": "done"}
 2. Context preparation via vector search + reranking
 3. Context passed to chat agent with query
 4. Response generated (streamed or complete)
+
+### Generate Document API
+
+**Authentication**: Project API Key (Bearer token)
+
+Document generation endpoint using memo context with optional formatting rules.
+
+#### Generate (Non-Streaming)
+```
+POST /api/v1/generate/
+Authorization: Bearer sk_proj_...
+Content-Type: application/json
+
+{
+  "prompt": "Create a technical specification document",
+  "rules": "Use formal language. Include sections for Overview, Architecture, and Implementation",
+  "stream": false
+}
+```
+
+**Response**:
+```json
+{
+  "ok": true,
+  "response": "# Technical Specification\n\n## Overview\n...",
+  "intermediate_steps": []
+}
+```
+
+#### Generate (Streaming)
+```
+POST /api/v1/generate/
+Authorization: Bearer sk_proj_...
+Content-Type: application/json
+
+{
+  "prompt": "Create a technical specification document",
+  "rules": "Use formal language. Include sections for Overview, Architecture, and Implementation",
+  "stream": true
+}
+```
+
+**Response**: Server-Sent Events (SSE) stream
+```
+data: {"type": "token", "content": "#"}
+data: {"type": "token", "content": " Technical"}
+...
+data: {"type": "done"}
+```
+
+**Implementation**: `skald/api/generate_doc_api.py:20-112`
+
+**Processing Flow**:
+1. Prompt and optional rules received
+2. Context preparation via vector search + reranking (same as chat)
+3. Context passed to generation agent with prompt and rules
+4. Structured document generated (streamed or complete)
 
 ### Health Check
 

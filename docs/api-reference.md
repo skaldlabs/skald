@@ -13,6 +13,7 @@ Complete API reference for Skald 2.0. All endpoints return JSON unless otherwise
 - [Memo Management](#memo-management)
 - [Search](#search)
 - [Chat](#chat)
+- [Generate Document](#generate-document)
 
 ---
 
@@ -753,25 +754,35 @@ All memo endpoints support both authentication methods:
 
 ### GET /api/v1/memo
 
-List all memos in the project.
+List all memos in the project (paginated).
 
 **Authentication:** Project API Key or Token (required)
+
+**Query Parameters:**
+
+- `page` (integer, optional): Page number (default: 1)
+- `page_size` (integer, optional): Number of results per page (default: 20, max: 100)
 
 **Response:**
 
 ```json
-[
-    {
-        "id": 1,
-        "created_at": "2024-01-15T10:30:00Z",
-        "updated_at": "2024-01-15T10:30:00Z",
-        "title": "Meeting Notes",
-        "summary": "Discussion about Q1 goals",
-        "content_length": 1234,
-        "metadata": { "type": "notes" },
-        "client_reference_id": "external-id-123"
-    }
-]
+{
+    "count": 45,
+    "next": "http://api.example.com/api/v1/memo?page=2",
+    "previous": null,
+    "results": [
+        {
+            "uuid": "memo-uuid",
+            "created_at": "2024-01-15T10:30:00Z",
+            "updated_at": "2024-01-15T10:30:00Z",
+            "title": "Meeting Notes",
+            "summary": "Discussion about Q1 goals",
+            "content_length": 1234,
+            "metadata": { "type": "notes" },
+            "client_reference_id": "external-id-123"
+        }
+    ]
+}
 ```
 
 ### POST /api/v1/memo
@@ -847,14 +858,59 @@ Get memo details.
 
 ```json
 {
-    "id": 1,
+    "uuid": "memo-uuid",
     "created_at": "2024-01-15T10:30:00Z",
     "updated_at": "2024-01-15T10:30:00Z",
     "title": "Meeting Notes",
+    "content": "Full content of the memo...",
     "summary": "Discussion about Q1 goals",
     "content_length": 1234,
     "metadata": { "type": "notes" },
-    "client_reference_id": "external-id-123"
+    "client_reference_id": "external-id-123",
+    "source": "notion",
+    "type": "document",
+    "expiration_date": "2024-12-31T23:59:59Z",
+    "archived": false,
+    "pending": false,
+    "tags": [
+        {
+            "uuid": "tag-uuid",
+            "tag": "meeting"
+        }
+    ],
+    "chunks": [
+        {
+            "uuid": "chunk-uuid",
+            "chunk_content": "First chunk content...",
+            "chunk_index": 0
+        }
+    ]
+}
+```
+
+### DELETE /api/v1/memo/{memo_id}
+
+Delete a memo and all its associated data (content, summary, tags, chunks).
+
+**Authentication:** Project API Key or Token (required)
+
+**Response:** `204 No Content`
+
+**Error Responses:**
+
+Project not found (404):
+
+```json
+{
+    "error": "Project not found"
+}
+```
+
+Memo belongs to different project (403):
+
+```json
+{
+    "error": "Memo does not belong to the project"
 }
 ```
 
@@ -1089,6 +1145,102 @@ Agent error (500):
 **Citation Format:**
 
 Responses include inline citations in the format `[[N]]` where N is the result number from the retrieved context.
+
+---
+
+## Generate Document
+
+### POST /api/v1/generate
+
+Generate documents based on prompts and retrieved context from the knowledge base. Similar to chat but optimized for document generation with optional style/format rules.
+
+**Authentication:** Project API Key or Token (required)
+
+**Request (using Project API Key):**
+
+```json
+{
+    "prompt": "Create a product requirements document for a new mobile app",
+    "rules": "Use formal business language. Include sections for: Overview, Requirements, Technical Specifications, Timeline",
+    "stream": false
+}
+```
+
+**Request (using Token Authentication):**
+
+```json
+{
+    "prompt": "Create a product requirements document for a new mobile app",
+    "project_id": "project-uuid",
+    "rules": "Use formal business language. Include sections for: Overview, Requirements, Technical Specifications, Timeline",
+    "stream": false
+}
+```
+
+**Parameters:**
+
+- `prompt` (string, required): Description of what document to generate
+- `rules` (string, optional): Style guidelines, format requirements, or structural rules for the generated document
+- `project_id` (UUID, optional): **Only required when using Token Authentication**
+- `stream` (boolean, optional): Enable streaming responses (default: false)
+
+**Response (Non-streaming):**
+
+```json
+{
+    "ok": true,
+    "response": "# Product Requirements Document\n\n## Overview\nBased on the context from your knowledge base...",
+    "intermediate_steps": []
+}
+```
+
+**Response (Streaming):**
+
+When `stream: true`, returns Server-Sent Events:
+
+```
+Content-Type: text/event-stream
+
+: ping
+
+data: {"type": "token", "content": "#"}
+
+data: {"type": "token", "content": " Product"}
+
+data: {"type": "done"}
+```
+
+**Error Responses:**
+
+Missing prompt (400):
+
+```json
+{
+    "error": "Prompt is required"
+}
+```
+
+Agent error (500):
+
+```json
+{
+    "error": "Agent error: <error details>"
+}
+```
+
+**Use Cases:**
+
+- Generate documentation from existing knowledge
+- Create reports based on stored information
+- Compile research summaries with specific formatting
+- Generate technical specifications with style constraints
+
+**How It Works:**
+
+1. System retrieves relevant context from knowledge base based on prompt
+2. Context is combined with prompt and optional rules
+3. AI agent generates structured document
+4. Response includes citations to source memos
 
 ---
 
