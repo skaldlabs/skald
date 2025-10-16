@@ -1,7 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers, status, viewsets
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
-from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -9,8 +8,12 @@ from skald.api.permissions import (
     IsAuthenticatedOrAuthDisabled,
     ProjectAPIKeyAuthentication,
     get_project_for_request,
+    verify_user_can_access_project_resource,
 )
-from skald.flows.process_memo.process_memo import create_new_memo
+from skald.flows.process_memo.process_memo import (
+    create_new_memo,
+    send_memo_for_async_processing,
+)
 from skald.models.memo import (
     Memo,
     MemoChunk,
@@ -18,6 +21,17 @@ from skald.models.memo import (
     MemoSummary,
     MemoTag,
 )
+
+
+class UpdateMemoRequestSerializer(serializers.Serializer):
+    title = serializers.CharField(required=False, allow_null=True, max_length=255)
+    metadata = serializers.JSONField(required=False, allow_null=True)
+    client_reference_id = serializers.CharField(
+        required=False, allow_null=True, max_length=255
+    )
+    source = serializers.CharField(required=False, allow_null=True, max_length=255)
+    expiration_date = serializers.DateTimeField(required=False, allow_null=True)
+    content = serializers.CharField(required=False, allow_null=True)
 
 
 class CreateMemoRequestSerializer(serializers.Serializer):
@@ -140,26 +154,21 @@ class MemoViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, pk=None):
         user = getattr(request, "user", None)
-        project, error_response = get_project_for_request(user, request)
-
-        if project is None or error_response:
-            if error_response:
-                return error_response
-            else:
-                return Response(
-                    {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
-                )
 
         try:
             memo = (
                 Memo.objects.select_related()
                 .prefetch_related("memotag_set", "memochunk_set")
-                .get(uuid=pk, project=project)
+                .get(uuid=pk)
             )
         except Memo.DoesNotExist:
             return Response(
                 {"error": "Memo not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+        error_response = verify_user_can_access_project_resource(user, memo.project)
+        if error_response:
+            return error_response
 
         serializer = DetailedMemoSerializer(memo)
         return Response(serializer.data)
@@ -177,47 +186,63 @@ class MemoViewSet(viewsets.ModelViewSet):
         serializer = CreateMemoRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
-        created_memo = create_new_memo(validated_data, project)
+        create_new_memo(validated_data, project)
         return Response({"ok": True}, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        user = getattr(request, "user", None)
+        pk = kwargs.get("pk")
+
+        try:
+            memo = Memo.objects.get(uuid=pk)
+        except Memo.DoesNotExist:
+            return Response(
+                {"error": "Memo not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        error_response = verify_user_can_access_project_resource(user, memo.project)
+        if error_response:
+            return error_response
+
+        serializer = UpdateMemoRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        validated_data = serializer.validated_data
+        content_updated = False
+
+        with transaction.atomic():
+            for field, value in validated_data.items():
+                if field == "content":
+                    content_updated = True
+                    MemoContent.objects.filter(memo=memo).update(content=value)
+                    MemoSummary.objects.filter(memo=memo).delete()
+                    MemoTag.objects.filter(memo=memo).delete()
+                    MemoChunk.objects.filter(memo=memo).delete()
+                else:
+                    setattr(memo, field, value)
+
+            memo.save()
+
+        if content_updated:
+            send_memo_for_async_processing(memo)
+
+        return Response({"ok": True}, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         user = getattr(request, "user", None)
-        project, error_response = get_project_for_request(user, request)
+        pk = kwargs.get("pk")
 
-        if project is None or error_response:
-            if error_response:
-                return error_response
-            else:
-                return Response(
-                    {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
-                )
-        memo = self.get_object()
-        if memo.project.uuid != project.uuid:
+        try:
+            memo = Memo.objects.get(uuid=pk)
+        except Memo.DoesNotExist:
             return Response(
-                {"error": "Memo does not belong to the project"},
-                status=status.HTTP_403_FORBIDDEN,
+                {"error": "Memo not found"}, status=status.HTTP_404_NOT_FOUND
             )
-        with transaction.atomic():
-            MemoContent.objects.filter(memo=memo).delete()
-            MemoSummary.objects.filter(memo=memo).delete()
-            MemoTag.objects.filter(memo=memo).delete()
-            MemoChunk.objects.filter(memo=memo).delete()
-            memo.delete()
+
+        error_response = verify_user_can_access_project_resource(user, memo.project)
+        if error_response:
+            return error_response
+
+        memo.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=False, methods=["post"])
-    def push(self, request):
-        return Response({"ok": True}, status=status.HTTP_201_CREATED)
-
-    @action(detail=False, methods=["post"])
-    def push_memo_content(self, request):
-        return Response({"ok": True}, status=status.HTTP_201_CREATED)
-
-    @action(detail=False, methods=["post"])
-    def push_memo_tag(self, request):
-        return Response({"ok": True}, status=status.HTTP_201_CREATED)
-
-    @action(detail=False, methods=["post"])
-    def push_memo_relationship(self, request):
-        return Response({"ok": True}, status=status.HTTP_201_CREATED)

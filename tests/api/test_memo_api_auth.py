@@ -76,15 +76,15 @@ class TestMemoAPIAuthentication:
 
         assert response.status_code == status.HTTP_201_CREATED
 
-    def test_api_key_cannot_access_different_project(
+    def test_api_key_ignores_project_id_in_request(
         self, project_api_key, other_project
     ) -> None:
-        """Test that a project API key cannot access a different project."""
+        """Test that a project API key ignores project_id in request and uses its own project."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Bearer {project_api_key}")
         url = reverse("memo-list")
 
-        # Try to create a memo in a different project
+        # Send a different project_id - it should be ignored
         data = {
             "title": "Test Memo",
             "content": "Test content",
@@ -94,5 +94,5 @@ class TestMemoAPIAuthentication:
 
         response = client.post(url, data, format="json")
 
-        # Should fail because the API key is for a different project
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        # Should succeed because the API key determines the project, not the request parameter
+        assert response.status_code == status.HTTP_201_CREATED

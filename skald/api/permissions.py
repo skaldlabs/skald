@@ -200,6 +200,37 @@ def is_user_org_member(user, organization):
     ).exists()
 
 
+def verify_user_can_access_project_resource(
+    user, resource_project
+) -> Optional[Response]:
+    """
+    Verify that a user can access a resource that belongs to a specific project.
+
+    For ProjectAPIUser (API key auth): Verifies the resource's project matches the API key's project.
+    For regular users: Verifies the user is a member of the project's organization.
+
+    Args:
+        user: The requesting user (can be ProjectAPIUser or regular User)
+        resource_project: The Project instance that the resource belongs to
+
+    Returns:
+        None if access is allowed, otherwise a Response with error details
+    """
+    if isinstance(user, ProjectAPIUser):
+        if resource_project.uuid != user.project.uuid:
+            return Response(
+                {"error": "Resource does not belong to the project"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    else:
+        if not is_user_org_member(user, resource_project.organization):
+            return Response(
+                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+    return None
+
+
 def get_project_for_request(
     user, request
 ) -> Tuple[Optional[Project], Optional[Response]]:
@@ -230,7 +261,8 @@ def get_project_for_request(
 
     # Check if this is a ProjectAPIUser (authenticated via API key)
     if isinstance(user, ProjectAPIUser):
-        # For API key auth, the project is already attached to the user
+        # For API key auth, the project is determined exclusively by the API key
+        # Ignore any project_id in the request
         if user.project is None:
             return None, Response(
                 {"error": "Project not found"}, status=status.HTTP_400_BAD_REQUEST

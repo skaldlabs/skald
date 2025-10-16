@@ -78,12 +78,16 @@ def _publish_to_sqs(memo_uuid: str) -> None:
     logger.info(f"Published memo {memo_uuid} to SQS queue: {response['MessageId']}")
 
 
-def create_new_memo(memo_data: MemoData, project: Project) -> Memo:
-    memo = _create_memo_object(memo_data, project)
-
+def send_memo_for_async_processing(memo: Memo) -> None:
     if USE_SQS:
         _publish_to_sqs(memo.uuid)
     else:
         _publish_to_redis(memo.uuid)
+
+
+def create_new_memo(memo_data: MemoData, project: Project) -> Memo:
+    memo = _create_memo_object(memo_data, project)
+
+    send_memo_for_async_processing(memo)
 
     return memo

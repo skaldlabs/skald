@@ -888,6 +888,74 @@ Get memo details.
 }
 ```
 
+### PUT /api/v1/memo/{memo_id}
+
+Update an existing memo. If the content is updated, all related data (summary, tags, chunks) will be deleted and the memo will be reprocessed.
+
+**Authentication:** Project API Key or Token (required)
+
+**Request:**
+
+```json
+{
+    "title": "Updated Title",
+    "metadata": { "type": "updated" },
+    "client_reference_id": "new-ref-id",
+    "source": "updated-source",
+    "expiration_date": "2025-12-31T23:59:59Z",
+    "content": "Updated content..."
+}
+```
+
+**All Fields Optional:**
+
+- `title` (string, max 255 chars): Update the memo title
+- `metadata` (object): Update custom JSON metadata
+- `client_reference_id` (string, max 255 chars): Update external reference ID
+- `source` (string, max 255 chars): Update source system name
+- `expiration_date` (datetime): Update expiration date
+- `content` (string): Update the memo content (triggers reprocessing)
+
+**Response:**
+
+```json
+{
+    "ok": true
+}
+```
+
+**Notes:**
+
+- When `content` is updated, the memo is automatically reprocessed (summary, tags, and chunks are regenerated)
+- When other fields are updated without `content`, related data is preserved
+- No authorization checks are needed for `project_id` - access is verified through memo ownership
+
+**Error Responses:**
+
+Memo not found (404):
+
+```json
+{
+    "error": "Memo not found"
+}
+```
+
+Access denied (403):
+
+```json
+{
+    "error": "Resource does not belong to the project"
+}
+```
+
+or
+
+```json
+{
+    "error": "Access denied"
+}
+```
+
 ### DELETE /api/v1/memo/{memo_id}
 
 Delete a memo and all its associated data (content, summary, tags, chunks).
@@ -898,19 +966,27 @@ Delete a memo and all its associated data (content, summary, tags, chunks).
 
 **Error Responses:**
 
-Project not found (404):
+Memo not found (404):
 
 ```json
 {
-    "error": "Project not found"
+    "error": "Memo not found"
 }
 ```
 
-Memo belongs to different project (403):
+Access denied (403):
 
 ```json
 {
-    "error": "Memo does not belong to the project"
+    "error": "Resource does not belong to the project"
+}
+```
+
+or
+
+```json
+{
+    "error": "Access denied"
 }
 ```
 
@@ -1134,14 +1210,6 @@ Missing query (400):
 }
 ```
 
-Agent error (500):
-
-```json
-{
-    "error": "Agent error: <error details>"
-}
-```
-
 **Citation Format:**
 
 Responses include inline citations in the format `[[N]]` where N is the result number from the retrieved context.
@@ -1220,14 +1288,6 @@ Missing prompt (400):
 }
 ```
 
-Agent error (500):
-
-```json
-{
-    "error": "Agent error: <error details>"
-}
-```
-
 **Use Cases:**
 
 - Generate documentation from existing knowledge
@@ -1261,14 +1321,6 @@ User does not have permission to access the resource.
 ### 404 Not Found
 
 Resource not found.
-
-### 500 Internal Server Error
-
-Server-side error occurred.
-
-### 503 Service Unavailable
-
-External service (e.g., email) temporarily unavailable.
 
 ---
 
