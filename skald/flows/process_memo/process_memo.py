@@ -7,7 +7,7 @@ from typing import NotRequired, TypedDict
 import redis
 from django.db import transaction
 
-from skald.models.memo import Memo, MemoContent
+from skald.models.memo import Memo, MemoContent, MemoTag
 from skald.models.project import Project
 from skald.settings import (
     AWS_REGION,
@@ -57,6 +57,12 @@ def _create_memo_object(memo: MemoData, project: Project) -> Memo:
             content=memo["content"],
             project=project,
         )
+        for tag in memo.get("tags", []):
+            MemoTag.objects.create(
+                memo=memo_object,
+                tag=tag,
+                project=project,
+            )
     return memo_object
 
 
