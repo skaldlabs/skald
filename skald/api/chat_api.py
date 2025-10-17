@@ -12,6 +12,7 @@ from skald.api.permissions import (
     ProjectAPIKeyAuthentication,
     get_project_for_request,
 )
+from skald.utils.filter_utils import parse_filter
 
 
 class ChatView(views.APIView):
@@ -41,13 +42,30 @@ class ChatView(views.APIView):
 
         query = request.data.get("query")
         stream = request.data.get("stream", False)
+        filters = request.data.get("filters", [])
 
         if not query:
             return Response(
                 {"error": "Query is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        reranked_results = prepare_context_for_chat_agent(query, project)
+        if not isinstance(filters, list):
+            return Response(
+                {"error": "Filters must be a list"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        memo_filters = []
+        for filter in filters:
+            memo_filter, error = parse_filter(filter)
+            if memo_filter is not None:
+                memo_filters.append(memo_filter)
+            else:
+                return Response(
+                    {"error": f"Invalid filter: {error}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        reranked_results = prepare_context_for_chat_agent(query, project, memo_filters)
         context_str = ""
         for i, result in enumerate(reranked_results):
             context_str += f"Result {i+1}: {result.document}\n\n"
