@@ -126,6 +126,10 @@ export const useMemoStore = create<MemoState>((set, get) => ({
     },
 
     deleteMemo: async (memoUuid: string) => {
+        const currentProject = useProjectStore.getState().currentProject
+        if (!currentProject) {
+            throw new Error('No project selected')
+        }
         const currentMemos = get().memos
         const memoToDelete = currentMemos.find((m) => m.uuid === memoUuid)
         const updatedMemos = currentMemos.filter((m) => m.uuid !== memoUuid)
@@ -136,7 +140,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
         })
 
         try {
-            const response = await api.delete(`/v1/memo/${memoUuid}/`)
+            const response = await api.delete(`/v1/memo/${memoUuid}/?project_id=${currentProject.uuid}`)
 
             if (response.error) {
                 if (memoToDelete) {
