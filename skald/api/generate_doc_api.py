@@ -15,6 +15,7 @@ from skald.api.permissions import (
     ProjectAPIKeyAuthentication,
     get_project_for_request,
 )
+from skald.utils.filter_utils import parse_filter
 
 
 class GenerateDocView(views.APIView):
@@ -45,13 +46,25 @@ class GenerateDocView(views.APIView):
         prompt = request.data.get("prompt")
         rules = request.data.get("rules", None)
         stream = request.data.get("stream", False)
+        filters = request.data.get("filters", [])
 
         if not prompt:
             return Response(
                 {"error": "Prompt is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        reranked_results = prepare_context_for_chat_agent(prompt, project)
+        memo_filters = []
+        for filter in filters:
+            memo_filter, error = parse_filter(filter)
+            if memo_filter is not None:
+                memo_filters.append(memo_filter)
+            else:
+                return Response(
+                    {"error": f"Invalid filter: {error}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        reranked_results = prepare_context_for_chat_agent(prompt, project, memo_filters)
         context_str = ""
         for i, result in enumerate(reranked_results):
             context_str += f"Result {i+1}: {result.document}\n\n"

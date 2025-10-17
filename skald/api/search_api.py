@@ -12,10 +12,10 @@ from skald.api.permissions import (
 from skald.embeddings.generate_embedding import generate_vector_embedding_for_search
 from skald.embeddings.vector_search import (
     memo_chunk_vector_search,
-    memo_summary_vector_search,
 )
 from skald.models.memo import Memo
 from skald.models.project import Project
+from skald.utils.filter_utils import MemoFilter, filter_queryset, parse_filter
 
 
 class SearchResultSerializer(serializers.Serializer):
@@ -29,7 +29,6 @@ class SearchResultSerializer(serializers.Serializer):
 SUPPORTED_SEARCH_METHODS = [
     "title_contains",
     "title_startswith",
-    "summary_vector_search",
     "chunk_vector_search",
 ]
 
@@ -61,7 +60,7 @@ class SearchView(ProjectAPIKeyAuthentication, views.APIView):
         query = request.data.get("query")
         search_method = request.data.get("search_method")
         limit = request.data.get("limit", 10)
-        tags = request.data.get("tags", None)
+        filters = request.data.get("filters", [])
 
         if not query:
             return Response(
@@ -76,6 +75,17 @@ class SearchView(ProjectAPIKeyAuthentication, views.APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        memo_filters = []
+        for filter in filters:
+            memo_filter, error = parse_filter(filter)
+            if memo_filter is not None:
+                memo_filters.append(memo_filter)
+            else:
+                return Response(
+                    {"error": f"Invalid filter: {error}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         if limit > 50:
             return Response(
                 {"error": "Limit must be less than or equal to 50"},
@@ -83,51 +93,32 @@ class SearchView(ProjectAPIKeyAuthentication, views.APIView):
             )
 
         search_method_to_function = {
-            "summary_vector_search": _summary_vector_search,
             "chunk_vector_search": _chunk_vector_search,
             "title_contains": _title_contains_search,
             "title_startswith": _title_startswith_search,
         }
 
-        results = search_method_to_function[search_method](project, query, limit, tags)
+        results = search_method_to_function[search_method](
+            project, query, limit, memo_filters
+        )
         return Response({"results": results}, status=status.HTTP_200_OK)
 
 
-def _summary_vector_search(
-    project: Project, query: str, limit: int, tags: list[str] = None
-):
-    embedding_vector = generate_vector_embedding_for_search(query)
-    memo_summary_results = memo_summary_vector_search(
-        project, embedding_vector, limit, tags=tags
-    )
-    results = []
-    for res in memo_summary_results:
-        memo_summary = res["summary"]
-        distance = res["distance"]
-        serializer = SearchResultSerializer(
-            {
-                "title": memo_summary.memo.title,
-                "uuid": memo_summary.memo.uuid,
-                "content_snippet": memo_summary.memo.content[:100],
-                "summary": memo_summary.summary,
-                "distance": distance,
-            }
-        )
-        results.append(serializer.data)
-    return results
-
-
 def _chunk_vector_search(
-    project: Project, query: str, limit: int, tags: list[str] = None
+    project: Project, query: str, limit: int, filters: list[MemoFilter] = None
 ):
     embedding_vector = generate_vector_embedding_for_search(query)
     memo_chunk_results = memo_chunk_vector_search(
-        project, embedding_vector, limit, tags=tags
+        project, embedding_vector, limit, filters=filters
     )
     results = []
+    memo_uuids = set()
     for res in memo_chunk_results:
         memo_chunk = res["chunk"]
         distance = res["distance"]
+        if memo_chunk.memo.uuid in memo_uuids:
+            continue
+        memo_uuids.add(memo_chunk.memo.uuid)
         serializer = SearchResultSerializer(
             {
                 "title": memo_chunk.memo.title,
@@ -142,11 +133,11 @@ def _chunk_vector_search(
 
 
 def _title_startswith_search(
-    project: Project, query: str, limit: int, tags: list[str] = None
+    project: Project, query: str, limit: int, filters: list[MemoFilter] = None
 ):
     memos = Memo.objects.filter(project=project)
-    if tags is not None:
-        memos = memos.filter(memotag__tag__in=tags)
+    if filters is not None:
+        memos = filter_queryset(memos, filters)
     memos = memos.filter(title__istartswith=query)[:limit]
     results = []
     for memo in memos:
@@ -164,11 +155,11 @@ def _title_startswith_search(
 
 
 def _title_contains_search(
-    project: Project, query: str, limit: int, tags: list[str] = None
+    project: Project, query: str, limit: int, filters: list[MemoFilter] = None
 ):
     memos = Memo.objects.filter(project=project)
-    if tags is not None:
-        memos = memos.filter(memotag__tag__in=tags)
+    if filters is not None:
+        memos = filter_queryset(memos, filters)
     memos = memos.filter(title__icontains=query.lower())[:limit]
     results = []
     for memo in memos:

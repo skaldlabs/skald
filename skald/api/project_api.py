@@ -125,7 +125,8 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             )
 
         serializer = ProjectSerializer(project, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
         posthog.capture(

@@ -1,25 +1,27 @@
 import asyncio
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import voyageai
-from asgiref.sync import sync_to_async
 
 from skald.embeddings.generate_embedding import generate_vector_embedding_for_search
 from skald.embeddings.vector_search import memo_chunk_vector_search
+from skald.models.memo import Memo
 from skald.models.project import Project
+from skald.utils.filter_utils import MemoFilter, filter_queryset
 
 DEFAULT_VOYAGE_RERANK_MODEL = "rerank-2.5"
 VECTOR_SEARCH_TOP_K = 100
 POST_RERANK_TOP_K = 50
 
 
-def _chunk_vector_search(query: str, project: Project) -> List[Dict[str, Any]]:
-    # Wrap synchronous database operations with sync_to_async
+def _chunk_vector_search(
+    query: str, project: Project, filters: Optional[List[MemoFilter]] = None
+) -> List[Dict[str, Any]]:
     from skald.models.memo import MemoSummary
 
     embedding_vector = generate_vector_embedding_for_search(query)
     chunk_results = memo_chunk_vector_search(
-        project, embedding_vector, VECTOR_SEARCH_TOP_K
+        project, embedding_vector, VECTOR_SEARCH_TOP_K, filters=filters
     )
 
     rerank_data = []
@@ -56,7 +58,9 @@ def _chunk_vector_search(query: str, project: Project) -> List[Dict[str, Any]]:
     return results
 
 
-def prepare_context_for_chat_agent(query: str, project) -> List[Dict[str, Any]]:
+def prepare_context_for_chat_agent(
+    query: str, project: Project, filters: Optional[List[MemoFilter]] = None
+) -> List[Dict[str, Any]]:
     """
     Async version of prepare_context_for_chat_agent that processes rerank batches in parallel.
 
@@ -68,7 +72,7 @@ def prepare_context_for_chat_agent(query: str, project) -> List[Dict[str, Any]]:
         List of reranked results
     """
 
-    results = _chunk_vector_search(query, project)
+    results = _chunk_vector_search(query, project, filters)
 
     # sort all results by relevance score
     results.sort(key=lambda x: x.relevance_score, reverse=True)

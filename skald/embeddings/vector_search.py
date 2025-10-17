@@ -1,9 +1,10 @@
-from typing import TypedDict
+from typing import List, Optional, TypedDict
 
 from pgvector.django import CosineDistance
 
 from skald.models.memo import MemoChunk, MemoSummary
 from skald.models.project import Project
+from skald.utils.filter_utils import MemoFilter, filter_queryset
 
 
 class MemoChunkWithDistance(TypedDict):
@@ -21,7 +22,7 @@ def memo_chunk_vector_search(
     embedding_vector: list[float],
     top_k: int = 10,
     similarity_threshold: float = 0.9,
-    tags: list[str] = None,
+    filters: Optional[List[MemoFilter]] = None,
 ) -> list[MemoChunkWithDistance]:
     # search for the most similar memos in the knowledge base using the Memo model and the MemoChunk model
     query = (
@@ -30,9 +31,8 @@ def memo_chunk_vector_search(
         .filter(distance__lte=similarity_threshold, project=project)
     )
 
-    # Filter by tags if provided
-    if tags is not None:
-        query = query.filter(memo__memotag__tag__in=tags).distinct()
+    if filters is not None:
+        query = filter_queryset(query, filters)
 
     memo_chunks = query.order_by("distance")[:top_k]
 

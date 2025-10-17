@@ -1052,7 +1052,7 @@ Placeholder endpoint for pushing memo relationships.
 
 ### POST /api/v1/search
 
-Search through memos using various methods.
+Search through memos using various methods with advanced filtering capabilities.
 
 **Authentication:** Project API Key or Token (required)
 
@@ -1063,7 +1063,26 @@ Search through memos using various methods.
     "query": "quarterly goals",
     "search_method": "chunk_vector_search",
     "limit": 10,
-    "tags": ["meeting", "q1"]
+    "filters": [
+        {
+            "field": "source",
+            "operator": "eq",
+            "value": "notion",
+            "filter_type": "native_field"
+        },
+        {
+            "field": "level",
+            "operator": "eq",
+            "value": "beginner",
+            "filter_type": "custom_metadata"
+        },
+        {
+            "field": "tags",
+            "operator": "in",
+            "value": ["meeting", "q1"],
+            "filter_type": "native_field"
+        }
+    ]
 }
 ```
 
@@ -1075,7 +1094,14 @@ Search through memos using various methods.
     "search_method": "chunk_vector_search",
     "project_id": "project-uuid",
     "limit": 10,
-    "tags": ["meeting", "q1"]
+    "filters": [
+        {
+            "field": "source",
+            "operator": "eq",
+            "value": "notion",
+            "filter_type": "native_field"
+        }
+    ]
 }
 ```
 
@@ -1083,13 +1109,125 @@ Search through memos using various methods.
 
 - `query` (string, required): The search query
 - `search_method` (string, required): One of:
-    - `summary_vector_search` - Semantic search on memo summaries
     - `chunk_vector_search` - Semantic search on memo chunks
     - `title_contains` - Case-insensitive substring match on titles
     - `title_startswith` - Case-insensitive prefix match on titles
 - `project_id` (UUID, optional): **Only required when using Token Authentication**
 - `limit` (integer, optional): Max results to return (1-50, default 10)
-- `tags` (array of strings, optional): Filter by tags
+- `filters` (array of filter objects, optional): Array of filters to apply (see Filter Objects below)
+
+#### Filter Objects
+
+Each filter object supports the following structure:
+
+```json
+{
+    "field": "field_name",
+    "operator": "operator_name",
+    "value": "value or [array]",
+    "filter_type": "native_field | custom_metadata"
+}
+```
+
+**Filter Types:**
+
+1. **native_field** - Filter on built-in memo fields:
+   - `title` - Memo title
+   - `source` - Source system name
+   - `client_reference_id` - External reference ID
+   - `tags` - Memo tags (must use `in` or `not_in` operator with array value)
+
+2. **custom_metadata** - Filter on custom metadata fields:
+   - Any field from the memo's `metadata` JSON object
+
+**Supported Operators:**
+
+- `eq` - Equals (exact match)
+- `neq` - Not equals
+- `contains` - Contains substring (case-insensitive)
+- `startswith` - Starts with (case-sensitive)
+- `endswith` - Ends with (case-sensitive)
+- `in` - Value is in array (requires array value)
+- `not_in` - Value is not in array (requires array value)
+
+**Filter Examples:**
+
+Filter by source:
+```json
+{
+    "field": "source",
+    "operator": "eq",
+    "value": "notion",
+    "filter_type": "native_field"
+}
+```
+
+Filter by custom metadata:
+```json
+{
+    "field": "category",
+    "operator": "contains",
+    "value": "tutorial",
+    "filter_type": "custom_metadata"
+}
+```
+
+Filter by tags (tags always require array value):
+```json
+{
+    "field": "tags",
+    "operator": "in",
+    "value": ["meeting", "q1"],
+    "filter_type": "native_field"
+}
+```
+
+Filter by multiple sources:
+```json
+{
+    "field": "source",
+    "operator": "in",
+    "value": ["notion", "confluence"],
+    "filter_type": "native_field"
+}
+```
+
+**Combining Filters:**
+
+Multiple filters use AND logic - all filters must match:
+
+```json
+{
+    "query": "python",
+    "search_method": "title_contains",
+    "filters": [
+        {
+            "field": "source",
+            "operator": "eq",
+            "value": "docs.python.org",
+            "filter_type": "native_field"
+        },
+        {
+            "field": "level",
+            "operator": "eq",
+            "value": "beginner",
+            "filter_type": "custom_metadata"
+        },
+        {
+            "field": "tags",
+            "operator": "in",
+            "value": ["tutorial"],
+            "filter_type": "native_field"
+        }
+    ]
+}
+```
+
+This returns only memos where:
+- Title contains "python" AND
+- Source equals "docs.python.org" AND
+- Metadata field "level" equals "beginner" AND
+- Has at least one tag in ["tutorial"]
 
 **Response:**
 
@@ -1112,6 +1250,8 @@ Search through memos using various methods.
 - `distance` is the vector similarity distance (lower is more similar)
 - `distance` is `null` for non-vector search methods
 - Results are ordered by relevance
+- Filters work with all search methods
+- Empty filters array is equivalent to no filters
 
 **Error Responses:**
 
@@ -1127,7 +1267,7 @@ Invalid search method (400):
 
 ```json
 {
-    "error": "Search method is required and must be one of: title_contains, title_startswith, summary_vector_search, chunk_vector_search"
+    "error": "Search method is required and must be one of: title_contains, title_startswith, chunk_vector_search"
 }
 ```
 
@@ -1139,13 +1279,29 @@ Limit too high (400):
 }
 ```
 
+Invalid filter (400):
+
+```json
+{
+    "error": "Invalid filter: <specific error message>"
+}
+```
+
+Common filter errors:
+- Missing required fields (`field`, `operator`, `value`, `filter_type`)
+- Invalid operator (must be one of: `eq`, `neq`, `contains`, `startswith`, `endswith`, `in`, `not_in`)
+- Invalid filter_type (must be `native_field` or `custom_metadata`)
+- Invalid native field (must be `title`, `source`, `client_reference_id`, or `tags`)
+- Tags filter must use `in` or `not_in` operator with array value
+- `in` and `not_in` operators require array value
+
 ---
 
 ## Chat
 
 ### POST /api/v1/chat
 
-Ask questions about your knowledge base using an AI agent. See [Chat API Documentation](./chat.md) for detailed information.
+Ask questions about your knowledge base using an AI agent with optional filtering to focus the search context. See [Chat API Documentation](./chat.md) for detailed information.
 
 **Authentication:** Project API Key or Token (required)
 
@@ -1154,7 +1310,21 @@ Ask questions about your knowledge base using an AI agent. See [Chat API Documen
 ```json
 {
     "query": "What were the main points discussed in the Q1 meeting?",
-    "stream": false
+    "stream": false,
+    "filters": [
+        {
+            "field": "source",
+            "operator": "eq",
+            "value": "meeting-notes",
+            "filter_type": "native_field"
+        },
+        {
+            "field": "tags",
+            "operator": "in",
+            "value": ["q1", "meeting"],
+            "filter_type": "native_field"
+        }
+    ]
 }
 ```
 
@@ -1164,7 +1334,15 @@ Ask questions about your knowledge base using an AI agent. See [Chat API Documen
 {
     "query": "What were the main points discussed in the Q1 meeting?",
     "project_id": "project-uuid",
-    "stream": false
+    "stream": false,
+    "filters": [
+        {
+            "field": "category",
+            "operator": "eq",
+            "value": "meeting",
+            "filter_type": "custom_metadata"
+        }
+    ]
 }
 ```
 
@@ -1173,6 +1351,20 @@ Ask questions about your knowledge base using an AI agent. See [Chat API Documen
 - `query` (string, required): The question to ask
 - `project_id` (UUID, optional): **Only required when using Token Authentication**
 - `stream` (boolean, optional): Enable streaming responses (default: false)
+- `filters` (array of filter objects, optional): Filters to narrow the search context (see [Search Filters](#filter-objects) for full documentation)
+
+**Filter Support:**
+
+The chat endpoint uses the same filter structure as the search endpoint. You can filter by:
+- **Native fields**: `title`, `source`, `client_reference_id`, `tags`
+- **Custom metadata**: Any field from the memo's `metadata` object
+- **Operators**: `eq`, `neq`, `contains`, `startswith`, `endswith`, `in`, `not_in`
+
+Filters are applied during the initial retrieval of relevant context, allowing you to:
+- Focus the chat on specific sources (e.g., only Notion docs)
+- Limit to specific time periods via metadata
+- Query only memos with certain tags
+- Exclude certain categories of content
 
 **Response (Non-streaming):**
 
@@ -1210,6 +1402,22 @@ Missing query (400):
 }
 ```
 
+Invalid filters (400):
+
+```json
+{
+    "error": "Filters must be a list"
+}
+```
+
+Invalid filter structure (400):
+
+```json
+{
+    "error": "Invalid filter: <specific error message>"
+}
+```
+
 **Citation Format:**
 
 Responses include inline citations in the format `[[N]]` where N is the result number from the retrieved context.
@@ -1220,7 +1428,7 @@ Responses include inline citations in the format `[[N]]` where N is the result n
 
 ### POST /api/v1/generate
 
-Generate documents based on prompts and retrieved context from the knowledge base. Similar to chat but optimized for document generation with optional style/format rules.
+Generate documents based on prompts and retrieved context from the knowledge base with optional filtering to control context sources. Similar to chat but optimized for document generation with optional style/format rules.
 
 **Authentication:** Project API Key or Token (required)
 
@@ -1230,7 +1438,21 @@ Generate documents based on prompts and retrieved context from the knowledge bas
 {
     "prompt": "Create a product requirements document for a new mobile app",
     "rules": "Use formal business language. Include sections for: Overview, Requirements, Technical Specifications, Timeline",
-    "stream": false
+    "stream": false,
+    "filters": [
+        {
+            "field": "source",
+            "operator": "in",
+            "value": ["product-specs", "user-research"],
+            "filter_type": "native_field"
+        },
+        {
+            "field": "document_type",
+            "operator": "eq",
+            "value": "specification",
+            "filter_type": "custom_metadata"
+        }
+    ]
 }
 ```
 
@@ -1241,7 +1463,15 @@ Generate documents based on prompts and retrieved context from the knowledge bas
     "prompt": "Create a product requirements document for a new mobile app",
     "project_id": "project-uuid",
     "rules": "Use formal business language. Include sections for: Overview, Requirements, Technical Specifications, Timeline",
-    "stream": false
+    "stream": false,
+    "filters": [
+        {
+            "field": "tags",
+            "operator": "in",
+            "value": ["mobile", "product"],
+            "filter_type": "native_field"
+        }
+    ]
 }
 ```
 
@@ -1251,6 +1481,20 @@ Generate documents based on prompts and retrieved context from the knowledge bas
 - `rules` (string, optional): Style guidelines, format requirements, or structural rules for the generated document
 - `project_id` (UUID, optional): **Only required when using Token Authentication**
 - `stream` (boolean, optional): Enable streaming responses (default: false)
+- `filters` (array of filter objects, optional): Filters to control which memos are used as context (see [Search Filters](#filter-objects) for full documentation)
+
+**Filter Support:**
+
+The generate endpoint uses the same filter structure as the search endpoint. You can filter by:
+- **Native fields**: `title`, `source`, `client_reference_id`, `tags`
+- **Custom metadata**: Any field from the memo's `metadata` object
+- **Operators**: `eq`, `neq`, `contains`, `startswith`, `endswith`, `in`, `not_in`
+
+Filters are applied during context retrieval, allowing you to:
+- Generate documents from specific sources only (e.g., only technical docs)
+- Use only recent content via metadata timestamps
+- Include/exclude specific categories
+- Combine multiple sources strategically
 
 **Response (Non-streaming):**
 
@@ -1288,16 +1532,25 @@ Missing prompt (400):
 }
 ```
 
+Invalid filter structure (400):
+
+```json
+{
+    "error": "Invalid filter: <specific error message>"
+}
+```
+
 **Use Cases:**
 
 - Generate documentation from existing knowledge
 - Create reports based on stored information
 - Compile research summaries with specific formatting
 - Generate technical specifications with style constraints
+- Create focused documents using filtered context sources
 
 **How It Works:**
 
-1. System retrieves relevant context from knowledge base based on prompt
+1. System retrieves relevant context from knowledge base based on prompt (with optional filters applied)
 2. Context is combined with prompt and optional rules
 3. AI agent generates structured document
 4. Response includes citations to source memos
