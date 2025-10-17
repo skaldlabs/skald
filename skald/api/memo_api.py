@@ -184,7 +184,9 @@ class MemoViewSet(viewsets.ModelViewSet):
                     {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
                 )
         serializer = CreateMemoRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         validated_data = serializer.validated_data
         create_new_memo(validated_data, project)
         return Response({"ok": True}, status=status.HTTP_201_CREATED)
@@ -205,7 +207,8 @@ class MemoViewSet(viewsets.ModelViewSet):
             return error_response
 
         serializer = UpdateMemoRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         validated_data = serializer.validated_data
         content_updated = False

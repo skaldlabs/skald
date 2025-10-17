@@ -1,5 +1,6 @@
 import uuid
 
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from pgvector.django import VectorField
 
@@ -42,6 +43,13 @@ class Memo(models.Model):
     @property
     def summary(self) -> str:
         return MemoSummary.objects.get(memo=self).summary
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["project", "client_reference_id"]),
+            models.Index(fields=["project", "source"]),
+            GinIndex(fields=["metadata"]),
+        ]
 
 
 class MemoSummary(models.Model):
