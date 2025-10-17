@@ -850,9 +850,28 @@ Create a new memo. The memo will be automatically processed (summarized, chunked
 
 ### GET /api/v1/memo/{memo_id}
 
-Get memo details.
+Get memo details by UUID or client reference ID.
 
 **Authentication:** Project API Key or Token (required)
+
+**Query Parameters:**
+
+- `id_type` (string, optional): Type of identifier used. Must be either:
+    - `memo_uuid` (default) - Use memo UUID
+    - `reference_id` - Use client_reference_id
+- `project_id` (UUID): **Required when using Token Authentication**
+
+**Examples:**
+
+Get by UUID (default):
+```
+GET /api/v1/memo/550e8400-e29b-41d4-a716-446655440000?project_id={project-uuid}
+```
+
+Get by client reference ID:
+```
+GET /api/v1/memo/external-id-123?id_type=reference_id&project_id={project-uuid}
+```
 
 **Response:**
 
@@ -888,11 +907,48 @@ Get memo details.
 }
 ```
 
+**Error Responses:**
+
+Invalid id_type (400):
+
+```json
+{
+    "error": "id_type must be either 'memo_uuid' or 'reference_id'"
+}
+```
+
+Memo not found (404):
+
+```json
+{
+    "error": "Memo not found"
+}
+```
+
 ### PATCH /api/v1/memo/{memo_id}
 
-Partially update an existing memo. If the content is updated, all related data (summary, tags, chunks) will be deleted and the memo will be reprocessed.
+Partially update an existing memo by UUID or client reference ID. If the content is updated, all related data (summary, tags, chunks) will be deleted and the memo will be reprocessed.
 
 **Authentication:** Project API Key or Token (required)
+
+**Query Parameters:**
+
+- `id_type` (string, optional): Type of identifier used. Must be either:
+    - `memo_uuid` (default) - Use memo UUID
+    - `reference_id` - Use client_reference_id
+- `project_id` (UUID): **Required when using Token Authentication**
+
+**Examples:**
+
+Update by UUID (default):
+```
+PATCH /api/v1/memo/550e8400-e29b-41d4-a716-446655440000?project_id={project-uuid}
+```
+
+Update by client reference ID:
+```
+PATCH /api/v1/memo/external-id-123?id_type=reference_id&project_id={project-uuid}
+```
 
 **Request:**
 
@@ -932,6 +988,14 @@ Partially update an existing memo. If the content is updated, all related data (
 
 **Error Responses:**
 
+Invalid id_type (400):
+
+```json
+{
+    "error": "id_type must be either 'memo_uuid' or 'reference_id'"
+}
+```
+
 Memo not found (404):
 
 ```json
@@ -958,13 +1022,40 @@ or
 
 ### DELETE /api/v1/memo/{memo_id}
 
-Delete a memo and all its associated data (content, summary, tags, chunks).
+Delete a memo by UUID or client reference ID and all its associated data (content, summary, tags, chunks).
 
 **Authentication:** Project API Key or Token (required)
+
+**Query Parameters:**
+
+- `id_type` (string, optional): Type of identifier used. Must be either:
+    - `memo_uuid` (default) - Use memo UUID
+    - `reference_id` - Use client_reference_id
+- `project_id` (UUID): **Required when using Token Authentication**
+
+**Examples:**
+
+Delete by UUID (default):
+```
+DELETE /api/v1/memo/550e8400-e29b-41d4-a716-446655440000?project_id={project-uuid}
+```
+
+Delete by client reference ID:
+```
+DELETE /api/v1/memo/external-id-123?id_type=reference_id&project_id={project-uuid}
+```
 
 **Response:** `204 No Content`
 
 **Error Responses:**
+
+Invalid id_type (400):
+
+```json
+{
+    "error": "id_type must be either 'memo_uuid' or 'reference_id'"
+}
+```
 
 Memo not found (404):
 

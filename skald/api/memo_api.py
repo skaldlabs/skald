@@ -1,6 +1,9 @@
+from typing import Literal, Tuple
+
 from django.db import transaction
 from rest_framework import serializers, status, viewsets
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -21,6 +24,72 @@ from skald.models.memo import (
     MemoSummary,
     MemoTag,
 )
+from skald.models.project import Project
+
+
+def get_memo_by_identifier(
+    request, pk: str, user
+) -> Tuple[Memo | None, Response | None, Project | None]:
+    """
+    Get a memo by either UUID or client_reference_id based on id_type query parameter.
+
+    Args:
+        request: The request object
+        pk: The identifier (either UUID or client_reference_id)
+        user: The authenticated user
+
+    Returns:
+        Tuple of (memo, error_response, project)
+        - If successful: (memo, None, project)
+        - If error: (None, error_response, None)
+    """
+    id_type: Literal["memo_uuid", "reference_id"] = request.query_params.get(
+        "id_type", "memo_uuid"
+    )
+
+    # Validate id_type parameter
+    if id_type not in ["memo_uuid", "reference_id"]:
+        return (
+            None,
+            Response(
+                {"error": "id_type must be either 'memo_uuid' or 'reference_id'"},
+                status=status.HTTP_400_BAD_REQUEST,
+            ),
+            None,
+        )
+
+    # Get project for filtering
+    project, error_response = get_project_for_request(user, request)
+    if project is None or error_response:
+        if error_response:
+            return None, error_response, None
+        else:
+            return (
+                None,
+                Response(
+                    {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
+                ),
+                None,
+            )
+
+    try:
+        if id_type == "memo_uuid":
+            memo = Memo.objects.get(uuid=pk, project=project)
+        else:  # reference_id
+            memo = Memo.objects.get(client_reference_id=pk, project=project)
+    except Memo.DoesNotExist:
+        return (
+            None,
+            Response({"error": "Memo not found"}, status=status.HTTP_404_NOT_FOUND),
+            None,
+        )
+
+    # Verify user can access the memo's project
+    error_response = verify_user_can_access_project_resource(user, memo.project)
+    if error_response:
+        return None, error_response, None
+
+    return memo, None, project
 
 
 class UpdateMemoRequestSerializer(serializers.Serializer):
@@ -154,21 +223,16 @@ class MemoViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, pk=None):
         user = getattr(request, "user", None)
-
-        try:
-            memo = (
-                Memo.objects.select_related()
-                .prefetch_related("memotag_set", "memochunk_set")
-                .get(uuid=pk)
-            )
-        except Memo.DoesNotExist:
-            return Response(
-                {"error": "Memo not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        error_response = verify_user_can_access_project_resource(user, memo.project)
+        memo, error_response, project = get_memo_by_identifier(request, pk, user)
         if error_response:
             return error_response
+
+        # Reload with prefetch for detailed serializer
+        memo = (
+            Memo.objects.select_related()
+            .prefetch_related("memotag_set", "memochunk_set")
+            .get(pk=memo.pk)
+        )
 
         serializer = DetailedMemoSerializer(memo)
         return Response(serializer.data)
@@ -194,15 +258,7 @@ class MemoViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         user = getattr(request, "user", None)
         pk = kwargs.get("pk")
-
-        try:
-            memo = Memo.objects.get(uuid=pk)
-        except Memo.DoesNotExist:
-            return Response(
-                {"error": "Memo not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        error_response = verify_user_can_access_project_resource(user, memo.project)
+        memo, error_response, project = get_memo_by_identifier(request, pk, user)
         if error_response:
             return error_response
 
@@ -234,15 +290,7 @@ class MemoViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         user = getattr(request, "user", None)
         pk = kwargs.get("pk")
-
-        try:
-            memo = Memo.objects.get(uuid=pk)
-        except Memo.DoesNotExist:
-            return Response(
-                {"error": "Memo not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        error_response = verify_user_can_access_project_resource(user, memo.project)
+        memo, error_response, project = get_memo_by_identifier(request, pk, user)
         if error_response:
             return error_response
 

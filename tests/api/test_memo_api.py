@@ -194,7 +194,10 @@ class TestMemoAPIDestroy:
         assert MemoTag.objects.filter(memo=memo).exists()
         assert MemoChunk.objects.filter(memo=memo).exists()
 
-        destroy_url = reverse("memo-detail", kwargs={"pk": memo_uuid})
+        destroy_url = (
+            reverse("memo-detail", kwargs={"pk": memo_uuid})
+            + f"?project_id={project.uuid}"
+        )
         response = client.delete(destroy_url)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -232,7 +235,10 @@ class TestMemoAPIDestroy:
         assert memo1 is not None
         assert memo2 is not None
 
-        destroy_url = reverse("memo-detail", kwargs={"pk": memo1.uuid})
+        destroy_url = (
+            reverse("memo-detail", kwargs={"pk": memo1.uuid})
+            + f"?project_id={project.uuid}"
+        )
         response = client.delete(destroy_url)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -245,10 +251,44 @@ class TestMemoAPIDestroy:
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
 
         fake_uuid = "00000000-0000-0000-0000-000000000000"
-        destroy_url = reverse("memo-detail", kwargs={"pk": fake_uuid})
+        destroy_url = (
+            reverse("memo-detail", kwargs={"pk": fake_uuid})
+            + f"?project_id={project.uuid}"
+        )
         response = client.delete(destroy_url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("skald.flows.process_memo.process_memo.send_memo_for_async_processing")
+    def test_destroy_memo_by_reference_id(
+        self, mock_send_memo, user_token, project
+    ) -> None:
+        """Test destroying a memo using client_reference_id."""
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
+
+        create_url = reverse("memo-list")
+        data = {
+            "title": "Memo with Reference ID",
+            "content": "Content",
+            "project_id": str(project.uuid),
+            "reference_id": "REF-DELETE-123",
+        }
+        client.post(create_url, data, format="json")
+
+        memo = Memo.objects.filter(
+            project=project, client_reference_id="REF-DELETE-123"
+        ).first()
+        assert memo is not None
+
+        destroy_url = (
+            reverse("memo-detail", kwargs={"pk": "REF-DELETE-123"})
+            + f"?project_id={project.uuid}&id_type=reference_id"
+        )
+        response = client.delete(destroy_url)
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Memo.objects.filter(client_reference_id="REF-DELETE-123").exists()
 
     @patch("skald.flows.process_memo.process_memo.send_memo_for_async_processing")
     def test_destroy_memo_from_different_project_fails(
@@ -272,7 +312,10 @@ class TestMemoAPIDestroy:
         other_client = APIClient()
         other_client.credentials(HTTP_AUTHORIZATION=f"Token {other_user_token}")
 
-        destroy_url = reverse("memo-detail", kwargs={"pk": memo.uuid})
+        destroy_url = (
+            reverse("memo-detail", kwargs={"pk": memo.uuid})
+            + f"?project_id={other_project.uuid}"
+        )
         response = other_client.delete(destroy_url)
 
         assert response.status_code in [
@@ -325,7 +368,10 @@ class TestMemoAPIUpdate:
 
         mock_send_memo.reset_mock()
 
-        update_url = reverse("memo-detail", kwargs={"pk": memo_uuid})
+        update_url = (
+            reverse("memo-detail", kwargs={"pk": memo_uuid})
+            + f"?project_id={project.uuid}"
+        )
         update_data = {
             "title": "Updated Title",
             "metadata": {"updated": "metadata"},
@@ -392,7 +438,10 @@ class TestMemoAPIUpdate:
 
         mock_send_memo.reset_mock()
 
-        update_url = reverse("memo-detail", kwargs={"pk": memo_uuid})
+        update_url = (
+            reverse("memo-detail", kwargs={"pk": memo_uuid})
+            + f"?project_id={project.uuid}"
+        )
         update_data = {
             "content": "New updated content",
         }
@@ -442,7 +491,10 @@ class TestMemoAPIUpdate:
 
         mock_send_memo.reset_mock()
 
-        update_url = reverse("memo-detail", kwargs={"pk": memo_uuid})
+        update_url = (
+            reverse("memo-detail", kwargs={"pk": memo_uuid})
+            + f"?project_id={project.uuid}"
+        )
         update_data = {
             "title": "New Title",
             "content": "New content",
@@ -489,7 +541,10 @@ class TestMemoAPIUpdate:
 
         mock_send_memo.reset_mock()
 
-        update_url = reverse("memo-detail", kwargs={"pk": memo_uuid})
+        update_url = (
+            reverse("memo-detail", kwargs={"pk": memo_uuid})
+            + f"?project_id={project.uuid}"
+        )
         update_data = {
             "source": None,
         }
@@ -506,10 +561,165 @@ class TestMemoAPIUpdate:
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
 
         fake_uuid = "00000000-0000-0000-0000-000000000000"
-        update_url = reverse("memo-detail", kwargs={"pk": fake_uuid})
+        update_url = (
+            reverse("memo-detail", kwargs={"pk": fake_uuid})
+            + f"?project_id={project.uuid}"
+        )
         update_data = {
             "title": "Updated Title",
         }
         response = client.patch(update_url, update_data, format="json")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("skald.flows.process_memo.process_memo.send_memo_for_async_processing")
+    def test_update_memo_by_reference_id(
+        self, mock_send_memo, user_token, project
+    ) -> None:
+        """Test updating a memo using client_reference_id."""
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
+
+        create_url = reverse("memo-list")
+        data = {
+            "title": "Original Title",
+            "content": "Original content",
+            "project_id": str(project.uuid),
+            "reference_id": "REF-UPDATE-123",
+        }
+        client.post(create_url, data, format="json")
+
+        memo = Memo.objects.filter(
+            project=project, client_reference_id="REF-UPDATE-123"
+        ).first()
+        assert memo is not None
+
+        mock_send_memo.reset_mock()
+
+        update_url = (
+            reverse("memo-detail", kwargs={"pk": "REF-UPDATE-123"})
+            + f"?project_id={project.uuid}&id_type=reference_id"
+        )
+        update_data = {
+            "title": "Updated via Reference ID",
+            "metadata": {"updated": "true"},
+        }
+        response = client.patch(update_url, update_data, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["ok"] is True
+
+        memo.refresh_from_db()
+        assert memo.title == "Updated via Reference ID"
+        assert memo.metadata == {"updated": "true"}
+        assert mock_send_memo.call_count == 0
+
+
+@pytest.mark.django_db
+class TestMemoAPIRetrieve:
+    """Test suite for memo API retrieve endpoint."""
+
+    @patch("skald.flows.process_memo.process_memo.send_memo_for_async_processing")
+    def test_retrieve_memo_by_uuid(self, mock_send_memo, user_token, project) -> None:
+        """Test retrieving a memo by UUID (default behavior)."""
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
+
+        create_url = reverse("memo-list")
+        data = {
+            "title": "Test Retrieve Memo",
+            "content": "Content to retrieve",
+            "project_id": str(project.uuid),
+            "reference_id": "REF-RETRIEVE-123",
+        }
+        client.post(create_url, data, format="json")
+
+        memo = Memo.objects.filter(project=project, title="Test Retrieve Memo").first()
+        assert memo is not None
+
+        retrieve_url = (
+            reverse("memo-detail", kwargs={"pk": str(memo.uuid)})
+            + f"?project_id={project.uuid}"
+        )
+        response = client.get(retrieve_url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["uuid"] == str(memo.uuid)
+        assert response.data["title"] == "Test Retrieve Memo"
+        assert response.data["client_reference_id"] == "REF-RETRIEVE-123"
+
+    @patch("skald.flows.process_memo.process_memo.send_memo_for_async_processing")
+    def test_retrieve_memo_by_reference_id(
+        self, mock_send_memo, user_token, project
+    ) -> None:
+        """Test retrieving a memo using client_reference_id."""
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
+
+        create_url = reverse("memo-list")
+        data = {
+            "title": "Memo with Reference",
+            "content": "Content",
+            "project_id": str(project.uuid),
+            "reference_id": "REF-RETRIEVE-456",
+        }
+        client.post(create_url, data, format="json")
+
+        memo = Memo.objects.filter(
+            project=project, client_reference_id="REF-RETRIEVE-456"
+        ).first()
+        assert memo is not None
+
+        retrieve_url = (
+            reverse("memo-detail", kwargs={"pk": "REF-RETRIEVE-456"})
+            + f"?project_id={project.uuid}&id_type=reference_id"
+        )
+        response = client.get(retrieve_url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["uuid"] == str(memo.uuid)
+        assert response.data["title"] == "Memo with Reference"
+        assert response.data["client_reference_id"] == "REF-RETRIEVE-456"
+
+    @patch("skald.flows.process_memo.process_memo.send_memo_for_async_processing")
+    def test_retrieve_memo_with_invalid_id_type(
+        self, mock_send_memo, user_token, project
+    ) -> None:
+        """Test that invalid id_type parameter returns 400."""
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
+
+        create_url = reverse("memo-list")
+        data = {
+            "title": "Test Memo",
+            "content": "Content",
+            "project_id": str(project.uuid),
+        }
+        client.post(create_url, data, format="json")
+
+        memo = Memo.objects.filter(project=project, title="Test Memo").first()
+        assert memo is not None
+
+        retrieve_url = (
+            reverse("memo-detail", kwargs={"pk": str(memo.uuid)})
+            + f"?project_id={project.uuid}&id_type=invalid_type"
+        )
+        response = client.get(retrieve_url)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "id_type" in response.data["error"]
+
+    def test_retrieve_nonexistent_memo_by_reference_id(
+        self, user_token, project
+    ) -> None:
+        """Test that retrieving a nonexistent memo by reference_id returns 404."""
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
+
+        retrieve_url = (
+            reverse("memo-detail", kwargs={"pk": "NONEXISTENT-REF"})
+            + f"?project_id={project.uuid}&id_type=reference_id"
+        )
+        response = client.get(retrieve_url)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
