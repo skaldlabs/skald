@@ -330,7 +330,7 @@ class TestMemoAPIUpdate:
             "title": "Updated Title",
             "metadata": {"updated": "metadata"},
         }
-        response = client.put(update_url, update_data, format="json")
+        response = client.patch(update_url, update_data, format="json")
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["ok"] is True
@@ -396,7 +396,7 @@ class TestMemoAPIUpdate:
         update_data = {
             "content": "New updated content",
         }
-        response = client.put(update_url, update_data, format="json")
+        response = client.patch(update_url, update_data, format="json")
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -448,7 +448,7 @@ class TestMemoAPIUpdate:
             "content": "New content",
             "metadata": {"new": "metadata"},
         }
-        response = client.put(update_url, update_data, format="json")
+        response = client.patch(update_url, update_data, format="json")
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -493,7 +493,7 @@ class TestMemoAPIUpdate:
         update_data = {
             "source": None,
         }
-        response = client.put(update_url, update_data, format="json")
+        response = client.patch(update_url, update_data, format="json")
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -510,6 +510,6 @@ class TestMemoAPIUpdate:
         update_data = {
             "title": "Updated Title",
         }
-        response = client.put(update_url, update_data, format="json")
+        response = client.patch(update_url, update_data, format="json")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND

@@ -24,9 +24,29 @@ def mock_async_processing():
 
 @pytest.fixture(autouse=True)
 def mock_voyage_embeddings():
-    """Mock Voyage AI embedding generation for all tests."""
-    with patch("skald.embeddings.generate_embedding._get_voyage_client"):
-        yield
+    """Mock Voyage AI embedding generation and reranking for all tests."""
+    from unittest.mock import MagicMock
+
+    # Return a dummy embedding vector of the correct size (2048 dimensions)
+    with patch(
+        "skald.embeddings.generate_embedding.generate_vector_embedding_for_search",
+        return_value=[0.1] * 2048,
+    ):
+        with patch(
+            "skald.embeddings.generate_embedding.generate_vector_embedding_for_storage",
+            return_value=[0.1] * 2048,
+        ):
+            # Mock Voyage client for reranking
+            mock_client = MagicMock()
+            mock_rerank_result = MagicMock()
+            mock_rerank_result.results = []
+            mock_client.rerank.return_value = mock_rerank_result
+
+            with patch(
+                "skald.agents.chat_agent.preprocessing.voyageai.Client",
+                return_value=mock_client,
+            ):
+                yield
 
 
 @pytest.fixture

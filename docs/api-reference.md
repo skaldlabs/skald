@@ -888,9 +888,9 @@ Get memo details.
 }
 ```
 
-### PUT /api/v1/memo/{memo_id}
+### PATCH /api/v1/memo/{memo_id}
 
-Update an existing memo. If the content is updated, all related data (summary, tags, chunks) will be deleted and the memo will be reprocessed.
+Partially update an existing memo. If the content is updated, all related data (summary, tags, chunks) will be deleted and the memo will be reprocessed.
 
 **Authentication:** Project API Key or Token (required)
 
@@ -1132,13 +1132,13 @@ Each filter object supports the following structure:
 **Filter Types:**
 
 1. **native_field** - Filter on built-in memo fields:
-   - `title` - Memo title
-   - `source` - Source system name
-   - `client_reference_id` - External reference ID
-   - `tags` - Memo tags (must use `in` or `not_in` operator with array value)
+    - `title` - Memo title
+    - `source` - Source system name
+    - `client_reference_id` - External reference ID
+    - `tags` - Memo tags (must use `in` or `not_in` operator with array value)
 
 2. **custom_metadata** - Filter on custom metadata fields:
-   - Any field from the memo's `metadata` JSON object
+    - Any field from the memo's `metadata` JSON object
 
 **Supported Operators:**
 
@@ -1153,6 +1153,7 @@ Each filter object supports the following structure:
 **Filter Examples:**
 
 Filter by source:
+
 ```json
 {
     "field": "source",
@@ -1163,6 +1164,7 @@ Filter by source:
 ```
 
 Filter by custom metadata:
+
 ```json
 {
     "field": "category",
@@ -1173,6 +1175,7 @@ Filter by custom metadata:
 ```
 
 Filter by tags (tags always require array value):
+
 ```json
 {
     "field": "tags",
@@ -1183,6 +1186,7 @@ Filter by tags (tags always require array value):
 ```
 
 Filter by multiple sources:
+
 ```json
 {
     "field": "source",
@@ -1224,6 +1228,7 @@ Multiple filters use AND logic - all filters must match:
 ```
 
 This returns only memos where:
+
 - Title contains "python" AND
 - Source equals "docs.python.org" AND
 - Metadata field "level" equals "beginner" AND
@@ -1288,6 +1293,7 @@ Invalid filter (400):
 ```
 
 Common filter errors:
+
 - Missing required fields (`field`, `operator`, `value`, `filter_type`)
 - Invalid operator (must be one of: `eq`, `neq`, `contains`, `startswith`, `endswith`, `in`, `not_in`)
 - Invalid filter_type (must be `native_field` or `custom_metadata`)
@@ -1356,11 +1362,13 @@ Ask questions about your knowledge base using an AI agent with optional filterin
 **Filter Support:**
 
 The chat endpoint uses the same filter structure as the search endpoint. You can filter by:
+
 - **Native fields**: `title`, `source`, `client_reference_id`, `tags`
 - **Custom metadata**: Any field from the memo's `metadata` object
 - **Operators**: `eq`, `neq`, `contains`, `startswith`, `endswith`, `in`, `not_in`
 
 Filters are applied during the initial retrieval of relevant context, allowing you to:
+
 - Focus the chat on specific sources (e.g., only Notion docs)
 - Limit to specific time periods via metadata
 - Query only memos with certain tags
@@ -1486,11 +1494,13 @@ Generate documents based on prompts and retrieved context from the knowledge bas
 **Filter Support:**
 
 The generate endpoint uses the same filter structure as the search endpoint. You can filter by:
+
 - **Native fields**: `title`, `source`, `client_reference_id`, `tags`
 - **Custom metadata**: Any field from the memo's `metadata` object
 - **Operators**: `eq`, `neq`, `contains`, `startswith`, `endswith`, `in`, `not_in`
 
 Filters are applied during context retrieval, allowing you to:
+
 - Generate documents from specific sources only (e.g., only technical docs)
 - Use only recent content via metadata timestamps
 - Include/exclude specific categories

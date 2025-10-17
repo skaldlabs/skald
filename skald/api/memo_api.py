@@ -191,7 +191,7 @@ class MemoViewSet(viewsets.ModelViewSet):
         create_new_memo(validated_data, project)
         return Response({"ok": True}, status=status.HTTP_201_CREATED)
 
-    def update(self, request, *args, **kwargs):
+    def partial_update(self, request, *args, **kwargs):
         user = getattr(request, "user", None)
         pk = kwargs.get("pk")
 
