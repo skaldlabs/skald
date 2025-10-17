@@ -30,6 +30,7 @@ jobs:
               - 'package.json'
               - 'frontend/**'
               - 'ui.fly.toml'
+              - 'nginx.conf'
             memo-processing:
               - 'memo-processing-server/**'
 
