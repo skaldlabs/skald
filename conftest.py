@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from rest_framework.authtoken.models import Token
 
@@ -11,6 +13,20 @@ from skald.utils.api_key_utils import generate_api_key, hash_api_key
 def disable_ssl_redirects(settings):
     """Disable SSL redirects for all tests."""
     settings.SECURE_SSL_REDIRECT = False
+
+
+@pytest.fixture(autouse=True)
+def mock_async_processing():
+    """Mock async processing (Redis/SQS) for all tests."""
+    with patch("skald.flows.process_memo.process_memo.send_memo_for_async_processing"):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_voyage_embeddings():
+    """Mock Voyage AI embedding generation for all tests."""
+    with patch("skald.embeddings.generate_embedding._get_voyage_client"):
+        yield
 
 
 @pytest.fixture
