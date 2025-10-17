@@ -49,6 +49,32 @@ def mock_voyage_embeddings():
                 yield
 
 
+@pytest.fixture(autouse=True)
+def mock_chat_agent():
+    """Mock the chat agent for all tests to avoid OpenAI API calls."""
+    mock_response = {
+        "output": "This is a test response from the chat agent.",
+        "intermediate_steps": [],
+    }
+
+    with patch(
+        "skald.agents.chat_agent.chat_agent.run_chat_agent",
+        return_value=mock_response,
+    ):
+        # Mock streaming as well
+        def mock_stream_generator(query, context):
+            yield {"type": "token", "content": "This "}
+            yield {"type": "token", "content": "is "}
+            yield {"type": "token", "content": "a "}
+            yield {"type": "token", "content": "test."}
+
+        with patch(
+            "skald.agents.chat_agent.chat_agent.stream_chat_agent",
+            side_effect=mock_stream_generator,
+        ):
+            yield
+
+
 @pytest.fixture
 def user(db):
     """Create a test user."""
