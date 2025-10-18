@@ -142,8 +142,11 @@ WSGI_APPLICATION = "skald.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL", "postgres://postgres:12345678@localhost/skald2")
+    "default": dj_database_url.config(
+        default=os.environ.get(
+            "DATABASE_URL", "postgres://postgres:12345678@localhost/skald2"
+        ),
+        conn_max_age=0,
     )
 }
 
