@@ -12,6 +12,7 @@ from skald.api.permissions import (
     ProjectAPIKeyAuthentication,
     get_project_for_request,
 )
+from skald.decorators import require_usage_limit
 from skald.utils.filter_utils import parse_filter
 
 
@@ -23,6 +24,12 @@ class ChatView(views.APIView):
     ]
     permission_classes = [IsAuthenticatedOrAuthDisabled]
 
+    def get_project(self):
+        """Get project for current request (used by usage decorator)"""
+        user = getattr(self.request, "user", None)
+        project, _ = get_project_for_request(user, self.request)
+        return project
+
     def options(self, request, *args, **kwargs):
         """Handle CORS preflight requests."""
         response = Response(status=status.HTTP_200_OK)
@@ -31,6 +38,7 @@ class ChatView(views.APIView):
         response["Access-Control-Allow-Headers"] = "Content-Type"
         return response
 
+    @require_usage_limit("chat_queries", increment=True)
     def post(self, request):
         user = getattr(request, "user", None)
 
