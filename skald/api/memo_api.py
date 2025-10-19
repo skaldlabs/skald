@@ -296,7 +296,7 @@ class MemoViewSet(viewsets.ModelViewSet):
 
         return Response({"ok": True}, status=status.HTTP_200_OK)
 
-    @require_usage_limit("memo_operations", increment=True)
+    @require_usage_limit("memo_operations", increment=False)
     def destroy(self, request, *args, **kwargs):
         user = getattr(request, "user", None)
         pk = kwargs.get("pk")

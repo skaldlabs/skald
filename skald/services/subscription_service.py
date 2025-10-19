@@ -5,6 +5,7 @@ Encapsulates all Stripe subscription logic.
 
 import logging
 from datetime import datetime
+from datetime import timezone as dt_timezone
 
 import stripe
 from django.conf import settings
@@ -15,13 +16,15 @@ from skald.models.subscription import SubscriptionStatus
 
 logger = logging.getLogger(__name__)
 
-stripe.api_key = (
-    settings.STRIPE_SECRET_KEY if hasattr(settings, "STRIPE_SECRET_KEY") else None
-)
-
 
 class SubscriptionService:
     """Handles all subscription-related operations with Stripe"""
+
+    def __init__(self):
+        if hasattr(settings, "STRIPE_SECRET_KEY") and settings.STRIPE_SECRET_KEY:
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+        else:
+            logger.warning("STRIPE_SECRET_KEY not configured")
 
     def create_checkout_session(
         self,
@@ -41,10 +44,8 @@ class SubscriptionService:
                 f"Plan {plan_slug} does not have a Stripe price ID configured"
             )
 
-        # Get or create Stripe customer
         customer_id = self._get_or_create_stripe_customer(organization)
 
-        # Create checkout session
         checkout_session = stripe.checkout.Session.create(
             customer=customer_id,
             mode="subscription",
@@ -119,7 +120,6 @@ class SubscriptionService:
                 proration_behavior="always_invoice",  # Immediate proration
             )
 
-            # Update local record
             subscription.plan = new_plan
             subscription.save()
 
@@ -132,7 +132,6 @@ class SubscriptionService:
         if subscription.stripe_customer_id:
             return subscription.stripe_customer_id
 
-        # Create new customer
         customer = stripe.Customer.create(
             email=organization.owner.email,
             name=organization.name,
@@ -161,75 +160,137 @@ class SubscriptionService:
 
     def handle_subscription_created(self, event):
         """Handle new subscription creation"""
-        stripe_subscription = event["data"]["object"]
-        customer_id = stripe_subscription["customer"]
+        try:
+            stripe_subscription = event["data"]["object"]
+            logger.info(
+                f"Processing subscription.created event: {stripe_subscription.get('id')}"
+            )
 
-        # Find organization by customer ID
-        subscription = OrganizationSubscription.objects.get(
-            stripe_customer_id=customer_id
-        )
+            customer_id = stripe_subscription.get("customer")
+            if not customer_id:
+                logger.error(f"No customer_id in subscription: {stripe_subscription}")
+                raise ValueError("No customer_id found in subscription event")
 
-        # Get plan from Stripe price ID
-        price_id = stripe_subscription["items"]["data"][0]["price"]["id"]
-        plan = Plan.objects.get(stripe_price_id=price_id)
+            subscription = OrganizationSubscription.objects.get(
+                stripe_customer_id=customer_id
+            )
 
-        # Update subscription
-        subscription.stripe_subscription_id = stripe_subscription["id"]
-        subscription.plan = plan
-        subscription.status = stripe_subscription["status"]
-        subscription.current_period_start = datetime.fromtimestamp(
-            stripe_subscription["current_period_start"], tz=timezone.utc
-        )
-        subscription.current_period_end = datetime.fromtimestamp(
-            stripe_subscription["current_period_end"], tz=timezone.utc
-        )
-        subscription.save()
+            price_id = stripe_subscription["items"]["data"][0]["price"]["id"]
+            plan = Plan.objects.get(stripe_price_id=price_id)
 
-        # Create new usage record for this billing period
-        UsageRecord.objects.get_or_create(
-            organization=subscription.organization,
-            billing_period_start=subscription.current_period_start.date(),
-            defaults={"billing_period_end": subscription.current_period_end.date()},
-        )
+            subscription.stripe_subscription_id = stripe_subscription.get("id")
+            subscription.plan = plan
+            subscription.status = stripe_subscription.get("status", "active")
 
-        logger.info(f"Subscription created for {subscription.organization.name}")
+            period_start = stripe_subscription.get("current_period_start")
+            period_end = stripe_subscription.get("current_period_end")
 
-    def handle_subscription_updated(self, event):
-        """Handle subscription updates (plan changes, renewals)"""
-        stripe_subscription = event["data"]["object"]
+            if not period_start or not period_end:
+                items_data = stripe_subscription.get("items", {}).get("data", [])
+                if items_data:
+                    period_start = items_data[0].get("current_period_start")
+                    period_end = items_data[0].get("current_period_end")
 
-        subscription = OrganizationSubscription.objects.get(
-            stripe_subscription_id=stripe_subscription["id"]
-        )
+            if not period_start:
+                period_start = stripe_subscription.get(
+                    "billing_cycle_anchor"
+                ) or stripe_subscription.get("start_date")
+                if not period_start:
+                    logger.error(f"No period start timestamp found in subscription")
+                    raise ValueError("Cannot determine current_period_start")
 
-        # Update fields
-        subscription.status = stripe_subscription["status"]
-        subscription.current_period_start = datetime.fromtimestamp(
-            stripe_subscription["current_period_start"], tz=timezone.utc
-        )
-        subscription.current_period_end = datetime.fromtimestamp(
-            stripe_subscription["current_period_end"], tz=timezone.utc
-        )
-        subscription.cancel_at_period_end = stripe_subscription["cancel_at_period_end"]
+            if not period_end:
+                # Calculate end based on start + 30 days as fallback
+                logger.warning(f"No period end found, calculating from start date")
+                period_end = period_start + (30 * 24 * 60 * 60)  # 30 days in seconds
 
-        # Check for plan change
-        price_id = stripe_subscription["items"]["data"][0]["price"]["id"]
-        new_plan = Plan.objects.get(stripe_price_id=price_id)
-        if subscription.plan != new_plan:
-            subscription.plan = new_plan
+            subscription.current_period_start = datetime.fromtimestamp(
+                period_start, tz=dt_timezone.utc
+            )
+            subscription.current_period_end = datetime.fromtimestamp(
+                period_end, tz=dt_timezone.utc
+            )
+            subscription.save()
 
-        subscription.save()
-
-        # On billing period change, create new usage record
-        previous_attributes = event["data"].get("previous_attributes", {})
-        if "current_period_start" in previous_attributes:
             UsageRecord.objects.get_or_create(
                 organization=subscription.organization,
                 billing_period_start=subscription.current_period_start.date(),
                 defaults={"billing_period_end": subscription.current_period_end.date()},
             )
 
-        logger.info(f"Subscription updated for {subscription.organization.name}")
+            logger.info(
+                f"Subscription created successfully for {subscription.organization.name}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Error in handle_subscription_created: {str(e)}", exc_info=True
+            )
+            raise
+
+    def handle_subscription_updated(self, event):
+        """Handle subscription updates (plan changes, renewals)"""
+        try:
+            stripe_subscription = event["data"]["object"]
+            logger.info(
+                f"Processing subscription.updated event: {stripe_subscription.get('id')}"
+            )
+
+            subscription = OrganizationSubscription.objects.get(
+                stripe_subscription_id=stripe_subscription.get("id")
+            )
+
+            subscription.status = stripe_subscription.get("status", subscription.status)
+
+            period_start = stripe_subscription.get("current_period_start")
+            period_end = stripe_subscription.get("current_period_end")
+
+            if not period_start or not period_end:
+                items_data = stripe_subscription.get("items", {}).get("data", [])
+                if items_data:
+                    period_start = items_data[0].get("current_period_start")
+                    period_end = items_data[0].get("current_period_end")
+
+            if period_start:
+                subscription.current_period_start = datetime.fromtimestamp(
+                    period_start, tz=dt_timezone.utc
+                )
+            if period_end:
+                subscription.current_period_end = datetime.fromtimestamp(
+                    period_end, tz=dt_timezone.utc
+                )
+
+            subscription.cancel_at_period_end = stripe_subscription.get(
+                "cancel_at_period_end", False
+            )
+
+            price_id = stripe_subscription["items"]["data"][0]["price"]["id"]
+            new_plan = Plan.objects.get(stripe_price_id=price_id)
+            if subscription.plan != new_plan:
+                logger.info(
+                    f"Plan changed from {subscription.plan.name} to {new_plan.name}"
+                )
+                subscription.plan = new_plan
+
+            subscription.save()
+
+            previous_attributes = event["data"].get("previous_attributes", {})
+            if "current_period_start" in previous_attributes:
+                UsageRecord.objects.get_or_create(
+                    organization=subscription.organization,
+                    billing_period_start=subscription.current_period_start.date(),
+                    defaults={
+                        "billing_period_end": subscription.current_period_end.date()
+                    },
+                )
+
+            logger.info(
+                f"Subscription updated successfully for {subscription.organization.name}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Error in handle_subscription_updated: {str(e)}", exc_info=True
+            )
+            raise
 
     def handle_subscription_deleted(self, event):
         """Handle subscription cancellation"""
@@ -252,7 +313,6 @@ class SubscriptionService:
         """Handle successful payment"""
         invoice = event["data"]["object"]
         logger.info(f"Invoice paid: {invoice['id']}")
-        # Could send email confirmation here
 
     def handle_payment_failed(self, event):
         """Handle payment failure"""
@@ -265,6 +325,4 @@ class SubscriptionService:
         subscription.status = SubscriptionStatus.PAST_DUE
         subscription.save()
 
-        # Send email notification to organization owner
         logger.warning(f"Payment failed for {subscription.organization.name}")
-        # TODO: Send email notification

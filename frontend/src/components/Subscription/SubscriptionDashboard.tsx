@@ -32,13 +32,11 @@ export const SubscriptionDashboard = () => {
     }, [])
 
     useEffect(() => {
-        // Handle Stripe checkout callbacks
         const success = searchParams.get('success')
         const canceled = searchParams.get('canceled')
 
         if (success === 'true') {
             toast.success('Subscription updated successfully!')
-            // Refresh data
             fetchSubscription()
             fetchUsage()
         }
@@ -50,10 +48,12 @@ export const SubscriptionDashboard = () => {
 
     const handleSelectPlan = async (planSlug: string) => {
         if (planSlug === 'free') {
-            // For free plan, open customer portal to downgrade
+            if (!currentSubscription?.stripe_customer_id) {
+                toast.info('You are already on the free plan')
+                return
+            }
             await openCustomerPortal()
         } else {
-            // For paid plans, create checkout session
             await createCheckoutSession(planSlug)
         }
     }
@@ -84,7 +84,7 @@ export const SubscriptionDashboard = () => {
         <div className="space-y-6">
             {/* Current Subscription Overview */}
             {currentSubscription && (
-                <Card>
+                <Card className="mt-6">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>

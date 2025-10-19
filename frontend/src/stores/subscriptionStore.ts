@@ -1,6 +1,5 @@
 import { create } from 'zustand'
-import { api } from '@/lib/api'
-import { useAuthStore } from '@/stores/authStore'
+import { api, getOrgPath } from '@/lib/api'
 import { toast } from 'sonner'
 
 export interface Plan {
@@ -96,112 +95,124 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     },
 
     fetchSubscription: async () => {
-        const organizationId = useAuthStore.getState().user?.current_organization_uuid
-        if (!organizationId) {
-            return
-        }
-
         set({ loading: true, error: null })
 
-        const response = await api.get<Subscription>(`/organization/${organizationId}/subscription/subscription/`)
+        try {
+            const orgPath = getOrgPath()
+            const response = await api.get<Subscription>(`${orgPath}/subscription/subscription/`)
 
-        if (response.error || !response.data) {
+            if (response.error || !response.data) {
+                set({
+                    loading: false,
+                    error: response.error || 'Failed to fetch subscription',
+                })
+                return
+            }
+
+            set({
+                currentSubscription: response.data,
+                loading: false,
+                error: null,
+            })
+        } catch (error) {
             set({
                 loading: false,
-                error: response.error || 'Failed to fetch subscription',
+                error: String(error),
             })
-            return
         }
-
-        set({
-            currentSubscription: response.data,
-            loading: false,
-            error: null,
-        })
     },
 
     fetchUsage: async () => {
-        const organizationId = useAuthStore.getState().user?.current_organization_uuid
-        if (!organizationId) {
-            return
-        }
-
         set({ loading: true, error: null })
 
-        const response = await api.get<UsageData>(`/organization/${organizationId}/subscription/usage/`)
+        try {
+            const orgPath = getOrgPath()
+            const response = await api.get<UsageData>(`${orgPath}/subscription/usage/`)
 
-        if (response.error || !response.data) {
+            if (response.error || !response.data) {
+                set({
+                    loading: false,
+                    error: response.error || 'Failed to fetch usage',
+                })
+                return
+            }
+
+            set({
+                usage: response.data,
+                loading: false,
+                error: null,
+            })
+        } catch (error) {
             set({
                 loading: false,
-                error: response.error || 'Failed to fetch usage',
+                error: String(error),
             })
-            return
         }
-
-        set({
-            usage: response.data,
-            loading: false,
-            error: null,
-        })
     },
 
     createCheckoutSession: async (planSlug: string) => {
-        const organizationId = useAuthStore.getState().user?.current_organization_uuid
-        if (!organizationId) {
-            toast.error('Organization not found')
-            return
-        }
-
         set({ checkoutLoading: true, error: null })
 
-        const successUrl = `${window.location.origin}/organization/subscription?success=true`
-        const cancelUrl = `${window.location.origin}/organization/subscription?canceled=true`
+        try {
+            const orgPath = getOrgPath()
+            const successUrl = `${window.location.origin}/organization/subscription?success=true`
+            const cancelUrl = `${window.location.origin}/organization/subscription?canceled=true`
 
-        const response = await api.post<{ url: string }>(`/organization/${organizationId}/subscription/checkout/`, {
-            plan_slug: planSlug,
-            success_url: successUrl,
-            cancel_url: cancelUrl,
-        })
+            const response = await api.post<{ checkout_url: string }>(`${orgPath}/subscription/checkout/`, {
+                plan_slug: planSlug,
+                success_url: successUrl,
+                cancel_url: cancelUrl,
+            })
 
-        if (response.error || !response.data) {
+            if (response.error || !response.data) {
+                set({
+                    checkoutLoading: false,
+                    error: response.error || 'Failed to create checkout session',
+                })
+                toast.error(response.error || 'Failed to start checkout')
+                return
+            }
+
+            // Redirect to Stripe Checkout
+            window.location.href = response.data.checkout_url
+        } catch (error) {
             set({
                 checkoutLoading: false,
-                error: response.error || 'Failed to create checkout session',
+                error: String(error),
             })
             toast.error('Failed to start checkout')
-            return
         }
-
-        // Redirect to Stripe Checkout
-        window.location.href = response.data.url
     },
 
     openCustomerPortal: async () => {
-        const organizationId = useAuthStore.getState().user?.current_organization_uuid
-        if (!organizationId) {
-            toast.error('Organization not found')
-            return
-        }
-
         set({ loading: true, error: null })
 
-        const returnUrl = `${window.location.origin}/organization/subscription`
+        try {
+            const orgPath = getOrgPath()
+            const returnUrl = `${window.location.origin}/organization/subscription`
 
-        const response = await api.post<{ url: string }>(`/organization/${organizationId}/subscription/portal/`, {
-            return_url: returnUrl,
-        })
+            const response = await api.post<{ portal_url: string }>(`${orgPath}/subscription/portal/`, {
+                return_url: returnUrl,
+            })
 
-        if (response.error || !response.data) {
+            if (response.error || !response.data) {
+                set({
+                    loading: false,
+                    error: response.error || 'Failed to open customer portal',
+                })
+                toast.error(response.error || 'Failed to open billing portal')
+                return
+            }
+
+            // Redirect to Stripe Customer Portal
+            window.location.href = response.data.portal_url
+        } catch (error) {
             set({
                 loading: false,
-                error: response.error || 'Failed to open customer portal',
+                error: String(error),
             })
             toast.error('Failed to open billing portal')
-            return
         }
-
-        // Redirect to Stripe Customer Portal
-        window.location.href = response.data.url
     },
 
     refreshAll: async () => {

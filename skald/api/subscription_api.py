@@ -112,10 +112,10 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
     """
 
     permission_classes = [IsAuthenticatedOrAuthDisabled]
-    organization_url_kwarg = "org_id"
+    organization_url_kwarg = "parent_lookup_organization"
 
     @action(detail=False, methods=["get"])
-    def subscription(self, request, org_id=None):
+    def subscription(self, request, **kwargs):
         """
         Get current subscription details for organization.
 
@@ -135,7 +135,7 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     @require_access_level(OrganizationMembershipRole.OWNER)
-    def checkout(self, request, org_id=None):
+    def checkout(self, request, **kwargs):
         """
         Create Stripe Checkout session for subscribing to a plan.
 
@@ -183,7 +183,7 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     @require_access_level(OrganizationMembershipRole.OWNER)
-    def portal(self, request, org_id=None):
+    def portal(self, request, **kwargs):
         """
         Get Stripe Customer Portal URL for managing payment methods and cancellation.
 
@@ -196,6 +196,11 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
         {
             "portal_url": "https://billing.stripe.com/..."
         }
+
+        Error Response (Free Plan):
+        {
+            "error": "No active subscription to manage. Please upgrade to a paid plan first."
+        }
         """
         org = self.get_organization()
         return_url = request.data.get("return_url")
@@ -203,6 +208,14 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
         if not return_url:
             return Response(
                 {"error": "return_url is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not org.subscription.stripe_customer_id:
+            return Response(
+                {
+                    "error": "No active subscription to manage. Please upgrade to a paid plan first."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
@@ -215,15 +228,15 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"Error creating portal session: {str(e)}")
+            logger.error(f"Error creating portal session: {str(e)}", exc_info=True)
             return Response(
-                {"error": "Failed to create portal session"},
+                {"error": f"Failed to create portal session: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @action(detail=False, methods=["post"])
     @require_access_level(OrganizationMembershipRole.OWNER)
-    def change_plan(self, request, org_id=None):
+    def change_plan(self, request, **kwargs):
         """
         Change organization's subscription plan.
         Handles upgrade/downgrade logic.
@@ -265,7 +278,7 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
             )
 
     @action(detail=False, methods=["get"])
-    def usage(self, request, org_id=None):
+    def usage(self, request, **kwargs):
         """
         Get current billing period usage.
         Available to all organization members.
@@ -293,7 +306,7 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
         return Response(usage_data)
 
     @action(detail=False, methods=["get"])
-    def usage_history(self, request, org_id=None):
+    def usage_history(self, request, **kwargs):
         """
         Get usage history for previous billing periods.
         Available to all organization members.
