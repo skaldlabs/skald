@@ -44,6 +44,7 @@ dependencies = [
     "gevent>=25.9.1",
     "boto3>=1.35.0",
     "sentry-sdk[django]>=2.41.0",
+    "stripe>=13.0.1",
 ]
 
 [project.optional-dependencies]

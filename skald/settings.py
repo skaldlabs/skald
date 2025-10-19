@@ -185,6 +185,16 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", None)
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
+# Stripe Configuration
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", None)
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", None)
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", None)
+
+if not STRIPE_SECRET_KEY and not DEBUG:
+    import logging
+
+    logging.getLogger(__name__).warning("STRIPE_SECRET_KEY not set in production")
+
 EMAIL_DOMAIN = os.getenv("EMAIL_DOMAIN", "useskald.com")
 
 EMAIL_VERIFICATION_ENABLED = str_to_bool(os.getenv("EMAIL_VERIFICATION_ENABLED", True))

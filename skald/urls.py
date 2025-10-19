@@ -8,6 +8,8 @@ from rest_framework_extensions.routers import ExtendedDefaultRouter
 from skald.api.email_verification_api import VerifyEmailViewSet
 from skald.api.organization_api import OrganizationViewSet
 from skald.api.project_api import ProjectViewSet
+from skald.api.stripe_webhook_api import stripe_webhook
+from skald.api.subscription_api import PlanViewSet, SubscriptionViewSet
 
 from .api.chat_api import ChatView
 from .api.generate_doc_api import GenerateDocView
@@ -32,6 +34,7 @@ router.register(
     r"api/email_verification", VerifyEmailViewSet, basename="email_verification"
 )
 router.register(r"api/v1/memo", MemoViewSet, basename="memo")
+router.register(r"api/plans", PlanViewSet, basename="plan")
 # router.register(r"api/project", ProjectViewSet, basename="project")
 
 # the organizations router is for routes that are org-scoped
@@ -47,6 +50,13 @@ organizations_router.register(
     parents_query_lookups=["organization"],
 )
 
+organizations_router.register(
+    r"subscription",
+    SubscriptionViewSet,
+    basename="organization-subscription",
+    parents_query_lookups=["organization"],
+)
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health", HealthView.as_view(), name="health"),
@@ -57,6 +67,8 @@ urlpatterns = [
     path("api/v1/chat/", ChatView.as_view(), name="chat"),
     path("api/v1/generate", GenerateDocView.as_view(), name="generate_doc"),
     path("api/v1/generate/", GenerateDocView.as_view(), name="generate_doc"),
+    path("api/stripe/webhook", stripe_webhook, name="stripe-webhook"),
+    path("api/stripe/webhook/", stripe_webhook, name="stripe-webhook-slash"),
     *router.urls,
 ] + staticfiles_urlpatterns()
 
