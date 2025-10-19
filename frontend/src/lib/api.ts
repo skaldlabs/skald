@@ -80,6 +80,22 @@ const _makeRequest = async <T>(requestConfig: ApiConfig): Promise<ApiResponse<T>
             if (error.response?.status === 401) {
                 localStorage.removeItem('token')
             }
+
+            // Handle 402 Payment Required - Usage limit exceeded
+            if (error.response?.status === 402) {
+                const errorData = error.response.data
+                // Import dynamically to avoid circular dependency
+                import('@/stores/upgradePromptStore').then(({ useUpgradePromptStore }) => {
+                    useUpgradePromptStore
+                        .getState()
+                        .showPrompt(
+                            errorData.message || 'You have reached your usage limit',
+                            errorData.current_usage,
+                            errorData.limit
+                        )
+                })
+            }
+
             errorStr =
                 error.response?.data.error || error.response?.data?.detail || `Status code: ${error.response?.status}`
         }

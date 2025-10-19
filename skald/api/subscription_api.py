@@ -35,37 +35,39 @@ logger = logging.getLogger(__name__)
 class PlanSerializer(serializers.ModelSerializer):
     """Serializer for Plan model"""
 
-    limits = serializers.SerializerMethodField()
+    uuid = serializers.CharField(source="id", read_only=True)
 
     class Meta:
         model = Plan
         fields = [
-            "id",
+            "uuid",
             "slug",
             "name",
+            "stripe_price_id",
             "monthly_price",
-            "limits",
+            "memo_operations_limit",
+            "chat_queries_limit",
+            "projects_limit",
             "features",
-            "is_active",
+            "is_default",
         ]
-
-    def get_limits(self, obj):
-        return {
-            "memo_operations": obj.memo_operations_limit,
-            "chat_queries": obj.chat_queries_limit,
-            "projects": obj.projects_limit,
-        }
 
 
 class SubscriptionDetailSerializer(serializers.ModelSerializer):
     """Serializer for OrganizationSubscription with plan details"""
 
+    uuid = serializers.CharField(source="id", read_only=True)
+    organization = serializers.CharField(source="organization.uuid", read_only=True)
     plan = PlanSerializer(read_only=True)
 
     class Meta:
         model = OrganizationSubscription
         fields = [
+            "uuid",
+            "organization",
             "plan",
+            "stripe_customer_id",
+            "stripe_subscription_id",
             "status",
             "current_period_start",
             "current_period_end",

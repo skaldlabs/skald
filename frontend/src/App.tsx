@@ -4,6 +4,8 @@ import { LoginPage } from '@/pages/LoginPage'
 import { useAuthStore } from '@/stores/authStore'
 import { SignupFlow, SignupFlowStep } from '@/components/SignupFlow'
 import { privateRoutes } from '@/routes'
+import { UpgradePromptDialog } from '@/components/Subscription/UpgradePromptDialog'
+import { useUpgradePromptStore } from '@/stores/upgradePromptStore'
 import '@/index.css'
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -33,6 +35,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
     const initializeAuth = useAuthStore((state) => state.initializeAuth)
     const firstLoad = useAuthStore((state) => state.firstLoad)
+    const { open, message, currentUsage, limit, hidePrompt } = useUpgradePromptStore()
 
     useEffect(() => {
         initializeAuth()
@@ -68,6 +71,13 @@ function App() {
                     />
                 ))}
             </Routes>
+            <UpgradePromptDialog
+                open={open}
+                onOpenChange={hidePrompt}
+                message={message}
+                currentUsage={currentUsage}
+                limit={limit}
+            />
         </Router>
     )
 }
