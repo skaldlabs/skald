@@ -103,8 +103,55 @@ class SubscriptionService:
             subscription.save()
             return subscription
 
-        # Paid plan -> Different paid plan: Update Stripe subscription
-        if subscription.stripe_subscription_id and new_plan.monthly_price > 0:
+        # Paid plan -> Different paid plan downgrade: Schedule change for end of period
+        if (
+            subscription.stripe_subscription_id
+            and new_plan.monthly_price < subscription.plan.monthly_price
+        ):
+            stripe_subscription = stripe.Subscription.retrieve(
+                subscription.stripe_subscription_id
+            )
+
+            schedule = stripe.SubscriptionSchedule.create(
+                from_subscription=subscription.stripe_subscription_id,
+            )
+
+            stripe.SubscriptionSchedule.modify(
+                schedule.id,
+                phases=[
+                    {
+                        "items": [
+                            {
+                                "price": subscription.plan.stripe_price_id,
+                                "quantity": 1,
+                            }
+                        ],
+                        "start_date": int(
+                            subscription.current_period_start.timestamp()
+                        ),
+                        "end_date": int(subscription.current_period_end.timestamp()),
+                    },
+                    {
+                        "items": [
+                            {
+                                "price": new_plan.stripe_price_id,
+                                "quantity": 1,
+                            }
+                        ],
+                        "start_date": int(subscription.current_period_end.timestamp()),
+                    },
+                ],
+            )
+
+            subscription.plan = new_plan
+            subscription.save()
+            return subscription
+
+        # Paid plan -> Different paid plan upgrade: Create new Stripe subscription for upgrade
+        if (
+            subscription.stripe_subscription_id
+            and new_plan.monthly_price > subscription.plan.monthly_price
+        ):
             stripe_subscription = stripe.Subscription.retrieve(
                 subscription.stripe_subscription_id
             )
@@ -119,7 +166,6 @@ class SubscriptionService:
                 ],
                 proration_behavior="always_invoice",  # Immediate proration
             )
-
             subscription.plan = new_plan
             subscription.save()
 

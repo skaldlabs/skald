@@ -7,13 +7,17 @@ import type { Plan } from '@/stores/subscriptionStore'
 interface PricingCardProps {
     plan: Plan
     currentPlanSlug?: string
+    currentPlanPrice?: string
     onSelectPlan: (planSlug: string) => void
     loading?: boolean
 }
 
-export const PricingCard = ({ plan, currentPlanSlug, onSelectPlan, loading }: PricingCardProps) => {
+export const PricingCard = ({ plan, currentPlanSlug, currentPlanPrice, onSelectPlan, loading }: PricingCardProps) => {
     const isCurrentPlan = plan.slug === currentPlanSlug
     const isFree = parseFloat(plan.monthly_price) === 0
+    const isEnterprise = plan.slug === 'enterprise'
+
+    const isDowngrade = currentPlanPrice ? parseFloat(plan.monthly_price) < parseFloat(currentPlanPrice) : isFree
 
     const formatLimit = (limit: number | null) => {
         if (limit === null) return 'Unlimited'
@@ -43,20 +47,39 @@ export const PricingCard = ({ plan, currentPlanSlug, onSelectPlan, loading }: Pr
                     {isCurrentPlan && <Badge>Current Plan</Badge>}
                 </div>
                 <CardDescription>
-                    <span className="text-3xl font-bold">${parseFloat(plan.monthly_price).toFixed(0)}</span>
-                    <span className="text-muted-foreground">/month</span>
+                    <span className="text-3xl font-bold">
+                        {isEnterprise ? 'Custom' : '$' + parseFloat(plan.monthly_price).toFixed(0)}
+                    </span>
+                    <span className="text-muted-foreground">{isEnterprise ? '' : '/month'}</span>
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <ul className="space-y-3">
-                    {features.map((feature, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-primary" />
-                            <span className="text-sm">
-                                <span className="font-semibold">{feature.value}</span> {feature.label}
-                            </span>
-                        </li>
-                    ))}
+                    {isEnterprise ? (
+                        <>
+                            <li className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-primary" />
+                                <span className="text-sm">Unlimited memo operations</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-primary" />
+                                <span className="text-sm">Unlimited chat queries</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-primary" />
+                                <span className="text-sm">Unlimited projects</span>
+                            </li>
+                        </>
+                    ) : (
+                        features.map((feature, index) => (
+                            <li key={index} className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-primary" />
+                                <span className="text-sm">
+                                    <span className="font-semibold">{feature.value}</span> {feature.label}
+                                </span>
+                            </li>
+                        ))
+                    )}
                 </ul>
             </CardContent>
             <CardFooter>
@@ -69,9 +92,9 @@ export const PricingCard = ({ plan, currentPlanSlug, onSelectPlan, loading }: Pr
                         className="w-full"
                         onClick={() => onSelectPlan(plan.slug)}
                         disabled={loading}
-                        variant={isFree ? 'outline' : 'default'}
+                        variant={isDowngrade && !isEnterprise ? 'outline' : 'default'}
                     >
-                        {isFree ? 'Downgrade' : 'Upgrade'}
+                        {isEnterprise ? 'Schedule a call' : isDowngrade ? 'Downgrade' : 'Upgrade'}
                     </Button>
                 )}
             </CardFooter>

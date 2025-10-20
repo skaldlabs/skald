@@ -20,6 +20,7 @@ export const SubscriptionDashboard = () => {
         fetchSubscription,
         fetchUsage,
         createCheckoutSession,
+        changePlan,
         openCustomerPortal,
     } = useSubscriptionStore()
 
@@ -47,12 +48,19 @@ export const SubscriptionDashboard = () => {
     }, [searchParams])
 
     const handleSelectPlan = async (planSlug: string) => {
+        const hasActivePaidSubscription =
+            currentSubscription?.stripe_subscription_id &&
+            currentSubscription?.plan.monthly_price &&
+            parseFloat(currentSubscription.plan.monthly_price) > 0
+
         if (planSlug === 'free') {
             if (!currentSubscription?.stripe_customer_id) {
                 toast.info('You are already on the free plan')
                 return
             }
             await openCustomerPortal()
+        } else if (hasActivePaidSubscription) {
+            await changePlan(planSlug)
         } else {
             await createCheckoutSession(planSlug)
         }
@@ -150,10 +158,32 @@ export const SubscriptionDashboard = () => {
                             key={plan.uuid}
                             plan={plan}
                             currentPlanSlug={currentSubscription?.plan.slug}
+                            currentPlanPrice={currentSubscription?.plan.monthly_price}
                             onSelectPlan={handleSelectPlan}
                             loading={checkoutLoading}
                         />
                     ))}
+                    <PricingCard
+                        key="enterprise"
+                        plan={{
+                            slug: 'enterprise',
+                            name: 'Enterprise',
+                            monthly_price: '0.00',
+                            memo_operations_limit: null,
+                            chat_queries_limit: null,
+                            projects_limit: null,
+                            features: {},
+                            stripe_price_id: null,
+                            is_default: false,
+                            uuid: 'enterprise',
+                        }}
+                        currentPlanSlug={currentSubscription?.plan.slug}
+                        currentPlanPrice={currentSubscription?.plan.monthly_price}
+                        onSelectPlan={() => {
+                            window.open('https://calendar.app.google/z2sjypLTSNUJumAYA', '_blank')
+                        }}
+                        loading={checkoutLoading}
+                    />
                 </div>
             </div>
         </div>

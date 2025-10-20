@@ -62,6 +62,7 @@ interface SubscriptionState {
     fetchSubscription: () => Promise<void>
     fetchUsage: () => Promise<void>
     createCheckoutSession: (planSlug: string) => Promise<void>
+    changePlan: (planSlug: string) => Promise<void>
     openCustomerPortal: () => Promise<void>
     refreshAll: () => Promise<void>
 }
@@ -181,6 +182,48 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 error: String(error),
             })
             toast.error('Failed to start checkout')
+        }
+    },
+
+    changePlan: async (planSlug: string) => {
+        set({ checkoutLoading: true, error: null })
+
+        try {
+            const orgPath = getOrgPath()
+
+            const response = await api.post<{ status: string; subscription: Subscription }>(
+                `${orgPath}/subscription/change_plan/`,
+                {
+                    plan_slug: planSlug,
+                }
+            )
+
+            if (response.error || !response.data) {
+                set({
+                    checkoutLoading: false,
+                    error: response.error || 'Failed to change plan',
+                })
+                toast.error(response.error || 'Failed to change plan')
+                return
+            }
+
+            // Update local subscription state
+            set({
+                currentSubscription: response.data.subscription,
+                checkoutLoading: false,
+                error: null,
+            })
+
+            toast.success('Plan changed successfully!')
+
+            // Refresh usage to get updated limits
+            await get().fetchUsage()
+        } catch (error) {
+            set({
+                checkoutLoading: false,
+                error: String(error),
+            })
+            toast.error('Failed to change plan')
         }
     },
 
