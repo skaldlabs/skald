@@ -98,11 +98,11 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         posthog.capture(
             "project_created",
-            distinct_id=request.user.id,
+            distinct_id=request.user.email,
             properties={
-                "project_uuid": project.uuid,
+                "project_uuid": str(project.uuid),
                 "project_name": project.name,
-                "organization_uuid": org.uuid,
+                "organization_uuid": str(org.uuid),
                 "organization_name": org.name,
                 "user_email": request.user.email,
             },
@@ -133,11 +133,11 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         posthog.capture(
             "project_updated",
-            distinct_id=request.user.id,
+            distinct_id=request.user.email,
             properties={
-                "project_uuid": project.uuid,
+                "project_uuid": str(project.uuid),
                 "project_name": project.name,
-                "organization_uuid": project.organization.uuid,
+                "organization_uuid": str(project.organization.uuid),
                 "user_email": request.user.email,
             },
         )
@@ -188,11 +188,11 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         posthog.capture(
             "project_deleted",
-            distinct_id=request.user.id,
+            distinct_id=request.user.email,
             properties={
-                "project_uuid": project_uuid,
+                "project_uuid": str(project_uuid),
                 "project_name": project_name,
-                "organization_uuid": org_uuid,
+                "organization_uuid": str(org_uuid),
                 "user_email": request.user.email,
             },
         )

@@ -1,3 +1,4 @@
+import posthog
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -102,6 +103,16 @@ class UserViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             user = serializer.save()
             token, _ = Token.objects.get_or_create(user=user)
+
+            posthog.capture(
+                "user_signed_up",
+                distinct_id=user.email,
+                properties={
+                    "user_email": user.email,
+                    "email_verified": user.email_verified,
+                },
+            )
+
             return Response(
                 {"token": token.key, "user": UserSerializer(user).data},
                 status=status.HTTP_201_CREATED,
@@ -134,6 +145,16 @@ class UserViewSet(viewsets.ModelViewSet):
         if user:
             login(request, user)
             token, _ = Token.objects.get_or_create(user=user)
+
+            posthog.capture(
+                "user_logged_in",
+                distinct_id=user.email,
+                properties={
+                    "user_email": user.email,
+                    "email_verified": user.email_verified,
+                },
+            )
+
             return Response(
                 {"token": token.key, "user": UserSerializer(user).data},
                 status=status.HTTP_200_OK,
