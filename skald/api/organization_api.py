@@ -118,9 +118,9 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         posthog.capture(
             "organization_created",
-            distinct_id=request.user.id,
+            distinct_id=request.user.email,
             properties={
-                "organization_uuid": org.uuid,
+                "organization_uuid": str(org.uuid),
                 "organization_name": org.name,
                 "user_email": request.user.email,
             },
@@ -237,9 +237,9 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         posthog.capture(
             "organization_invite_accepted",
-            distinct_id=request.user.id,
+            distinct_id=request.user.email,
             properties={
-                "organization_uuid": membership.organization.uuid,
+                "organization_uuid": str(membership.organization.uuid),
                 "organization_name": membership.organization.name,
                 "user_email": request.user.email,
             },
@@ -292,9 +292,9 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         posthog.capture(
             "organization_member_removed",
-            distinct_id=request.user.id,
+            distinct_id=request.user.email,
             properties={
-                "organization_uuid": org.uuid,
+                "organization_uuid": str(org.uuid),
                 "organization_name": org.name,
                 "removed_user_email": email,
                 "removed_by_email": request.user.email,
@@ -347,9 +347,9 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         posthog.capture(
             "organization_invite_cancelled",
-            distinct_id=request.user.id,
+            distinct_id=request.user.email,
             properties={
-                "organization_uuid": org.uuid,
+                "organization_uuid": str(org.uuid),
                 "organization_name": org.name,
                 "invited_email": invite.email,
                 "cancelled_by_email": request.user.email,
@@ -395,9 +395,9 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
             posthog.capture(
                 "organization_invite_resent",
-                distinct_id=request.user.id,
+                distinct_id=request.user.email,
                 properties={
-                    "organization_uuid": org.uuid,
+                    "organization_uuid": str(org.uuid),
                     "organization_name": org.name,
                     "invited_email": invite.email,
                     "resent_by_email": request.user.email,

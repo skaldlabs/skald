@@ -1,3 +1,4 @@
+import posthog
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from rest_framework import serializers, status, viewsets
 from rest_framework.authtoken.models import Token
@@ -62,9 +63,9 @@ class UserSerializer(serializers.ModelSerializer):
         organization_access_levels = {}
         team_access_levels = {}
         for organization in obj.organizationmembership_set.all():
-            organization_access_levels[
-                str(organization.organization.uuid)
-            ] = organization.access_level
+            organization_access_levels[str(organization.organization.uuid)] = (
+                organization.access_level
+            )
         return {
             "organization_access_levels": organization_access_levels,
         }
@@ -99,6 +100,16 @@ class UserViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             user = serializer.save()
             token, _ = Token.objects.get_or_create(user=user)
+
+            posthog.capture(
+                "user_signed_up",
+                distinct_id=user.email,
+                properties={
+                    "user_email": user.email,
+                    "email_verified": user.email_verified,
+                },
+            )
+
             return Response(
                 {"token": token.key, "user": UserSerializer(user).data},
                 status=status.HTTP_201_CREATED,
@@ -130,6 +141,16 @@ class UserViewSet(viewsets.ModelViewSet):
         if user:
             login(request, user)
             token, _ = Token.objects.get_or_create(user=user)
+
+            posthog.capture(
+                "user_logged_in",
+                distinct_id=user.email,
+                properties={
+                    "user_email": user.email,
+                    "email_verified": user.email_verified,
+                },
+            )
+
             return Response(
                 {"token": token.key, "user": UserSerializer(user).data},
                 status=status.HTTP_200_OK,

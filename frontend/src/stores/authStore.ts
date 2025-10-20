@@ -67,13 +67,23 @@ export const useAuthStore = create<AuthState>((set) => {
 
             const userDetails = await fetchUserDetails()
             if (userDetails) {
+                const user = {
+                    ...userDetails,
+                    current_organization_uuid: userDetails.default_organization,
+                    organization_name: userDetails.organization_name,
+                }
                 set({
                     isAuthenticated: true,
-                    user: {
-                        ...userDetails,
-                        current_organization_uuid: userDetails.default_organization,
-                        organization_name: userDetails.organization_name,
-                    },
+                    user: user,
+                })
+
+                posthog.identify(user.email, {
+                    email: user.email,
+                    name: user.name,
+                    default_organization: user.default_organization,
+                    email_verified: user.email_verified,
+                    organization_name: user.organization_name,
+                    current_organization_uuid: user.current_organization_uuid,
                 })
             } else {
                 storage.remove(STORAGE_KEYS.TOKEN)
@@ -98,6 +108,7 @@ export const useAuthStore = create<AuthState>((set) => {
 
             posthog.identify(user.email, {
                 email: user.email,
+                name: user.name,
                 default_organization: user.default_organization,
                 email_verified: user.email_verified,
                 organization_name: user.organization_name,
@@ -116,8 +127,9 @@ export const useAuthStore = create<AuthState>((set) => {
             storage.set(STORAGE_KEYS.TOKEN, response.data.token)
             set({ isAuthenticated: true, user: user })
 
-            posthog.identify(response.data.user.email, {
+            posthog.identify(user.email, {
                 email: user.email,
+                name: user.name,
                 default_organization: user.default_organization,
                 email_verified: user.email_verified,
                 organization_name: user.organization_name,
