@@ -15,7 +15,7 @@ export const SubscriptionPage = () => {
     }
 
     return (
-        <Page pageTitle="Subscription & Billing">
+        <Page pageTitle="Plan & Billing">
             <SubscriptionDashboard />
         </Page>
     )

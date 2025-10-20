@@ -64,6 +64,7 @@ interface SubscriptionState {
     fetchSubscription: () => Promise<void>
     fetchUsage: () => Promise<void>
     createCheckoutSession: (planSlug: string) => Promise<void>
+    upgrade: (planSlug: string) => Promise<void>
     changePlan: (planSlug: string) => Promise<void>
     cancelScheduledChange: () => Promise<void>
     openCustomerPortal: () => Promise<void>
@@ -185,6 +186,56 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 error: String(error),
             })
             toast.error('Failed to start checkout')
+        }
+    },
+
+    upgrade: async (planSlug: string) => {
+        set({ checkoutLoading: true, error: null })
+
+        try {
+            const orgPath = getOrgPath()
+            const successUrl = `${window.location.origin}/organization/subscription?success=true`
+            const cancelUrl = `${window.location.origin}/organization/subscription?canceled=true`
+
+            const response = await api.post<
+                | { status: 'subscription_created'; subscription: Subscription }
+                | { status: 'checkout_required'; checkout_url: string; reason: string }
+            >(`${orgPath}/subscription/upgrade/`, {
+                plan_slug: planSlug,
+                success_url: successUrl,
+                cancel_url: cancelUrl,
+            })
+
+            if (response.error || !response.data) {
+                set({
+                    checkoutLoading: false,
+                    error: response.error || 'Failed to upgrade plan',
+                })
+                toast.error(response.error || 'Failed to upgrade plan')
+                return
+            }
+
+            if (response.data.status === 'subscription_created') {
+                // Successfully created subscription with saved payment method
+                set({
+                    currentSubscription: response.data.subscription,
+                    checkoutLoading: false,
+                    error: null,
+                })
+                toast.success('Subscription upgraded successfully!')
+
+                // Refresh usage to get updated limits
+                await get().fetchUsage()
+            } else if (response.data.status === 'checkout_required') {
+                // Need to redirect to checkout
+                window.location.href = response.data.checkout_url
+            }
+        } catch (error) {
+            set({
+                checkoutLoading: false,
+                error: String(error),
+            })
+            toast.error('Failed to upgrade plan')
         }
     },
 

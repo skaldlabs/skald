@@ -97,7 +97,7 @@ export const UsageDashboard = ({ usage, loading }: UsageDashboardProps) => {
     const periodEnd = new Date(usage.billing_period_end).toLocaleDateString()
 
     return (
-        <Card>
+        <Card className="h-full">
             <CardHeader>
                 <CardTitle>Current Usage</CardTitle>
                 <CardDescription>

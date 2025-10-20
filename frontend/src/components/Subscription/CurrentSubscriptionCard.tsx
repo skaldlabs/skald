@@ -69,6 +69,19 @@ export const CurrentSubscriptionCard = ({ subscription, onManageBilling, loading
                     </div>
                 </div>
 
+                {subscription.plan.name.toLowerCase() !== 'free' && (
+                    <>
+                        <Separator />
+                        <div>
+                            <p className="text-sm font-semibold mb-2">Over-Limit Usage Pricing</p>
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                                <p>• USD 0.002 per memo operation</p>
+                                <p>• USD 0.03 per chat query</p>
+                            </div>
+                        </div>
+                    </>
+                )}
+
                 {subscription.stripe_customer_id && (
                     <>
                         <Separator />

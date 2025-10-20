@@ -8,20 +8,18 @@ import { toast } from 'sonner'
 import { useSearchParams } from 'react-router-dom'
 
 export const SubscriptionDashboard = () => {
-    const {
-        plans,
-        currentSubscription,
-        usage,
-        loading,
-        checkoutLoading,
-        fetchPlans,
-        fetchSubscription,
-        fetchUsage,
-        createCheckoutSession,
-        changePlan,
-        cancelScheduledChange,
-        openCustomerPortal,
-    } = useSubscriptionStore()
+    const plans = useSubscriptionStore((state) => state.plans)
+    const currentSubscription = useSubscriptionStore((state) => state.currentSubscription)
+    const usage = useSubscriptionStore((state) => state.usage)
+    const loading = useSubscriptionStore((state) => state.loading)
+    const checkoutLoading = useSubscriptionStore((state) => state.checkoutLoading)
+    const fetchPlans = useSubscriptionStore((state) => state.fetchPlans)
+    const fetchSubscription = useSubscriptionStore((state) => state.fetchSubscription)
+    const fetchUsage = useSubscriptionStore((state) => state.fetchUsage)
+    const upgrade = useSubscriptionStore((state) => state.upgrade)
+    const changePlan = useSubscriptionStore((state) => state.changePlan)
+    const cancelScheduledChange = useSubscriptionStore((state) => state.cancelScheduledChange)
+    const openCustomerPortal = useSubscriptionStore((state) => state.openCustomerPortal)
 
     const [searchParams] = useSearchParams()
 
@@ -61,7 +59,8 @@ export const SubscriptionDashboard = () => {
         } else if (hasActivePaidSubscription) {
             await changePlan(planSlug)
         } else {
-            await createCheckoutSession(planSlug)
+            // Free to paid upgrade: try saved payment method first, fallback to checkout
+            await upgrade(planSlug)
         }
     }
 

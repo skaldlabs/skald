@@ -4,6 +4,7 @@ Subscription Management API
 Endpoints:
 - GET /api/organization/{org_id}/subscription/ - Get current subscription details
 - POST /api/organization/{org_id}/subscription/checkout/ - Create Stripe checkout session
+- POST /api/organization/{org_id}/subscription/upgrade/ - upgrade (try saved payment, fallback to checkout)
 - POST /api/organization/{org_id}/subscription/portal/ - Get Stripe customer portal URL
 - POST /api/organization/{org_id}/subscription/change-plan/ - Change subscription plan
 - GET /api/organization/{org_id}/subscription/usage/ - Get current usage
@@ -181,6 +182,89 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
             logger.error(f"Error creating checkout session: {str(e)}")
             return Response(
                 {"error": "Failed to create checkout session"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["post"])
+    @require_access_level(OrganizationMembershipRole.OWNER)
+    def upgrade(self, request, **kwargs):
+        """
+        Smart upgrade endpoint for free to paid transitions.
+        First attempts to create subscription with saved payment method.
+        Falls back to checkout session if no payment method exists or payment fails.
+
+        Request:
+        {
+            "plan_slug": "pro",
+            "success_url": "https://app.useskald.com/organization/settings?success=true",
+            "cancel_url": "https://app.useskald.com/organization/settings?canceled=true"
+        }
+
+        Success Response (Created with saved payment):
+        {
+            "status": "subscription_created",
+            "subscription": {...}
+        }
+
+        Success Response (Fallback to checkout):
+        {
+            "status": "checkout_required",
+            "checkout_url": "https://checkout.stripe.com/...",
+            "reason": "No saved payment method found"
+        }
+        """
+        org = self.get_organization()
+        plan_slug = request.data.get("plan_slug")
+        success_url = request.data.get("success_url")
+        cancel_url = request.data.get("cancel_url")
+
+        if not all([plan_slug, success_url, cancel_url]):
+            return Response(
+                {"error": "plan_slug, success_url, and cancel_url are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            service = SubscriptionService()
+
+            # Try to create subscription with saved payment method
+            success, result = service.try_create_subscription_with_saved_payment(
+                organization=org, plan_slug=plan_slug
+            )
+
+            if success:
+                # Successfully created subscription with saved payment method
+                serializer = SubscriptionDetailSerializer(result)
+                return Response(
+                    {
+                        "status": "subscription_created",
+                        "subscription": serializer.data,
+                    }
+                )
+            else:
+                # Failed to use saved payment method, fallback to checkout
+                logger.info(f"Falling back to checkout for {org.name}: {result}")
+                checkout_session = service.create_checkout_session(
+                    organization=org,
+                    plan_slug=plan_slug,
+                    success_url=success_url,
+                    cancel_url=cancel_url,
+                )
+
+                return Response(
+                    {
+                        "status": "checkout_required",
+                        "checkout_url": checkout_session.url,
+                        "reason": result,
+                    }
+                )
+
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in upgrade: {str(e)}", exc_info=True)
+            return Response(
+                {"error": "Failed to process upgrade"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

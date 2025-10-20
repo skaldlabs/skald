@@ -224,6 +224,134 @@ class SubscriptionService:
 
         return customer.id
 
+    def _get_default_payment_method(self, customer_id: str) -> str | None:
+        """
+        Get the default payment method for a Stripe customer.
+        Returns payment method ID if found, None otherwise.
+        """
+        try:
+            customer = stripe.Customer.retrieve(customer_id)
+
+            # Check for invoice_settings.default_payment_method first
+            if customer.get("invoice_settings", {}).get("default_payment_method"):
+                return customer["invoice_settings"]["default_payment_method"]
+
+            # Fallback to default_source
+            if customer.get("default_source"):
+                return customer["default_source"]
+
+            # Try to get the most recent payment method
+            payment_methods = stripe.PaymentMethod.list(
+                customer=customer_id, type="card", limit=1
+            )
+
+            if payment_methods.data:
+                return payment_methods.data[0].id
+
+            return None
+
+        except stripe.StripeError as e:
+            logger.warning(
+                f"Error retrieving payment method for customer {customer_id}: {str(e)}"
+            )
+            return None
+
+    def try_create_subscription_with_saved_payment(
+        self, organization: Organization, plan_slug: str
+    ) -> tuple[bool, OrganizationSubscription | str]:
+        """
+        Try to create a subscription using a saved payment method.
+
+        Returns:
+            (success: bool, result: OrganizationSubscription | error_message)
+            - If successful: (True, subscription)
+            - If failed: (False, error_message)
+        """
+        try:
+            plan = Plan.objects.get(slug=plan_slug, is_active=True)
+            subscription = organization.subscription
+
+            # Check if organization has a Stripe customer
+            if not subscription.stripe_customer_id:
+                return False, "No Stripe customer found"
+
+            # Check for saved payment method
+            payment_method_id = self._get_default_payment_method(
+                subscription.stripe_customer_id
+            )
+
+            if not payment_method_id:
+                return False, "No saved payment method found"
+
+            # Attempt to create subscription with saved payment method
+            stripe_subscription = stripe.Subscription.create(
+                customer=subscription.stripe_customer_id,
+                items=[{"price": plan.stripe_price_id}],
+                default_payment_method=payment_method_id,
+                metadata={
+                    "organization_id": str(organization.uuid),
+                    "plan_slug": plan_slug,
+                },
+            )
+
+            if not stripe_subscription.get("id"):
+                logger.error(f"Invalid subscription response: {stripe_subscription}")
+                return False, "Failed to create subscription"
+
+            period_start = stripe_subscription.get("current_period_start")
+            period_end = stripe_subscription.get("current_period_end")
+
+            if not period_start or not period_end:
+                items_data = stripe_subscription.get("items", {}).get("data", [])
+                if items_data:
+                    period_start = items_data[0].get("current_period_start")
+                    period_end = items_data[0].get("current_period_end")
+
+            if not period_start or not period_end:
+                logger.error(
+                    f"Missing period dates in subscription response: {stripe_subscription}"
+                )
+                return False, "Invalid subscription data received"
+
+            subscription.stripe_subscription_id = stripe_subscription["id"]
+            subscription.plan = plan
+            subscription.status = stripe_subscription.get("status", "active")
+            subscription.current_period_start = datetime.fromtimestamp(
+                period_start, tz=dt_timezone.utc
+            )
+            subscription.current_period_end = datetime.fromtimestamp(
+                period_end, tz=dt_timezone.utc
+            )
+            subscription.save()
+
+            UsageRecord.objects.get_or_create(
+                organization=organization,
+                billing_period_start=subscription.current_period_start.date(),
+                defaults={"billing_period_end": subscription.current_period_end.date()},
+            )
+
+            logger.info(
+                f"Successfully created subscription with saved payment method for {organization.name}"
+            )
+            return True, subscription
+
+        except stripe.CardError as e:
+            logger.warning(
+                f"Card error when creating subscription for {organization.name}: {str(e)}"
+            )
+            return False, f"Payment failed: {e.user_message}"
+        except stripe.StripeError as e:
+            logger.warning(
+                f"Stripe error when creating subscription for {organization.name}: {str(e)}"
+            )
+            return False, f"Payment processing error: {str(e)}"
+        except Exception as e:
+            logger.error(
+                f"Unexpected error creating subscription for {organization.name}: {str(e)}",
+                exc_info=True,
+            )
+            return False, f"Unexpected error: {str(e)}"
+
     # Webhook Handlers
 
     def handle_checkout_completed(self, event):
