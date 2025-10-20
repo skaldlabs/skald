@@ -12,6 +12,7 @@ from skald.api.permissions import (
     OrganizationPermissionMixin,
     require_access_level,
 )
+from skald.decorators import require_usage_limit
 from skald.models.memo import Memo, MemoChunk, MemoContent, MemoSummary, MemoTag
 from skald.models.organization import Organization
 from skald.models.project import Project, ProjectApiKey
@@ -61,6 +62,7 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         return Project.objects.filter(organization=self.get_organization())
 
     @require_access_level(OrganizationMembershipRole.MEMBER)
+    @require_usage_limit("projects", increment=False)
     def create(self, request, parent_lookup_organization=None):
         """Create a new project"""
         name = request.data.get("name")

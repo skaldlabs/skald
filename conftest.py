@@ -1,10 +1,14 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
+from django.utils import timezone
 from rest_framework.authtoken.models import Token
 
 from skald.models.organization import Organization
+from skald.models.plan import Plan
 from skald.models.project import Project, ProjectApiKey
+from skald.models.subscription import OrganizationSubscription, SubscriptionStatus
 from skald.models.user import OrganizationMembership, User
 from skald.utils.api_key_utils import generate_api_key, hash_api_key
 
@@ -96,21 +100,59 @@ def other_user(db):
 
 
 @pytest.fixture
-def organization(db, user):
-    """Create a test organization."""
-    return Organization.objects.create(
-        name="Test Organization",
-        owner=user,
+def free_plan(db):
+    """Create a free plan (default plan for tests)."""
+    return Plan.objects.create(
+        slug="free",
+        name="Free",
+        monthly_price=0.00,
+        memo_operations_limit=1000,
+        chat_queries_limit=100,
+        projects_limit=1,
+        features={"search_type": "basic", "support_level": "community"},
+        is_active=True,
+        is_default=True,
     )
 
 
 @pytest.fixture
-def other_organization(db, other_user):
-    """Create another test organization."""
-    return Organization.objects.create(
+def organization(db, user, free_plan):
+    """Create a test organization with a subscription."""
+    org = Organization.objects.create(
+        name="Test Organization",
+        owner=user,
+    )
+    # Create subscription manually if signal didn't create it
+    if not hasattr(org, "subscription"):
+        now = timezone.now()
+        OrganizationSubscription.objects.create(
+            organization=org,
+            plan=free_plan,
+            status=SubscriptionStatus.ACTIVE,
+            current_period_start=now,
+            current_period_end=now + timedelta(days=30),
+        )
+    return org
+
+
+@pytest.fixture
+def other_organization(db, other_user, free_plan):
+    """Create another test organization with a subscription."""
+    org = Organization.objects.create(
         name="Other Organization",
         owner=other_user,
     )
+    # Create subscription manually if signal didn't create it
+    if not hasattr(org, "subscription"):
+        now = timezone.now()
+        OrganizationSubscription.objects.create(
+            organization=org,
+            plan=free_plan,
+            status=SubscriptionStatus.ACTIVE,
+            current_period_start=now,
+            current_period_end=now + timedelta(days=30),
+        )
+    return org
 
 
 @pytest.fixture

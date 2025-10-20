@@ -9,6 +9,7 @@ Complete API reference for Skald 2.0. All endpoints return JSON unless otherwise
 - [User Management](#user-management)
 - [Email Verification](#email-verification)
 - [Organization Management](#organization-management)
+- [Subscription Management](#subscription-management)
 - [Project Management](#project-management)
 - [Memo Management](#memo-management)
 - [Search](#search)
@@ -609,6 +610,279 @@ Cannot remove owner (400):
 
 ---
 
+## Subscription Management
+
+### GET /api/organization/{organization_id}/subscription/subscription
+
+Get current subscription details for the organization.
+
+**Authentication:** Token (required)
+**Permission:** Organization member
+
+**Response:**
+
+```json
+{
+    "uuid": "subscription-uuid",
+    "organization": "org-uuid",
+    "plan": {
+        "uuid": "plan-uuid",
+        "slug": "pro",
+        "name": "Pro",
+        "stripe_price_id": "price_xxx",
+        "monthly_price": "29.00",
+        "memo_operations_limit": 80000,
+        "chat_queries_limit": 10000,
+        "projects_limit": 5,
+        "features": {},
+        "is_default": false
+    },
+    "stripe_customer_id": "cus_xxx",
+    "stripe_subscription_id": "sub_xxx",
+    "status": "active",
+    "current_period_start": "2025-01-01T00:00:00Z",
+    "current_period_end": "2025-02-01T00:00:00Z",
+    "cancel_at_period_end": false,
+    "scheduled_plan": null,
+    "scheduled_change_date": null
+}
+```
+
+**Note:** `scheduled_plan` and `scheduled_change_date` will be populated if a plan change has been scheduled for the end of the billing period.
+
+### POST /api/organization/{organization_id}/subscription/checkout
+
+Create a Stripe checkout session to subscribe to or upgrade to a paid plan.
+
+**Authentication:** Token (required)
+**Permission:** Organization owner
+
+**Request:**
+
+```json
+{
+    "plan_slug": "pro",
+    "success_url": "https://app.example.com/subscription?success=true",
+    "cancel_url": "https://app.example.com/subscription?canceled=true"
+}
+```
+
+**Response:**
+
+```json
+{
+    "checkout_url": "https://checkout.stripe.com/..."
+}
+```
+
+### POST /api/organization/{organization_id}/subscription/portal
+
+Get Stripe Customer Portal URL for managing payment methods and viewing invoices.
+
+**Authentication:** Token (required)
+**Permission:** Organization owner
+
+**Request:**
+
+```json
+{
+    "return_url": "https://app.example.com/subscription"
+}
+```
+
+**Response:**
+
+```json
+{
+    "portal_url": "https://billing.stripe.com/..."
+}
+```
+
+**Error Response (400):**
+
+```json
+{
+    "error": "No active subscription to manage. Please upgrade to a paid plan first."
+}
+```
+
+### POST /api/organization/{organization_id}/subscription/change_plan
+
+Change the organization's subscription plan. Upgrades are immediate, downgrades are scheduled for the end of the current billing period.
+
+**Authentication:** Token (required)
+**Permission:** Organization owner
+
+**Request:**
+
+```json
+{
+    "plan_slug": "basic"
+}
+```
+
+**Response:**
+
+```json
+{
+    "status": "success",
+    "subscription": {
+        "uuid": "subscription-uuid",
+        "plan": { ... },
+        "scheduled_plan": {
+            "uuid": "plan-uuid",
+            "slug": "basic",
+            "name": "Basic",
+            ...
+        },
+        "scheduled_change_date": "2025-02-01T00:00:00Z",
+        ...
+    }
+}
+```
+
+**Error Responses:**
+
+Already scheduled (400):
+
+```json
+{
+    "error": "A plan change to Pro is already scheduled for February 1, 2025. Please cancel the existing scheduled change before making a new one."
+}
+```
+
+Use checkout for free to paid (400):
+
+```json
+{
+    "error": "Use checkout session to upgrade from free plan"
+}
+```
+
+### POST /api/organization/{organization_id}/subscription/cancel_scheduled_change
+
+Cancel a scheduled plan change.
+
+**Authentication:** Token (required)
+**Permission:** Organization owner
+
+**Response:**
+
+```json
+{
+    "status": "success",
+    "subscription": {
+        "uuid": "subscription-uuid",
+        "plan": { ... },
+        "scheduled_plan": null,
+        "scheduled_change_date": null,
+        ...
+    }
+}
+```
+
+**Error Response (400):**
+
+```json
+{
+    "error": "No scheduled plan change to cancel"
+}
+```
+
+### GET /api/organization/{organization_id}/subscription/usage
+
+Get current billing period usage statistics.
+
+**Authentication:** Token (required)
+**Permission:** Organization member
+
+**Response:**
+
+```json
+{
+    "billing_period_start": "2025-01-01",
+    "billing_period_end": "2025-02-01",
+    "usage": {
+        "memo_operations": {
+            "count": 45000,
+            "limit": 80000,
+            "percentage": 56.25
+        },
+        "chat_queries": {
+            "count": 3500,
+            "limit": 10000,
+            "percentage": 35.0
+        },
+        "projects": {
+            "count": 3,
+            "limit": 5,
+            "percentage": 60.0
+        }
+    }
+}
+```
+
+### GET /api/organization/{organization_id}/subscription/usage_history
+
+Get usage history for previous billing periods (last 12 months).
+
+**Authentication:** Token (required)
+**Permission:** Organization member
+
+**Response:**
+
+```json
+[
+    {
+        "billing_period_start": "2024-12-01",
+        "billing_period_end": "2025-01-01",
+        "memo_operations_count": 72000,
+        "chat_queries_count": 8900,
+        "projects": 4
+    },
+    ...
+]
+```
+
+### GET /api/plans
+
+List all available subscription plans. This endpoint is public and doesn't require authentication.
+
+**Authentication:** None
+
+**Response:**
+
+```json
+[
+    {
+        "uuid": "plan-uuid",
+        "slug": "free",
+        "name": "Free",
+        "stripe_price_id": null,
+        "monthly_price": "0.00",
+        "memo_operations_limit": 10000,
+        "chat_queries_limit": 1000,
+        "projects_limit": 1,
+        "features": {},
+        "is_default": true
+    },
+    {
+        "uuid": "plan-uuid",
+        "slug": "basic",
+        "name": "Basic",
+        "stripe_price_id": "price_xxx",
+        "monthly_price": "9.00",
+        "memo_operations_limit": 20000,
+        "chat_queries_limit": 2500,
+        "projects_limit": 2,
+        "features": {},
+        "is_default": false
+    }
+]
+```
+
+---
+
 ## Project Management
 
 ### GET /api/organization/{organization_id}/projects
@@ -864,11 +1138,13 @@ Get memo details by UUID or client reference ID.
 **Examples:**
 
 Get by UUID (default):
+
 ```
 GET /api/v1/memo/550e8400-e29b-41d4-a716-446655440000?project_id={project-uuid}
 ```
 
 Get by client reference ID:
+
 ```
 GET /api/v1/memo/external-id-123?id_type=reference_id&project_id={project-uuid}
 ```
@@ -941,11 +1217,13 @@ Partially update an existing memo by UUID or client reference ID. If the content
 **Examples:**
 
 Update by UUID (default):
+
 ```
 PATCH /api/v1/memo/550e8400-e29b-41d4-a716-446655440000?project_id={project-uuid}
 ```
 
 Update by client reference ID:
+
 ```
 PATCH /api/v1/memo/external-id-123?id_type=reference_id&project_id={project-uuid}
 ```
@@ -1036,11 +1314,13 @@ Delete a memo by UUID or client reference ID and all its associated data (conten
 **Examples:**
 
 Delete by UUID (default):
+
 ```
 DELETE /api/v1/memo/550e8400-e29b-41d4-a716-446655440000?project_id={project-uuid}
 ```
 
 Delete by client reference ID:
+
 ```
 DELETE /api/v1/memo/external-id-123?id_type=reference_id&project_id={project-uuid}
 ```

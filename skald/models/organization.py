@@ -14,3 +14,21 @@ class Organization(models.Model):
         on_delete=models.CASCADE,
         related_name="owned_organizations",
     )
+
+    @property
+    def current_plan(self):
+        """Returns the current plan for this organization"""
+        try:
+            return self.subscription.plan
+        except Exception:
+            # Import here to avoid circular dependency
+            from skald.models.plan import Plan
+
+            # Return free plan if no subscription exists
+            try:
+                return Plan.objects.get(is_default=True)
+            except Plan.DoesNotExist:
+                return None
+
+    def __str__(self):
+        return self.name

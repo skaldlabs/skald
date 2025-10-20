@@ -5,6 +5,7 @@ Complete reference for all database models in the Skald system.
 ## Table of Contents
 
 - [Organization Models](#organization-models)
+- [Subscription Models](#subscription-models)
 - [User Models](#user-models)
 - [Project Models](#project-models)
 - [Memo Models](#memo-models)
@@ -35,6 +36,364 @@ Represents a team or company that owns projects and has members.
 - **Owner**: Many-to-one with User (one user owns the organization)
 - **Members**: Many-to-many with User through OrganizationMembership
 - **Projects**: One-to-many with Project (related_name: `projects`)
+- **Subscription**: One-to-one with OrganizationSubscription (related_name: `subscription`)
+
+#### Properties
+
+##### `current_plan` (property)
+
+Returns the current subscription plan for this organization.
+
+**Returns:** `Plan` object or `None`
+
+**Implementation:** `organization.py:18`
+
+```python
+@property
+def current_plan(self):
+    """Returns the current plan for this organization"""
+    try:
+        return self.subscription.plan
+    except Exception:
+        from skald.models.plan import Plan
+        try:
+            return Plan.objects.get(is_default=True)
+        except Plan.DoesNotExist:
+            return None
+```
+
+**Behavior:**
+- Returns plan from subscription if exists
+- Falls back to default (free) plan if no subscription
+- Returns None if no default plan configured
+
+---
+
+## Subscription Models
+
+### Plan
+
+**File:** `plan.py:4`
+
+Defines subscription plan tiers and their limits. Stored in database (not hardcoded) to allow future plan changes without code deployment.
+
+#### Fields
+
+| Field                    | Type                 | Description                                         |
+| ------------------------ | -------------------- | --------------------------------------------------- |
+| `id`                     | AutoField            | Primary key                                         |
+| `slug`                   | CharField(50)        | Stable identifier (e.g., 'free', 'basic', 'pro')    |
+| `name`                   | CharField(100)       | Display name                                        |
+| `stripe_price_id`        | CharField(255)       | Stripe Price ID (nullable for free/custom plans)    |
+| `monthly_price`          | DecimalField(10, 2)  | Monthly price in USD (default: 0.00)                |
+| `memo_operations_limit`  | IntegerField         | Max memo operations/month (null = unlimited)        |
+| `chat_queries_limit`     | IntegerField         | Max chat queries/month (null = unlimited)           |
+| `projects_limit`         | IntegerField         | Max projects (null = unlimited)                     |
+| `features`               | JSONField            | Additional features (default: {})                   |
+| `is_active`              | BooleanField         | Whether plan is available for selection             |
+| `is_default`             | BooleanField         | Whether this is the default plan for new orgs       |
+| `created_at`             | DateTimeField        | Plan creation timestamp (auto)                      |
+| `updated_at`             | DateTimeField        | Last update timestamp (auto)                        |
+
+#### Constraints
+
+- `slug`: Unique
+- `stripe_price_id`: Unique (nullable)
+
+#### Meta Options
+
+- **Ordering**: `["monthly_price"]` - Cheapest plans first
+
+#### Features Field Structure
+
+The `features` JSONField stores non-quantifiable plan features:
+
+```json
+{
+  "search_type": "basic" | "advanced",
+  "support_level": "community" | "email" | "priority" | "dedicated",
+  "custom_embeddings": true | false,
+  "self_hosted": true | false,
+  "sla_guarantee": true | false
+}
+```
+
+#### Default Plans
+
+Four plans are created via fixtures:
+
+1. **Free** ($0/month):
+   - 1,000 memo operations/month
+   - 100 chat queries/month
+   - 1 project
+   - Basic search, community support
+   - `is_default=True`
+
+2. **Basic** ($20/month):
+   - 80,000 memo operations/month
+   - 10,000 chat queries/month
+   - 5 projects
+   - Advanced search, email support
+
+3. **Pro** ($250/month):
+   - Unlimited memo operations
+   - 100,000 chat queries/month
+   - Unlimited projects
+   - Advanced search, priority support
+
+4. **Enterprise** (Custom pricing):
+   - Unlimited everything
+   - Custom embeddings, self-hosted option
+   - Dedicated support, SLA guarantee
+
+#### Usage Limits
+
+- `null` values represent unlimited usage
+- Limits are tracked at API endpoints via decorators
+- Email alerts are sent at 80% and 100% usage thresholds
+- Usage is **not blocked** when limits are exceeded
+- Overage usage is charged at the end of the billing period
+- See `decorators/usage_decorators.py` for tracking implementation
+
+---
+
+### OrganizationSubscription
+
+**File:** `subscription.py:24`
+
+Links an organization to a subscription plan. One subscription per organization.
+
+#### Fields
+
+| Field                    | Type                     | Description                                       |
+| ------------------------ | ------------------------ | ------------------------------------------------- |
+| `id`                     | AutoField                | Primary key                                       |
+| `organization`           | OneToOneField(Org)       | Organization (related_name: `subscription`)       |
+| `plan`                   | ForeignKey(Plan)         | Current plan (PROTECT on delete)                  |
+| `stripe_customer_id`     | CharField(255)           | Stripe Customer ID (nullable, unique)             |
+| `stripe_subscription_id` | CharField(255)           | Stripe Subscription ID (nullable, unique)         |
+| `status`                 | CharField(50)            | Subscription status (choices from enum)           |
+| `current_period_start`   | DateTimeField            | Current billing period start                      |
+| `current_period_end`     | DateTimeField            | Current billing period end                        |
+| `cancel_at_period_end`   | BooleanField             | Whether subscription cancels at period end        |
+| `canceled_at`            | DateTimeField            | Cancellation timestamp (nullable)                 |
+| `trial_start`            | DateTimeField            | Trial period start (nullable)                     |
+| `trial_end`              | DateTimeField            | Trial period end (nullable)                       |
+| `created_at`             | DateTimeField            | Subscription creation timestamp (auto)            |
+| `updated_at`             | DateTimeField            | Last update timestamp (auto)                      |
+
+#### Status Choices
+
+Defined by `SubscriptionStatus` enum:
+
+| Status                  | Description                                      |
+| ----------------------- | ------------------------------------------------ |
+| `active`                | Subscription is active and valid                 |
+| `past_due`              | Payment failed, awaiting retry                   |
+| `canceled`              | Subscription has been canceled                   |
+| `incomplete`            | Initial payment incomplete                       |
+| `incomplete_expired`    | Initial payment incomplete and expired           |
+| `trialing`              | In trial period                                  |
+| `unpaid`                | Payment overdue                                  |
+
+#### Indexes
+
+- `stripe_customer_id`
+- `stripe_subscription_id`
+- `status`
+
+#### Stripe Integration
+
+- **Free plan users**: `stripe_customer_id` and `stripe_subscription_id` are null
+- **Paid plans**: Stripe IDs are populated on checkout completion
+- Status mirrors Stripe subscription status
+- Updated via webhooks
+
+#### Auto-Creation Signal
+
+When a new organization is created, a subscription with the default (free) plan is automatically created:
+
+**Signal:** `post_save` on `Organization`
+**Handler:** `create_default_subscription()` in `subscription.py:109`
+
+```python
+@receiver(post_save, sender=Organization)
+def create_default_subscription(sender, instance, created, **kwargs):
+    if created:
+        free_plan = Plan.objects.get(is_default=True)
+        now = timezone.now()
+        OrganizationSubscription.objects.create(
+            organization=instance,
+            plan=free_plan,
+            status=SubscriptionStatus.ACTIVE,
+            current_period_start=now,
+            current_period_end=now + timedelta(days=30)
+        )
+```
+
+---
+
+### UsageRecord
+
+**File:** `usage.py:6`
+
+Tracks organization usage per billing period. Enables current usage display and historical reporting.
+
+#### Fields
+
+| Field                    | Type                     | Description                                           |
+| ------------------------ | ------------------------ | ----------------------------------------------------- |
+| `id`                     | AutoField                | Primary key                                           |
+| `organization`           | ForeignKey(Organization) | Organization (related_name: `usage_records`)          |
+| `billing_period_start`   | DateField                | Start date of billing period                          |
+| `billing_period_end`     | DateField                | End date of billing period                            |
+| `memo_operations_count`  | IntegerField             | Count of memo operations (default: 0)                 |
+| `chat_queries_count`     | IntegerField             | Count of chat queries (default: 0)                    |
+| `alerts_sent`            | JSONField                | Tracks which usage alerts have been sent (default: {}) |
+| `created_at`             | DateTimeField            | Record creation timestamp (auto)                      |
+| `updated_at`             | DateTimeField            | Last update timestamp (auto)                          |
+
+#### Constraints
+
+- **Unique Together**: (`organization`, `billing_period_start`) - One record per org per period
+
+#### Indexes
+
+- (`organization`, `billing_period_start`)
+- `billing_period_start`
+
+#### Meta Options
+
+- **Ordering**: `["-billing_period_start"]` - Newest periods first
+
+#### Properties
+
+##### `projects_count` (property)
+
+Computed property (not stored) that returns current project count.
+
+**Returns:** `int`
+
+**Implementation:** `usage.py:32`
+
+```python
+@property
+def projects_count(self):
+    """Compute current projects count (not stored)"""
+    return self.organization.projects.count()
+```
+
+**Rationale:** Projects can be created/deleted independently, so count is computed real-time rather than stored.
+
+#### Usage Tracking
+
+- **Atomic Increments**: Usage counters are incremented atomically using F() expressions to prevent race conditions
+- **Billing Period Lifecycle**: New record created at start of each billing period
+- **Historical Data**: Previous periods preserved for usage history display
+
+#### Usage Alerts
+
+The `alerts_sent` JSONField tracks which usage alert emails have been sent for the current billing period:
+
+**Structure:**
+```json
+{
+  "memo_operations_80": true,
+  "memo_operations_100": true,
+  "chat_queries_80": true,
+  "chat_queries_100": false,
+  "projects_80": false
+}
+```
+
+**Alert Thresholds:**
+- `80`: Alert sent when usage reaches 80% of limit
+- `100`: Alert sent when usage reaches or exceeds 100% of limit
+
+**Behavior:**
+- Alerts are sent only once per threshold per billing period
+- Tracked flags prevent duplicate alert emails
+- Flags reset automatically when new billing period starts (new UsageRecord created)
+- See `services/usage_tracking_service.py` for alert logic
+
+#### Increment Pattern
+
+```python
+from django.db.models import F
+
+UsageRecord.objects.filter(pk=record.pk).update(
+    memo_operations_count=F('memo_operations_count') + 1
+)
+```
+
+---
+
+### StripeEvent
+
+**File:** `subscription.py:77`
+
+Audit log of all Stripe webhook events. Prevents duplicate event processing and enables debugging.
+
+#### Fields
+
+| Field               | Type             | Description                                  |
+| ------------------- | ---------------- | -------------------------------------------- |
+| `id`                | AutoField        | Primary key                                  |
+| `stripe_event_id`   | CharField(255)   | Stripe event ID (unique)                     |
+| `event_type`        | CharField(100)   | Event type (e.g., 'customer.subscription.created') |
+| `payload`           | JSONField        | Full event data from Stripe                  |
+| `processed`         | BooleanField     | Whether event has been processed             |
+| `processing_error`  | TextField        | Error message if processing failed (nullable)|
+| `created_at`        | DateTimeField    | Event receipt timestamp (auto)               |
+| `processed_at`      | DateTimeField    | Processing completion timestamp (nullable)   |
+
+#### Constraints
+
+- `stripe_event_id`: Unique
+
+#### Indexes
+
+- `stripe_event_id`
+- (`event_type`, `processed`)
+
+#### Meta Options
+
+- **Ordering**: `["-created_at"]` - Newest events first
+
+#### Idempotency Pattern
+
+Before processing a webhook event, check if it already exists:
+
+```python
+if StripeEvent.objects.filter(stripe_event_id=event['id']).exists():
+    return HttpResponse(status=200)  # Already processed
+
+stripe_event = StripeEvent.objects.create(
+    stripe_event_id=event['id'],
+    event_type=event['type'],
+    payload=event
+)
+```
+
+This prevents duplicate processing when Stripe retries webhook delivery.
+
+#### Tracked Events
+
+Common event types stored:
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.paid`
+- `invoice.payment_failed`
+- `checkout.session.completed`
+
+#### Error Handling
+
+If event processing fails:
+1. Exception is caught
+2. `processing_error` field populated with error message
+3. `processed` remains `False`
+4. Event can be manually reprocessed
 
 ---
 
@@ -610,6 +969,12 @@ erDiagram
 
     User ||--o| EmailVerificationCode : "has verification"
 
+    %% Subscription Models
+    Organization ||--|| OrganizationSubscription : "has subscription"
+    Plan ||--o{ OrganizationSubscription : "subscribed to"
+    Organization ||--o{ UsageRecord : "usage history"
+    StripeEvent }o--|| OrganizationSubscription : "updates"
+
     %% Project Models
     Organization ||--o{ Project : "contains"
     User ||--o{ Project : "owns"
@@ -645,6 +1010,62 @@ erDiagram
         datetime created_at
         datetime updated_at
         int owner_id FK
+    }
+
+    Plan {
+        int id PK
+        string slug UK
+        string name
+        string stripe_price_id UK
+        decimal monthly_price
+        int memo_operations_limit
+        int chat_queries_limit
+        int projects_limit
+        json features
+        bool is_active
+        bool is_default
+        datetime created_at
+        datetime updated_at
+    }
+
+    OrganizationSubscription {
+        int id PK
+        uuid organization_id FK,UK
+        int plan_id FK
+        string stripe_customer_id UK
+        string stripe_subscription_id UK
+        string status
+        datetime current_period_start
+        datetime current_period_end
+        bool cancel_at_period_end
+        datetime canceled_at
+        datetime trial_start
+        datetime trial_end
+        datetime created_at
+        datetime updated_at
+    }
+
+    UsageRecord {
+        int id PK
+        uuid organization_id FK
+        date billing_period_start
+        date billing_period_end
+        int memo_operations_count
+        int chat_queries_count
+        json alerts_sent
+        datetime created_at
+        datetime updated_at
+    }
+
+    StripeEvent {
+        int id PK
+        string stripe_event_id UK
+        string event_type
+        json payload
+        bool processed
+        text processing_error
+        datetime created_at
+        datetime processed_at
     }
 
     OrganizationMembership {
@@ -816,8 +1237,12 @@ This enables:
 ## Related Files
 
 - `skald/models/organization.py` - Organization model
+- `skald/models/plan.py` - Subscription plan model
+- `skald/models/subscription.py` - OrganizationSubscription and StripeEvent models
+- `skald/models/usage.py` - Usage tracking model
 - `skald/models/user.py` - User, membership, and authentication models
 - `skald/models/project.py` - Project and API key models
 - `skald/models/memo.py` - Memo and related content models
 - `skald/embeddings/vector_search.py` - Vector search queries
 - `skald/embeddings/generate_embedding.py` - Embedding generation
+- `skald/fixtures/plans.json` - Default plan fixtures

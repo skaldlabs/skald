@@ -13,6 +13,7 @@ from skald.api.permissions import (
     get_project_for_request,
     verify_user_can_access_project_resource,
 )
+from skald.decorators import require_usage_limit
 from skald.flows.process_memo.process_memo import (
     create_new_memo,
     send_memo_for_async_processing,
@@ -205,6 +206,12 @@ class MemoViewSet(viewsets.ModelViewSet):
     ]
     pagination_class = MemoPagination
 
+    def get_project(self):
+        """Get project for current request (used by usage decorator)"""
+        user = getattr(self.request, "user", None)
+        project, _ = get_project_for_request(user, self.request)
+        return project
+
     def get_queryset(self):
         user = getattr(self.request, "user", None)
         project, error_response = get_project_for_request(user, self.request)
@@ -237,6 +244,7 @@ class MemoViewSet(viewsets.ModelViewSet):
         serializer = DetailedMemoSerializer(memo)
         return Response(serializer.data)
 
+    @require_usage_limit("memo_operations", increment=True)
     def create(self, request):
         user = getattr(request, "user", None)
         project, error_response = get_project_for_request(user, request)
@@ -255,6 +263,7 @@ class MemoViewSet(viewsets.ModelViewSet):
         create_new_memo(validated_data, project)
         return Response({"ok": True}, status=status.HTTP_201_CREATED)
 
+    @require_usage_limit("memo_operations", increment=True)
     def partial_update(self, request, *args, **kwargs):
         user = getattr(request, "user", None)
         pk = kwargs.get("pk")
@@ -287,6 +296,7 @@ class MemoViewSet(viewsets.ModelViewSet):
 
         return Response({"ok": True}, status=status.HTTP_200_OK)
 
+    @require_usage_limit("memo_operations", increment=False)
     def destroy(self, request, *args, **kwargs):
         user = getattr(request, "user", None)
         pk = kwargs.get("pk")

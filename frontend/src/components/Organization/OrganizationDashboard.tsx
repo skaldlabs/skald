@@ -2,8 +2,8 @@ import { OrganizationMembers } from '@/components/Organization/OrganizationMembe
 
 export const OrganizationDashboard = () => {
     return (
-        <>
+        <div className="space-y-6">
             <OrganizationMembers />
-        </>
+        </div>
     )
 }

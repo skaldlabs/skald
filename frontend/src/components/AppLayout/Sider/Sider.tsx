@@ -1,4 +1,4 @@
-import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings } from 'lucide-react'
+import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings, CreditCard } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { OrganizationAccessLevel, useAuthStore, UserDetails } from '@/stores/authStore'
 import {
@@ -15,6 +15,7 @@ import {
 import { useTheme } from '@/components/ThemeProvider'
 import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
 import { useProjectStore } from '@/stores/projectStore'
+import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
 
 interface MenuItem {
     key: string
@@ -71,6 +72,15 @@ export const Sider = () => {
                 user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
                     OrganizationAccessLevel.SUPER_ADMIN,
         },
+        {
+            key: '/organization/subscription',
+            icon: <CreditCard className="h-4 w-4" />,
+            label: 'Plan & Billing',
+            hasAccess: () =>
+                !!user &&
+                user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
+                    OrganizationAccessLevel.SUPER_ADMIN,
+        },
     ]
 
     const handleMenuClick = (key: string, onClick?: () => void) => {
@@ -119,6 +129,10 @@ export const Sider = () => {
             <SidebarFooter className="border-t px-3 py-2">
                 <SidebarGroup>
                     <SidebarGroupContent>
+                        <div className="mb-3">
+                            <UsageTracker />
+                        </div>
+
                         <SidebarMenu>
                             {configMenuItems
                                 .filter((item) => item.hasAccess(user))
