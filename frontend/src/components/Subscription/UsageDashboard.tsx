@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { UsageData } from '@/stores/subscriptionStore'
 import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface UsageDashboardProps {
     usage: UsageData | null
@@ -47,14 +48,36 @@ const UsageItem = ({ label, count, limit, percentage }: UsageItemProps) => {
     )
 }
 
+const UsageItemSkeleton = () => {
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-2 w-full" />
+            <div className="flex justify-end">
+                <Skeleton className="h-3 w-16" />
+            </div>
+        </div>
+    )
+}
+
 export const UsageDashboard = ({ usage, loading }: UsageDashboardProps) => {
     if (loading) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Usage</CardTitle>
-                    <CardDescription>Loading usage data...</CardDescription>
+                    <CardTitle>Current Usage</CardTitle>
+                    <CardDescription>
+                        <Skeleton className="h-4 w-64" />
+                    </CardDescription>
                 </CardHeader>
+                <CardContent className="space-y-6">
+                    <UsageItemSkeleton />
+                    <UsageItemSkeleton />
+                    <UsageItemSkeleton />
+                </CardContent>
             </Card>
         )
     }
