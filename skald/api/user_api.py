@@ -1,4 +1,6 @@
 from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -62,9 +64,9 @@ class UserSerializer(serializers.ModelSerializer):
         organization_access_levels = {}
         team_access_levels = {}
         for organization in obj.organizationmembership_set.all():
-            organization_access_levels[
-                str(organization.organization.uuid)
-            ] = organization.access_level
+            organization_access_levels[str(organization.organization.uuid)] = (
+                organization.access_level
+            )
         return {
             "organization_access_levels": organization_access_levels,
         }
@@ -93,6 +95,7 @@ class UserViewSet(viewsets.ModelViewSet):
         except KeyError:
             return [permission() for permission in self.permission_classes]
 
+    @method_decorator(csrf_exempt)
     def create(self, request):
         serializer = InternalUserSerializer(data=request.data)
 
@@ -123,6 +126,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
+    @method_decorator(csrf_exempt)
     def login(self, request):
         email = request.data.get("email", "").lower().strip()
         password = request.data.get("password")
