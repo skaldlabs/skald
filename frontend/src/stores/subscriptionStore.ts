@@ -25,6 +25,8 @@ export interface Subscription {
     current_period_start: string
     current_period_end: string
     cancel_at_period_end: boolean
+    scheduled_plan: Plan | null
+    scheduled_change_date: string | null
 }
 
 export interface UsageData {
@@ -63,6 +65,7 @@ interface SubscriptionState {
     fetchUsage: () => Promise<void>
     createCheckoutSession: (planSlug: string) => Promise<void>
     changePlan: (planSlug: string) => Promise<void>
+    cancelScheduledChange: () => Promise<void>
     openCustomerPortal: () => Promise<void>
     refreshAll: () => Promise<void>
 }
@@ -214,7 +217,12 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 error: null,
             })
 
-            toast.success('Plan changed successfully!')
+            // Show appropriate message based on whether it's scheduled or immediate
+            if (response.data.subscription.scheduled_plan) {
+                toast.success('Plan change scheduled successfully!')
+            } else {
+                toast.success('Plan changed successfully!')
+            }
 
             // Refresh usage to get updated limits
             await get().fetchUsage()
@@ -224,6 +232,43 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 error: String(error),
             })
             toast.error('Failed to change plan')
+        }
+    },
+
+    cancelScheduledChange: async () => {
+        set({ checkoutLoading: true, error: null })
+
+        try {
+            const orgPath = getOrgPath()
+
+            const response = await api.post<{ status: string; subscription: Subscription }>(
+                `${orgPath}/subscription/cancel_scheduled_change/`,
+                {}
+            )
+
+            if (response.error || !response.data) {
+                set({
+                    checkoutLoading: false,
+                    error: response.error || 'Failed to cancel scheduled change',
+                })
+                toast.error(response.error || 'Failed to cancel scheduled change')
+                return
+            }
+
+            // Update local subscription state
+            set({
+                currentSubscription: response.data.subscription,
+                checkoutLoading: false,
+                error: null,
+            })
+
+            toast.success('Scheduled plan change canceled')
+        } catch (error) {
+            set({
+                checkoutLoading: false,
+                error: String(error),
+            })
+            toast.error('Failed to cancel scheduled change')
         }
     },
 

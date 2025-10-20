@@ -40,12 +40,28 @@ class OrganizationSubscription(models.Model):
     stripe_subscription_id = models.CharField(
         max_length=255, null=True, blank=True, unique=True
     )
+    stripe_schedule_id = models.CharField(
+        max_length=255, null=True, blank=True, unique=True
+    )
 
     # Subscription Status
     status = models.CharField(
         max_length=50,
         choices=SubscriptionStatus.choices,
         default=SubscriptionStatus.ACTIVE,
+    )
+
+    # Scheduled Plan Change
+    scheduled_plan = models.ForeignKey(
+        Plan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scheduled_subscriptions",
+    )
+    scheduled_change_date = models.DateTimeField(
+        null=True,
+        blank=True,
     )
 
     # Billing Period Tracking
@@ -68,6 +84,7 @@ class OrganizationSubscription(models.Model):
         indexes = [
             models.Index(fields=["stripe_customer_id"]),
             models.Index(fields=["stripe_subscription_id"]),
+            models.Index(fields=["stripe_schedule_id"]),
             models.Index(fields=["status"]),
         ]
 

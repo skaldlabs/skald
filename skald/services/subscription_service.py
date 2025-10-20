@@ -90,6 +90,14 @@ class SubscriptionService:
         new_plan = Plan.objects.get(slug=new_plan_slug, is_active=True)
         subscription = organization.subscription
 
+        # Check if there's already a scheduled plan change
+        if subscription.scheduled_plan:
+            raise ValueError(
+                f"A plan change to {subscription.scheduled_plan.name} is already scheduled for "
+                f"{subscription.scheduled_change_date.strftime('%B %d, %Y')}. "
+                "Please contact support to cancel the scheduled plan change."
+            )
+
         # Free plan -> Paid plan: Create checkout session (handled by frontend)
         if not subscription.stripe_subscription_id and new_plan.monthly_price > 0:
             raise ValueError("Use checkout session to upgrade from free plan")
@@ -143,7 +151,10 @@ class SubscriptionService:
                 ],
             )
 
-            subscription.plan = new_plan
+            # Track the schedule in our database
+            subscription.stripe_schedule_id = schedule.id
+            subscription.scheduled_plan = new_plan
+            subscription.scheduled_change_date = subscription.current_period_end
             subscription.save()
             return subscription
 
@@ -168,6 +179,27 @@ class SubscriptionService:
             )
             subscription.plan = new_plan
             subscription.save()
+
+        return subscription
+
+    def cancel_scheduled_plan_change(self, organization: Organization):
+        """
+        Cancel a scheduled plan change.
+        """
+        subscription = organization.subscription
+
+        if not subscription.scheduled_plan:
+            raise ValueError("No scheduled plan change to cancel")
+
+        if not subscription.stripe_schedule_id:
+            raise ValueError("No Stripe schedule found")
+
+        stripe.SubscriptionSchedule.release(subscription.stripe_schedule_id)
+
+        subscription.stripe_schedule_id = None
+        subscription.scheduled_plan = None
+        subscription.scheduled_change_date = None
+        subscription.save()
 
         return subscription
 
@@ -372,3 +404,60 @@ class SubscriptionService:
         subscription.save()
 
         logger.warning(f"Payment failed for {subscription.organization.name}")
+
+    def handle_subscription_schedule_updated(self, event):
+        """Handle subscription schedule updates"""
+        try:
+            schedule = event["data"]["object"]
+            schedule_id = schedule.get("id")
+
+            subscription = OrganizationSubscription.objects.get(
+                stripe_schedule_id=schedule_id
+            )
+
+            status = schedule.get("status")
+            if status == "canceled" or status == "released":
+                subscription.stripe_schedule_id = None
+                subscription.scheduled_plan = None
+                subscription.scheduled_change_date = None
+                subscription.save()
+                logger.info(
+                    f"Schedule {schedule_id} canceled/released for {subscription.organization.name}"
+                )
+
+        except OrganizationSubscription.DoesNotExist:
+            logger.warning(f"No subscription found for schedule {schedule_id}")
+        except Exception as e:
+            logger.error(
+                f"Error in handle_subscription_schedule_updated: {str(e)}",
+                exc_info=True,
+            )
+            raise
+
+    def handle_subscription_schedule_completed(self, event):
+        """Handle when a scheduled plan change is completed"""
+        try:
+            schedule = event["data"]["object"]
+            schedule_id = schedule.get("id")
+
+            subscription = OrganizationSubscription.objects.get(
+                stripe_schedule_id=schedule_id
+            )
+
+            subscription.stripe_schedule_id = None
+            subscription.scheduled_plan = None
+            subscription.scheduled_change_date = None
+            subscription.save()
+
+            logger.info(
+                f"Scheduled plan change completed for {subscription.organization.name}"
+            )
+
+        except OrganizationSubscription.DoesNotExist:
+            logger.warning(f"No subscription found for schedule {schedule_id}")
+        except Exception as e:
+            logger.error(
+                f"Error in handle_subscription_schedule_completed: {str(e)}",
+                exc_info=True,
+            )
+            raise

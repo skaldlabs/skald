@@ -59,6 +59,7 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
     uuid = serializers.CharField(source="id", read_only=True)
     organization = serializers.CharField(source="organization.uuid", read_only=True)
     plan = PlanSerializer(read_only=True)
+    scheduled_plan = PlanSerializer(read_only=True)
 
     class Meta:
         model = OrganizationSubscription
@@ -72,6 +73,8 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
             "current_period_start",
             "current_period_end",
             "cancel_at_period_end",
+            "scheduled_plan",
+            "scheduled_change_date",
         ]
 
 
@@ -274,6 +277,35 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
             logger.error(f"Error changing plan: {str(e)}")
             return Response(
                 {"error": "Failed to change plan"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["post"])
+    @require_access_level(OrganizationMembershipRole.OWNER)
+    def cancel_scheduled_change(self, request, **kwargs):
+        """
+        Cancel a scheduled plan change.
+
+        Response:
+        {
+            "status": "success",
+            "subscription": {...}
+        }
+        """
+        org = self.get_organization()
+
+        try:
+            service = SubscriptionService()
+            subscription = service.cancel_scheduled_plan_change(organization=org)
+
+            serializer = SubscriptionDetailSerializer(subscription)
+            return Response({"status": "success", "subscription": serializer.data})
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error canceling scheduled change: {str(e)}")
+            return Response(
+                {"error": "Failed to cancel scheduled change"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

@@ -28,9 +28,9 @@
             "name": "Basic",
             "stripe_price_id": "price_1SK2QrDLJGVytqPTmA6tnuAh",
             "monthly_price": "20.00",
-            "memo_operations_limit": 80000,
-            "chat_queries_limit": 10000,
-            "projects_limit": 5,
+            "memo_operations_limit": 10000,
+            "chat_queries_limit": 1000,
+            "projects_limit": 3,
             "features": {
                 "search_type": "advanced",
                 "support_level": "email"
@@ -49,8 +49,8 @@
             "name": "Pro",
             "stripe_price_id": "price_1SK2R6DLJGVytqPT21DpcESA",
             "monthly_price": "250.00",
-            "memo_operations_limit": null,
-            "chat_queries_limit": 100000,
+            "memo_operations_limit": 100000,
+            "chat_queries_limit": 10000,
             "projects_limit": null,
             "features": {
                 "search_type": "advanced",

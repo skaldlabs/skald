@@ -5,6 +5,8 @@ Handles events from Stripe:
 - customer.subscription.created
 - customer.subscription.updated
 - customer.subscription.deleted
+- subscription_schedule.updated
+- subscription_schedule.completed
 - invoice.paid
 - invoice.payment_failed
 - checkout.session.completed
@@ -71,6 +73,8 @@ def stripe_webhook(request):
             "customer.subscription.created": service.handle_subscription_created,
             "customer.subscription.updated": service.handle_subscription_updated,
             "customer.subscription.deleted": service.handle_subscription_deleted,
+            "subscription_schedule.updated": service.handle_subscription_schedule_updated,
+            "subscription_schedule.completed": service.handle_subscription_schedule_completed,
             "invoice.paid": service.handle_invoice_paid,
             "invoice.payment_failed": service.handle_payment_failed,
             "checkout.session.completed": service.handle_checkout_completed,

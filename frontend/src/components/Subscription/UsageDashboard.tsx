@@ -37,7 +37,7 @@ const UsageItem = ({ label, count, limit, percentage }: UsageItemProps) => {
                         <span
                             className={`text-xs ${isAtLimit ? 'text-destructive font-semibold' : isNearLimit ? 'text-yellow-600' : 'text-muted-foreground'}`}
                         >
-                            {percentage.toFixed(1)}% used
+                            {percentage.toFixed(0)}% used
                         </span>
                     </div>
                 </>

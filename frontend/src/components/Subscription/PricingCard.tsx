@@ -8,14 +8,24 @@ interface PricingCardProps {
     plan: Plan
     currentPlanSlug?: string
     currentPlanPrice?: string
+    scheduledPlanSlug?: string
     onSelectPlan: (planSlug: string) => void
     loading?: boolean
 }
 
-export const PricingCard = ({ plan, currentPlanSlug, currentPlanPrice, onSelectPlan, loading }: PricingCardProps) => {
+export const PricingCard = ({
+    plan,
+    currentPlanSlug,
+    currentPlanPrice,
+    scheduledPlanSlug,
+    onSelectPlan,
+    loading,
+}: PricingCardProps) => {
     const isCurrentPlan = plan.slug === currentPlanSlug
     const isFree = parseFloat(plan.monthly_price) === 0
     const isEnterprise = plan.slug === 'enterprise'
+    const isScheduledPlan = plan.slug === scheduledPlanSlug
+    const hasScheduledChange = !!scheduledPlanSlug
 
     const isDowngrade = currentPlanPrice ? parseFloat(plan.monthly_price) < parseFloat(currentPlanPrice) : isFree
 
@@ -40,11 +50,12 @@ export const PricingCard = ({ plan, currentPlanSlug, currentPlanPrice, onSelectP
     ]
 
     return (
-        <Card className={isCurrentPlan ? 'border-primary' : ''}>
+        <Card className={isCurrentPlan ? 'border-primary' : isScheduledPlan ? 'border-blue-500' : ''}>
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <CardTitle>{plan.name}</CardTitle>
                     {isCurrentPlan && <Badge>Current Plan</Badge>}
+                    {isScheduledPlan && <Badge variant="secondary">Scheduled</Badge>}
                 </div>
                 <CardDescription>
                     <span className="text-3xl font-bold">
@@ -87,12 +98,21 @@ export const PricingCard = ({ plan, currentPlanSlug, currentPlanPrice, onSelectP
                     <Button variant="outline" className="w-full" disabled>
                         Current Plan
                     </Button>
+                ) : isScheduledPlan ? (
+                    <Button variant="outline" className="w-full" disabled>
+                        Scheduled Plan
+                    </Button>
                 ) : (
                     <Button
                         className="w-full"
                         onClick={() => onSelectPlan(plan.slug)}
-                        disabled={loading}
+                        disabled={loading || (hasScheduledChange && !isEnterprise)}
                         variant={isDowngrade && !isEnterprise ? 'outline' : 'default'}
+                        title={
+                            hasScheduledChange && !isEnterprise
+                                ? 'Cancel the scheduled plan change to select a different plan'
+                                : ''
+                        }
                     >
                         {isEnterprise ? 'Schedule a call' : isDowngrade ? 'Downgrade' : 'Upgrade'}
                     </Button>
