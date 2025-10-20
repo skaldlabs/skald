@@ -108,6 +108,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "https://app.useskald.com",
     "https://api.useskald.com",
+    "https://platform.useskald.com",
     "http://localhost:8000",
     "http://localhost:3000",
     "http://localhost:5173",
@@ -230,6 +231,7 @@ TIME_ZONE = "UTC"
 
 CSRF_TRUSTED_ORIGINS = [
     "https://app.useskald.com",
+    "https://platform.useskald.com",
     "http://localhost:8000",
     "http://localhost:3000",
     "http://localhost:5173",
