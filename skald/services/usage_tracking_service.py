@@ -31,7 +31,8 @@ class UsageTrackingService:
 
         Returns:
         {
-            "current_period": {...},
+            "billing_period_start": "2025-01-01",
+            "billing_period_end": "2025-02-01",
             "usage": {
                 "memo_operations": {"count": X, "limit": Y, "percentage": Z},
                 ...
@@ -53,10 +54,8 @@ class UsageTrackingService:
             }
 
         return {
-            "current_period": {
-                "start": str(subscription.current_period_start.date()),
-                "end": str(subscription.current_period_end.date()),
-            },
+            "billing_period_start": str(subscription.current_period_start.date()),
+            "billing_period_end": str(subscription.current_period_end.date()),
             "usage": {
                 "memo_operations": calc_usage(
                     usage_record.memo_operations_count, plan.memo_operations_limit

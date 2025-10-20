@@ -41,7 +41,8 @@ def require_usage_limit(limit_type, increment=True):
                 organization = view_instance.get_organization()
             elif hasattr(view_instance, "get_project"):
                 project = view_instance.get_project()
-                organization = project.organization
+                if project:
+                    organization = project.organization
             elif hasattr(request, "user") and hasattr(
                 request.user, "default_organization"
             ):

@@ -285,10 +285,8 @@ class SubscriptionViewSet(OrganizationPermissionMixin, viewsets.ViewSet):
 
         Response:
         {
-            "current_period": {
-                "start": "2025-01-01",
-                "end": "2025-02-01"
-            },
+            "billing_period_start": "2025-01-01",
+            "billing_period_end": "2025-02-01",
             "usage": {
                 "memo_operations": {
                     "count": 45000,
