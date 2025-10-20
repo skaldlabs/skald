@@ -149,8 +149,11 @@ Four plans are created via fixtures:
 #### Usage Limits
 
 - `null` values represent unlimited usage
-- Limits are enforced at API endpoints via decorators
-- See `decorators/usage_decorators.py` for enforcement
+- Limits are tracked at API endpoints via decorators
+- Email alerts are sent at 80% and 100% usage thresholds
+- Usage is **not blocked** when limits are exceeded
+- Overage usage is charged at the end of the billing period
+- See `decorators/usage_decorators.py` for tracking implementation
 
 ---
 
@@ -238,16 +241,17 @@ Tracks organization usage per billing period. Enables current usage display and 
 
 #### Fields
 
-| Field                    | Type                     | Description                              |
-| ------------------------ | ------------------------ | ---------------------------------------- |
-| `id`                     | AutoField                | Primary key                              |
-| `organization`           | ForeignKey(Organization) | Organization (related_name: `usage_records`) |
-| `billing_period_start`   | DateField                | Start date of billing period             |
-| `billing_period_end`     | DateField                | End date of billing period               |
-| `memo_operations_count`  | IntegerField             | Count of memo operations (default: 0)    |
-| `chat_queries_count`     | IntegerField             | Count of chat queries (default: 0)       |
-| `created_at`             | DateTimeField            | Record creation timestamp (auto)         |
-| `updated_at`             | DateTimeField            | Last update timestamp (auto)             |
+| Field                    | Type                     | Description                                           |
+| ------------------------ | ------------------------ | ----------------------------------------------------- |
+| `id`                     | AutoField                | Primary key                                           |
+| `organization`           | ForeignKey(Organization) | Organization (related_name: `usage_records`)          |
+| `billing_period_start`   | DateField                | Start date of billing period                          |
+| `billing_period_end`     | DateField                | End date of billing period                            |
+| `memo_operations_count`  | IntegerField             | Count of memo operations (default: 0)                 |
+| `chat_queries_count`     | IntegerField             | Count of chat queries (default: 0)                    |
+| `alerts_sent`            | JSONField                | Tracks which usage alerts have been sent (default: {}) |
+| `created_at`             | DateTimeField            | Record creation timestamp (auto)                      |
+| `updated_at`             | DateTimeField            | Last update timestamp (auto)                          |
 
 #### Constraints
 
@@ -286,6 +290,31 @@ def projects_count(self):
 - **Atomic Increments**: Usage counters are incremented atomically using F() expressions to prevent race conditions
 - **Billing Period Lifecycle**: New record created at start of each billing period
 - **Historical Data**: Previous periods preserved for usage history display
+
+#### Usage Alerts
+
+The `alerts_sent` JSONField tracks which usage alert emails have been sent for the current billing period:
+
+**Structure:**
+```json
+{
+  "memo_operations_80": true,
+  "memo_operations_100": true,
+  "chat_queries_80": true,
+  "chat_queries_100": false,
+  "projects_80": false
+}
+```
+
+**Alert Thresholds:**
+- `80`: Alert sent when usage reaches 80% of limit
+- `100`: Alert sent when usage reaches or exceeds 100% of limit
+
+**Behavior:**
+- Alerts are sent only once per threshold per billing period
+- Tracked flags prevent duplicate alert emails
+- Flags reset automatically when new billing period starts (new UsageRecord created)
+- See `services/usage_tracking_service.py` for alert logic
 
 #### Increment Pattern
 
@@ -1023,6 +1052,7 @@ erDiagram
         date billing_period_end
         int memo_operations_count
         int chat_queries_count
+        json alerts_sent
         datetime created_at
         datetime updated_at
     }

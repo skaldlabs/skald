@@ -22,6 +22,10 @@ class UsageRecord(models.Model):
     memo_operations_count = models.IntegerField(default=0)
     chat_queries_count = models.IntegerField(default=0)
 
+    # Alert Tracking - stores which usage alerts have been sent
+    # Structure: {"memo_operations_80": true, "chat_queries_100": true, ...}
+    alerts_sent = models.JSONField(default=dict)
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -13,7 +13,7 @@ from skald.services import UsageTrackingService
 
 def require_usage_limit(limit_type, increment=True):
     """
-    Decorator to check and optionally increment usage limits.
+    Decorator to track usage and send alert emails when limits are reached.
 
     Usage:
         @require_usage_limit('memo_operations', increment=True)
@@ -22,10 +22,11 @@ def require_usage_limit(limit_type, increment=True):
 
     Args:
         limit_type: 'memo_operations', 'chat_queries', or 'projects'
-        increment: Whether to increment counter after successful check
+        increment: Whether to increment counter after successful execution
 
-    Returns:
-        402 Payment Required if limit exceeded, otherwise executes view
+    Note:
+        This decorator sends email alerts at 80% and 100% usage thresholds.
+        Overage usage will be charged at the end of the billing period.
     """
 
     def decorator(view_func):
@@ -54,35 +55,22 @@ def require_usage_limit(limit_type, increment=True):
                 # (this maintains backward compatibility)
                 return view_func(view_instance, request, *args, **kwargs)
 
-            # Check limit
-            service = UsageTrackingService()
-            within_limit, current_count, limit = service.check_limit(
-                organization, limit_type
-            )
-
-            if not within_limit:
-                return Response(
-                    {
-                        "error": "usage_limit_exceeded",
-                        "message": f"You have reached your {limit_type.replace('_', ' ')} limit",
-                        "current_usage": current_count,
-                        "limit": limit,
-                        "upgrade_required": True,
-                    },
-                    status=status.HTTP_402_PAYMENT_REQUIRED,
-                )
-
             # Execute view
             response = view_func(view_instance, request, *args, **kwargs)
 
-            # Increment counter if successful and requested
-            if increment and response.status_code < 400:
-                if limit_type == "memo_operations":
-                    service.increment_memo_operations(organization)
-                elif limit_type == "chat_queries":
-                    service.increment_chat_queries(organization)
-                # Note: projects limit is checked but not incremented
-                # (projects_count is a computed property)
+            # Track usage if successful
+            if response.status_code < 400:
+                service = UsageTrackingService()
+
+                if increment:
+                    # Increment counter (which also triggers alert checking)
+                    if limit_type == "memo_operations":
+                        service.increment_memo_operations(organization)
+                    elif limit_type == "chat_queries":
+                        service.increment_chat_queries(organization)
+                else:
+                    # For non-incremented types (like projects), check alerts manually
+                    service._check_and_send_usage_alerts(organization, limit_type)
 
             return response
 
