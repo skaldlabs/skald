@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react'
 import { ProjectEditor } from '@/components/Project/ProjectEditor'
 import { ApiKeyManager } from '@/components/Project/ApiKeyManager'
 import { ProjectDangerZone } from '@/components/Project/ProjectDangerZone'
+import { PageHeader } from '@/components/AppLayout/PageHeader'
 
 export const ProjectSettings = () => {
     const currentProject = useProjectStore((state) => state.currentProject)
@@ -17,9 +18,7 @@ export const ProjectSettings = () => {
 
     return (
         <div className="p-6 max-w-4xl">
-            <div className="mb-6">
-                <h1 className="text-2xl font-semibold mb-2">Project Settings</h1>
-            </div>
+            <PageHeader title="Project Settings" />
 
             <div className="space-y-6">
                 <ApiKeyManager project={currentProject} />

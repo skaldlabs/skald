@@ -1,4 +1,5 @@
 import { AppLayout } from './AppLayout'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import './Page.scss'
 
 export const Page = ({ children, pageTitle }: { children: React.ReactNode; pageTitle: string }) => {
@@ -6,7 +7,10 @@ export const Page = ({ children, pageTitle }: { children: React.ReactNode; pageT
         <AppLayout>
             <div className="page">
                 <div className="page-header">
-                    <h1>{pageTitle}</h1>
+                    <div className="flex items-center gap-2">
+                        <SidebarTrigger className="md:hidden" />
+                        <h1>{pageTitle}</h1>
+                    </div>
                     <hr />
                 </div>
                 <div className="page-content">{children}</div>

@@ -9,6 +9,7 @@ import { MemosTable } from './MemosTable'
 import { MemosPagination } from './MemosPagination'
 import { DeleteMemoDialog } from './DeleteMemoDialog'
 import { ViewMemoDialog } from './ViewMemoDialog'
+import { PageHeader } from '@/components/AppLayout/PageHeader'
 
 export const MemosDashboard = () => {
     const currentProject = useProjectStore((state) => state.currentProject)
@@ -84,15 +85,12 @@ export const MemosDashboard = () => {
 
     return (
         <div className="container mx-auto py-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold">Memos</h1>
-                </div>
+            <PageHeader title="Memos">
                 <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm">
                     <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                     Refresh
                 </Button>
-            </div>
+            </PageHeader>
 
             <MemosSearchBar
                 searchQuery={searchQuery}
