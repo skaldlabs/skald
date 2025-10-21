@@ -1,7 +1,6 @@
 import { ApiKeyStep } from '@/components/GettingStarted/ApiKeyStep'
 import { CreateMemoStep } from '@/components/GettingStarted/CreateMemoStep'
 import { ChatStep } from '@/components/GettingStarted/ChatStep'
-import { SearchMemoStep } from '@/components/GettingStarted/SearchMemoStep'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import '@/components/GettingStarted/GettingStarted.scss'
 
@@ -22,7 +21,6 @@ export const Onboarding = () => {
                 <ApiKeyStep />
                 <CreateMemoStep />
                 <ChatStep />
-                <SearchMemoStep />
             </div>
         </div>
     )
