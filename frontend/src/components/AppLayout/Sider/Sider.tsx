@@ -1,4 +1,4 @@
-import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings, CreditCard } from 'lucide-react'
+import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings, CreditCard, BookOpen } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { OrganizationAccessLevel, useAuthStore, UserDetails } from '@/stores/authStore'
 import {
@@ -80,6 +80,13 @@ export const Sider = () => {
                 !!user &&
                 user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
                     OrganizationAccessLevel.SUPER_ADMIN,
+        },
+        {
+            key: 'https://docs.useskald.com',
+            icon: <BookOpen className="h-4 w-4" />,
+            label: 'Documentation ↗',
+            hasAccess: () => true,
+            onClick: () => window.open('https://docs.useskald.com', '_blank', 'noopener,noreferrer'),
         },
     ]
 
