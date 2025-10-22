@@ -38,16 +38,30 @@ Skald supports two authentication methods:
 
 ### GET /api/health
 
-Check if the API is running.
+Check if the API is running and dependencies are accessible. Checks database connectivity.
 
 **Authentication:** None
 
-**Response:**
+**Response (Healthy):**
 
 ```json
 {
     "status": "ok",
-    "message": "API is healthy"
+    "checks": {
+        "database": true
+    }
+}
+```
+
+**Response (Unhealthy - 503):**
+
+```json
+{
+    "status": "unhealthy",
+    "checks": {
+        "database": false
+    },
+    "errors": ["Database connection failed: <error details>"]
 }
 ```
 

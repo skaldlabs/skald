@@ -24,9 +24,10 @@ class TestHealthAPI:
 
         assert response.status_code == status.HTTP_200_OK
         assert "status" in response.data
-        assert "message" in response.data
+        assert "checks" in response.data
         assert response.data["status"] == "ok"
-        assert response.data["message"] == "API is healthy"
+        assert "database" in response.data["checks"]
+        assert response.data["checks"]["database"] is True
 
     def test_health_endpoint_with_trailing_slash(self) -> None:
         """Test that the health endpoint works with trailing slash."""
