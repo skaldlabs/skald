@@ -200,8 +200,29 @@ EMAIL_DOMAIN = os.getenv("EMAIL_DOMAIN", "useskald.com")
 
 EMAIL_VERIFICATION_ENABLED = str_to_bool(os.getenv("EMAIL_VERIFICATION_ENABLED", True))
 
-# Authentication bypass for development/testing
+# SECURITY: Authentication bypass for development/testing ONLY
+# This is extremely dangerous and must NEVER be enabled in production
 DISABLE_AUTH = str_to_bool(os.getenv("DISABLE_AUTH", False))
+
+# Prevent accidental production use
+if DISABLE_AUTH and not DEBUG:
+    raise ValueError(
+        "CRITICAL SECURITY ERROR: DISABLE_AUTH=true is not allowed in production "
+        "(when DEBUG=false). This would completely disable all authentication and "
+        "allow unauthorized access to all API endpoints. If you need to disable "
+        "auth for testing, you must also set DEBUG=true."
+    )
+
+if DISABLE_AUTH:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "=" * 80 + "\n"
+        "WARNING: Authentication is DISABLED! This is EXTREMELY DANGEROUS!\n"
+        "All API endpoints are accessible without authentication.\n"
+        "This should ONLY be used in local development/testing.\n"
+        "=" * 80
+    )
 
 
 # Internationalization
