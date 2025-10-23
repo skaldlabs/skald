@@ -102,17 +102,30 @@ REST_FRAMEWORK = {
     + (("rest_framework.renderers.BrowsableAPIRenderer",) if DEBUG else ()),
 }
 
-CORS_ORIGIN_ALLOW_ALL = True
+# SECURITY: CORS configuration
+# CORS_ORIGIN_ALLOW_ALL is dangerous and should never be True
+# Instead, explicitly whitelist allowed origins
+CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "https://app.useskald.com",
-    "https://api.useskald.com",
-    "https://platform.useskald.com",
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
+# Get allowed origins from environment or use defaults
+CORS_ORIGINS_ENV = os.getenv("CORS_ALLOWED_ORIGINS", "")
+if CORS_ORIGINS_ENV:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ORIGINS_ENV.split(",")]
+elif DEBUG:
+    # Development defaults - localhost on common ports
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:8000",
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ]
+else:
+    # Production defaults - should be overridden via environment variable
+    CORS_ALLOWED_ORIGINS = [
+        "https://app.useskald.com",
+        "https://api.useskald.com",
+        "https://platform.useskald.com",
+    ]
 
 ROOT_URLCONF = "skald.urls"
 
