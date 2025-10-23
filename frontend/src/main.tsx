@@ -31,7 +31,7 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
         <PostHogProvider
             // this is a public key that can be leaked
-            apiKey="phc_FK03wMplwRao74BtkCzoCtwJJrJfuPX89UAq8ndcg6L"
+            apiKey="phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2"
             options={posthogOptions}
         >
             <Toaster />
