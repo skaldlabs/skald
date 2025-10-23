@@ -59,9 +59,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "SECRET_KEY", "django-insecure-^dd*jyje2dc7!f-^1=gk(mo5eux*1_113ff*ds5io14(u^sp#w"
-)
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    if DEBUG:
+        # Only allow insecure default in DEBUG mode
+        import logging
+        logging.getLogger(__name__).warning(
+            "Using insecure default SECRET_KEY. Set SECRET_KEY environment variable."
+        )
+        SECRET_KEY = "django-insecure-dev-only-key-change-in-production"
+    else:
+        raise ValueError(
+            "SECRET_KEY environment variable must be set in production. "
+            "Generate one with: python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'"
+        )
 
 # Application definition
 
@@ -145,11 +157,19 @@ WSGI_APPLICATION = "skald.wsgi.application"
 DATABASES = {
     "default": dj_database_url.config(
         default=os.environ.get(
-            "DATABASE_URL", "postgres://postgres:12345678@localhost/skald2"
+            "DATABASE_URL",
+            "postgres://postgres:dev_password_change_me@localhost/skald2" if DEBUG
+            else None
         ),
         conn_max_age=0,
     )
 }
+
+if not DEBUG and not os.environ.get("DATABASE_URL"):
+    raise ValueError(
+        "DATABASE_URL environment variable must be set in production. "
+        "Format: postgres://username:password@host:port/database"
+    )
 
 # Use skald2_test for testing
 DATABASES["default"]["TEST"] = {
