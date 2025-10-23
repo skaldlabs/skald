@@ -134,7 +134,21 @@ TEMPLATES = [
     },
 ]
 
-ALLOWED_HOSTS = ["*"]
+# SECURITY: Restrict allowed hosts to prevent Host header injection attacks
+# In production, this should be set to your actual domain names
+ALLOWED_HOSTS_ENV = os.getenv("ALLOWED_HOSTS", "")
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(",")]
+elif DEBUG:
+    # Allow all hosts in DEBUG mode for development convenience
+    ALLOWED_HOSTS = ["*"]
+else:
+    # Production must specify allowed hosts
+    raise ValueError(
+        "ALLOWED_HOSTS environment variable must be set in production. "
+        "Set it to a comma-separated list of allowed hostnames, e.g., "
+        "'app.useskald.com,api.useskald.com,platform.useskald.com'"
+    )
 
 WSGI_APPLICATION = "skald.wsgi.application"
 
