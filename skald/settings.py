@@ -42,6 +42,11 @@ def str_to_bool(input):
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str_to_bool(os.getenv("DEBUG", False))
 
+# self-hosted deploys are slightly different from our cloud deploys.
+# they don't have billing, are single-tenant, etc.
+IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", True))
+
+
 if not DEBUG:
     sentry_sdk.init(
         dsn="https://d9311bc8f81f566a5bcedac72e22427d@o4509092419076096.ingest.de.sentry.io/4510188083216464",
@@ -202,7 +207,9 @@ if not STRIPE_SECRET_KEY and not DEBUG:
 
 EMAIL_DOMAIN = os.getenv("EMAIL_DOMAIN", "useskald.com")
 
-EMAIL_VERIFICATION_ENABLED = str_to_bool(os.getenv("EMAIL_VERIFICATION_ENABLED", True))
+EMAIL_VERIFICATION_ENABLED = str_to_bool(
+    os.getenv("EMAIL_VERIFICATION_ENABLED", not IS_SELF_HOSTED_DEPLOY)
+)
 
 # Authentication bypass for development/testing
 DISABLE_AUTH = str_to_bool(os.getenv("DISABLE_AUTH", False))
@@ -303,12 +310,54 @@ APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
 VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 
+# LLM Configuration
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
+
+# OpenAI
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+# Anthropic
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-7-sonnet-20250219")
+
+# Local LLM (OpenAI-compatible API)
+LOCAL_LLM_BASE_URL = os.getenv("LOCAL_LLM_BASE_URL")
+LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama-3.1-8b-instruct")
+LOCAL_LLM_API_KEY = os.getenv("LOCAL_LLM_API_KEY", None)
+
+# Validation
+SUPPORTED_PROVIDERS = ["openai", "anthropic", "local"]
+if LLM_PROVIDER not in SUPPORTED_PROVIDERS:
+    raise ValueError(
+        f"Invalid LLM_PROVIDER: {LLM_PROVIDER}. "
+        f"Supported: {', '.join(SUPPORTED_PROVIDERS)}"
+    )
+
+# Warn if LLM providers API keys are missing in production
+if not DEBUG:
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
+        logger.warning("OPENAI_API_KEY not set in production")
+    elif LLM_PROVIDER == "anthropic" and not ANTHROPIC_API_KEY:
+        logger.warning("ANTHROPIC_API_KEY not set in production")
+    elif LLM_PROVIDER == "local" and not LOCAL_LLM_BASE_URL:
+        logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
+
 # Posthog
 POSTHOG_PUBLIC_API_KEY = os.getenv("POSTHOG_PUBLIC_API_KEY", None)
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
 
 # mechanism for communicating with the memo processing server
-USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))
+USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))  # legacy
+INTER_PROCESS_QUEUE = "sqs" if USE_SQS else os.getenv("INTER_PROCESS_QUEUE", "redis")
+
+if INTER_PROCESS_QUEUE not in ["redis", "sqs", "rabbitmq"]:
+    raise ValueError(f"Invalid inter-process queue: {INTER_PROCESS_QUEUE}")
+
 
 SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-2")
@@ -321,3 +370,10 @@ REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 REDIS_MEMO_PROCESSING_PUB_SUB_CHANNEL = os.getenv(
     "REDIS_PUB_SUB_CHANNEL_NAME", "process_memo"
 )
+
+# rabbitmq
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+RABBITMQ_PORT = os.getenv("RABBITMQ_PORT", "5672")
+RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
+RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
+RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")

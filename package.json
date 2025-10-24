@@ -12,7 +12,7 @@
         "lint": "eslint frontend",
         "preview": "vite preview",
         "prepare": "husky",
-        "deploy": "VITE_API_HOST=https://api.useskald.com pnpm run build && flyctl deploy -c ui.fly.toml -a skald-platform-ui --remote-only"
+        "deploy": "flyctl deploy -c ui.fly.toml -a skald-platform-ui --remote-only"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": ["prettier --write --ignore-unknown"],
@@ -29,6 +29,7 @@
         "@radix-ui/react-separator": "^1.1.7",
         "@radix-ui/react-slot": "^1.2.3",
         "@radix-ui/react-tooltip": "^1.2.8",
+        "@sentry/react": "^10.22.0",
         "@tailwindcss/vite": "^4.1.14",
         "axios": "^1.7.9",
         "class-variance-authority": "^0.7.1",
