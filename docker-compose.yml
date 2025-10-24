@@ -2,7 +2,7 @@ services:
   db:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: skald2
+      POSTGRES_DB: skald
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 12345678
     ports:
@@ -26,16 +26,38 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"    # AMQP port
+      - "15672:15672"  # Management UI port
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
   api:
     build: .
     command: ./bin/start-dev.sh
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgres://postgres:12345678@db/skald2
+      - DATABASE_URL=postgres://postgres:12345678@db/skald
       - POSTHOG_API_KEY=phc_Mn0nVBv8wLLcJJ4gLWggO35SbrIDOvD14hiKzEtv5zp
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - INTER_PROCESS_QUEUE=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
     ports:
       - "8000:8000"
     volumes:
@@ -45,6 +67,8 @@ services:
       redis:
         condition: service_healthy
       db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     stdin_open: true
     tty: true
@@ -57,14 +81,24 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CHANNEL_NAME=memo-processing
-      - DATABASE_URL=postgres://postgres:12345678@db/skald2
+      - DATABASE_URL=postgres://postgres:12345678@db/skald
+      - INTER_PROCESS_QUEUE=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_QUEUE_NAME=process_memo
     depends_on:
       redis:
         condition: service_healthy
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  rabbitmq_data:
 
