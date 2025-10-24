@@ -57,7 +57,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: uvicorn skald.main:app --host 0.0.0.0 --port 8000
+    command: ./bin/start-prod.sh
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-skald2}
       - REDIS_HOST=redis
