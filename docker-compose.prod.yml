@@ -72,7 +72,11 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - FRONTEND_URL=https://${UI_DOMAIN}
       - INTER_PROCESS_QUEUE=rabbitmq
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-skald}:${RABBITMQ_PASSWORD:-skald}@rabbitmq:5672/
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-skald}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-skald}
+      - RABBITMQ_VHOST=/
     depends_on:
       db:
         condition: service_healthy
@@ -98,7 +102,12 @@ services:
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - INTER_PROCESS_QUEUE=rabbitmq
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-skald}:${RABBITMQ_PASSWORD:-skald}@rabbitmq:5672/
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-skald}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-skald}
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_QUEUE_NAME=process_memo
     depends_on:
       db:
         condition: service_healthy
