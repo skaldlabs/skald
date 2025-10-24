@@ -63,7 +63,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ./bin/start-prod.sh
+    command: ./bin/start-docker.sh
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-skald2}
       - IS_SELF_HOSTED_DEPLOY=true
