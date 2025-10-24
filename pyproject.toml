@@ -43,6 +43,7 @@ dependencies = [
     "langchain-core>=0.3.79,<1.0",
     "langchain-community>=0.3.0,<1.0",
     "langchain-openai>=0.3.35,<1.0",
+    "langchain-anthropic>=0.3.0,<1.0",
     "gevent>=25.9.1",
     "boto3>=1.35.0",
     "sentry-sdk[django]>=2.41.0",

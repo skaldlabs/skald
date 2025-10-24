@@ -30,8 +30,9 @@ docker-compose up
 
 #### Pre-requisites
 
-- Create a Langchain account and get your secret key
-- Make sure you've created a db called `skald2` locally (or use another name and change the config on the servers)
+- **LLM Provider API Key**: Get an API key from [OpenAI](https://platform.openai.com/), [Anthropic](https://console.anthropic.com/), or set up a local LLM (see LLM Provider Options below)
+- **Voyage AI API Key**: Get your API key from [Voyage AI](https://www.voyageai.com/) for embeddings
+- **PostgreSQL with pgvector**: Create a database with the vector extension
 
     ```sh
     createdb skald2
@@ -41,9 +42,32 @@ docker-compose up
 
 #### Environment variables
 
+See `.env.example` for a complete list of environment variables.
+
+**Required:**
 ```
+# Embeddings (required for vector search)
 VOYAGE_API_KEY=<your Voyage API key>
+
+# LLM Provider (choose one)
+LLM_PROVIDER=openai  # Options: openai, anthropic, local
+
+# OpenAI (if LLM_PROVIDER=openai)
 OPENAI_API_KEY=<your OpenAI API key>
+OPENAI_MODEL=gpt-4o-mini  # Default model
+
+# Anthropic (if LLM_PROVIDER=anthropic)
+ANTHROPIC_API_KEY=<your Anthropic API key>
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022  # Default model
+
+# Local LLM (if LLM_PROVIDER=local)
+LOCAL_LLM_BASE_URL=http://localhost:11434/v1  # e.g., Ollama, LM Studio, vLLM
+LOCAL_LLM_MODEL=llama3.1:8b
+LOCAL_LLM_API_KEY=not-needed  # Most local servers don't need this
+```
+
+**Optional (for LangChain tracing):**
+```
 LANGSMITH_TRACING=true
 LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 LANGSMITH_API_KEY=<your LangSmith API key>
@@ -51,6 +75,41 @@ LANGSMITH_PROJECT=<langsmith_project_name>
 ```
 
 The LangSmith vars will be given to you during LangChain onboarding.
+
+#### LLM Provider Options
+
+Skald supports multiple LLM providers. Choose the one that works best for you:
+
+**1. OpenAI (Default)**
+- Most reliable and well-tested
+- Requires OpenAI API key
+- Recommended model: `gpt-4o-mini` (fast and cost-effective)
+
+**2. Anthropic**
+- Alternative to OpenAI
+- Requires Anthropic API key
+- Recommended model: `claude-3-5-sonnet-20241022`
+
+**3. Local LLM (Self-hosted)**
+- No API costs, fully private
+- Works with any OpenAI-compatible API
+- Supported platforms:
+  - **Ollama**: `brew install ollama`, then `ollama pull llama3.1:8b`
+  - **LM Studio**: Download from [lmstudio.ai](https://lmstudio.ai)
+  - **vLLM**: High-performance serving for production
+  - **LocalAI**: Community-driven OpenAI alternative
+
+Example with Ollama:
+```sh
+# Install and start Ollama
+brew install ollama
+ollama pull llama3.1:8b
+
+# Configure .env
+LLM_PROVIDER=local
+LOCAL_LLM_BASE_URL=http://localhost:11434/v1
+LOCAL_LLM_MODEL=llama3.1:8b
+```
 
 #### Authentication Bypass (Development Only)
 
