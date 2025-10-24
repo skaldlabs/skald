@@ -69,7 +69,7 @@ The server supports multiple LLM providers. See `.env.example` for all options.
 **Anthropic (if LLM_PROVIDER=anthropic):**
 
 - `ANTHROPIC_API_KEY` - Anthropic API key (required)
-- `ANTHROPIC_MODEL` - Model to use (default: claude-3-5-sonnet-20241022)
+- `ANTHROPIC_MODEL` - Model to use (default: claude-3-7-sonnet-20250219)
 
 **Local LLM (if LLM_PROVIDER=local):**
 

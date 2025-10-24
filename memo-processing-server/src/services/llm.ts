@@ -24,7 +24,7 @@ export class LLMService {
             })
         } else if (provider === 'anthropic') {
             return new ChatAnthropic({
-                model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
+                model: process.env.ANTHROPIC_MODEL || 'claude-3-7-sonnet-20250219',
                 apiKey: process.env.ANTHROPIC_API_KEY,
                 temperature,
             })

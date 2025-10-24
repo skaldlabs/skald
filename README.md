@@ -61,7 +61,7 @@ OPENAI_MODEL=gpt-4o-mini  # Default model
 
 # Anthropic (if LLM_PROVIDER=anthropic)
 ANTHROPIC_API_KEY=<your Anthropic API key>
-ANTHROPIC_MODEL=claude-3-5-sonnet-20241022  # Default model
+ANTHROPIC_MODEL=claude-3-7-sonnet-20250219  # Default model
 
 # Local LLM (if LLM_PROVIDER=local)
 LOCAL_LLM_BASE_URL=http://localhost:11434/v1  # e.g., Ollama, LM Studio, vLLM
