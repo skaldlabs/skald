@@ -257,7 +257,8 @@ USE_SECURE_SETTINGS = not DEBUG
 if USE_SECURE_SETTINGS:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-SECURE_SSL_REDIRECT = USE_SECURE_SETTINGS
+# SSL redirect - disable when using a reverse proxy like Traefik that handles SSL
+SECURE_SSL_REDIRECT = str_to_bool(os.getenv("SECURE_SSL_REDIRECT", USE_SECURE_SETTINGS))
 SECURE_REDIRECT_EXEMPT = [
     "api/health",
     "api/health/",
