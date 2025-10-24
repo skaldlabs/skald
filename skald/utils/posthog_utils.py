@@ -7,4 +7,4 @@ def posthog_capture(event_name: str, distinct_id: str, properties: dict):
     if settings.IS_SELF_HOSTED_DEPLOY and event_name not in ["organization_created"]:
         return
 
-    posthog.capture(event_name, distinct_id, properties)
+    posthog.capture(event_name, distinct_id=distinct_id, properties=properties)
