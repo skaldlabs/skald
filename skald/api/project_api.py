@@ -14,10 +14,10 @@ from skald.api.permissions import (
 )
 from skald.decorators import require_usage_limit
 from skald.models.memo import Memo, MemoChunk, MemoContent, MemoSummary, MemoTag
-from skald.models.organization import Organization
 from skald.models.project import Project, ProjectApiKey
 from skald.models.user import OrganizationMembership, OrganizationMembershipRole
 from skald.utils.api_key_utils import generate_api_key, hash_api_key
+from skald.utils.posthog_utils import posthog_capture
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             owner=request.user,
         )
 
-        posthog.capture(
+        posthog_capture(
             "project_created",
             distinct_id=request.user.email,
             properties={
@@ -131,7 +131,7 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
 
-        posthog.capture(
+        posthog_capture(
             "project_updated",
             distinct_id=request.user.email,
             properties={
@@ -186,7 +186,7 @@ class ProjectViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             # Finally, delete the project itself
             project.delete()
 
-        posthog.capture(
+        posthog_capture(
             "project_deleted",
             distinct_id=request.user.email,
             properties={
