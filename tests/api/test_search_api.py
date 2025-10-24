@@ -531,7 +531,7 @@ class TestSearchAPIChunkVectorSearch:
 
         return {"memo1": memo1, "memo2": memo2}
 
-    @patch("skald.api.search_api.generate_vector_embedding_for_search")
+    @patch("skald.services.embedding_service.EmbeddingService.generate_embedding")
     def test_chunk_vector_search_basic(
         self, mock_generate_embedding, user_token, project, setup_memos_with_chunks
     ):
@@ -554,7 +554,7 @@ class TestSearchAPIChunkVectorSearch:
         assert len(response.data["results"]) >= 1
         assert "distance" in response.data["results"][0]
 
-    @patch("skald.api.search_api.generate_vector_embedding_for_search")
+    @patch("skald.services.embedding_service.EmbeddingService.generate_embedding")
     def test_chunk_vector_search_with_filter(
         self, mock_generate_embedding, user_token, project, setup_memos_with_chunks
     ):
@@ -585,7 +585,7 @@ class TestSearchAPIChunkVectorSearch:
         assert len(response.data["results"]) == 1
         assert response.data["results"][0]["title"] == "Python Guide"
 
-    @patch("skald.api.search_api.generate_vector_embedding_for_search")
+    @patch("skald.services.embedding_service.EmbeddingService.generate_embedding")
     def test_chunk_vector_search_with_tag_filter(
         self, mock_generate_embedding, user_token, project, setup_memos_with_chunks
     ):
