@@ -45,6 +45,7 @@ services:
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
       - RABBITMQ_VHOST=/
+      - SELF_HOSTED_DEPLOY=true
     ports:
       - "8000:8000"
     volumes:

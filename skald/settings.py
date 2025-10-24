@@ -289,6 +289,8 @@ LOGGING = {
 # Host from where the UI is served rather than the API
 DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.useskald.com"
 
+SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("SELF_HOSTED_DEPLOY", False))
+
 APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 
 # Voyage - embeddings
