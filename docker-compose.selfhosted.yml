@@ -124,7 +124,6 @@ services:
       - backend
 
   ui:
-    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-ui:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: ui.Dockerfile
