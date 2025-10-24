@@ -1,10 +1,12 @@
 # Self-Hosted Deployment Guide
 
-This guide will help you deploy Skald on your own infrastructure with SSL certificates for both the API and UI.
+This guide will help you deploy Skald on your own infrastructure using Docker Compose. It should only take 15 minutes or so.
 
-## Prerequisites
+By default this deployment will spin up all the services you need to run Skald, but if you intend to run it in production you should ideally deploy Postgres and potentially RabbitMQ separately.
 
-1. A Linux server with Docker and Docker Compose installed
+## Pre-requisites
+
+1. A Linux server (x86) with [Docker](https://docs.docker.com/engine/install/ubuntu/) and [Docker Compose](https://docs.docker.com/compose/install/linux/) installed
 2. Two domain names (or subdomains) pointing to your server's IP address:
    - One for the API (e.g., `api.yourdomain.com`)
    - One for the UI (e.g., `app.yourdomain.com`)
@@ -12,7 +14,7 @@ This guide will help you deploy Skald on your own infrastructure with SSL certif
 
 ## DNS Configuration
 
-Before running the deployment, ensure your DNS records are configured:
+Before running the deployment, ensure the following DNS records are configured:
 
 1. Create an A record for your API domain pointing to your server's IP address
 2. Create an A record for your UI domain pointing to your server's IP address
@@ -25,7 +27,7 @@ skald.yourdomain.com        A    123.456.789.0
 
 ## Deployment
 
-Run the deployment script:
+Run the deployment setup script:
 
 ```bash
 ./bin/deploy.sh
@@ -35,7 +37,7 @@ The script will:
 
 1. Prompt you for your API and UI domain names
 2. Request an email address (required for Let's Encrypt SSL certificates)
-3. Prompt you for environment variables such as your OpenAI API key.
+3. Prompt you for environment variables such as your OpenAI API key
 4. Verify your DNS configuration
 5. Generate secure credentials
 6. Set up a .env.prod file to be used when deploying the stack
