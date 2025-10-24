@@ -2,7 +2,9 @@ app = 'skald-platform-ui'
 primary_region = 'dfw'
 
 [build]
-dockerfile="ui.Dockerfile"
+  dockerfile = "ui.Dockerfile"
+  [build.args]
+    VITE_API_HOST = "https://api.useskald.com"
 
 [http_service]
   internal_port = 80

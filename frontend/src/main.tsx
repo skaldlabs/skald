@@ -1,17 +1,18 @@
+import '@/settings'
 import { createRoot } from 'react-dom/client'
 import App from '@/App'
 import '@/styles/global.scss'
 import { PostHogProvider } from 'posthog-js/react'
-// import * as Sentry from '@sentry/react'
+import * as Sentry from '@sentry/react'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
 
 const isLocalhost = window.location.hostname === 'localhost'
 
 if (!isLocalhost) {
-    // Sentry.init({
-    //     dsn: 'https://b253885bf8381ce9188e516a32437dd6@o4509092419076096.ingest.de.sentry.io/4509092455448656',
-    // })
+    Sentry.init({
+        dsn: 'https://b253885bf8381ce9188e516a32437dd6@o4509092419076096.ingest.de.sentry.io/4509092455448656',
+    })
 }
 
 const posthogOptions = {

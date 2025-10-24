@@ -16,6 +16,7 @@ import { useTheme } from '@/components/ThemeProvider'
 import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
 import { useProjectStore } from '@/stores/projectStore'
 import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
+import { isSelfHostedDeploy } from '@/settings'
 
 interface MenuItem {
     key: string
@@ -62,20 +63,11 @@ export const Sider = () => {
         ],
     }
 
-    const configMenuItems: MenuItem[] = [
+    const defaultConfigMenuItems: MenuItem[] = [
         {
             key: '/organization',
             icon: <Hotel className="h-4 w-4" />,
             label: 'Organization',
-            hasAccess: () =>
-                !!user &&
-                user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
-                    OrganizationAccessLevel.SUPER_ADMIN,
-        },
-        {
-            key: '/organization/subscription',
-            icon: <CreditCard className="h-4 w-4" />,
-            label: 'Plan & Billing',
             hasAccess: () =>
                 !!user &&
                 user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
@@ -89,6 +81,19 @@ export const Sider = () => {
             onClick: () => window.open('https://docs.useskald.com', '_blank', 'noopener,noreferrer'),
         },
     ]
+
+    const cloudConfigMenuItems: MenuItem[] = [
+        {
+            key: '/organization/subscription',
+            icon: <CreditCard className="h-4 w-4" />,
+            label: 'Plan & Billing',
+            hasAccess: () => true,
+        },
+    ]
+
+    const configMenuItems: MenuItem[] = isSelfHostedDeploy
+        ? defaultConfigMenuItems
+        : [...defaultConfigMenuItems, ...cloudConfigMenuItems]
 
     const handleMenuClick = (key: string, onClick?: () => void) => {
         if (onClick) {
@@ -136,9 +141,7 @@ export const Sider = () => {
             <SidebarFooter className="border-t px-3 py-2">
                 <SidebarGroup>
                     <SidebarGroupContent>
-                        <div className="mb-3">
-                            <UsageTracker />
-                        </div>
+                        <div className="mb-3">{!isSelfHostedDeploy && <UsageTracker />}</div>
 
                         <SidebarMenu>
                             {configMenuItems

@@ -16,16 +16,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     environment:
@@ -49,23 +39,19 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgres://postgres:12345678@db/skald
-      - POSTHOG_API_KEY=phc_Mn0nVBv8wLLcJJ4gLWggO35SbrIDOvD14hiKzEtv5zp
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - INTER_PROCESS_QUEUE=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
       - RABBITMQ_VHOST=/
+      - SELF_HOSTED_DEPLOY=true
     ports:
       - "8000:8000"
     volumes:
       - .:/app
       - /app/node_modules  # Prevent overwriting node_modules if present
     depends_on:
-      redis:
-        condition: service_healthy
       db:
         condition: service_healthy
       rabbitmq:
@@ -78,9 +64,6 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CHANNEL_NAME=memo-processing
       - DATABASE_URL=postgres://postgres:12345678@db/skald
       - INTER_PROCESS_QUEUE=rabbitmq
       - RABBITMQ_HOST=rabbitmq
@@ -90,12 +73,20 @@ services:
       - RABBITMQ_VHOST=/
       - RABBITMQ_QUEUE_NAME=process_memo
     depends_on:
-      redis:
-        condition: service_healthy
       db:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: .
+      dockerfile: ui.Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
     restart: unless-stopped
 
 volumes:
