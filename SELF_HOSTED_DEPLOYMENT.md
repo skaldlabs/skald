@@ -41,7 +41,7 @@ VOYAGE_API_KEY="<your_voyage_api_key>"
 
 ```sh
 # add -d to run in detached mode
-docker-compose -f docker-compose.dev.yml --env-file .env.dev up
+docker-compose -f docker-compose.yml --env-file .env.dev up
 ```
 
 Once the build is done you should be able to access `http://localhost:3000` on your browser to access the Skald UI, and `http://localhost:8000` will be your API URL.
