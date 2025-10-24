@@ -19,7 +19,7 @@ If the content follows a format like markdown, include the outline of the docume
  * @returns An agent that can summarize memo content
  */
 export function createMemoSummaryAgent() {
-    const llm = LLMService.getLLM(0)
+    const llm = LLMService.getLLM()
 
     const structuredLlm = llm.withStructuredOutput(MemoSummaryOutputSchema, {
         name: 'MemoSummaryAgent',

@@ -18,7 +18,7 @@ Given a chunk of text, you will extract the most relevant keywords that describe
  * @returns An agent that can extract keywords from text content
  */
 export function createKeywordExtractorAgent() {
-    const llm = LLMService.getLLM(0)
+    const llm = LLMService.getLLM()
 
     const structuredLlm = llm.withStructuredOutput(KeywordsOutputSchema, {
         name: 'KeywordExtractorAgent',
