@@ -71,6 +71,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - SECRET_KEY=${SECRET_KEY}
       - FRONTEND_URL=https://${UI_DOMAIN}
+      - API_URL=https://${API_DOMAIN}
       - INTER_PROCESS_QUEUE=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672

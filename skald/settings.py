@@ -119,11 +119,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
-# Add self-hosted deployment URL to CORS allowed origins
+# Add self-hosted deployment URLs to CORS allowed origins
 IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", False))
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-if IS_SELF_HOSTED_DEPLOY and FRONTEND_URL:
-    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+API_URL = os.getenv("API_URL", "")
+if IS_SELF_HOSTED_DEPLOY:
+    if FRONTEND_URL:
+        CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+    if API_URL:
+        CORS_ALLOWED_ORIGINS.append(API_URL)
 
 ROOT_URLCONF = "skald.urls"
 
@@ -248,9 +252,12 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
 
-# Add self-hosted deployment URL to CSRF trusted origins
-if IS_SELF_HOSTED_DEPLOY and FRONTEND_URL:
-    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
+# Add self-hosted deployment URLs to CSRF trusted origins
+if IS_SELF_HOSTED_DEPLOY:
+    if FRONTEND_URL:
+        CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
+    if API_URL:
+        CSRF_TRUSTED_ORIGINS.append(API_URL)
 
 USE_SECURE_SETTINGS = not DEBUG
 
