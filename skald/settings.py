@@ -314,9 +314,18 @@ DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.useskald.c
 
 APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 
-# Voyage - embeddings
+# Embedding Provider Configuration
+EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "voyage")
+
+# Voyage AI
 VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
 VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
+
+# OpenAI
+OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large")
+
+# Constants
+EMBEDDING_VECTOR_DIMENSIONS = 2048
 
 # LLM Configuration
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
@@ -342,6 +351,14 @@ if LLM_PROVIDER not in SUPPORTED_PROVIDERS:
         f"Supported: {', '.join(SUPPORTED_PROVIDERS)}"
     )
 
+# Embedding Provider Validation
+SUPPORTED_EMBEDDING_PROVIDERS = ["voyage", "openai"]
+if EMBEDDING_PROVIDER not in SUPPORTED_EMBEDDING_PROVIDERS:
+    raise ValueError(
+        f"Invalid EMBEDDING_PROVIDER: {EMBEDDING_PROVIDER}. "
+        f"Supported: {', '.join(SUPPORTED_EMBEDDING_PROVIDERS)}"
+    )
+
 # Warn if LLM providers API keys are missing in production
 if not DEBUG:
     import logging
@@ -354,6 +371,12 @@ if not DEBUG:
         logger.warning("ANTHROPIC_API_KEY not set in production")
     elif LLM_PROVIDER == "local" and not LOCAL_LLM_BASE_URL:
         logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
+
+    # Warn if embedding provider API keys are missing
+    if EMBEDDING_PROVIDER == "voyage" and not VOYAGE_API_KEY:
+        logger.warning("VOYAGE_API_KEY not set in production")
+    elif EMBEDDING_PROVIDER == "openai" and not OPENAI_API_KEY:
+        logger.warning("OPENAI_API_KEY not set for embedding provider in production")
 
 # Posthog
 POSTHOG_PUBLIC_API_KEY = os.getenv(
