@@ -62,6 +62,7 @@ services:
 
 
   api:
+    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-api:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -98,6 +99,7 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=8000"
 
   memo-processing-server:
+    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-memo-processing:${IMAGE_TAG:-latest}
     build:
       context: ./memo-processing-server
       dockerfile: Dockerfile
@@ -122,6 +124,7 @@ services:
       - backend
 
   ui:
+    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-ui:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: ui.Dockerfile

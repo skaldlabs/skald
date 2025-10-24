@@ -72,24 +72,24 @@ SSL certificates are automatically generated and renewed by Let's Encrypt throug
 ### View logs
 
 ```bash
-docker compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.selfhosted.yml logs -f
 ```
 
 View logs for a specific service:
 ```bash
-docker compose -f docker-compose.prod.yml logs -f api
+docker compose -f docker-compose.selfhosted.yml logs -f api
 ```
 
 ### Stop the deployment
 
 ```bash
-docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.selfhosted.yml down
 ```
 
 ### Restart the deployment
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+docker compose -f docker-compose.selfhosted.yml --env-file .env.prod up -d
 ```
 
 ### Update the deployment
@@ -101,8 +101,8 @@ After pulling new code:
 VITE_API_HOST="https://your-api-domain.com" pnpm run build
 
 # Rebuild and restart services
-docker compose -f docker-compose.prod.yml --env-file .env.prod build
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+docker compose -f docker-compose.selfhosted.yml --env-file .env.prod build
+docker compose -f docker-compose.selfhosted.yml --env-file .env.prod up -d
 ```
 
 ## Troubleshooting
@@ -113,20 +113,20 @@ If you're having trouble with SSL certificates:
 
 1. Ensure ports 80 and 443 are open
 2. Verify DNS records are pointing to the correct IP
-3. Check Traefik logs: `docker compose -f docker-compose.prod.yml logs traefik`
+3. Check Traefik logs: `docker compose -f docker-compose.selfhosted.yml logs traefik`
 4. Wait a few minutes - certificate generation can take time
 
 ### Service won't start
 
-1. Check service logs: `docker compose -f docker-compose.prod.yml logs <service-name>`
+1. Check service logs: `docker compose -f docker-compose.selfhosted.yml logs <service-name>`
 2. Ensure all required environment variables are set in `.env.prod`
-3. Verify database is healthy: `docker compose -f docker-compose.prod.yml ps`
+3. Verify database is healthy: `docker compose -f docker-compose.selfhosted.yml ps`
 
 ### Cannot connect to API
 
 1. Verify DNS is resolving correctly: `dig your-api-domain.com`
-2. Check API logs: `docker compose -f docker-compose.prod.yml logs api`
-3. Ensure Traefik is running: `docker compose -f docker-compose.prod.yml ps traefik`
+2. Check API logs: `docker compose -f docker-compose.selfhosted.yml logs api`
+3. Ensure Traefik is running: `docker compose -f docker-compose.selfhosted.yml ps traefik`
 
 ## Security Considerations
 
