@@ -32,6 +32,8 @@ docker-compose up
 
 #### Pre-requisites
 
+- Create a Langchain account and get your secret key
+- Make sure you've created a db called `skald2` locally (or use another name and change the config on the servers)
 - **LLM Provider API Key**: Get an API key from [OpenAI](https://platform.openai.com/), [Anthropic](https://console.anthropic.com/), or set up a local LLM (see LLM Provider Options below)
 - **Voyage AI API Key**: Get your API key from [Voyage AI](https://www.voyageai.com/) for embeddings
 - **PostgreSQL with pgvector**: Create a database with the vector extension

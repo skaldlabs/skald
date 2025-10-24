@@ -107,7 +107,14 @@ async def async_stream_chat_agent(
     try:
         result = await agent_task
         if result.get("output"):
-            yield {"type": "output", "content": result.get("output", "")}
+            output = result.get("output", "")
+            # Extract string from output if it's a list (Anthropic format)
+            if isinstance(output, list) and len(output) > 0:
+                if isinstance(output[0], dict):
+                    output = (
+                        output[0].get("text") or output[0].get("content") or str(output)
+                    )
+            yield {"type": "output", "content": output}
     except Exception as e:
         yield {"type": "error", "content": str(e)}
 
