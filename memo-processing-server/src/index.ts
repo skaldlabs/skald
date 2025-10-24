@@ -50,6 +50,7 @@ async function main() {
     // Validate LLM configuration on startup
     LLMService.validateConfig()
     console.log(`LLM provider: ${process.env.LLM_PROVIDER || 'openai'}`)
+    console.log(`Embedding provider: ${process.env.EMBEDDING_PROVIDER || 'voyage'}`)
 
     switch (INTER_PROCESS_QUEUE) {
         case 'redis':
