@@ -42,16 +42,22 @@ services:
     networks:
       - backend
 
-  redis:
-    image: redis:7-alpine
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-skald}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-skald}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
     networks:
       - backend
+
 
   api:
     build:
@@ -60,17 +66,17 @@ services:
     command: ./bin/start-prod.sh
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-skald2}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - IS_SELF_HOSTED_DEPLOY=true
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - SECRET_KEY=${SECRET_KEY}
       - FRONTEND_URL=https://${UI_DOMAIN}
+      - INTER_PROCESS_QUEUE=rabbitmq
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-skald}:${RABBITMQ_PASSWORD:-skald}@rabbitmq:5672/
     depends_on:
-      redis:
-        condition: service_healthy
       db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -88,16 +94,15 @@ services:
       context: ./memo-processing-server
       dockerfile: Dockerfile
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CHANNEL_NAME=memo-processing
       - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-skald2}
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - INTER_PROCESS_QUEUE=rabbitmq
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-skald}:${RABBITMQ_PASSWORD:-skald}@rabbitmq:5672/
     depends_on:
-      redis:
-        condition: service_healthy
       db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -122,6 +127,7 @@ services:
 
 volumes:
   postgres_data:
+  rabbitmq_data:
   traefik-certificates:
 
 networks:
