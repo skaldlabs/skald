@@ -43,8 +43,11 @@ echo ""
 # Prompt for domain names
 echo "Domain Configuration"
 echo "--------------------"
-read -p "Enter your API domain (e.g., api.example.com): " API_DOMAIN
-read -p "Enter your UI domain (e.g., app.example.com): " UI_DOMAIN
+echo "For Skald to work properly, you need to setup DNS records for two domains: one for the Skald API, and the other for the Skald UI."
+echo "To do so, before entering them here, set up an A record for each pointing to the IP address of this machine."
+echo "We will automatically provision SSL certificates for these domains."
+read -p "Enter your API domain (e.g., skald-api.<your_domain>.com): " API_DOMAIN
+read -p "Enter your UI domain (e.g., skald.<your_domain>.com): " UI_DOMAIN
 
 if [ -z "$API_DOMAIN" ] || [ -z "$UI_DOMAIN" ]; then
     echo -e "${RED}Error: Both API and UI domains are required.${NC}"

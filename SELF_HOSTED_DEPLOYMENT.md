@@ -5,11 +5,10 @@ This guide will help you deploy Skald on your own infrastructure with SSL certif
 ## Prerequisites
 
 1. A Linux server with Docker and Docker Compose installed
-2. Two domain names (or subdomains) pointing to your server:
+2. Two domain names (or subdomains) pointing to your server's IP address:
    - One for the API (e.g., `api.yourdomain.com`)
    - One for the UI (e.g., `app.yourdomain.com`)
 3. Ports 80 and 443 open on your server
-4. Node.js and pnpm installed (for building the frontend)
 
 ## DNS Configuration
 
@@ -20,8 +19,8 @@ Before running the deployment, ensure your DNS records are configured:
 
 Example DNS configuration:
 ```
-api.yourdomain.com    A    123.456.789.0
-app.yourdomain.com    A    123.456.789.0
+skald-api.yourdomain.com    A    123.456.789.0
+skald.yourdomain.com        A    123.456.789.0
 ```
 
 ## Deployment
@@ -35,11 +34,11 @@ Run the deployment script:
 The script will:
 1. Prompt you for your API and UI domain names
 2. Request an email address (required for Let's Encrypt SSL certificates)
-3. Ask for optional API keys (VOYAGE_API_KEY and OPENAI_API_KEY)
+3. Prompt you for environment variables such as your OpenAI API key.
 4. Verify your DNS configuration
 5. Generate secure credentials
-6. Build the frontend with the correct API URL
-7. Build and start all Docker services
+6. Set up a .env.prod file to be used when deploying the stack
+
 
 ## What Gets Deployed
 
@@ -47,7 +46,7 @@ The deployment includes:
 
 - **Traefik**: Reverse proxy with automatic SSL certificate generation
 - **PostgreSQL with pgvector**: Database for storing memos and embeddings
-- **Redis**: Cache and message queue
+- **RabbitMQ**: Used for communicating between the Django server and the Memo Processing Server
 - **API**: The main Skald API server
 - **Memo Processing Server**: Background worker for processing memos
 - **UI**: The web interface
