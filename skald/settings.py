@@ -356,8 +356,10 @@ if not DEBUG:
         logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
 
 # Posthog
-POSTHOG_PUBLIC_API_KEY = os.getenv("POSTHOG_PUBLIC_API_KEY", None)
-POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
+POSTHOG_PUBLIC_API_KEY = os.getenv(
+    "POSTHOG_PUBLIC_API_KEY", "phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2"
+)
+POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
 
 # mechanism for communicating with the memo processing server
 USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))  # legacy
