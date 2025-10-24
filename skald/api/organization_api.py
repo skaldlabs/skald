@@ -97,6 +97,14 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         )
 
     def create(self, request):
+        if settings.IS_SELF_HOSTED_DEPLOY and Organization.objects.count() >= 1:
+            return Response(
+                {
+                    "detail": "You can only create one organization in a self-hosted deploy"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         org = Organization.objects.create(
             name=request.data["name"],
             owner=request.user,

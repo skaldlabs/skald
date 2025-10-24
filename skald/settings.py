@@ -42,6 +42,11 @@ def str_to_bool(input):
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = str_to_bool(os.getenv("DEBUG", False))
 
+# self-hosted deploys are slightly different from our cloud deploys.
+# they don't have billing, are single-tenant, etc.
+IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", True))
+
+
 if not DEBUG:
     sentry_sdk.init(
         dsn="https://d9311bc8f81f566a5bcedac72e22427d@o4509092419076096.ingest.de.sentry.io/4510188083216464",
@@ -198,7 +203,9 @@ if not STRIPE_SECRET_KEY and not DEBUG:
 
 EMAIL_DOMAIN = os.getenv("EMAIL_DOMAIN", "useskald.com")
 
-EMAIL_VERIFICATION_ENABLED = str_to_bool(os.getenv("EMAIL_VERIFICATION_ENABLED", True))
+EMAIL_VERIFICATION_ENABLED = str_to_bool(
+    os.getenv("EMAIL_VERIFICATION_ENABLED", not IS_SELF_HOSTED_DEPLOY)
+)
 
 # Authentication bypass for development/testing
 DISABLE_AUTH = str_to_bool(os.getenv("DISABLE_AUTH", False))
@@ -288,8 +295,6 @@ LOGGING = {
 
 # Host from where the UI is served rather than the API
 DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.useskald.com"
-
-IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", True))
 
 APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 
