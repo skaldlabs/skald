@@ -3,21 +3,18 @@ from typing import Any, AsyncIterator, Dict, Iterator
 
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import ChatOpenAI
 
 from skald.agents.chat_agent.prompts import CHAT_AGENT_INSTRUCTIONS
 from skald.agents.streaming import AsyncStreamingCallbackHandler
+from skald.services.llm_service import LLMService
 
 
 def create_chat_agent(streaming: bool = False, callback_handler=None):
 
     # Initialize the LLM with optional streaming
-    llm_kwargs = {"model": "gpt-4o-mini", "temperature": 0, "streaming": streaming}
-
-    if callback_handler:
-        llm_kwargs["callbacks"] = [callback_handler]
-
-    llm = ChatOpenAI(**llm_kwargs)
+    llm = LLMService.get_llm(
+        streaming=streaming, callbacks=[callback_handler] if callback_handler else None
+    )
 
     # Define the tools
     # tools = [greet, get_current_time]
@@ -110,7 +107,14 @@ async def async_stream_chat_agent(
     try:
         result = await agent_task
         if result.get("output"):
-            yield {"type": "output", "content": result.get("output", "")}
+            output = result.get("output", "")
+            # Extract string from output if it's a list (Anthropic format)
+            if isinstance(output, list) and len(output) > 0:
+                if isinstance(output[0], dict):
+                    output = (
+                        output[0].get("text") or output[0].get("content") or str(output)
+                    )
+            yield {"type": "output", "content": output}
     except Exception as e:
         yield {"type": "error", "content": str(e)}
 

@@ -295,6 +295,43 @@ APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
 VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 
+# LLM Configuration
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
+
+# OpenAI
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+# Anthropic
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-7-sonnet-20250219")
+
+# Local LLM (OpenAI-compatible API)
+LOCAL_LLM_BASE_URL = os.getenv("LOCAL_LLM_BASE_URL")
+LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama-3.1-8b-instruct")
+LOCAL_LLM_API_KEY = os.getenv("LOCAL_LLM_API_KEY", None)
+
+# Validation
+SUPPORTED_PROVIDERS = ["openai", "anthropic", "local"]
+if LLM_PROVIDER not in SUPPORTED_PROVIDERS:
+    raise ValueError(
+        f"Invalid LLM_PROVIDER: {LLM_PROVIDER}. "
+        f"Supported: {', '.join(SUPPORTED_PROVIDERS)}"
+    )
+
+# Warn if LLM providers API keys are missing in production
+if not DEBUG:
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
+        logger.warning("OPENAI_API_KEY not set in production")
+    elif LLM_PROVIDER == "anthropic" and not ANTHROPIC_API_KEY:
+        logger.warning("ANTHROPIC_API_KEY not set in production")
+    elif LLM_PROVIDER == "local" and not LOCAL_LLM_BASE_URL:
+        logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
+
 # Posthog
 POSTHOG_PUBLIC_API_KEY = os.getenv("POSTHOG_PUBLIC_API_KEY", None)
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")

@@ -54,8 +54,22 @@ def mock_voyage_embeddings():
 
 
 @pytest.fixture(autouse=True)
+def mock_llm_service():
+    """Mock the LLM service for all tests to avoid LLM API calls."""
+    from unittest.mock import MagicMock
+
+    mock_llm = MagicMock()
+
+    with patch(
+        "skald.services.llm_service.LLMService.get_llm",
+        return_value=mock_llm,
+    ):
+        yield
+
+
+@pytest.fixture(autouse=True)
 def mock_chat_agent():
-    """Mock the chat agent for all tests to avoid OpenAI API calls."""
+    """Mock the chat agent for all tests to avoid LLM API calls."""
     mock_response = {
         "output": "This is a test response from the chat agent.",
         "intermediate_steps": [],

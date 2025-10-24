@@ -6,6 +6,7 @@ import { createClient } from 'redis'
 import { processMemo } from './processMemo'
 import { runSQSConsumer } from './sqsConsumer'
 import { runRabbitMQConsumer, closeRabbitMQ } from './rabbitmqConsumer'
+import { LLMService } from './services/llm'
 
 // Load environment variables from the main repo's .env file
 if (process.env.NODE_ENV === 'development') {
@@ -46,6 +47,15 @@ const runRedisPubSub = async () => {
 
 async function main() {
     console.log(`Starting memo processing server with ${INTER_PROCESS_QUEUE} queue`)
+    // Validate LLM configuration on startup
+    LLMService.validateConfig()
+    console.log(`LLM provider: ${process.env.LLM_PROVIDER || 'openai'}`)
+
+    if (!USE_SQS) {
+        console.log('Running in development mode with Redis pub/sub')
+        await runRedisPubSub()
+    } else {
+        const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
 
     switch (INTER_PROCESS_QUEUE) {
         case 'redis':
