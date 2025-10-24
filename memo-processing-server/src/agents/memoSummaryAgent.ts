@@ -1,5 +1,5 @@
-import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
+import { LLMService } from '../services/llm'
 
 // Output schema for the memo summary agent
 const MemoSummaryOutputSchema = z.object({
@@ -19,10 +19,7 @@ If the content follows a format like markdown, include the outline of the docume
  * @returns An agent that can summarize memo content
  */
 export function createMemoSummaryAgent() {
-    const llm = new ChatOpenAI({
-        model: 'gpt-4o-mini',
-        temperature: 0,
-    })
+    const llm = LLMService.getLLM(0)
 
     const structuredLlm = llm.withStructuredOutput(MemoSummaryOutputSchema, {
         name: 'MemoSummaryAgent',

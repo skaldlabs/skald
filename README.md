@@ -17,12 +17,14 @@ docker-compose up
 ```
 
 **Benefits:**
+
 - ✅ No need to install PostgreSQL locally
 - ✅ Code changes auto-reload (no rebuild needed)
 - ✅ Migrations run automatically on startup
 - ✅ Consistent environment across team
 
 **When you need to rebuild:**
+
 - Only when you change dependencies in `pyproject.toml`
 - Run: `docker-compose build`
 
@@ -45,6 +47,7 @@ docker-compose up
 See `.env.example` for a complete list of environment variables.
 
 **Required:**
+
 ```
 # Embeddings (required for vector search)
 VOYAGE_API_KEY=<your Voyage API key>
@@ -67,6 +70,7 @@ LOCAL_LLM_API_KEY=not-needed  # Most local servers don't need this
 ```
 
 **Optional (for LangChain tracing):**
+
 ```
 LANGSMITH_TRACING=true
 LANGSMITH_ENDPOINT=https://api.smith.langchain.com
@@ -81,34 +85,23 @@ The LangSmith vars will be given to you during LangChain onboarding.
 Skald supports multiple LLM providers. Choose the one that works best for you:
 
 **1. OpenAI (Default)**
+
 - Most reliable and well-tested
 - Requires OpenAI API key
 - Recommended model: `gpt-4o-mini` (fast and cost-effective)
 
 **2. Anthropic**
+
 - Alternative to OpenAI
 - Requires Anthropic API key
 - Recommended model: `claude-3-5-sonnet-20241022`
 
-**3. Local LLM (Self-hosted)**
-- No API costs, fully private
-- Works with any OpenAI-compatible API
-- Supported platforms:
-  - **Ollama**: `brew install ollama`, then `ollama pull llama3.1:8b`
-  - **LM Studio**: Download from [lmstudio.ai](https://lmstudio.ai)
-  - **vLLM**: High-performance serving for production
-  - **LocalAI**: Community-driven OpenAI alternative
-
-Example with Ollama:
-```sh
-# Install and start Ollama
-brew install ollama
-ollama pull llama3.1:8b
-
 # Configure .env
+
 LLM_PROVIDER=local
 LOCAL_LLM_BASE_URL=http://localhost:11434/v1
 LOCAL_LLM_MODEL=llama3.1:8b
+
 ```
 
 #### Authentication Bypass (Development Only)
@@ -116,8 +109,10 @@ LOCAL_LLM_MODEL=llama3.1:8b
 To disable authentication for development/testing purposes, set:
 
 ```
+
 DISABLE_AUTH=true
-```
+
+````
 
 **⚠️ WARNING: Never use this in production!** This bypasses all authentication and authorization checks.
 
@@ -136,8 +131,7 @@ From the root dir you can run commands like:
 python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
-```
-
+````
 
 ### Memo processing server
 
@@ -182,7 +176,7 @@ python push_mock_docs.py --all --project-id YOUR_PROJECT_UUID
 # Import only Odin documentation
 python push_mock_docs.py --odin --project-id YOUR_PROJECT_UUID
 
-# Import only Wikipedia articles  
+# Import only Wikipedia articles
 python push_mock_docs.py --wikipedia --project-id YOUR_PROJECT_UUID
 
 # Add delay between requests to prevent rate limiting
@@ -203,4 +197,4 @@ docker build -t skald .
 docker run --env-file .env -p 8000:8000 skald
 ```
 
-This uses gunicorn and bakes the code into the image for optimal performance. 
+This uses gunicorn and bakes the code into the image for optimal performance.

@@ -5,6 +5,7 @@ import { resolve } from 'path'
 import { createClient } from 'redis'
 import { processMemo } from './processMemo'
 import { runSQSConsumer } from './sqsConsumer'
+import { LLMService } from './services/llm'
 
 // Load environment variables from the main repo's .env file
 if (process.env.NODE_ENV === 'development') {
@@ -40,6 +41,10 @@ const runRedisPubSub = async () => {
 }
 
 async function main() {
+    // Validate LLM configuration on startup
+    LLMService.validateConfig()
+    console.log(`LLM provider: ${process.env.LLM_PROVIDER || 'openai'}`)
+
     if (!USE_SQS) {
         console.log('Running in development mode with Redis pub/sub')
         await runRedisPubSub()
