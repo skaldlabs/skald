@@ -300,7 +300,12 @@ POSTHOG_PUBLIC_API_KEY = os.getenv("POSTHOG_PUBLIC_API_KEY", None)
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
 
 # mechanism for communicating with the memo processing server
-USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))
+USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))  # legacy
+INTER_PROCESS_QUEUE = "sqs" if USE_SQS else os.getenv("INTER_PROCESS_QUEUE", "redis")
+
+if INTER_PROCESS_QUEUE not in ["redis", "sqs", "rabbitmq"]:
+    raise ValueError(f"Invalid inter-process queue: {INTER_PROCESS_QUEUE}")
+
 
 SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-2")
@@ -313,3 +318,10 @@ REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 REDIS_MEMO_PROCESSING_PUB_SUB_CHANNEL = os.getenv(
     "REDIS_PUB_SUB_CHANNEL_NAME", "process_memo"
 )
+
+# rabbitmq
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+RABBITMQ_PORT = os.getenv("RABBITMQ_PORT", "5672")
+RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
+RABBITMQ_PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
+RABBITMQ_VHOST = os.getenv("RABBITMQ_VHOST", "/")

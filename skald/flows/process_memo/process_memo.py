@@ -11,18 +11,17 @@ from skald.models.memo import Memo, MemoContent, MemoTag
 from skald.models.project import Project
 from skald.settings import (
     AWS_REGION,
+    INTER_PROCESS_QUEUE,
     REDIS_HOST,
     REDIS_MEMO_PROCESSING_PUB_SUB_CHANNEL,
     REDIS_PORT,
     SQS_QUEUE_URL,
-    USE_SQS,
 )
 
 logger = logging.getLogger(__name__)
 
-# Initialize SQS client if in production mode
 sqs_client = None
-if SQS_QUEUE_URL and USE_SQS:
+if SQS_QUEUE_URL and INTER_PROCESS_QUEUE == "sqs":
     import boto3
 
     sqs_client = boto3.client("sqs", region_name=AWS_REGION)
@@ -84,11 +83,58 @@ def _publish_to_sqs(memo_uuid: str) -> None:
     logger.info(f"Published memo {memo_uuid} to SQS queue: {response['MessageId']}")
 
 
+def _publish_to_rabbitmq(memo_uuid: str) -> None:
+    """Publish memo to RabbitMQ queue"""
+    import pika
+
+    from skald.settings import (
+        RABBITMQ_HOST,
+        RABBITMQ_PASSWORD,
+        RABBITMQ_PORT,
+        RABBITMQ_USER,
+        RABBITMQ_VHOST,
+    )
+
+    credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
+    parameters = pika.ConnectionParameters(
+        host=RABBITMQ_HOST,
+        port=int(RABBITMQ_PORT),
+        virtual_host=RABBITMQ_VHOST,
+        credentials=credentials,
+    )
+
+    connection = pika.BlockingConnection(parameters)
+    channel = connection.channel()
+
+    # Declare the queue (idempotent operation)
+    queue_name = "process_memo"
+    channel.queue_declare(queue=queue_name, durable=True)
+
+    # Publish the message
+    message = json.dumps({"memo_uuid": str(memo_uuid)})
+    channel.basic_publish(
+        exchange="",
+        routing_key=queue_name,
+        body=message,
+        properties=pika.BasicProperties(
+            delivery_mode=2,  # make message persistent
+        ),
+    )
+
+    logger.info(f"Published memo {memo_uuid} to RabbitMQ queue: {queue_name}")
+
+    connection.close()
+
+
 def send_memo_for_async_processing(memo: Memo) -> None:
-    if USE_SQS:
+    if INTER_PROCESS_QUEUE == "sqs":
         _publish_to_sqs(memo.uuid)
-    else:
+    elif INTER_PROCESS_QUEUE == "redis":
         _publish_to_redis(memo.uuid)
+    elif INTER_PROCESS_QUEUE == "rabbitmq":
+        _publish_to_rabbitmq(memo.uuid)
+    else:
+        raise ValueError(f"Invalid inter-process queue: {INTER_PROCESS_QUEUE}")
 
 
 def create_new_memo(memo_data: MemoData, project: Project) -> Memo:
