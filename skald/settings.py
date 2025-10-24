@@ -114,6 +114,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
+# Add self-hosted deployment URL to CORS allowed origins
+IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", False))
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+if IS_SELF_HOSTED_DEPLOY and FRONTEND_URL:
+    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+
 ROOT_URLCONF = "skald.urls"
 
 TEMPLATES = [
@@ -184,8 +190,6 @@ AUTH_TOKEN_VALIDITY = timedelta(days=30)
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", None)
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-
 # Stripe Configuration
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", None)
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", None)
@@ -236,6 +240,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
 ]
+
+# Add self-hosted deployment URL to CSRF trusted origins
+if IS_SELF_HOSTED_DEPLOY and FRONTEND_URL:
+    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 USE_SECURE_SETTINGS = not DEBUG
 
