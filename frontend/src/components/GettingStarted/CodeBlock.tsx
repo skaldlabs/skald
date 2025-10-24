@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Copy, Check } from 'lucide-react'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { dracula } from 'react-syntax-highlighter/dist/cjs/styles/prism'
+
 import './GettingStarted.scss'
 
 interface CodeBlockProps {
@@ -26,9 +29,13 @@ export const CodeBlock = ({ code, language = 'bash' }: CodeBlockProps) => {
                     {isCopied ? <Check size={18} /> : <Copy size={18} />}
                 </Button>
             </div>
-            <pre className="code-block">
-                <code>{code}</code>
-            </pre>
+            <SyntaxHighlighter
+                language={language}
+                style={dracula}
+                customStyle={{ padding: '1.5rem', paddingTop: '3rem', overflowX: 'auto', margin: '0' }}
+            >
+                {code}
+            </SyntaxHighlighter>
         </div>
     )
 }
