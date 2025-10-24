@@ -39,20 +39,18 @@ jobs:
         env:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
-        run: docker compose -f docker-compose.selfhosted.yml build api memo-processing-server ui
+        run: docker compose -f docker-compose.selfhosted.yml build api memo-processing-server
 
       - name: Push versioned images to DockerHub
         env:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
-        run: docker compose -f docker-compose.selfhosted.yml push api memo-processing-server ui
+        run: docker compose -f docker-compose.selfhosted.yml push api memo-processing-server
 
       - name: Tag and push latest
         run: |
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/skald-api:${{ env.IMAGE_TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/skald-api:latest
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/skald-memo-processing:${{ env.IMAGE_TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/skald-memo-processing:latest
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/skald-ui:${{ env.IMAGE_TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/skald-ui:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/skald-api:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/skald-memo-processing:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/skald-ui:latest
 
