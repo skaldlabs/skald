@@ -129,7 +129,7 @@ services:
       dockerfile: ui.Dockerfile
       args:
         VITE_API_HOST: https://${API_DOMAIN}
-        VITE_IS_SELF_HOSTED_DEPLOY: true
+        VITE_IS_SELF_HOSTED_DEPLOY: 'true'
     restart: unless-stopped
     networks:
       - web

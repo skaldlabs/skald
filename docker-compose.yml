@@ -39,13 +39,19 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgres://postgres:12345678@db/skald
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - INTER_PROCESS_QUEUE=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
       - RABBITMQ_VHOST=/
-      - SELF_HOSTED_DEPLOY=true
+      - IS_SELF_HOSTED_DEPLOY=true
+      - DEBUG=true
     ports:
       - "8000:8000"
     volumes:
@@ -65,6 +71,11 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgres://postgres:12345678@db/skald
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - INTER_PROCESS_QUEUE=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
@@ -83,6 +94,9 @@ services:
     build:
       context: .
       dockerfile: ui.Dockerfile
+    environment:
+      - VITE_IS_SELF_HOSTED_DEPLOY=true
+      - VITE_API_HOST=http://localhost:8000
     ports:
       - "3000:80"
     depends_on:
