@@ -50,9 +50,32 @@ NODE_ENV=production npm start
 
 ### Common
 
-- `VOYAGE_API_KEY` - VoyageAI API key
-- `OPENAI_API_KEY` - OpenAI API key
 - `DATABASE_URL` - PostgreSQL connection string
+- `VOYAGE_API_KEY` - VoyageAI API key (required for embeddings)
+
+### LLM Configuration
+
+The server supports multiple LLM providers. See `.env.example` for all options.
+
+**Choose your provider:**
+
+- `LLM_PROVIDER` - Set to `openai`, `anthropic`, or `local` (default: openai)
+
+**OpenAI (if LLM_PROVIDER=openai):**
+
+- `OPENAI_API_KEY` - OpenAI API key (required)
+- `OPENAI_MODEL` - Model to use (default: gpt-4o-mini)
+
+**Anthropic (if LLM_PROVIDER=anthropic):**
+
+- `ANTHROPIC_API_KEY` - Anthropic API key (required)
+- `ANTHROPIC_MODEL` - Model to use (default: claude-3-7-sonnet-20250219)
+
+**Local LLM (if LLM_PROVIDER=local):**
+
+- `LOCAL_LLM_BASE_URL` - OpenAI-compatible API endpoint (e.g., http://localhost:11434/v1 for Ollama)
+- `LOCAL_LLM_MODEL` - Model name (e.g., llama3.1:8b)
+- `LOCAL_LLM_API_KEY` - API key (default: not-needed)
 
 ## Message Format
 
