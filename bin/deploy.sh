@@ -37,16 +37,6 @@ else
     DOCKER_COMPOSE="docker compose"
 fi
 
-if ! command_exists node; then
-    echo -e "${RED}Error: Node.js is not installed. Please install Node.js first.${NC}"
-    exit 1
-fi
-
-if ! command_exists npm; then
-    echo -e "${RED}Error: npm is not installed. Please install npm first.${NC}"
-    exit 1
-fi
-
 echo -e "${GREEN}✓ Prerequisites check passed${NC}"
 echo ""
 
@@ -175,44 +165,27 @@ EOF
 echo -e "${GREEN}✓ Configuration saved to .env.prod${NC}"
 echo ""
 
-# Check if pnpm is installed (needed to build frontend)
-echo "Building frontend..."
-if ! command_exists pnpm; then
-    echo -e "${YELLOW}Warning: pnpm is not installed. Installing pnpm...${NC}"
-    npm install -g pnpm
-fi
-
-# Build frontend
-pnpm install
-VITE_API_HOST="https://$API_DOMAIN" pnpm run build
-
-echo -e "${GREEN}✓ Frontend built successfully${NC}"
-echo ""
-
-# Pull/build images
-echo "Building Docker images (this may take a few minutes)..."
-$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.prod build
-
-echo -e "${GREEN}✓ Docker images built${NC}"
-echo ""
-
-# Start the stack
-echo "Starting services..."
-$DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.prod up -d
-
-echo ""
 echo "================================================"
-echo -e "${GREEN}  Deployment Complete!${NC}"
+echo -e "${GREEN}  Configuration Complete!${NC}"
 echo "================================================"
 echo ""
-echo "Your Skald instance is now running:"
+echo "To deploy your Skald instance, run the following commands:"
+echo ""
+echo -e "${YELLOW}# Build Docker images${NC}"
+echo "  $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.prod build"
+echo ""
+echo -e "${YELLOW}# Start services${NC}"
+echo "  $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.prod up -d"
+echo ""
+echo "Once deployed, your Skald instance will be available at:"
 echo "  - API: https://$API_DOMAIN"
 echo "  - UI:  https://$UI_DOMAIN"
 echo ""
 echo "Note: SSL certificates may take a few minutes to be issued."
-echo "If you encounter any issues, check the logs with:"
-echo "  $DOCKER_COMPOSE -f docker-compose.prod.yml logs -f"
 echo ""
-echo "To stop the services:"
-echo "  $DOCKER_COMPOSE -f docker-compose.prod.yml down"
+echo -e "${YELLOW}# Check logs${NC}"
+echo "  $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.prod logs -f"
+echo ""
+echo -e "${YELLOW}# Stop services${NC}"
+echo "  $DOCKER_COMPOSE -f docker-compose.prod.yml --env-file .env.prod down"
 echo ""
