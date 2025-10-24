@@ -31,7 +31,7 @@ class TestGenerateDocAPI:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a summary document",
@@ -64,7 +64,7 @@ class TestGenerateDocAPI:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a summary document",
@@ -90,7 +90,7 @@ class TestGenerateDocAPI:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a summary document",
@@ -111,7 +111,7 @@ class TestGenerateDocAPI:
         """Test that missing prompt returns 400."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "project_id": str(project.uuid),
@@ -128,7 +128,7 @@ class TestGenerateDocAPI:
         """Test that empty prompt returns 400."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "",
@@ -143,7 +143,7 @@ class TestGenerateDocAPI:
         """Test that missing project_id returns 404."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a document",
@@ -157,7 +157,7 @@ class TestGenerateDocAPI:
         """Test that invalid project_id returns 404."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a document",
@@ -174,7 +174,7 @@ class TestGenerateDocAPI:
         """Test that user cannot generate doc for other user's project."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a document",
@@ -191,7 +191,7 @@ class TestGenerateDocAPI:
     def test_generate_doc_without_authentication(self, project) -> None:
         """Test that document generation requires authentication."""
         client = APIClient()
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a document",
@@ -208,7 +208,7 @@ class TestGenerateDocAPI:
         """Test that invalid filter format returns 400, not 500."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a document",
@@ -243,7 +243,7 @@ class TestGenerateDocAPI:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         long_prompt = "A" * 10000
         data = {
@@ -259,7 +259,7 @@ class TestGenerateDocAPI:
     def test_generate_doc_options_request(self, project) -> None:
         """Test CORS preflight OPTIONS request."""
         client = APIClient()
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         response = client.options(url)
 
@@ -290,7 +290,7 @@ class TestGenerateDocAPIWithProjectKey:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Bearer {project_api_key}")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a document",
@@ -305,7 +305,7 @@ class TestGenerateDocAPIWithProjectKey:
         """Test that invalid API key returns 401."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Bearer invalid_key")
-        url = reverse("generate-doc")
+        url = reverse("generate_doc")
 
         data = {
             "prompt": "Generate a document",

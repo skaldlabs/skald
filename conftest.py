@@ -20,6 +20,15 @@ def disable_ssl_redirects(settings):
 
 
 @pytest.fixture(autouse=True)
+def mock_posthog():
+    """Mock PostHog for all tests."""
+    with patch("skald.api.user_api.posthog"):
+        with patch("skald.api.project_api.posthog"):
+            with patch("skald.api.organization_api.posthog"):
+                yield
+
+
+@pytest.fixture(autouse=True)
 def mock_async_processing():
     """Mock async processing (Redis/SQS) for all tests."""
     with patch("skald.flows.process_memo.process_memo.send_memo_for_async_processing"):
@@ -136,6 +145,10 @@ def organization(db, user, free_plan):
         name="Test Organization",
         owner=user,
     )
+    # Set as user's default organization
+    user.default_organization = org
+    user.save()
+
     # Create subscription manually if signal didn't create it
     if not hasattr(org, "subscription"):
         now = timezone.now()
@@ -172,18 +185,24 @@ def other_organization(db, other_user, free_plan):
 @pytest.fixture
 def organization_membership(db, user, organization):
     """Create organization membership for user."""
+    from skald.models.user import OrganizationMembershipRole
+
     return OrganizationMembership.objects.create(
         user=user,
         organization=organization,
+        access_level=OrganizationMembershipRole.OWNER,
     )
 
 
 @pytest.fixture
 def other_organization_membership(db, other_user, other_organization):
     """Create organization membership for other_user."""
+    from skald.models.user import OrganizationMembershipRole
+
     return OrganizationMembership.objects.create(
         user=other_user,
         organization=other_organization,
+        access_level=OrganizationMembershipRole.OWNER,
     )
 
 

@@ -22,7 +22,7 @@ class TestSendVerificationCode:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-send")
+        url = reverse("email_verification-send")
 
         response = client.post(url, format="json")
 
@@ -48,7 +48,7 @@ class TestSendVerificationCode:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-send")
+        url = reverse("email_verification-send")
 
         response = client.post(url, format="json")
 
@@ -76,7 +76,7 @@ class TestSendVerificationCode:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-send")
+        url = reverse("email_verification-send")
 
         response = client.post(url, format="json")
 
@@ -105,7 +105,7 @@ class TestSendVerificationCode:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-send")
+        url = reverse("email_verification-send")
 
         response = client.post(url, format="json")
 
@@ -115,7 +115,7 @@ class TestSendVerificationCode:
     def test_send_verification_code_without_authentication(self) -> None:
         """Test that sending verification code requires authentication."""
         client = APIClient()
-        url = reverse("verifyemail-send")
+        url = reverse("email_verification-send")
 
         response = client.post(url, format="json")
 
@@ -141,7 +141,7 @@ class TestVerifyCode:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-verify")
+        url = reverse("email_verification-verify")
 
         data = {
             "code": "123456",
@@ -174,7 +174,7 @@ class TestVerifyCode:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-verify")
+        url = reverse("email_verification-verify")
 
         data = {
             "code": "wrong",
@@ -204,7 +204,7 @@ class TestVerifyCode:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-verify")
+        url = reverse("email_verification-verify")
 
         data = {
             "code": "123456",
@@ -223,7 +223,7 @@ class TestVerifyCode:
         """Test that missing code returns 400."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-verify")
+        url = reverse("email_verification-verify")
 
         data = {}
 
@@ -235,7 +235,7 @@ class TestVerifyCode:
         """Test that empty code returns 400."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-verify")
+        url = reverse("email_verification-verify")
 
         data = {
             "code": "",
@@ -261,7 +261,7 @@ class TestVerifyCode:
 
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("verifyemail-verify")
+        url = reverse("email_verification-verify")
 
         data = {
             "code": "123456",
@@ -279,7 +279,7 @@ class TestVerifyCode:
     def test_verify_without_authentication(self) -> None:
         """Test that verifying code requires authentication."""
         client = APIClient()
-        url = reverse("verifyemail-verify")
+        url = reverse("email_verification-verify")
 
         data = {
             "code": "123456",

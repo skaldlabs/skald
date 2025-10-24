@@ -316,8 +316,7 @@ class TestProjectGenerateApiKey:
         """Test generating an API key for a project."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse(
-            "project-generate-api-key",
+        url = reverse("organization-project-generate-api-key",
             kwargs={
                 "parent_lookup_organization": str(project.organization.uuid),
                 "pk": str(project.uuid),
@@ -339,8 +338,7 @@ class TestProjectGenerateApiKey:
         """Test that generating new API key replaces existing one."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse(
-            "project-generate-api-key",
+        url = reverse("organization-project-generate-api-key",
             kwargs={
                 "parent_lookup_organization": str(project.organization.uuid),
                 "pk": str(project.uuid),
@@ -365,8 +363,7 @@ class TestProjectGenerateApiKey:
         """Test that user cannot generate API key for project in different organization."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse(
-            "project-generate-api-key",
+        url = reverse("organization-project-generate-api-key",
             kwargs={
                 "parent_lookup_organization": str(other_project.organization.uuid),
                 "pk": str(other_project.uuid),
@@ -383,8 +380,7 @@ class TestProjectGenerateApiKey:
         """Test that generating API key for nonexistent project returns 404."""
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse(
-            "project-generate-api-key",
+        url = reverse("organization-project-generate-api-key",
             kwargs={
                 "parent_lookup_organization": str(organization.uuid),
                 "pk": "00000000-0000-0000-0000-000000000000",
@@ -398,8 +394,7 @@ class TestProjectGenerateApiKey:
     def test_generate_api_key_without_authentication(self, project) -> None:
         """Test that API key generation requires authentication."""
         client = APIClient()
-        url = reverse(
-            "project-generate-api-key",
+        url = reverse("organization-project-generate-api-key",
             kwargs={
                 "parent_lookup_organization": str(project.organization.uuid),
                 "pk": str(project.uuid),

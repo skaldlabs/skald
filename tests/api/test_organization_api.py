@@ -317,9 +317,11 @@ class TestOrganizationAcceptInvite:
 
     def test_accept_nonexistent_invite(self, user_token) -> None:
         """Test that accepting nonexistent invite returns 404."""
+        import uuid
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {user_token}")
-        url = reverse("organization-accept-invite", kwargs={"pk": 99999})
+        fake_uuid = str(uuid.uuid4())
+        url = reverse("organization-accept-invite", kwargs={"pk": fake_uuid})
 
         response = client.post(url, format="json")
 

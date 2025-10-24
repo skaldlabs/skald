@@ -126,6 +126,18 @@ class UserViewSet(viewsets.ModelViewSet):
         old_password = request.data.get("old_password")
         new_password = request.data.get("new_password")
 
+        if not old_password:
+            return Response(
+                {"old_password": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not new_password:
+            return Response(
+                {"new_password": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if not user.check_password(old_password):
             return Response(
                 {"old_password": ["Wrong password."]},
@@ -199,6 +211,12 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         # Validate that the project belongs to the user's current organization
+        if not user.default_organization:
+            return Response(
+                {"error": "User does not have a default organization"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if project.organization.uuid != user.default_organization.uuid:
             return Response(
                 {"error": "Project does not belong to your current organization"},
