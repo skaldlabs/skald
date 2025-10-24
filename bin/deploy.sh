@@ -37,6 +37,16 @@ else
     DOCKER_COMPOSE="docker compose"
 fi
 
+if ! command_exists node; then
+    echo -e "${RED}Error: Node.js is not installed. Please install Node.js first.${NC}"
+    exit 1
+fi
+
+if ! command_exists npm; then
+    echo -e "${RED}Error: npm is not installed. Please install npm first.${NC}"
+    exit 1
+fi
+
 echo -e "${GREEN}✓ Prerequisites check passed${NC}"
 echo ""
 
