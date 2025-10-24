@@ -4,10 +4,7 @@ export const NODE_ENV = process.env.NODE_ENV
 export const DATABASE_URL = process.env.DATABASE_URL
 
 // queue configuration
-export const USE_SQS = process.env.USE_SQS === 'true' // legacy support
-export const INTER_PROCESS_QUEUE = USE_SQS
-    ? 'sqs'
-    : process.env.INTER_PROCESS_QUEUE || (process.env.NODE_ENV === 'production' ? 'sqs' : 'redis')
+export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE
 
 export const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
 

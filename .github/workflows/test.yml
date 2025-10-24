@@ -40,7 +40,7 @@ jobs:
       DB_HOST: localhost
       DB_PORT: 5432
       TEST_DB_NAME: skald2_test
-      USE_SQS: false
+      INTER_PROCESS_QUEUE: 'redis'
 
     steps:
       - uses: actions/checkout@v4

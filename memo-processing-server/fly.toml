@@ -15,6 +15,7 @@ primary_region = 'dfw'
   LANGSMITH_TRACING = 'true'
   NODE_ENV = 'production'
   AWS_ACCESS_KEY_ID = 'AKIAUJ2UYHADVHRWWZ3E'
+  INTER_PROCESS_QUEUE = 'sqs'
   SQS_QUEUE_URL = 'https://sqs.us-east-2.amazonaws.com/295993620487/SkaldMemoProcessingQueue'
   
 

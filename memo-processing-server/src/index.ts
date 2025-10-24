@@ -15,11 +15,7 @@ if (process.env.NODE_ENV === 'development') {
     config({ path: resolve(__dirname, '.env') })
 }
 
-// Determine which queue to use
-const USE_SQS = process.env.USE_SQS === 'true' // legacy support
-const INTER_PROCESS_QUEUE = USE_SQS
-    ? 'sqs'
-    : process.env.INTER_PROCESS_QUEUE || (process.env.NODE_ENV === 'production' ? 'sqs' : 'redis')
+const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE
 
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')

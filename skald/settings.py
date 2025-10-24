@@ -362,8 +362,7 @@ POSTHOG_PUBLIC_API_KEY = os.getenv(
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
 
 # mechanism for communicating with the memo processing server
-USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))  # legacy
-INTER_PROCESS_QUEUE = "sqs" if USE_SQS else os.getenv("INTER_PROCESS_QUEUE", "redis")
+INTER_PROCESS_QUEUE = os.getenv("INTER_PROCESS_QUEUE", "redis")
 
 if INTER_PROCESS_QUEUE not in ["redis", "sqs", "rabbitmq"]:
     raise ValueError(f"Invalid inter-process queue: {INTER_PROCESS_QUEUE}")
