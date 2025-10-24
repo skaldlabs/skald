@@ -43,9 +43,11 @@ echo ""
 # Prompt for domain names
 echo "Domain Configuration"
 echo "--------------------"
+echo ""
 echo "For Skald to work properly, you need to setup DNS records for two domains: one for the Skald API, and the other for the Skald UI."
 echo "To do so, before entering them here, set up an A record for each pointing to the IP address of this machine."
 echo "We will automatically provision SSL certificates for these domains."
+echo ""
 read -p "Enter your API domain (e.g., skald-api.<your_domain>.com): " API_DOMAIN
 read -p "Enter your UI domain (e.g., skald.<your_domain>.com): " UI_DOMAIN
 
@@ -172,10 +174,7 @@ echo "================================================"
 echo -e "${GREEN}  Configuration Complete!${NC}"
 echo "================================================"
 echo ""
-echo "To deploy your Skald instance, run the following commands:"
-echo ""
-echo -e "${YELLOW}# Build Docker images${NC}"
-echo "  $DOCKER_COMPOSE -f docker-compose.selfhosted.yml --env-file .env.prod build"
+echo "To deploy your Skald instance, run the following command:"
 echo ""
 echo -e "${YELLOW}# Start services${NC}"
 echo "  $DOCKER_COMPOSE -f docker-compose.selfhosted.yml --env-file .env.prod up -d"
