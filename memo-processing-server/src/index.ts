@@ -51,12 +51,6 @@ async function main() {
     LLMService.validateConfig()
     console.log(`LLM provider: ${process.env.LLM_PROVIDER || 'openai'}`)
 
-    if (!USE_SQS) {
-        console.log('Running in development mode with Redis pub/sub')
-        await runRedisPubSub()
-    } else {
-        const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
-
     switch (INTER_PROCESS_QUEUE) {
         case 'redis':
             console.log('Running with Redis pub/sub')

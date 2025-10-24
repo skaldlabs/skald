@@ -1,0 +1,153 @@
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.dashboard=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=skald2_web"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      # HTTP to HTTPS redirect
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--log.level=DEBUG"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certificates:/letsencrypt
+    restart: unless-stopped
+    networks:
+      - web
+
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-skald2}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - backend
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-skald}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-skald}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - backend
+
+
+  api:
+    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-api:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ./bin/start-docker.sh
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-skald2}
+      - IS_SELF_HOSTED_DEPLOY=true
+      - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - SECRET_KEY=${SECRET_KEY}
+      - FRONTEND_URL=https://${UI_DOMAIN}
+      - API_URL=https://${API_DOMAIN}
+      - INTER_PROCESS_QUEUE=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-skald}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-skald}
+      - RABBITMQ_VHOST=/
+      - SECURE_SSL_REDIRECT=false
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - web
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN}`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+
+  memo-processing-server:
+    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-memo-processing:${IMAGE_TAG:-latest}
+    build:
+      context: ./memo-processing-server
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-skald2}
+      - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - INTER_PROCESS_QUEUE=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-skald}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-skald}
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_QUEUE_NAME=process_memo
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend
+
+  ui:
+    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-ui:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: ui.Dockerfile
+      args:
+        VITE_API_HOST: https://${API_DOMAIN}
+        VITE_IS_SELF_HOSTED_DEPLOY: true
+    restart: unless-stopped
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ui.rule=Host(`${UI_DOMAIN}`)"
+      - "traefik.http.routers.ui.entrypoints=websecure"
+      - "traefik.http.routers.ui.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ui.loadbalancer.server.port=80"
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  traefik-certificates:
+
+networks:
+  web:
+    driver: bridge
+  backend:
+    driver: bridge

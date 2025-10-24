@@ -119,6 +119,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
+# Add self-hosted deployment URLs to CORS allowed origins
+IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", False))
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+API_URL = os.getenv("API_URL", "")
+if IS_SELF_HOSTED_DEPLOY:
+    if FRONTEND_URL:
+        CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+    if API_URL:
+        CORS_ALLOWED_ORIGINS.append(API_URL)
+
 ROOT_URLCONF = "skald.urls"
 
 TEMPLATES = [
@@ -189,14 +199,12 @@ AUTH_TOKEN_VALIDITY = timedelta(days=30)
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", None)
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-
 # Stripe Configuration
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", None)
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", None)
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", None)
 
-if not STRIPE_SECRET_KEY and not DEBUG:
+if not STRIPE_SECRET_KEY and not (DEBUG or IS_SELF_HOSTED_DEPLOY):
     import logging
 
     logging.getLogger(__name__).warning("STRIPE_SECRET_KEY not set in production")
@@ -244,12 +252,20 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
 
+# Add self-hosted deployment URLs to CSRF trusted origins
+if IS_SELF_HOSTED_DEPLOY:
+    if FRONTEND_URL:
+        CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
+    if API_URL:
+        CSRF_TRUSTED_ORIGINS.append(API_URL)
+
 USE_SECURE_SETTINGS = not DEBUG
 
 if USE_SECURE_SETTINGS:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-SECURE_SSL_REDIRECT = USE_SECURE_SETTINGS
+# SSL redirect - disable when using a reverse proxy like Traefik that handles SSL
+SECURE_SSL_REDIRECT = str_to_bool(os.getenv("SECURE_SSL_REDIRECT", USE_SECURE_SETTINGS))
 SECURE_REDIRECT_EXEMPT = [
     "api/health",
     "api/health/",
@@ -340,8 +356,10 @@ if not DEBUG:
         logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
 
 # Posthog
-POSTHOG_PUBLIC_API_KEY = os.getenv("POSTHOG_PUBLIC_API_KEY", None)
-POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
+POSTHOG_PUBLIC_API_KEY = os.getenv(
+    "POSTHOG_PUBLIC_API_KEY", "phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2"
+)
+POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
 
 # mechanism for communicating with the memo processing server
 USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))  # legacy
