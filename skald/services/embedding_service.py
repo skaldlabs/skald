@@ -58,13 +58,23 @@ class EmbeddingService:
         return response.data[0].embedding
 
     @staticmethod
-    def _generate_sentence_transformer_embedding(content: str) -> list[float]:
-        """Generate embedding using Sentence Transformer"""
-        from sentence_transformers import SentenceTransformer
+    def _generate_embedding_with_local_service(content: str) -> list[float]:
+        """Generate embedding using the embedding service"""
+        import requests
 
-        model = SentenceTransformer(settings.LOCAL_EMBEDDING_MODEL)
-        response = model.encode(content)
-        return response.tolist()
+        response = requests.post(
+            f"{settings.EMBEDDING_SERVICE_URL}/embed",
+            json={"content": content, "normalize": True},
+            timeout=30,
+        )
+
+        if not response.ok:
+            raise ValueError(
+                f"Embedding service error: {response.status_code} - {response.text}"
+            )
+
+        data = response.json()
+        return data["embedding"]
 
     @staticmethod
     def generate_embedding(
@@ -89,7 +99,7 @@ class EmbeddingService:
         elif provider == "openai":
             embedding = EmbeddingService._generate_openai_embedding(query)
         elif provider == "local":
-            embedding = EmbeddingService._generate_sentence_transformer_embedding(query)
+            embedding = EmbeddingService._generate_embedding_with_local_service(query)
         else:
             raise ValueError(f"Unsupported embedding provider: {provider}")
 
