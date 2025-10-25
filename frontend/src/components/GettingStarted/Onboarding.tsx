@@ -35,7 +35,7 @@ export const Onboarding = () => {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
                 >
-                    View Documentation ↗
+                    View Documentation
                     <ExternalLink className="h-4 w-4" />
                 </a>
             </div>
