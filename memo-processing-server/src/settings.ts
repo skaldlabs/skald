@@ -4,7 +4,7 @@ export const NODE_ENV = process.env.NODE_ENV
 export const DATABASE_URL = process.env.DATABASE_URL
 
 // queue configuration
-export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE
+export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'redis'
 
 export const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
 

@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'development') {
     config({ path: resolve(__dirname, '.env') })
 }
 
-const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE
+const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'redis'
 
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')
