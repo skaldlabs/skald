@@ -2,6 +2,7 @@ import json
 from types import SimpleNamespace
 from typing import Optional
 
+import numpy as np
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field, confloat, conlist
@@ -48,6 +49,55 @@ class RerankService:
         return RerankService._normalize_rerank_results(
             RerankOutput(**result_dict), results
         )
+
+    @staticmethod
+    def _rerank_local(query: str, results: list[dict]) -> list[dict]:
+        from sentence_transformers import CrossEncoder
+
+        if not results:
+            return []
+
+        if not hasattr(RerankService, "_local_rerank_model"):
+            RerankService._local_rerank_model = CrossEncoder(
+                "cross-encoder/ms-marco-MiniLM-L-6-v2"
+            )
+
+        model = RerankService._local_rerank_model
+
+        def get_document_text(doc):
+            if isinstance(doc, str):
+                return doc
+            if isinstance(doc, dict):
+                for field in ["text", "content", "document", "page_content"]:
+                    if field in doc:
+                        return doc[field]
+            return str(doc)
+
+        pairs = [[query, get_document_text(doc)] for doc in results]
+
+        scores = model.predict(pairs)
+
+        normalized_scores = 1 / (1 + np.exp(-np.array(scores)))
+
+        reranked = []
+        for idx, (doc, score) in enumerate(zip(results, normalized_scores)):
+            reranked.append(
+                SimpleNamespace(
+                    index=idx,
+                    document=doc,
+                    relevance_score=float(f"{score:.6f}"),
+                )
+            )
+
+        reranked.sort(key=lambda r: r.relevance_score, reverse=True)
+
+        if (
+            isinstance(settings.POST_RERANK_TOP_K, int)
+            and settings.POST_RERANK_TOP_K > 0
+        ):
+            reranked = reranked[: settings.POST_RERANK_TOP_K]
+
+        return reranked
 
     @staticmethod
     def _build_openai_rerank_chain():
@@ -109,11 +159,6 @@ class RerankService:
             normalized = normalized[: settings.POST_RERANK_TOP_K]
 
         return normalized
-
-    @staticmethod
-    def _rerank_local(query: str, results: list[dict]) -> list[dict]:
-        """Rerank results using local embedding provider"""
-        return results
 
 
 class RerankItem(BaseModel):
