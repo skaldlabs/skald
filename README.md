@@ -49,17 +49,30 @@ const result = await skald.chat({
 });
 ```
 
-## Try it
+<small>[Python](https://docs.useskald.com/docs/sdks/python#usage) - [Ruby](https://docs.useskald.com/docs/sdks/ruby#usage) - [Go](https://docs.useskald.com/docs/sdks/go#usage) - [PHP](https://docs.useskald.com/docs/sdks/php#quick-start) - [MCP](https://docs.useskald.com/docs/sdks/mcp) - [CLI](https://docs.useskald.com/docs/sdks/cli)</small>
+
+## ⚡ Try it
 
 ```sh
 git clone https://github.com/skaldlabs/skald
 cd skald
-docker-compose up
+OPENAI_API_KEY=<your_key> docker-compose up
 ```
 
 For a production self-hosted deploy, check out our [self-hosting docs](https://docs.useskald.com/docs/self-host/intro).
 
-## Features:
+<details>
+<summary>
+<b>Running Skald without <u>any</u> third-party services</b>
+</summary>
+<br>
+
+You can deploy Skald without **any** third-party dependencies (including OpenAI), but that will require hosting your own LLM and using a local embeddings model. If you run `docker-compose up` without any vars at all we'll run a tiny Qwen model locally so you can test this, but due to the model size
+answers may be of low quality. You should self-host a larger model yourself for better results.
+
+</details>
+
+## ✨ Features:
 
 * **Chat:** Chat with your knowledge in Skald with just one API call
 * **Search:** Use semantic search to find relevant context based on user queries
@@ -68,12 +81,12 @@ For a production self-hosted deploy, check out our [self-hosting docs](https://d
 * **Amazing DX, no bullsh*t:** Implement in minutes with SDKs for every major languag. Don't see yours? open an issue and we'll build it!
 * **Truly open-source:** Our open source version is fully-featured, easy to deploy and can run with **no third-party dependencies**. You heard that right, no need to configure a single env var.
 
-## Get started
+## 🚀 Get started
 
 * [Cloud](https://useskald.com): free tier with no credit card required
 * [Self-hosted](https://docs.useskald.com/docs/self-host/intro): get a fully-featured production deploy with SSL live in less than an hour
 
-## License
+## 🗒️ License
 
 MIT 🤸
 
