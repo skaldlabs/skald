@@ -1,7 +1,19 @@
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+// Load environment variables from the main repo's .env file
+if (process.env.NODE_ENV === 'development') {
+    config({ path: resolve(__dirname, '../../.env') })
+} else {
+    config({ path: resolve(__dirname, '.env') })
+}
+
+export const DEBUG = process.env.DEBUG === 'true'
+
 export const NODE_ENV = process.env.NODE_ENV
 
 // postgres
-export const DATABASE_URL = process.env.DATABASE_URL
+export const DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:12345678@localhost/skald2'
 
 // queue configuration
 export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'redis'
@@ -9,7 +21,7 @@ export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'redis'
 export const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
 
 export const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
-export const REDIS_PORT = process.env.REDIS_PORT || '6379'
+export const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')
 export const CHANNEL_NAME = process.env.CHANNEL_NAME || 'process_memo'
 
 export const RABBITMQ_HOST = process.env.RABBITMQ_HOST || 'localhost'
@@ -25,10 +37,23 @@ export const AWS_REGION = process.env.AWS_REGION || 'us-east-2'
 export const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID
 export const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY
 
-// llms
-export const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+// ---- LLM Configuration ----
+export const LLM_PROVIDER = process.env.LLM_PROVIDER || 'openai'
 
-// Embedding Provider Configuration
+// OpenAI
+export const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+
+// Anthropic
+export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
+export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-7-sonnet-20250219'
+
+// Local LLM
+export const LOCAL_LLM_MODEL = process.env.LOCAL_LLM_MODEL || 'llama-3.1-8b-instruct'
+export const LOCAL_LLM_BASE_URL = process.env.LOCAL_LLM_BASE_URL
+export const LOCAL_LLM_API_KEY = process.env.LOCAL_LLM_API_KEY || 'not-needed'
+
+// ---- Embedding Provider Configuration ----
 export const EMBEDDING_PROVIDER = process.env.EMBEDDING_PROVIDER || 'voyage'
 
 // Voyage AI
@@ -41,7 +66,12 @@ export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'tex
 // Constants
 export const EMBEDDING_VECTOR_DIMENSION = 2048
 
-// Validation
+// Validation of LLM and embedding provider configuration on startup
+const SUPPORTED_LLM_PROVIDERS = ['openai', 'anthropic', 'local']
+if (!SUPPORTED_LLM_PROVIDERS.includes(LLM_PROVIDER)) {
+    throw new Error(`Invalid LLM_PROVIDER: ${LLM_PROVIDER}. Supported: ${SUPPORTED_LLM_PROVIDERS.join(', ')}`)
+}
+
 const SUPPORTED_EMBEDDING_PROVIDERS = ['voyage', 'openai']
 if (!SUPPORTED_EMBEDDING_PROVIDERS.includes(EMBEDDING_PROVIDER)) {
     throw new Error(
