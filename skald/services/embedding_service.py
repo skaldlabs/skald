@@ -58,6 +58,15 @@ class EmbeddingService:
         return response.data[0].embedding
 
     @staticmethod
+    def _generate_sentence_transformer_embedding(content: str) -> list[float]:
+        """Generate embedding using Sentence Transformer"""
+        from sentence_transformers import SentenceTransformer
+
+        model = SentenceTransformer(settings.LOCAL_EMBEDDING_MODEL)
+        response = model.encode(content)
+        return response.tolist()
+
+    @staticmethod
     def generate_embedding(
         query: str, usage: Literal["storage", "search"]
     ) -> list[float]:
@@ -79,6 +88,8 @@ class EmbeddingService:
             )
         elif provider == "openai":
             embedding = EmbeddingService._generate_openai_embedding(query)
+        elif provider == "local":
+            embedding = EmbeddingService._generate_sentence_transformer_embedding(query)
         else:
             raise ValueError(f"Unsupported embedding provider: {provider}")
 

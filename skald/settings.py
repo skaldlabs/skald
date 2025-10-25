@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import logging
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -19,6 +20,7 @@ import sentry_sdk
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
+logger = logging.getLogger(__name__)
 
 
 def str_to_bool(input):
@@ -324,6 +326,9 @@ VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 # OpenAI
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large")
 
+# Local
+LOCAL_EMBEDDING_MODEL = os.getenv("LOCAL_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+
 # Constants
 EMBEDDING_VECTOR_DIMENSIONS = 2048
 
@@ -344,39 +349,36 @@ LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama-3.1-8b-instruct")
 LOCAL_LLM_API_KEY = os.getenv("LOCAL_LLM_API_KEY", None)
 
 # Validation
-SUPPORTED_PROVIDERS = ["openai", "anthropic", "local"]
-if LLM_PROVIDER not in SUPPORTED_PROVIDERS:
+SUPPORTED_LLM_PROVIDERS = ["openai", "anthropic", "local"]
+if LLM_PROVIDER not in SUPPORTED_LLM_PROVIDERS:
     raise ValueError(
         f"Invalid LLM_PROVIDER: {LLM_PROVIDER}. "
-        f"Supported: {', '.join(SUPPORTED_PROVIDERS)}"
+        f"Supported: {', '.join(SUPPORTED_LLM_PROVIDERS)}"
     )
 
 # Embedding Provider Validation
-SUPPORTED_EMBEDDING_PROVIDERS = ["voyage", "openai"]
+SUPPORTED_EMBEDDING_PROVIDERS = ["voyage", "openai", "local"]
 if EMBEDDING_PROVIDER not in SUPPORTED_EMBEDDING_PROVIDERS:
     raise ValueError(
         f"Invalid EMBEDDING_PROVIDER: {EMBEDDING_PROVIDER}. "
         f"Supported: {', '.join(SUPPORTED_EMBEDDING_PROVIDERS)}"
     )
 
-# Warn if LLM providers API keys are missing in production
-if not DEBUG:
-    import logging
+# Warn if LLM provider API keys are missing
+if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
+    logger.warning("OPENAI_API_KEY not set in production")
+elif LLM_PROVIDER == "anthropic" and not ANTHROPIC_API_KEY:
+    logger.warning("ANTHROPIC_API_KEY not set in production")
+elif LLM_PROVIDER == "local" and not LOCAL_LLM_BASE_URL:
+    logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
 
-    logger = logging.getLogger(__name__)
-
-    if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
-        logger.warning("OPENAI_API_KEY not set in production")
-    elif LLM_PROVIDER == "anthropic" and not ANTHROPIC_API_KEY:
-        logger.warning("ANTHROPIC_API_KEY not set in production")
-    elif LLM_PROVIDER == "local" and not LOCAL_LLM_BASE_URL:
-        logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
-
-    # Warn if embedding provider API keys are missing
-    if EMBEDDING_PROVIDER == "voyage" and not VOYAGE_API_KEY:
-        logger.warning("VOYAGE_API_KEY not set in production")
-    elif EMBEDDING_PROVIDER == "openai" and not OPENAI_API_KEY:
-        logger.warning("OPENAI_API_KEY not set for embedding provider in production")
+# Warn if embedding provider API keys are missing
+if EMBEDDING_PROVIDER == "voyage" and not VOYAGE_API_KEY:
+    logger.warning("VOYAGE_API_KEY not set in production")
+elif EMBEDDING_PROVIDER == "openai" and not OPENAI_API_KEY:
+    logger.warning("OPENAI_API_KEY not set for embedding provider in production")
+elif EMBEDDING_PROVIDER == "local" and not LOCAL_EMBEDDING_MODEL:
+    logger.warning("LOCAL_EMBEDDING_MODEL not set for local provider")
 
 # Posthog
 POSTHOG_PUBLIC_API_KEY = os.getenv(
