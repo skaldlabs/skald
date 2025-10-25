@@ -5,8 +5,8 @@ from typing import Optional
 import numpy as np
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field, confloat, conlist
 from langchain_core.runnables import RunnableLambda
+from pydantic import BaseModel, Field
 
 from skald import settings
 from skald.services.prompts import RERANK_PROMPT
@@ -166,11 +166,11 @@ class RerankItem(BaseModel):
         ..., description="Original index of the document in the input list"
     )
     document: str = Field(..., description="The original document text verbatim")
-    relevance_score: confloat(ge=0.0, le=1.0) = Field(
-        ..., description="Relevance score in [0.0, 1.0]"
+    relevance_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Relevance score in [0.0, 1.0]"
     )
 
 
 class RerankOutput(BaseModel):
-    results: conlist(RerankItem, min_items=0)
+    results: list[RerankItem] = Field(default_factory=list, min_length=0)
     total_tokens: Optional[int] = None
