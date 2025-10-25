@@ -318,6 +318,8 @@ APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 
 # Embedding Provider Configuration
 EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "voyage")
+EMBEDDING_SERVICE_URL = os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8001")
+EMBEDDING_VECTOR_DIMENSIONS = 2048
 
 # Voyage AI
 VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
@@ -326,11 +328,6 @@ VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 # OpenAI
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large")
 
-# Local
-EMBEDDING_SERVICE_URL = os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8001")
-
-# Constants
-EMBEDDING_VECTOR_DIMENSIONS = 2048
 
 # LLM Configuration
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")

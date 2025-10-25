@@ -23,8 +23,13 @@ class RerankService:
             return RerankService._rerank_voyage(query, results)
         elif embedding_provider == "openai":
             return RerankService._rerank_openai(query, results)
-        else:
+        elif embedding_provider == "local":
+            # when EMBEDDING_PROVIDER=local, we use the so-called "local embedding service" to rerank the results
+            # via its /rerank endpoint. this uses the sentence_transformers library and is meant for advanced usage
+            # when those self-hosting don't want to send data to any third-party providers.
             return RerankService._rerank_local(query, results)
+
+        raise ValueError(f"Unsupported embedding provider: {embedding_provider}")
 
     @staticmethod
     def _rerank_voyage(query: str, results: list[dict]) -> list[dict]:
@@ -52,52 +57,38 @@ class RerankService:
 
     @staticmethod
     def _rerank_local(query: str, results: list[dict]) -> list[dict]:
-        from sentence_transformers import CrossEncoder
-
         if not results:
             return []
 
-        if not hasattr(RerankService, "_local_rerank_model"):
-            RerankService._local_rerank_model = CrossEncoder(
-                "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        import requests
+
+        response = requests.post(
+            f"{settings.EMBEDDING_SERVICE_URL}/rerank",
+            json={
+                "query": query,
+                "documents": results,
+                "top_k": settings.POST_RERANK_TOP_K,
+            },
+            timeout=30,
+        )
+
+        if not response.ok:
+            raise ValueError(
+                f"Rerank service error: {response.status_code} - {response.text}"
             )
 
-        model = RerankService._local_rerank_model
-
-        def get_document_text(doc):
-            if isinstance(doc, str):
-                return doc
-            if isinstance(doc, dict):
-                for field in ["text", "content", "document", "page_content"]:
-                    if field in doc:
-                        return doc[field]
-            return str(doc)
-
-        pairs = [[query, get_document_text(doc)] for doc in results]
-
-        scores = model.predict(pairs)
-
-        normalized_scores = 1 / (1 + np.exp(-np.array(scores)))
-
-        reranked = []
-        for idx, (doc, score) in enumerate(zip(results, normalized_scores)):
-            reranked.append(
+        parsed_results = []
+        for result in response.json()["results"]:
+            parsed_results.append(
                 SimpleNamespace(
-                    index=idx,
-                    document=doc,
-                    relevance_score=float(f"{score:.6f}"),
+                    index=result["index"],
+                    document=result["document"],
+                    relevance_score=result["relevance_score"],
                 )
             )
+        parsed_results.sort(key=lambda r: r.relevance_score, reverse=True)
 
-        reranked.sort(key=lambda r: r.relevance_score, reverse=True)
-
-        if (
-            isinstance(settings.POST_RERANK_TOP_K, int)
-            and settings.POST_RERANK_TOP_K > 0
-        ):
-            reranked = reranked[: settings.POST_RERANK_TOP_K]
-
-        return reranked
+        return parsed_results
 
     @staticmethod
     def _build_openai_rerank_chain():
@@ -173,4 +164,3 @@ class RerankItem(BaseModel):
 
 class RerankOutput(BaseModel):
     results: list[RerankItem] = Field(default_factory=list, min_length=0)
-    total_tokens: Optional[int] = None

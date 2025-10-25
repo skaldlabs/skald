@@ -26,6 +26,4 @@ RULES:
 - "relevance_score" MUST be a float in [0.0, 1.0] (use up to 6 decimal places as needed).
 - "total_tokens" must be set to null. (A calling wrapper will replace it with an actual integer.)
 - Output ONLY valid JSON. No comments, no trailing text.
-
-Now wait for the JSON block with "query" and "documents".
 """
