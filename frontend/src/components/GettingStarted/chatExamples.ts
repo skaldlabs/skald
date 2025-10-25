@@ -44,7 +44,7 @@ for await (const event of stream) {
         }),
 
         python: () => ({
-            code: `from skald import Skald
+            code: `from skald_sdk import Skald
 
 skald = Skald('${apiKeyDisplay}')
 
