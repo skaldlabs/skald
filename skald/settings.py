@@ -348,6 +348,11 @@ LOCAL_LLM_BASE_URL = os.getenv("LOCAL_LLM_BASE_URL")
 LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama-3.1-8b-instruct")
 LOCAL_LLM_API_KEY = os.getenv("LOCAL_LLM_API_KEY", None)
 
+# Rerank Configuration
+VOYAGE_RERANK_MODEL = os.getenv("VOYAGE_RERANK_MODEL", "rerank-2.5")
+POST_RERANK_TOP_K = os.getenv("POST_RERANK_TOP_K", 50)
+VECTOR_SEARCH_TOP_K = os.getenv("VECTOR_SEARCH_TOP_K", 100)
+
 # Validation
 SUPPORTED_LLM_PROVIDERS = ["openai", "anthropic", "local"]
 if LLM_PROVIDER not in SUPPORTED_LLM_PROVIDERS:

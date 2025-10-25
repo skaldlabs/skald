@@ -12,10 +12,10 @@ import {
     memoChunkVectorSearchWithMemoInfo,
     memoSummaryVectorSearchWithMemoInfo,
 } from '../../vectorEmbeddings/vectorSearch'
-import { generateVectorEmbeddingForSearch } from '../../vectorEmbeddings/voyage'
 import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from './memoOperations'
 import { FetchMemoResult } from '../../db/memo'
 import { handleNewMemoCreation } from './knowledgeBaseUpdateUtils'
+import { EmbeddingService } from '../../vectorEmbeddings/embeddingService'
 
 const getMemoTitlesByTagSchema = z.object({
     tag: z.string().describe('The tag to search for'),
@@ -106,7 +106,7 @@ const vectorSearchSchema = z.object({
 export const summaryVectorSearchTool = tool(
     async (input) => {
         const parsed = vectorSearchSchema.parse(input)
-        const embeddingVector = await generateVectorEmbeddingForSearch(parsed.query)
+        const embeddingVector = await EmbeddingService.generateEmbedding(parsed.query, 'search')
         const memoSummaries = await memoSummaryVectorSearchWithMemoInfo(embeddingVector)
         console.log(
             'summary_vector_search called! query:',
@@ -127,7 +127,7 @@ export const summaryVectorSearchTool = tool(
 export const vectorSearchTool = tool(
     async (input) => {
         const parsed = vectorSearchSchema.parse(input)
-        const embeddingVector = await generateVectorEmbeddingForSearch(parsed.query)
+        const embeddingVector = await EmbeddingService.generateEmbedding(parsed.query, 'search')
         const memoChunks = await memoChunkVectorSearchWithMemoInfo(embeddingVector)
         console.log(
             'vector_search called! query:',
