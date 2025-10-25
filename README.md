@@ -77,7 +77,7 @@ You can deploy Skald without **any** third-party dependencies (including OpenAI)
 * **Search:** Use semantic search to find relevant context based on user queries
 * **Generate:** Generate content from your knowledge like documentation and reports
 * **Powerful filtering**: Speed up and improve responses by filtering the accessible knowledge in every query.
-* **Amazing DX, no bullsh*t:** Implement in minutes with SDKs for every major languag. Don't see yours? open an issue and we'll build it!
+* **Amazing DX, no bullsh*t:** Implement in minutes with SDKs for every major language. Don't see yours? open an issue and we'll build it!
 * **Truly open-source:** Our open source version is fully-featured, easy to deploy and can run with **no third-party dependencies**. You heard that right, no need to configure a single env var.
 
 ## 🚀 Get started
