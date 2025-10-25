@@ -67,8 +67,7 @@ For a production self-hosted deploy, check out our [self-hosting docs](https://d
 </summary>
 <br>
 
-You can deploy Skald without **any** third-party dependencies (including OpenAI), but that will require hosting your own LLM and using a local embeddings model. If you run `docker-compose up` without any vars at all we'll run a tiny Qwen model locally so you can test this, but due to the model size
-answers may be of **low quality**. You should self-host a larger model yourself for better results.
+You can deploy Skald without **any** third-party dependencies (including OpenAI), but that will require hosting your own LLM inference server and using a local embeddings service (we've provided one for you in the `local-embedding` docker compose profile). This is advanced usage and is classed as experimental, check out our [docs](https://docs.useskald.com) for more details.
 
 </details>
 

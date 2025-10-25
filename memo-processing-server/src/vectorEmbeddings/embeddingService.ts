@@ -5,11 +5,10 @@ import {
     VOYAGE_EMBEDDING_MODEL,
     OPENAI_API_KEY,
     OPENAI_EMBEDDING_MODEL,
-    LOCAL_EMBEDDING_MODEL,
+    EMBEDDING_SERVICE_URL,
 } from '../settings'
 import { VoyageAIClient } from 'voyageai'
 import OpenAI from 'openai'
-import { pipeline } from '@huggingface/transformers'
 
 const TARGET_DIMENSION = EMBEDDING_VECTOR_DIMENSION
 
@@ -57,10 +56,24 @@ class EmbeddingService {
     }
 
     private static async generateTransformerEmbedding(content: string): Promise<number[]> {
-        const client = await pipeline('feature-extraction', 'Xenova/' + LOCAL_EMBEDDING_MODEL)
+        const response = await fetch(`${EMBEDDING_SERVICE_URL}/embed`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                content: content,
+                normalize: true,
+            }),
+        })
 
-        const response = await client(content, { pooling: 'mean', normalize: true })
-        return response.data
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`Embedding service error: ${response.status} - ${errorText}`)
+        }
+
+        const data = (await response.json()) as { embedding: number[] }
+        return data.embedding
     }
 
     static async generateEmbedding(content: string, usage: 'storage' | 'search'): Promise<number[]> {

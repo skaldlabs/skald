@@ -15,7 +15,6 @@
     "dependencies": {
         "@aws-sdk/client-sqs": "^3.716.0",
         "@chonkiejs/core": "^0.0.4",
-        "@huggingface/transformers": "^3.7.6",
         "@langchain/anthropic": "^0.3.0",
         "@langchain/core": "^0.3.78",
         "@langchain/langgraph": "^0.4.9",

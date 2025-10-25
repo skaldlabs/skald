@@ -64,7 +64,7 @@ export const VOYAGE_EMBEDDING_MODEL = process.env.VOYAGE_EMBEDDING_MODEL || 'voy
 export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large'
 
 // Local
-export const LOCAL_EMBEDDING_MODEL = process.env.LOCAL_EMBEDDING_MODEL || 'all-MiniLM-L6-v2'
+export const EMBEDDING_SERVICE_URL = process.env.EMBEDDING_SERVICE_URL || 'http://localhost:8001'
 
 // Constants
 export const EMBEDDING_VECTOR_DIMENSION = 2048
@@ -96,6 +96,6 @@ if (EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
     console.warn('VOYAGE_API_KEY not set in production')
 } else if (EMBEDDING_PROVIDER === 'openai' && !OPENAI_API_KEY) {
     console.warn('OPENAI_API_KEY not set for embedding provider in production')
-} else if (EMBEDDING_PROVIDER === 'local' && !LOCAL_EMBEDDING_MODEL) {
-    console.warn('LOCAL_EMBEDDING_MODEL not set for local provider')
+} else if (EMBEDDING_PROVIDER === 'local' && !EMBEDDING_SERVICE_URL) {
+    console.warn('EMBEDDING_SERVICE_URL not set for local provider')
 }

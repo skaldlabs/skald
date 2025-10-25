@@ -327,7 +327,7 @@ VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large")
 
 # Local
-LOCAL_EMBEDDING_MODEL = os.getenv("LOCAL_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+EMBEDDING_SERVICE_URL = os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8001")
 
 # Constants
 EMBEDDING_VECTOR_DIMENSIONS = 2048
@@ -377,8 +377,8 @@ if EMBEDDING_PROVIDER == "voyage" and not VOYAGE_API_KEY:
     logger.warning("VOYAGE_API_KEY not set in production")
 elif EMBEDDING_PROVIDER == "openai" and not OPENAI_API_KEY:
     logger.warning("OPENAI_API_KEY not set for embedding provider in production")
-elif EMBEDDING_PROVIDER == "local" and not LOCAL_EMBEDDING_MODEL:
-    logger.warning("LOCAL_EMBEDDING_MODEL not set for local provider")
+elif EMBEDDING_PROVIDER == "local" and not EMBEDDING_SERVICE_URL:
+    logger.warning("EMBEDDING_SERVICE_URL not set for local provider")
 
 # Posthog
 POSTHOG_PUBLIC_API_KEY = os.getenv(
