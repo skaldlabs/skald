@@ -37,13 +37,15 @@ def mock_voyage_embeddings():
         return_value=[0.1] * 2048,
     ):
         # Mock Voyage client for reranking
+        # Since voyageai is imported inside the _rerank_voyage method,
+        # we need to patch it at the voyageai module level
         mock_client = MagicMock()
         mock_rerank_result = MagicMock()
         mock_rerank_result.results = []
         mock_client.rerank.return_value = mock_rerank_result
 
         with patch(
-            "skald.agents.chat_agent.preprocessing.voyageai.Client",
+            "voyageai.Client",
             return_value=mock_client,
         ):
             yield

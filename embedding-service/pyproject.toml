@@ -8,4 +8,5 @@ dependencies = [
     "uvicorn[standard]>=0.31.0",
     "sentence-transformers>=3.2.1",
     "pydantic>=2.9.2",
+    "numpy>=2.3.4",
 ]

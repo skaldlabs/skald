@@ -1,6 +1,7 @@
 import os
 from typing import Literal
 
+import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from sentence_transformers import CrossEncoder, SentenceTransformer
@@ -75,7 +76,7 @@ class RerankRequest(BaseModel):
 
 class RerankResult(BaseModel):
     index: int = Field(..., description="Original index of the document")
-    text: str = Field(..., description="Document text")
+    document: str = Field(..., description="Document text")
     relevance_score: float = Field(..., description="Relevance score for the document")
 
 
@@ -134,26 +135,37 @@ async def rerank(request: RerankRequest):
 
         model = get_rerank_model()
 
-        # Create query-document pairs
-        pairs = [[request.query, doc] for doc in request.documents]
+        def get_document_text(doc):
+            if isinstance(doc, str):
+                return doc
+            if isinstance(doc, dict):
+                for field in ["text", "content", "document", "page_content"]:
+                    if field in doc:
+                        return doc[field]
+            return str(doc)
 
-        # Get relevance scores
-        scores = model.predict(pairs).tolist()
+        pairs = [[request.query, get_document_text(doc)] for doc in request.documents]
 
-        # Create results with original indices
-        results = [
-            RerankResult(index=i, text=doc, relevance_score=float(score))
-            for i, (doc, score) in enumerate(zip(request.documents, scores))
-        ]
+        scores = model.predict(pairs)
 
-        # Sort by relevance score (descending)
-        results.sort(key=lambda x: x.relevance_score, reverse=True)
+        normalized_scores = 1 / (1 + np.exp(-np.array(scores)))
 
-        # Apply top_k if specified
-        if request.top_k is not None:
-            results = results[: request.top_k]
+        reranked = []
+        for idx, (doc, score) in enumerate(zip(request.documents, normalized_scores)):
+            reranked.append(
+                RerankResult(
+                    index=idx,
+                    document=get_document_text(doc),
+                    relevance_score=float(f"{score:.6f}"),
+                )
+            )
 
-        return RerankResponse(results=results)
+        reranked.sort(key=lambda r: r.relevance_score, reverse=True)
+
+        if isinstance(request.top_k, int) and request.top_k > 0:
+            reranked = reranked[: request.top_k]
+
+        return RerankResponse(results=reranked)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Reranking failed: {str(e)}")
 

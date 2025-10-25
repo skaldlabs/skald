@@ -318,6 +318,8 @@ APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 
 # Embedding Provider Configuration
 EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "voyage")
+EMBEDDING_SERVICE_URL = os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8001")
+EMBEDDING_VECTOR_DIMENSIONS = 2048
 
 # Voyage AI
 VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
@@ -326,11 +328,6 @@ VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
 # OpenAI
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large")
 
-# Local
-EMBEDDING_SERVICE_URL = os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8001")
-
-# Constants
-EMBEDDING_VECTOR_DIMENSIONS = 2048
 
 # LLM Configuration
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
@@ -347,6 +344,11 @@ ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-7-sonnet-20250219")
 LOCAL_LLM_BASE_URL = os.getenv("LOCAL_LLM_BASE_URL")
 LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama-3.1-8b-instruct")
 LOCAL_LLM_API_KEY = os.getenv("LOCAL_LLM_API_KEY", None)
+
+# Rerank Configuration
+VOYAGE_RERANK_MODEL = os.getenv("VOYAGE_RERANK_MODEL", "rerank-2.5")
+POST_RERANK_TOP_K = os.getenv("POST_RERANK_TOP_K", 50)
+VECTOR_SEARCH_TOP_K = os.getenv("VECTOR_SEARCH_TOP_K", 100)
 
 # Validation
 SUPPORTED_LLM_PROVIDERS = ["openai", "anthropic", "local"]

@@ -146,6 +146,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },
+    { name = "numpy" },
     { name = "pydantic" },
     { name = "sentence-transformers" },
     { name = "uvicorn", extra = ["standard"] },
@@ -154,6 +155,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
+    { name = "numpy", specifier = ">=2.3.4" },
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "sentence-transformers", specifier = ">=3.2.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.31.0" },
