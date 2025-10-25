@@ -16,8 +16,8 @@ FastAPI microservice for generating embeddings and reranking documents using sen
 cd embedding-service
 uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install fastapi uvicorn[standard] sentence-transformers pydantic
-uvicorn main:app --host 0.0.0.0 --port 8000
+uv pip install fastapi uvicorn sentence-transformers pydantic
+uvicorn main:app --host 0.0.0.0 --port 8001
 ```
 
 Or using uv sync:
@@ -26,7 +26,7 @@ Or using uv sync:
 cd embedding-service
 uv sync --no-install-project
 source .venv/bin/activate
-uvicorn main:app --host 0.0.0.0 --port 8000
+uvicorn main:app --host 0.0.0.0 --port 8001
 ```
 
 ### Using Docker
@@ -34,7 +34,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ```bash
 cd embedding-service
 docker build -t embedding-service .
-docker run -p 8000:8000 embedding-service
+docker run -p 8001:8001 embedding-service
 ```
 
 ### Using Docker Compose
@@ -43,14 +43,14 @@ Add to your `docker-compose.yml`:
 
 ```yaml
 embedding-service:
-  build:
-    context: ./embedding-service
-  ports:
-    - "8000:8000"
-  environment:
-    - EMBEDDING_MODEL=all-MiniLM-L6-v2
-    - RERANK_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
-    - TARGET_DIMENSION=2048
+    build:
+        context: ./embedding-service
+    ports:
+        - '8001:8001'
+    environment:
+        - EMBEDDING_MODEL=all-MiniLM-L6-v2
+        - RERANK_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+        - TARGET_DIMENSION=2048
 ```
 
 ## Configuration
@@ -78,14 +78,16 @@ POST /embed
 ```
 
 Request body:
+
 ```json
 {
-  "content": "Text to embed",
-  "normalize": true
+    "content": "Text to embed",
+    "normalize": true
 }
 ```
 
 Response:
+
 ```json
 {
   "embedding": [0.1, 0.2, ...],
@@ -100,15 +102,17 @@ POST /rerank
 ```
 
 Request body:
+
 ```json
 {
-  "query": "search query",
-  "documents": ["doc1", "doc2", "doc3"],
-  "top_k": 10
+    "query": "search query",
+    "documents": ["doc1", "doc2", "doc3"],
+    "top_k": 10
 }
 ```
 
 Response:
+
 ```json
 {
   "results": [
@@ -125,5 +129,6 @@ Response:
 ## API Documentation
 
 Once running, visit:
+
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`

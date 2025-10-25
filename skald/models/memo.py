@@ -38,11 +38,17 @@ class Memo(models.Model):
 
     @property
     def content(self) -> str:
-        return MemoContent.objects.get(memo=self).content
+        try:
+            return MemoContent.objects.get(memo=self).content
+        except MemoContent.DoesNotExist:
+            return ""
 
     @property
     def summary(self) -> str:
-        return MemoSummary.objects.get(memo=self).summary
+        try:
+            return MemoSummary.objects.get(memo=self).summary
+        except MemoSummary.DoesNotExist:
+            return ""
 
     class Meta:
         indexes = [
