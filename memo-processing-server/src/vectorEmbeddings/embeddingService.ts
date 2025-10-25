@@ -5,9 +5,11 @@ import {
     VOYAGE_EMBEDDING_MODEL,
     OPENAI_API_KEY,
     OPENAI_EMBEDDING_MODEL,
+    LOCAL_EMBEDDING_MODEL,
 } from '../settings'
 import { VoyageAIClient } from 'voyageai'
 import OpenAI from 'openai'
+import { pipeline } from '@huggingface/transformers'
 
 const TARGET_DIMENSION = EMBEDDING_VECTOR_DIMENSION
 
@@ -54,6 +56,13 @@ class EmbeddingService {
         return response.data[0].embedding
     }
 
+    private static async generateTransformerEmbedding(content: string): Promise<number[]> {
+        const client = await pipeline('feature-extraction', 'Xenova/' + LOCAL_EMBEDDING_MODEL)
+
+        const response = await client(content, { pooling: 'mean', normalize: true })
+        return response.data
+    }
+
     static async generateEmbedding(content: string, usage: 'storage' | 'search'): Promise<number[]> {
         let embedding: number[]
 
@@ -62,6 +71,8 @@ class EmbeddingService {
             embedding = await this.generateVoyageEmbedding(content, inputType)
         } else if (EMBEDDING_PROVIDER === 'openai') {
             embedding = await this.generateOpenAIEmbedding(content)
+        } else if (EMBEDDING_PROVIDER === 'local') {
+            embedding = await this.generateTransformerEmbedding(content)
         } else {
             throw new Error(`Unsupported embedding provider: ${EMBEDDING_PROVIDER}`)
         }
