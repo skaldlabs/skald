@@ -46,7 +46,7 @@ DEBUG = str_to_bool(os.getenv("DEBUG", False))
 
 # self-hosted deploys are slightly different from our cloud deploys.
 # they don't have billing, are single-tenant, etc.
-IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", True))
+IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", False))
 
 
 SENTRY_DSN = os.getenv("SENTRY_DSN")
@@ -110,9 +110,6 @@ REST_FRAMEWORK = {
     + (("rest_framework.renderers.BrowsableAPIRenderer",) if DEBUG else ()),
 }
 
-# SECURITY: CORS configuration
-# CORS_ORIGIN_ALLOW_ALL is dangerous and should never be True
-# Instead, explicitly whitelist allowed origins
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 
@@ -121,22 +118,18 @@ CORS_ORIGINS_ENV = os.getenv("CORS_ALLOWED_ORIGINS", "")
 if CORS_ORIGINS_ENV:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ORIGINS_ENV.split(",")]
 elif DEBUG:
-    # Development defaults - localhost on common ports
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:8000",
         "http://localhost:3000",
         "http://localhost:5173",
     ]
 else:
-    # Production defaults - should be overridden via environment variable
     CORS_ALLOWED_ORIGINS = [
         "https://app.useskald.com",
         "https://api.useskald.com",
         "https://platform.useskald.com",
     ]
 
-# Add self-hosted deployment URLs to CORS allowed origins
-IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", False))
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 API_URL = os.getenv("API_URL", "")
 if IS_SELF_HOSTED_DEPLOY:
