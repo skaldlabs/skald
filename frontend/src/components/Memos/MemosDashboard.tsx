@@ -5,6 +5,7 @@ import type { Memo, DetailedMemo, SearchMethod } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
 import { MemosSearchBar } from './MemosSearchBar'
+import { MemosSearchResultsBanner } from './MemosSearchResultsBanner'
 import { MemosTable } from './MemosTable'
 import { MemosPagination } from './MemosPagination'
 import { DeleteMemoDialog } from './DeleteMemoDialog'
@@ -99,6 +100,13 @@ export const MemosDashboard = () => {
                 onSearchQueryChange={setSearchQuery}
                 onSearchMethodChange={(method: SearchMethod) => setSearchMethod(method)}
                 onSearch={handleSearch}
+                onClear={handleClearSearch}
+            />
+
+            <MemosSearchResultsBanner
+                searchQuery={searchQuery}
+                searchMethod={searchMethod}
+                totalCount={totalCount}
                 onClear={handleClearSearch}
             />
 

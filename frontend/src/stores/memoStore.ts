@@ -115,6 +115,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
 
             set({
                 memos: searchResultMemos,
+                totalCount: searchResultMemos.length,
                 loading: false,
                 error: null,
             })

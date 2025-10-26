@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { SearchMethod } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,8 @@ const SEARCH_METHODS: { value: SearchMethod; label: string }[] = [
     { value: 'title_contains', label: 'Title Contains' },
     { value: 'title_startswith', label: 'Title Starts With' },
 ]
+
+const DEBOUNCE_DELAY_MS = 500
 
 interface MemosSearchBarProps {
     searchQuery: string
@@ -30,9 +33,73 @@ export const MemosSearchBar = ({
     onSearch,
     onClear,
 }: MemosSearchBarProps) => {
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+    const previousSearchMethodRef = useRef<SearchMethod>(searchMethod)
+    const isInitialMountRef = useRef(true)
+    const onSearchRef = useRef(onSearch)
+    const onClearRef = useRef(onClear)
+    const previousQueryRef = useRef(searchQuery)
+
+    useEffect(() => {
+        onSearchRef.current = onSearch
+    }, [onSearch])
+
+    useEffect(() => {
+        onClearRef.current = onClear
+    }, [onClear])
+
+    useEffect(() => {
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false
+            previousQueryRef.current = searchQuery
+            return
+        }
+
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current)
+        }
+
+        if (!searchQuery.trim() && previousQueryRef.current.trim()) {
+            previousQueryRef.current = searchQuery
+            onClearRef.current()
+            return
+        }
+
+        previousQueryRef.current = searchQuery
+
+        if (!searchQuery.trim()) {
+            return
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            onSearchRef.current()
+        }, DEBOUNCE_DELAY_MS)
+
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current)
+            }
+        }
+    }, [searchQuery])
+
+    useEffect(() => {
+        if (previousSearchMethodRef.current === searchMethod) {
+            return
+        }
+
+        previousSearchMethodRef.current = searchMethod
+
+        if (searchQuery.trim()) {
+            onSearchRef.current()
+        }
+    }, [searchMethod, searchQuery])
+
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            onSearch()
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current)
+            }
+            onSearchRef.current()
         }
     }
 
