@@ -86,7 +86,12 @@ You can deploy Skald without **any** third-party dependencies (including OpenAI)
 * [Cloud](https://useskald.com): free tier with no credit card required
 * [Self-hosted](https://docs.useskald.com/docs/self-host/intro): get a fully-featured production deploy with SSL live in less than an hour
 
+## Contributing
+
+We'd be glad to have your contributions! See [CONTRIBUTING.md](/CONTRIBUTING.md) for instructions on how to run Skald locally and how to contribute.
+
 ## 🗒️ License
 
 MIT 🤸
+
 
