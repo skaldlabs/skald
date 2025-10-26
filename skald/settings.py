@@ -94,6 +94,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "skald.middleware.ConditionalCsrfMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    "skald.middleware.token_cookie_auth.TokenCookieAuthenticationMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -274,7 +275,11 @@ SECURE_REDIRECT_EXEMPT = [
     "api/health/",
 ]
 SESSION_COOKIE_SECURE = USE_SECURE_SETTINGS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+
 CSRF_COOKIE_SECURE = USE_SECURE_SETTINGS
+CSRF_COOKIE_SAMESITE = "Lax"
 
 
 # Logging

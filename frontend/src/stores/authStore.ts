@@ -1,12 +1,11 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
-import { storage, STORAGE_KEYS } from '@/lib/localStorage'
+import { storage } from '@/lib/localStorage'
 import posthog from 'posthog-js'
 import { posthogIdentify } from '@/lib/posthog'
 
 interface AuthResponse {
-    token: string
     user: UserDetails
 }
 // keep in sync with skald.models.user.OrganizationMembershipRole
@@ -59,13 +58,7 @@ export const useAuthStore = create<AuthState>((set) => {
         isAuthenticated: false,
         user: null,
         initializeAuth: async () => {
-            const token = storage.get<string>(STORAGE_KEYS.TOKEN)
-
-            if (!token) {
-                set({ isAuthenticated: false, user: null, firstLoad: false })
-                return
-            }
-
+            // Try to fetch user details - if we have a valid cookie, this will succeed
             const userDetails = await fetchUserDetails()
             if (userDetails) {
                 const user = {
@@ -87,7 +80,6 @@ export const useAuthStore = create<AuthState>((set) => {
                     current_organization_uuid: user.current_organization_uuid,
                 })
             } else {
-                storage.remove(STORAGE_KEYS.TOKEN)
                 set({ isAuthenticated: false, user: null })
             }
             set({ firstLoad: false })
@@ -104,7 +96,7 @@ export const useAuthStore = create<AuthState>((set) => {
                 current_organization_uuid: response.data.user.default_organization,
             }
 
-            storage.set(STORAGE_KEYS.TOKEN, response.data.token)
+            // Token is now stored in httpOnly cookie, no need to use localStorage
             set({ isAuthenticated: true, user: user })
 
             posthogIdentify(user.email, {
@@ -125,7 +117,7 @@ export const useAuthStore = create<AuthState>((set) => {
                 return false
             }
             const user = response.data.user
-            storage.set(STORAGE_KEYS.TOKEN, response.data.token)
+            // Token is now stored in httpOnly cookie, no need to use localStorage
             set({ isAuthenticated: true, user: user })
 
             posthogIdentify(user.email, {

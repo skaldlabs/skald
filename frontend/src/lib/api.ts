@@ -46,11 +46,6 @@ const getCookie = (cookieName: string) => {
 
 axios.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('token')
-        if (token) {
-            config.headers.set('Authorization', `Token ${token}`)
-        }
-
         if (config.method !== 'get') {
             const csrfToken = getCookie('csrftoken')
             if (csrfToken) {
@@ -77,9 +72,7 @@ const _makeRequest = async <T>(requestConfig: ApiConfig): Promise<ApiResponse<T>
 
         let errorStr = String(error)
         if (error instanceof AxiosError) {
-            if (error.response?.status === 401) {
-                localStorage.removeItem('token')
-            }
+            // On 401, cookie will be invalid/expired, no need to manually remove it
 
             // Handle 402 Payment Required - Usage limit exceeded
             if (error.response?.status === 402) {
@@ -183,14 +176,8 @@ export const api = {
         onMessage: (data: ApiStreamData) => void,
         onError?: (error: ApiErrorData | Event) => void
     ) => {
-        // Apply axios request interceptor manually to get headers
-        const token = localStorage.getItem('token')
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-        }
-
-        if (token) {
-            headers['Authorization'] = `Token ${token}`
         }
 
         // Get CSRF token
@@ -214,12 +201,13 @@ export const api = {
             headers['X-Csrftoken'] = csrfToken
         }
 
-        // Use fetch for streaming but with axios-style headers
+        // Use fetch for streaming with credentials to send cookies
         const controller = new AbortController()
 
         fetch(`${baseUrl}${path}`, {
             method: 'POST',
             headers,
+            credentials: 'include', // Send cookies with request
             body: JSON.stringify(data),
             signal: controller.signal,
         })

@@ -1,4 +1,4 @@
-import posthog
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -32,6 +32,7 @@ class InternalUserSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     organization_name = serializers.SerializerMethodField()
     access_levels = serializers.SerializerMethodField()
+    current_project = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -60,6 +61,11 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.default_organization.name
         return None
 
+    def get_current_project(self, obj):
+        if obj.current_project:
+            return str(obj.current_project.uuid)
+        return None
+
     def get_access_levels(self, obj):
         # get the access levels of the user in every organization they're a member of
         # then also get the access levels of the user in every team they're a member of
@@ -86,6 +92,7 @@ class UserViewSet(viewsets.ModelViewSet):
         "logout": [IsAuthenticated],
         "details": [IsAuthenticated],
         "change_password": [IsAuthenticated],
+        "set_current_project": [IsAuthenticated],
     }
 
     def get_permissions(self):
@@ -114,10 +121,20 @@ class UserViewSet(viewsets.ModelViewSet):
                 },
             )
 
-            return Response(
-                {"token": token.key, "user": UserSerializer(user).data},
+            response = Response(
+                {"user": UserSerializer(user).data},
                 status=status.HTTP_201_CREATED,
             )
+
+            response.set_cookie(
+                "authToken",
+                token.key,
+                max_age=30 * 24 * 60 * 60,  # 30 days
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite="Lax",
+            )
+            return response
         else:
             return format_validation_error(serializer.errors)
 
@@ -126,6 +143,18 @@ class UserViewSet(viewsets.ModelViewSet):
         user = request.user
         old_password = request.data.get("old_password")
         new_password = request.data.get("new_password")
+
+        if not old_password:
+            return Response(
+                {"old_password": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not new_password:
+            return Response(
+                {"new_password": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if not user.check_password(old_password):
             return Response(
@@ -156,10 +185,20 @@ class UserViewSet(viewsets.ModelViewSet):
                 },
             )
 
-            return Response(
-                {"token": token.key, "user": UserSerializer(user).data},
+            response = Response(
+                {"user": UserSerializer(user).data},
                 status=status.HTTP_200_OK,
             )
+
+            response.set_cookie(
+                "authToken",
+                token.key,
+                max_age=30 * 24 * 60 * 60,  # 30 days
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite="Lax",
+            )
+            return response
         else:
             return Response(
                 {"error": "Invalid Credentials"}, status=status.HTTP_400_BAD_REQUEST
@@ -169,7 +208,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def logout(self, request):
         request.user.auth_token.delete()
         logout(request)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        # Delete the httpOnly cookie
+        response.delete_cookie("authToken")
+        return response
 
     @action(methods=["GET"], detail=False)
     def details(self, request, **kwargs):
@@ -199,7 +241,12 @@ class UserViewSet(viewsets.ModelViewSet):
                 {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        # Validate that the project belongs to the user's current organization
+        if not user.default_organization:
+            return Response(
+                {"error": "User has no default organization"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if project.organization.uuid != user.default_organization.uuid:
             return Response(
                 {"error": "Project does not belong to your current organization"},
