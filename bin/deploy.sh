@@ -40,6 +40,14 @@ fi
 echo -e "${GREEN}✓ Prerequisites check passed${NC}"
 echo ""
 
+# Clean existing .env.prod file
+if [ -f .env.prod ]; then
+    echo "Removing existing .env.prod file..."
+    rm .env.prod
+    echo -e "${GREEN}✓ Cleaned existing configuration${NC}"
+    echo ""
+fi
+
 # Prompt for domain names
 echo "Domain Configuration"
 echo "--------------------"
@@ -201,23 +209,10 @@ if [ "$API_DNS_OK" = false ] || [ "$UI_DNS_OK" = false ]; then
     fi
 fi
 
-# Generate random passwords/keys if not exists
+# Generate random passwords/keys
 echo "Generating secure credentials..."
-
-if [ ! -f .env.prod ]; then
-    SECRET_KEY=$(openssl rand -hex 32)
-    POSTGRES_PASSWORD=$(openssl rand -base64 32)
-else
-    # Load existing credentials
-    source .env.prod
-    if [ -z "$SECRET_KEY" ]; then
-        SECRET_KEY=$(openssl rand -hex 32)
-    fi
-    if [ -z "$POSTGRES_PASSWORD" ]; then
-        POSTGRES_PASSWORD=$(openssl rand -base64 32)
-    fi
-fi
-
+SECRET_KEY=$(openssl rand -hex 32)
+POSTGRES_PASSWORD=$(openssl rand -base64 32)
 echo -e "${GREEN}✓ Credentials generated${NC}"
 echo ""
 
