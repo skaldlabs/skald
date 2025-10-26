@@ -664,9 +664,59 @@ Get current subscription details for the organization.
 
 **Note:** `scheduled_plan` and `scheduled_change_date` will be populated if a plan change has been scheduled for the end of the billing period.
 
+### POST /api/organization/{organization_id}/subscription/upgrade
+
+Smart upgrade endpoint for free to paid plan transitions. Attempts to create subscription with saved payment method first, then falls back to checkout session if needed.
+
+**Authentication:** Token (required)
+**Permission:** Organization owner
+
+**Request:**
+
+```json
+{
+    "plan_slug": "pro",
+    "success_url": "https://app.example.com/subscription?success=true",
+    "cancel_url": "https://app.example.com/subscription?canceled=true"
+}
+```
+
+**Response (Subscription created with saved payment):**
+
+```json
+{
+    "status": "subscription_created",
+    "subscription": {
+        "uuid": "subscription-uuid",
+        "plan": { ... },
+        ...
+    }
+}
+```
+
+**Response (Checkout required):**
+
+```json
+{
+    "status": "checkout_required",
+    "checkout_url": "https://checkout.stripe.com/...",
+    "reason": "No saved payment method found"
+}
+```
+
+**Error Response (400):**
+
+```json
+{
+    "error": "plan_slug, success_url, and cancel_url are required"
+}
+```
+
+**Note:** This endpoint intelligently handles the upgrade flow by first attempting to use a saved payment method (from previous subscriptions or portal setup), and only redirecting to checkout if necessary.
+
 ### POST /api/organization/{organization_id}/subscription/checkout
 
-Create a Stripe checkout session to subscribe to or upgrade to a paid plan.
+Create a Stripe checkout session to subscribe to or upgrade to a paid plan. Use this for initial subscriptions or when you want to force a checkout flow.
 
 **Authentication:** Token (required)
 **Permission:** Organization owner

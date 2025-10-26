@@ -22,7 +22,15 @@ The Search API consists of two main components:
     "query": "Your search query here",
     "search_method": "chunk_vector_search",
     "limit": 10,
-    "tags": ["tag1", "tag2"] // Optional
+    "filters": [  // Optional - advanced filtering
+        {
+            "field": "source",
+            "operator": "eq",
+            "value": "docs",
+            "filter_type": "native_field"
+        }
+    ],
+    "tags": ["tag1", "tag2"]  // Optional - legacy filtering (deprecated)
 }
 ```
 
@@ -31,7 +39,8 @@ The Search API consists of two main components:
 - `query` (string, required): The search query text
 - `search_method` (string, required): The search method to use (see below)
 - `limit` (integer, optional): Maximum number of results to return. Defaults to 10, max 50
-- `tags` (array of strings, optional): Filter results by tags
+- `filters` (array of filter objects, optional): Advanced filtering on native fields and custom metadata (see Filtering section)
+- `tags` (array of strings, optional): Legacy tag filtering (deprecated - use `filters` instead)
 
 ### Authentication
 
@@ -144,9 +153,57 @@ For vector searches, the `distance` value represents cosine distance:
 
 ## Filtering
 
-### Tag Filtering
+### Advanced Filtering
 
-All search methods support tag filtering:
+The Search API supports comprehensive filtering through structured filter objects. This allows you to filter by:
+
+- **Native fields**: `title`, `source`, `client_reference_id`, `tags`
+- **Custom metadata**: Any field from the memo's `metadata` JSON object
+- **Operators**: `eq`, `neq`, `contains`, `startswith`, `endswith`, `in`, `not_in`
+
+**Basic Filter Structure:**
+
+```json
+{
+    "query": "machine learning",
+    "search_method": "chunk_vector_search",
+    "filters": [
+        {
+            "field": "source",
+            "operator": "eq",
+            "value": "research-papers",
+            "filter_type": "native_field"
+        },
+        {
+            "field": "category",
+            "operator": "contains",
+            "value": "AI",
+            "filter_type": "custom_metadata"
+        },
+        {
+            "field": "tags",
+            "operator": "in",
+            "value": ["research", "ai"],
+            "filter_type": "native_field"
+        }
+    ]
+}
+```
+
+**Filter Object Fields:**
+
+- `field` (string): The field to filter on
+- `operator` (string): The comparison operator (see list above)
+- `value` (any): The value to compare against (can be string, number, array for `in`/`not_in`)
+- `filter_type` (string): Either `"native_field"` or `"custom_metadata"`
+
+**Multiple Filters:** All filters use AND logic - a memo must match all filters to be returned.
+
+**Complete Documentation:** See the [Search Filters section in API Reference](./api-reference.md#filter-objects) for comprehensive filter documentation with examples.
+
+### Legacy Tag Filtering (Deprecated)
+
+For backwards compatibility, the API still supports the simple `tags` array format:
 
 ```json
 {
@@ -155,6 +212,8 @@ All search methods support tag filtering:
     "tags": ["research", "ai"]
 }
 ```
+
+**Note:** The `tags` parameter is converted internally to the structured filter format. For new integrations, use the `filters` parameter for more flexibility.
 
 **Behavior:**
 
