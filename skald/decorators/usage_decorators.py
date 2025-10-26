@@ -8,6 +8,7 @@ from functools import wraps
 from rest_framework import status
 from rest_framework.response import Response
 
+from skald import settings
 from skald.services import UsageTrackingService
 
 
@@ -32,6 +33,9 @@ def require_usage_limit(limit_type, increment=True):
     def decorator(view_func):
         @wraps(view_func)
         def wrapped_view(view_instance, request, *args, **kwargs):
+            if settings.IS_SELF_HOSTED_DEPLOY or settings.DEBUG:
+                return view_func(view_instance, request, *args, **kwargs)
+
             # Get organization from request context
             # This assumes the view has get_organization() method (from OrganizationPermissionMixin)
             # or get_project() which has organization

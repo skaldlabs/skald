@@ -2,7 +2,7 @@ services:
   db:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: skald2
+      POSTGRES_DB: skald
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 12345678
     ports:
@@ -16,15 +16,21 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     ports:
-      - "6379:6379"
+      - "5672:5672"    # AMQP port
+      - "15672:15672"  # Management UI port
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
   api:
     build: .
@@ -32,19 +38,30 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgres://postgres:12345678@db/skald2
-      - POSTHOG_API_KEY=phc_Mn0nVBv8wLLcJJ4gLWggO35SbrIDOvD14hiKzEtv5zp
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - DATABASE_URL=${DATABASE_URL:-postgres://postgres:12345678@db/skald}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - INTER_PROCESS_QUEUE=rabbitmq
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      - IS_SELF_HOSTED_DEPLOY=true
+      - DEBUG=true
+      - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
     ports:
       - "8000:8000"
     volumes:
       - .:/app
       - /app/node_modules  # Prevent overwriting node_modules if present
     depends_on:
-      redis:
-        condition: service_healthy
       db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     stdin_open: true
     tty: true
@@ -54,17 +71,54 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CHANNEL_NAME=memo-processing
-      - DATABASE_URL=postgres://postgres:12345678@db/skald2
+      - DATABASE_URL=${DATABASE_URL:-postgres://postgres:12345678@db/skald}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - INTER_PROCESS_QUEUE=rabbitmq
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      - RABBITMQ_QUEUE_NAME=process_memo
+      - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
     depends_on:
-      redis:
-        condition: service_healthy
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: .
+      dockerfile: ui.Dockerfile
+    environment:
+      - VITE_IS_SELF_HOSTED_DEPLOY=true
+      - VITE_API_HOST=http://localhost:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  embedding-service:
+    build:
+      context: ./embedding-service
+    environment:
+      - EMBEDDING_MODEL=${LOCAL_EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+      - RERANK_MODEL=${LOCAL_RERANK_MODEL:-cross-encoder/ms-marco-MiniLM-L-6-v2}
+      - TARGET_DIMENSION=2048
+    ports:
+      - "8001:8000"
+    profiles:
+      - local-embedding
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  rabbitmq_data:
 

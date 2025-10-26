@@ -20,7 +20,6 @@ In order to determine the necessary actions, you can explore the knowledge base 
 
 - get_memo_titles_by_tag: Get all the titles of the memos in the knowledge base that are tagged with a given tag
 - vector_search: Perform a vector search on the knowledge base for memos that are similar to the new memo
-- summary_vector_search: Perform a vector search on the knowledge base for summaries of memos that are similar to the summary of the new memo
 - keyword_search: Perform a keyword search on the knowledge base for memos that contain a given keyword
 - get_memo_metadata: Get metadata for a given memo, including the title and the summary
 - get_memo_content: Get the full raw content of a given memo
@@ -124,4 +123,4 @@ Response:
         }
     ]
 }
-`;
+`

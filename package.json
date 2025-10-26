@@ -12,7 +12,7 @@
         "lint": "eslint frontend",
         "preview": "vite preview",
         "prepare": "husky",
-        "deploy": "VITE_API_HOST=https://api.useskald.com pnpm run build && flyctl deploy -c ui.fly.toml -a skald-platform-ui --remote-only"
+        "deploy": "flyctl deploy -c ui.fly.toml -a skald-platform-ui --remote-only"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": ["prettier --write --ignore-unknown"],
@@ -29,6 +29,7 @@
         "@radix-ui/react-separator": "^1.1.7",
         "@radix-ui/react-slot": "^1.2.3",
         "@radix-ui/react-tooltip": "^1.2.8",
+        "@sentry/react": "^10.22.0",
         "@tailwindcss/vite": "^4.1.14",
         "axios": "^1.7.9",
         "class-variance-authority": "^0.7.1",
@@ -40,6 +41,7 @@
         "react-dom": "^18.3.1",
         "react-hook-form": "^7.65.0",
         "react-router-dom": "^7.9.4",
+        "react-syntax-highlighter": "^15.6.6",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.3.1",
         "tailwindcss": "^4.1.14",
@@ -54,6 +56,7 @@
         "@types/node": "^24.7.1",
         "@types/react": "^18.3.17",
         "@types/react-dom": "^18.3.5",
+        "@types/react-syntax-highlighter": "^15.5.13",
         "@vitejs/plugin-react": "^4.3.4",
         "eslint": "^9.17.0",
         "eslint-plugin-react-hooks": "^5.0.0",

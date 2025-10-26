@@ -23,6 +23,7 @@ from skald.models.user import (
     OrganizationMembershipRole,
 )
 from skald.utils.email_utils import send_email
+from skald.utils.posthog_utils import posthog_capture
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +98,14 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         )
 
     def create(self, request):
+        if settings.IS_SELF_HOSTED_DEPLOY and Organization.objects.count() >= 1:
+            return Response(
+                {
+                    "detail": "You can only create one organization in a self-hosted deploy"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         org = Organization.objects.create(
             name=request.data["name"],
             owner=request.user,
@@ -116,13 +125,14 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             owner=request.user,
         )
 
-        posthog.capture(
+        posthog_capture(
             "organization_created",
             distinct_id=request.user.email,
             properties={
                 "organization_uuid": str(org.uuid),
                 "organization_name": org.name,
                 "user_email": request.user.email,
+                "is_self_hosted_deploy": settings.IS_SELF_HOSTED_DEPLOY,
             },
         )
 
@@ -235,7 +245,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
         request.user.default_organization = membership.organization
         request.user.save()
 
-        posthog.capture(
+        posthog_capture(
             "organization_invite_accepted",
             distinct_id=request.user.email,
             properties={
@@ -290,7 +300,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
             membership.user.default_organization = None
             membership.user.save()
 
-        posthog.capture(
+        posthog_capture(
             "organization_member_removed",
             distinct_id=request.user.email,
             properties={
@@ -345,7 +355,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
 
         invite.delete()
 
-        posthog.capture(
+        posthog_capture(
             "organization_invite_cancelled",
             distinct_id=request.user.email,
             properties={
@@ -393,7 +403,7 @@ class OrganizationViewSet(OrganizationPermissionMixin, viewsets.ModelViewSet):
                 html=html_content,
             )
 
-            posthog.capture(
+            posthog_capture(
                 "organization_invite_resent",
                 distinct_id=request.user.email,
                 properties={

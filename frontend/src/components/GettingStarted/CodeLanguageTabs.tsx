@@ -12,10 +12,7 @@ const AVAILABLE_TABS = [
     { id: 'python', label: 'Python' },
     { id: 'ruby', label: 'Ruby' },
     { id: 'go', label: 'Go' },
-    { id: 'rust', label: 'Rust' },
-    { id: 'elixir', label: 'Elixir' },
-    { id: 'java', label: 'Java' },
-    { id: 'dotnet', label: '.NET' },
+    { id: 'cli', label: 'CLI' },
 ]
 
 export const CodeLanguageTabs = ({ activeTab, onTabChange }: CodeLanguageTabsProps) => {
@@ -24,9 +21,8 @@ export const CodeLanguageTabs = ({ activeTab, onTabChange }: CodeLanguageTabsPro
             {AVAILABLE_TABS.map((tab) => (
                 <button
                     key={tab.id}
-                    className={`tab ${activeTab === tab.id ? 'active' : ''} ${tab.id !== 'curl' ? 'disabled' : ''}`}
-                    onClick={() => tab.id === 'curl' && onTabChange(tab.id)}
-                    disabled={tab.id !== 'curl'}
+                    className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+                    onClick={() => onTabChange(tab.id)}
                 >
                     {tab.label}
                 </button>

@@ -34,7 +34,6 @@
 - Always follow the same tone and patterns as existing documentation
 - Keep docs very concise and to the point
 - Whenever you make changes (or spot changes) to:
-    - services: update README.md to include the most up-to-date running instructions
     - the API's structural components: like changes to auth, update api-overview.md
     - API endpoints: update api-reference.md
     - models: update models.md

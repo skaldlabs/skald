@@ -1,5 +1,3 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers, status, views
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework.response import Response
@@ -9,12 +7,12 @@ from skald.api.permissions import (
     ProjectAPIKeyAuthentication,
     get_project_for_request,
 )
-from skald.embeddings.generate_embedding import generate_vector_embedding_for_search
 from skald.embeddings.vector_search import (
     memo_chunk_vector_search,
 )
 from skald.models.memo import Memo
 from skald.models.project import Project
+from skald.services.embedding_service import EmbeddingService
 from skald.utils.filter_utils import MemoFilter, filter_queryset, parse_filter
 
 
@@ -107,7 +105,7 @@ class SearchView(ProjectAPIKeyAuthentication, views.APIView):
 def _chunk_vector_search(
     project: Project, query: str, limit: int, filters: list[MemoFilter] = None
 ):
-    embedding_vector = generate_vector_embedding_for_search(query)
+    embedding_vector = EmbeddingService.generate_embedding(query, usage="search")
     memo_chunk_results = memo_chunk_vector_search(
         project, embedding_vector, limit, filters=filters
     )

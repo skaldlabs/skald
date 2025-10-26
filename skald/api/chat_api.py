@@ -89,6 +89,36 @@ class ChatView(views.APIView):
 
                     try:
                         for chunk in stream_chat_agent(query, context_str):
+                            if not isinstance(chunk, dict):
+                                import logging
+
+                                logging.error(
+                                    f"Invalid chunk type: {type(chunk)}, value: {chunk}"
+                                )
+                                continue
+
+                            if "content" in chunk:
+                                content = chunk["content"]
+                                if isinstance(content, dict):
+                                    import logging
+
+                                    logging.warning(
+                                        f"Content is dict: {content}, extracting 'text' field"
+                                    )
+                                    # Extract text from dict (Anthropic format)
+                                    chunk["content"] = (
+                                        content.get("text")
+                                        or content.get("content")
+                                        or str(content)
+                                    )
+                                elif not isinstance(content, str):
+                                    import logging
+
+                                    logging.warning(
+                                        f"Non-string content in chunk: {type(content)}, converting to string"
+                                    )
+                                    chunk["content"] = str(content)
+
                             # Format as Server-Sent Event
                             data = json.dumps(chunk)
                             yield f"data: {data}\n\n"

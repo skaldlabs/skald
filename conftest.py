@@ -28,34 +28,46 @@ def mock_async_processing():
 
 @pytest.fixture(autouse=True)
 def mock_voyage_embeddings():
-    """Mock Voyage AI embedding generation and reranking for all tests."""
+    """Mock embedding generation and reranking for all tests."""
     from unittest.mock import MagicMock
 
     # Return a dummy embedding vector of the correct size (2048 dimensions)
     with patch(
-        "skald.embeddings.generate_embedding.generate_vector_embedding_for_search",
+        "skald.services.embedding_service.EmbeddingService.generate_embedding",
         return_value=[0.1] * 2048,
     ):
-        with patch(
-            "skald.embeddings.generate_embedding.generate_vector_embedding_for_storage",
-            return_value=[0.1] * 2048,
-        ):
-            # Mock Voyage client for reranking
-            mock_client = MagicMock()
-            mock_rerank_result = MagicMock()
-            mock_rerank_result.results = []
-            mock_client.rerank.return_value = mock_rerank_result
+        # Mock Voyage client for reranking
+        # Since voyageai is imported inside the _rerank_voyage method,
+        # we need to patch it at the voyageai module level
+        mock_client = MagicMock()
+        mock_rerank_result = MagicMock()
+        mock_rerank_result.results = []
+        mock_client.rerank.return_value = mock_rerank_result
 
-            with patch(
-                "skald.agents.chat_agent.preprocessing.voyageai.Client",
-                return_value=mock_client,
-            ):
-                yield
+        with patch(
+            "voyageai.Client",
+            return_value=mock_client,
+        ):
+            yield
+
+
+@pytest.fixture(autouse=True)
+def mock_llm_service():
+    """Mock the LLM service for all tests to avoid LLM API calls."""
+    from unittest.mock import MagicMock
+
+    mock_llm = MagicMock()
+
+    with patch(
+        "skald.services.llm_service.LLMService.get_llm",
+        return_value=mock_llm,
+    ):
+        yield
 
 
 @pytest.fixture(autouse=True)
 def mock_chat_agent():
-    """Mock the chat agent for all tests to avoid OpenAI API calls."""
+    """Mock the chat agent for all tests to avoid LLM API calls."""
     mock_response = {
         "output": "This is a test response from the chat agent.",
         "intermediate_steps": [],

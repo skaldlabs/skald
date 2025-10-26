@@ -1,6 +1,6 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt'
-import { ChatOpenAI } from '@langchain/openai'
 import { z } from 'zod'
+import { LLMService } from '../../services/llm'
 
 import { KNOWLEDGE_BASE_UPDATE_AGENT_INSTRUCTIONS } from './prompts'
 import {
@@ -8,7 +8,6 @@ import {
     getMemoMetadataTool,
     getMemoContentTool,
     keywordSearchTool,
-    summaryVectorSearchTool,
     vectorSearchTool,
     createUpdateActionTool,
     deleteActionTool,
@@ -32,10 +31,7 @@ export type KnowledgeBaseUpdateAgentOutput = z.infer<typeof KnowledgeBaseUpdateA
 
 // TODO: run the entire agent in a transaction?
 export function createKnowledgeBaseUpdateAgent(memo: FetchMemoResult) {
-    const llm = new ChatOpenAI({
-        model: 'gpt-5-nano',
-        // temperature: 0,
-    })
+    const llm = LLMService.getLLM()
 
     const agent = createReactAgent({
         llm,
@@ -44,7 +40,6 @@ export function createKnowledgeBaseUpdateAgent(memo: FetchMemoResult) {
             getMemoMetadataTool,
             getMemoContentTool,
             keywordSearchTool,
-            summaryVectorSearchTool,
             vectorSearchTool,
             createInsertActionTool(memo),
             deleteActionTool,

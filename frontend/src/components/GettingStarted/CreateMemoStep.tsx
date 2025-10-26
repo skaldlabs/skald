@@ -3,10 +3,10 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Check } from 'lucide-react'
-import { CodeLanguageTabs } from './CodeLanguageTabs'
-import { CodeBlock } from './CodeBlock'
-import { domain } from '@/lib/api'
+import { CodeLanguageTabs } from '@/components/GettingStarted/CodeLanguageTabs'
+import { CodeBlock } from '@/components/GettingStarted/CodeBlock'
 import { useOnboardingStore } from '@/stores/onboardingStore'
+import { getCreateMemoExample } from '@/components/GettingStarted/createMemoExamples'
 import '@/components/GettingStarted/GettingStarted.scss'
 
 export const CreateMemoStep = () => {
@@ -20,18 +20,11 @@ export const CreateMemoStep = () => {
     const createMemo = useOnboardingStore((state) => state.createMemo)
     const [activeTab, setActiveTab] = useState('curl')
 
-    const getCurlCommand = () => {
-        const sampleTitle = memoTitle || ''
-        const sampleContent = memoContent || ''
-
-        return `curl -X POST '${domain}/api/v1/memo/' \\
-  -H 'Authorization: Bearer ${apiKey || 'your_api_key'}' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-  "title": "${sampleTitle}",
-  "content": "${sampleContent}"
-}'`
-    }
+    const currentExample = getCreateMemoExample(activeTab, {
+        apiKey: apiKey || '',
+        title: memoTitle || '',
+        content: memoContent || '',
+    })
 
     const isDisabled = !apiKey
     const isComplete = memoCreated
@@ -44,7 +37,7 @@ export const CreateMemoStep = () => {
 
                 <div className="code-section">
                     <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
-                    <CodeBlock code={getCurlCommand()} language="bash" />
+                    <CodeBlock code={currentExample.code} language={currentExample.language} />
                 </div>
 
                 <div className="interactive-section">

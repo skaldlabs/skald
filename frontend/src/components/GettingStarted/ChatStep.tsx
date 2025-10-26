@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Check, Send } from 'lucide-react'
 import { CodeLanguageTabs } from './CodeLanguageTabs'
 import { CodeBlock } from './CodeBlock'
-import { domain } from '@/lib/api'
+import { getChatExample } from '@/components/GettingStarted/chatExamples'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import '@/components/GettingStarted/GettingStarted.scss'
 
@@ -27,16 +27,12 @@ export const ChatStep = () => {
         }
     }, [chatMessages])
 
-    const getCurlCommand = () => {
-        const sampleQuery = chatQuery || ''
-
-        return `curl -X POST '${domain}/api/v1/chat/' \\
-  -H 'Authorization: Bearer ${apiKey || 'your_api_key'}' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-  "query": "${sampleQuery}",
-  "stream": true
-}'`
+    const getCodeExample = () => {
+        const sampleQuery = chatQuery || 'What are my memos about?'
+        return getChatExample(activeTab, {
+            apiKey: apiKey || '',
+            query: sampleQuery,
+        })
     }
 
     const isDisabled = !apiKey
@@ -50,7 +46,7 @@ export const ChatStep = () => {
 
                 <div className="code-section">
                     <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
-                    <CodeBlock code={getCurlCommand()} language="bash" />
+                    <CodeBlock code={getCodeExample().code} language={getCodeExample().language} />
                 </div>
 
                 <div className="interactive-section">
