@@ -1,4 +1,4 @@
-import type { Memo } from '@/lib/types'
+import type { Memo, SearchMethod } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -8,11 +8,19 @@ interface MemosTableProps {
     memos: Memo[]
     loading: boolean
     searchQuery: string
+    searchMethod: SearchMethod
     onViewMemo: (memo: Memo) => void
     onDeleteMemo: (memo: Memo) => void
 }
 
-export const MemosTable = ({ memos, loading, searchQuery, onViewMemo, onDeleteMemo }: MemosTableProps) => {
+export const MemosTable = ({
+    memos,
+    loading,
+    searchQuery,
+    searchMethod,
+    onViewMemo,
+    onDeleteMemo,
+}: MemosTableProps) => {
     const formatDate = (dateString: string) => {
         if (!dateString) return 'N/A'
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -26,6 +34,17 @@ export const MemosTable = ({ memos, loading, searchQuery, onViewMemo, onDeleteMe
         if (!text) return ''
         return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
     }
+
+    const formatRelevanceScore = (distance: number | null | undefined): string => {
+        if (distance === null || distance === undefined) return 'N/A'
+        // Convert cosine distance to similarity percentage
+        // Distance ranges from 0 (identical) to 2 (opposite)
+        // We want to show similarity as a percentage
+        const similarity = Math.max(0, Math.min(100, (1 - distance) * 100))
+        return `${similarity.toFixed(1)}%`
+    }
+
+    const showRelevanceColumn = searchQuery && searchMethod === 'chunk_vector_search'
 
     if (loading) {
         return (
@@ -54,8 +73,9 @@ export const MemosTable = ({ memos, loading, searchQuery, onViewMemo, onDeleteMe
             <Table className="w-full">
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[30%]">Title</TableHead>
-                        <TableHead className="w-[35%]">Summary</TableHead>
+                        {showRelevanceColumn && <TableHead className="w-[10%]">Relevance</TableHead>}
+                        <TableHead className={showRelevanceColumn ? 'w-[25%]' : 'w-[30%]'}>Title</TableHead>
+                        <TableHead className={showRelevanceColumn ? 'w-[30%]' : 'w-[35%]'}>Summary</TableHead>
                         <TableHead className="w-[10%]">Length</TableHead>
                         <TableHead className="w-[12%]">Created</TableHead>
                         <TableHead className="w-[8%] text-right">Actions</TableHead>
@@ -64,6 +84,13 @@ export const MemosTable = ({ memos, loading, searchQuery, onViewMemo, onDeleteMe
                 <TableBody>
                     {memos.map((memo) => (
                         <TableRow key={memo.uuid}>
+                            {showRelevanceColumn && (
+                                <TableCell className="text-sm font-medium">
+                                    <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                        {formatRelevanceScore(memo.distance)}
+                                    </span>
+                                </TableCell>
+                            )}
                             <TableCell className="font-medium">
                                 <div className="max-w-xs">
                                     <p className="truncate" title={memo.title}>

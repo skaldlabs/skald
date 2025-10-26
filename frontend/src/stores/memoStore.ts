@@ -103,7 +103,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
 
             // Convert search results to memo format
             const searchResultMemos: Memo[] = response.data.results.map((result) => ({
-                uuid: result.id,
+                uuid: result.uuid,
                 title: result.title,
                 summary: result.summary,
                 content_length: result.content_snippet.length,
@@ -111,6 +111,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
                 client_reference_id: null,
                 created_at: '',
                 updated_at: '',
+                distance: result.distance,
             }))
 
             set({

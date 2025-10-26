@@ -16,7 +16,7 @@ def memo_chunk_vector_search(
     project: Project,
     embedding_vector: list[float],
     top_k: int = 10,
-    similarity_threshold: float = 0.75,
+    similarity_threshold: float = 0.55,
     filters: Optional[List[MemoFilter]] = None,
 ) -> list[MemoChunkWithDistance]:
     # search for the most similar memos in the knowledge base using the Memo model and the MemoChunk model

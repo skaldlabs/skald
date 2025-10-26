@@ -92,7 +92,6 @@ export const MemosDashboard = () => {
                     Refresh
                 </Button>
             </PageHeader>
-
             <MemosSearchBar
                 searchQuery={searchQuery}
                 searchMethod={searchMethod}
@@ -114,6 +113,7 @@ export const MemosDashboard = () => {
                 memos={memos}
                 loading={loading}
                 searchQuery={searchQuery}
+                searchMethod={searchMethod}
                 onViewMemo={handleViewMemo}
                 onDeleteMemo={setMemoToDelete}
             />

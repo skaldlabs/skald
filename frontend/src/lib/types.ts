@@ -32,6 +32,7 @@ export interface Memo {
     content_length: number
     metadata: Record<string, unknown>
     client_reference_id: string | null
+    distance?: number | null
 }
 
 // Keep this in sync with the DetailedMemoSerializer in skald/api/memo_api.py
@@ -67,7 +68,7 @@ export interface MemoChunk {
 
 export interface SearchResult {
     title: string
-    id: string
+    uuid: string
     content_snippet: string
     summary: string
     distance: number | null
