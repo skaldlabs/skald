@@ -84,6 +84,7 @@ services:
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
       - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
       - RABBITMQ_QUEUE_NAME=process_memo
+      - DEBUG=true
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
     depends_on:
       db:
