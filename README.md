@@ -56,7 +56,8 @@ const result = await skald.chat({
 ```sh
 git clone https://github.com/skaldlabs/skald
 cd skald
-OPENAI_API_KEY=<your_key> docker-compose up
+echo "OPENAI_API_KEY=<your_key>" > .env
+docker-compose up
 ```
 
 For a production self-hosted deploy, check out our [self-hosting docs](https://docs.useskald.com/docs/self-host/intro).
