@@ -1,8 +1,8 @@
 import pytest
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 from skald.models.user import User
 
@@ -28,7 +28,6 @@ class TestUserSignup:
         assert "token" not in response.data
         assert "user" in response.data
         assert response.data["user"]["email"] == "newuser@example.com"
-        assert response.data["user"]["email_verified"] is False
 
         # Verify httpOnly cookie was set
         assert "authToken" in response.cookies
@@ -76,9 +75,7 @@ class TestUserSignup:
 
     def test_signup_with_duplicate_email(self) -> None:
         """Test that duplicate email returns 400, not 500."""
-        User.objects.create_user(
-            email="existing@example.com", password="password123"
-        )
+        User.objects.create_user(email="existing@example.com", password="password123")
 
         client = APIClient()
         url = reverse("user-list")

@@ -46,9 +46,6 @@ const getCookie = (cookieName: string) => {
 
 axios.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        // Token is now sent automatically via httpOnly cookie
-        // No need to manually set Authorization header
-
         if (config.method !== 'get') {
             const csrfToken = getCookie('csrftoken')
             if (csrfToken) {
@@ -179,7 +176,6 @@ export const api = {
         onMessage: (data: ApiStreamData) => void,
         onError?: (error: ApiErrorData | Event) => void
     ) => {
-        // Token is now sent automatically via httpOnly cookie with credentials: 'include'
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
         }

@@ -170,19 +170,29 @@ def other_organization(db, other_user, free_plan):
 @pytest.fixture
 def organization_membership(db, user, organization):
     """Create organization membership for user."""
-    return OrganizationMembership.objects.create(
+    membership = OrganizationMembership.objects.create(
         user=user,
         organization=organization,
     )
+    # Set user's default organization if not set
+    if not user.default_organization:
+        user.default_organization = organization
+        user.save()
+    return membership
 
 
 @pytest.fixture
 def other_organization_membership(db, other_user, other_organization):
     """Create organization membership for other_user."""
-    return OrganizationMembership.objects.create(
+    membership = OrganizationMembership.objects.create(
         user=other_user,
         organization=other_organization,
     )
+    # Set user's default organization if not set
+    if not other_user.default_organization:
+        other_user.default_organization = other_organization
+        other_user.save()
+    return membership
 
 
 @pytest.fixture

@@ -1,4 +1,3 @@
-import posthog
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.utils.decorators import method_decorator
@@ -126,7 +125,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 {"user": UserSerializer(user).data},
                 status=status.HTTP_201_CREATED,
             )
-            # Set httpOnly cookie for security (protects against XSS)
+
             response.set_cookie(
                 "authToken",
                 token.key,
@@ -144,6 +143,18 @@ class UserViewSet(viewsets.ModelViewSet):
         user = request.user
         old_password = request.data.get("old_password")
         new_password = request.data.get("new_password")
+
+        if not old_password:
+            return Response(
+                {"old_password": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not new_password:
+            return Response(
+                {"new_password": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if not user.check_password(old_password):
             return Response(
@@ -178,7 +189,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 {"user": UserSerializer(user).data},
                 status=status.HTTP_200_OK,
             )
-            # Set httpOnly cookie for security (protects against XSS)
+
             response.set_cookie(
                 "authToken",
                 token.key,
@@ -230,7 +241,12 @@ class UserViewSet(viewsets.ModelViewSet):
                 {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        # Validate that the project belongs to the user's current organization
+        if not user.default_organization:
+            return Response(
+                {"error": "User has no default organization"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if project.organization.uuid != user.default_organization.uuid:
             return Response(
                 {"error": "Project does not belong to your current organization"},
