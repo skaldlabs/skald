@@ -38,18 +38,18 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgres://postgres:12345678@db/skald
+      - DATABASE_URL=${DATABASE_URL:-postgres://postgres:12345678@db/skald}
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - INTER_PROCESS_QUEUE=rabbitmq
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_VHOST=/
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
       - IS_SELF_HOSTED_DEPLOY=true
       - DEBUG=true
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
@@ -71,18 +71,18 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgres://postgres:12345678@db/skald
+      - DATABASE_URL=${DATABASE_URL:-postgres://postgres:12345678@db/skald}
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - INTER_PROCESS_QUEUE=rabbitmq
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_VHOST=/
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
       - RABBITMQ_QUEUE_NAME=process_memo
       - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
     depends_on:
