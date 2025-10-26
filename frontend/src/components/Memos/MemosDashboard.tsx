@@ -29,6 +29,7 @@ export const MemosDashboard = () => {
     const setSearchQuery = useMemoStore((state) => state.setSearchQuery)
     const setSearchMethod = useMemoStore((state) => state.setSearchMethod)
     const clearSearch = useMemoStore((state) => state.clearSearch)
+    const isSearchMode = useMemoStore((state) => state.isSearchMode)
 
     const [selectedMemo, setSelectedMemo] = useState<DetailedMemo | null>(null)
     const [memoToDelete, setMemoToDelete] = useState<Memo | null>(null)
@@ -40,7 +41,9 @@ export const MemosDashboard = () => {
     }
 
     const handlePageChange = async (page: number) => {
-        await fetchMemos(page, pageSize)
+        if (!isSearchMode) {
+            await fetchMemos(page, pageSize)
+        }
     }
 
     const handleDelete = async () => {

@@ -41,7 +41,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
     currentPage: 1,
     pageSize: 20,
 
-    fetchMemos: async (page = 1, pageSize = 20) => {
+    fetchMemos: async (page = 1, pageSize = 50) => {
         set({ loading: true, error: null, isSearchMode: false })
         const currentProject = useProjectStore.getState().currentProject
         if (!currentProject) {
