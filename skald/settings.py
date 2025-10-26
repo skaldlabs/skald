@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import logging
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -19,6 +20,7 @@ import sentry_sdk
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
+logger = logging.getLogger(__name__)
 
 
 def str_to_bool(input):
@@ -47,9 +49,10 @@ DEBUG = str_to_bool(os.getenv("DEBUG", False))
 IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", True))
 
 
-if not DEBUG:
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if not (DEBUG or IS_SELF_HOSTED_DEPLOY) and SENTRY_DSN:
     sentry_sdk.init(
-        dsn="https://d9311bc8f81f566a5bcedac72e22427d@o4509092419076096.ingest.de.sentry.io/4510188083216464",
+        dsn=SENTRY_DSN,
         # Add data like request headers and IP for users,
         # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
         send_default_pii=True,
@@ -119,6 +122,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
 ]
+
+# Add self-hosted deployment URLs to CORS allowed origins
+IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", False))
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+API_URL = os.getenv("API_URL", "")
+if IS_SELF_HOSTED_DEPLOY:
+    if FRONTEND_URL:
+        CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+    if API_URL:
+        CORS_ALLOWED_ORIGINS.append(API_URL)
 
 ROOT_URLCONF = "skald.urls"
 
@@ -190,14 +203,12 @@ AUTH_TOKEN_VALIDITY = timedelta(days=30)
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", None)
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-
 # Stripe Configuration
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", None)
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", None)
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", None)
 
-if not STRIPE_SECRET_KEY and not DEBUG:
+if not STRIPE_SECRET_KEY and not (DEBUG or IS_SELF_HOSTED_DEPLOY):
     import logging
 
     logging.getLogger(__name__).warning("STRIPE_SECRET_KEY not set in production")
@@ -245,12 +256,20 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
 
+# Add self-hosted deployment URLs to CSRF trusted origins
+if IS_SELF_HOSTED_DEPLOY:
+    if FRONTEND_URL:
+        CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
+    if API_URL:
+        CSRF_TRUSTED_ORIGINS.append(API_URL)
+
 USE_SECURE_SETTINGS = not DEBUG
 
 if USE_SECURE_SETTINGS:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-SECURE_SSL_REDIRECT = USE_SECURE_SETTINGS
+# SSL redirect - disable when using a reverse proxy like Traefik that handles SSL
+SECURE_SSL_REDIRECT = str_to_bool(os.getenv("SECURE_SSL_REDIRECT", USE_SECURE_SETTINGS))
 SECURE_REDIRECT_EXEMPT = [
     "api/health",
     "api/health/",
@@ -303,9 +322,18 @@ DEFAULT_APP_HOST = "http://localhost:3000" if DEBUG else "https://api.useskald.c
 
 APP_HOST = os.getenv("APP_HOST", DEFAULT_APP_HOST)
 
-# Voyage - embeddings
+# Embedding Provider Configuration
+EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "voyage")
+EMBEDDING_SERVICE_URL = os.getenv("EMBEDDING_SERVICE_URL", "http://localhost:8001")
+EMBEDDING_VECTOR_DIMENSIONS = 2048
+
+# Voyage AI
 VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
 VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
+
+# OpenAI
+OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large")
+
 
 # LLM Configuration
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
@@ -323,34 +351,51 @@ LOCAL_LLM_BASE_URL = os.getenv("LOCAL_LLM_BASE_URL")
 LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL", "llama-3.1-8b-instruct")
 LOCAL_LLM_API_KEY = os.getenv("LOCAL_LLM_API_KEY", None)
 
+# Rerank Configuration
+VOYAGE_RERANK_MODEL = os.getenv("VOYAGE_RERANK_MODEL", "rerank-2.5")
+POST_RERANK_TOP_K = os.getenv("POST_RERANK_TOP_K", 50)
+VECTOR_SEARCH_TOP_K = os.getenv("VECTOR_SEARCH_TOP_K", 100)
+
 # Validation
-SUPPORTED_PROVIDERS = ["openai", "anthropic", "local"]
-if LLM_PROVIDER not in SUPPORTED_PROVIDERS:
+SUPPORTED_LLM_PROVIDERS = ["openai", "anthropic", "local"]
+if LLM_PROVIDER not in SUPPORTED_LLM_PROVIDERS:
     raise ValueError(
         f"Invalid LLM_PROVIDER: {LLM_PROVIDER}. "
-        f"Supported: {', '.join(SUPPORTED_PROVIDERS)}"
+        f"Supported: {', '.join(SUPPORTED_LLM_PROVIDERS)}"
     )
 
-# Warn if LLM providers API keys are missing in production
-if not DEBUG:
-    import logging
+# Embedding Provider Validation
+SUPPORTED_EMBEDDING_PROVIDERS = ["voyage", "openai", "local"]
+if EMBEDDING_PROVIDER not in SUPPORTED_EMBEDDING_PROVIDERS:
+    raise ValueError(
+        f"Invalid EMBEDDING_PROVIDER: {EMBEDDING_PROVIDER}. "
+        f"Supported: {', '.join(SUPPORTED_EMBEDDING_PROVIDERS)}"
+    )
 
-    logger = logging.getLogger(__name__)
+# Warn if LLM provider API keys are missing
+if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
+    logger.warning("OPENAI_API_KEY not set in production")
+elif LLM_PROVIDER == "anthropic" and not ANTHROPIC_API_KEY:
+    logger.warning("ANTHROPIC_API_KEY not set in production")
+elif LLM_PROVIDER == "local" and not LOCAL_LLM_BASE_URL:
+    logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
 
-    if LLM_PROVIDER == "openai" and not OPENAI_API_KEY:
-        logger.warning("OPENAI_API_KEY not set in production")
-    elif LLM_PROVIDER == "anthropic" and not ANTHROPIC_API_KEY:
-        logger.warning("ANTHROPIC_API_KEY not set in production")
-    elif LLM_PROVIDER == "local" and not LOCAL_LLM_BASE_URL:
-        logger.warning("LOCAL_LLM_BASE_URL not set for local provider")
+# Warn if embedding provider API keys are missing
+if EMBEDDING_PROVIDER == "voyage" and not VOYAGE_API_KEY:
+    logger.warning("VOYAGE_API_KEY not set in production")
+elif EMBEDDING_PROVIDER == "openai" and not OPENAI_API_KEY:
+    logger.warning("OPENAI_API_KEY not set for embedding provider in production")
+elif EMBEDDING_PROVIDER == "local" and not EMBEDDING_SERVICE_URL:
+    logger.warning("EMBEDDING_SERVICE_URL not set for local provider")
 
 # Posthog
-POSTHOG_PUBLIC_API_KEY = os.getenv("POSTHOG_PUBLIC_API_KEY", None)
-POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://app.posthog.com")
+POSTHOG_PUBLIC_API_KEY = os.getenv(
+    "POSTHOG_PUBLIC_API_KEY", "phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2"
+)
+POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
 
 # mechanism for communicating with the memo processing server
-USE_SQS = str_to_bool(os.getenv("USE_SQS", not DEBUG))  # legacy
-INTER_PROCESS_QUEUE = "sqs" if USE_SQS else os.getenv("INTER_PROCESS_QUEUE", "redis")
+INTER_PROCESS_QUEUE = os.getenv("INTER_PROCESS_QUEUE", "redis")
 
 if INTER_PROCESS_QUEUE not in ["redis", "sqs", "rabbitmq"]:
     raise ValueError(f"Invalid inter-process queue: {INTER_PROCESS_QUEUE}")

@@ -36,7 +36,6 @@ NODE_ENV=production npm start
 ### Queue Configuration
 
 - `INTER_PROCESS_QUEUE` - Queue type: `redis`, `rabbitmq`, or `sqs` (default: `redis` in development, `sqs` in production)
-- `USE_SQS` - Legacy flag, set to `true` to use SQS (overrides INTER_PROCESS_QUEUE)
 
 ### Redis Configuration
 

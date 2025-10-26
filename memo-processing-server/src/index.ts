@@ -1,29 +1,17 @@
 import './sentry'
-import 'dotenv/config'
-import { config } from 'dotenv'
-import { resolve } from 'path'
 import { createClient } from 'redis'
 import { processMemo } from './processMemo'
 import { runSQSConsumer } from './sqsConsumer'
 import { runRabbitMQConsumer, closeRabbitMQ } from './rabbitmqConsumer'
-import { LLMService } from './services/llm'
-
-// Load environment variables from the main repo's .env file
-if (process.env.NODE_ENV === 'development') {
-    config({ path: resolve(__dirname, '../../.env') })
-} else {
-    config({ path: resolve(__dirname, '.env') })
-}
-
-// Determine which queue to use
-const USE_SQS = process.env.USE_SQS === 'true' // legacy support
-const INTER_PROCESS_QUEUE = USE_SQS
-    ? 'sqs'
-    : process.env.INTER_PROCESS_QUEUE || (process.env.NODE_ENV === 'production' ? 'sqs' : 'redis')
-
-const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
-const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')
-const CHANNEL_NAME = process.env.CHANNEL_NAME || 'process_memo'
+import {
+    INTER_PROCESS_QUEUE,
+    REDIS_HOST,
+    REDIS_PORT,
+    CHANNEL_NAME,
+    LLM_PROVIDER,
+    EMBEDDING_PROVIDER,
+    SQS_QUEUE_URL,
+} from './settings'
 
 const runRedisPubSub = async () => {
     const subscriber = createClient({
@@ -47,15 +35,8 @@ const runRedisPubSub = async () => {
 
 async function main() {
     console.log(`Starting memo processing server with ${INTER_PROCESS_QUEUE} queue`)
-    // Validate LLM configuration on startup
-    LLMService.validateConfig()
-    console.log(`LLM provider: ${process.env.LLM_PROVIDER || 'openai'}`)
-
-    if (!USE_SQS) {
-        console.log('Running in development mode with Redis pub/sub')
-        await runRedisPubSub()
-    } else {
-        const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
+    console.log(`LLM provider: ${LLM_PROVIDER}`)
+    console.log(`Embedding provider: ${EMBEDDING_PROVIDER}`)
 
     switch (INTER_PROCESS_QUEUE) {
         case 'redis':
@@ -64,7 +45,6 @@ async function main() {
             break
 
         case 'sqs': {
-            const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
             if (!SQS_QUEUE_URL) {
                 throw new Error('SQS_QUEUE_URL environment variable is required for SQS mode')
             }

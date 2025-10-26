@@ -10,6 +10,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from skald.utils.error_utils import format_validation_error
+from skald.utils.posthog_utils import posthog_capture
 
 User = get_user_model()
 
@@ -112,7 +113,7 @@ class UserViewSet(viewsets.ModelViewSet):
             user = serializer.save()
             token, _ = Token.objects.get_or_create(user=user)
 
-            posthog.capture(
+            posthog_capture(
                 "user_signed_up",
                 distinct_id=user.email,
                 properties={
@@ -164,7 +165,7 @@ class UserViewSet(viewsets.ModelViewSet):
             login(request, user)
             token, _ = Token.objects.get_or_create(user=user)
 
-            posthog.capture(
+            posthog_capture(
                 "user_logged_in",
                 distinct_id=user.email,
                 properties={

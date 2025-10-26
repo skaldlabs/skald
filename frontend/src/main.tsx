@@ -6,19 +6,20 @@ import { PostHogProvider } from 'posthog-js/react'
 import * as Sentry from '@sentry/react'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
+import { isSelfHostedDeploy } from '@/settings'
 
 const isLocalhost = window.location.hostname === 'localhost'
 
-if (!isLocalhost) {
+if (!isLocalhost && !isSelfHostedDeploy) {
     Sentry.init({
-        dsn: 'https://b253885bf8381ce9188e516a32437dd6@o4509092419076096.ingest.de.sentry.io/4509092455448656',
+        dsn: 'https://7354207998ee26186ca556d398da8f0a@o4509092419076096.ingest.de.sentry.io/4510255948496976',
     })
 }
 
 const posthogOptions = {
     api_host: 'https://us.i.posthog.com',
-    autocapture: !isLocalhost,
-    disable_session_recording: isLocalhost,
+    autocapture: !isLocalhost && !isSelfHostedDeploy,
+    disable_session_recording: isLocalhost || isSelfHostedDeploy,
     session_recording: {
         maskAllInputs: false,
         maskInputOptions: {
@@ -28,15 +29,23 @@ const posthogOptions = {
     },
 }
 
+// we don't track self-hosted instance with posthog
 createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
-        <PostHogProvider
-            // this is a public key that can be leaked
-            apiKey="phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2"
-            options={posthogOptions}
-        >
-            <Toaster />
-            <App />
-        </PostHogProvider>
+        {isSelfHostedDeploy ? (
+            <>
+                <Toaster />
+                <App />
+            </>
+        ) : (
+            <PostHogProvider
+                // this is a public key that can be leaked
+                apiKey="phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2"
+                options={posthogOptions}
+            >
+                <Toaster />
+                <App />
+            </PostHogProvider>
+        )}
     </ThemeProvider>
 )

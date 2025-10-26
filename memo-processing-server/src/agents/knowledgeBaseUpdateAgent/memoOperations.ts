@@ -1,7 +1,7 @@
 import { memoSummaryAgent } from '../memoSummaryAgent'
 import { memoTagsAgent } from '../memoTagsAgent'
 import { createMemoSummary, createMemoTags, createMemoChunk } from '../../db/memo'
-import { generateVectorEmbeddingForStorage } from '../../vectorEmbeddings/voyage'
+import { EmbeddingService } from '../../vectorEmbeddings/embeddingService'
 import { RecursiveChunker } from '@chonkiejs/core'
 
 // Initialize chunker with the same configuration as Python version
@@ -29,7 +29,7 @@ const _createMemoChunk = async (
     chunkContent: string,
     chunkIndex: number
 ): Promise<void> => {
-    const vectorEmbedding = await generateVectorEmbeddingForStorage(chunkContent)
+    const vectorEmbedding = await EmbeddingService.generateEmbedding(chunkContent, 'storage')
     await createMemoChunk({
         memo_uuid: memoUuid,
         project_id: projectId,
@@ -58,6 +58,6 @@ export const extractTagsFromMemo = async (memo: { uuid: string; project_id: stri
 
 export const generateMemoSummary = async (memo: { uuid: string; project_id: string; content: string }) => {
     const summary = await memoSummaryAgent.summarize(memo.content)
-    const embedding = await generateVectorEmbeddingForStorage(summary.summary)
+    const embedding = await EmbeddingService.generateEmbedding(summary.summary, 'storage')
     await createMemoSummary(memo.uuid, memo.project_id, summary.summary, embedding)
 }

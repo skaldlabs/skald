@@ -3,6 +3,7 @@ import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { storage } from '@/lib/localStorage'
 import posthog from 'posthog-js'
+import { posthogIdentify } from '@/lib/posthog'
 
 interface AuthResponse {
     user: UserDetails
@@ -70,7 +71,7 @@ export const useAuthStore = create<AuthState>((set) => {
                     user: user,
                 })
 
-                posthog.identify(user.email, {
+                posthogIdentify(user.email, {
                     email: user.email,
                     name: user.name,
                     default_organization: user.default_organization,
@@ -98,7 +99,7 @@ export const useAuthStore = create<AuthState>((set) => {
             // Token is now stored in httpOnly cookie, no need to use localStorage
             set({ isAuthenticated: true, user: user })
 
-            posthog.identify(user.email, {
+            posthogIdentify(user.email, {
                 email: user.email,
                 name: user.name,
                 default_organization: user.default_organization,
@@ -119,7 +120,7 @@ export const useAuthStore = create<AuthState>((set) => {
             // Token is now stored in httpOnly cookie, no need to use localStorage
             set({ isAuthenticated: true, user: user })
 
-            posthog.identify(user.email, {
+            posthogIdentify(user.email, {
                 email: user.email,
                 name: user.name,
                 default_organization: user.default_organization,

@@ -33,7 +33,7 @@ def require_usage_limit(limit_type, increment=True):
     def decorator(view_func):
         @wraps(view_func)
         def wrapped_view(view_instance, request, *args, **kwargs):
-            if settings.IS_SELF_HOSTED_DEPLOY:
+            if settings.IS_SELF_HOSTED_DEPLOY or settings.DEBUG:
                 return view_func(view_instance, request, *args, **kwargs)
 
             # Get organization from request context

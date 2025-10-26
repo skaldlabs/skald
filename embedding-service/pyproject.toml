@@ -1,0 +1,12 @@
+[project]
+name = "embedding-service"
+version = "0.1.0"
+description = "FastAPI microservice for embeddings and reranking using sentence-transformers"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.31.0",
+    "sentence-transformers>=3.2.1",
+    "pydantic>=2.9.2",
+    "numpy>=2.3.4",
+]

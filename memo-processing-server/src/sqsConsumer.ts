@@ -1,5 +1,6 @@
 import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand, Message } from '@aws-sdk/client-sqs'
 import { processMemo } from './processMemo'
+import { AWS_REGION, SQS_QUEUE_URL } from './settings'
 
 const MAX_MESSAGES = 10
 const WAIT_TIME_SECONDS = 1
@@ -17,7 +18,7 @@ const initSQSClient = () => {
     }
 
     return new SQSClient({
-        region: process.env.AWS_REGION || 'us-east-2',
+        region: AWS_REGION,
     })
 }
 
@@ -27,7 +28,7 @@ const receiveMessage = async () => {
     }
 
     const command = new ReceiveMessageCommand({
-        QueueUrl: process.env.SQS_QUEUE_URL,
+        QueueUrl: SQS_QUEUE_URL,
         MaxNumberOfMessages: MAX_MESSAGES,
         WaitTimeSeconds: WAIT_TIME_SECONDS,
         VisibilityTimeout: VISIBILITY_TIMEOUT,
@@ -42,7 +43,7 @@ const deleteMessage = async (message: Message) => {
 
     await sqsClient.send(
         new DeleteMessageCommand({
-            QueueUrl: process.env.SQS_QUEUE_URL,
+            QueueUrl: SQS_QUEUE_URL,
             ReceiptHandle: message.ReceiptHandle,
         })
     )
