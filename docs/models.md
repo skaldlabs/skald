@@ -170,6 +170,8 @@ Links an organization to a subscription plan. One subscription per organization.
 | `id`                     | AutoField                | Primary key                                       |
 | `organization`           | OneToOneField(Org)       | Organization (related_name: `subscription`)       |
 | `plan`                   | ForeignKey(Plan)         | Current plan (PROTECT on delete)                  |
+| `scheduled_plan`         | ForeignKey(Plan)         | Plan scheduled for next period (nullable)         |
+| `scheduled_change_date`  | DateTimeField            | When scheduled plan takes effect (nullable)       |
 | `stripe_customer_id`     | CharField(255)           | Stripe Customer ID (nullable, unique)             |
 | `stripe_subscription_id` | CharField(255)           | Stripe Subscription ID (nullable, unique)         |
 | `status`                 | CharField(50)            | Subscription status (choices from enum)           |
@@ -201,6 +203,19 @@ Defined by `SubscriptionStatus` enum:
 - `stripe_customer_id`
 - `stripe_subscription_id`
 - `status`
+
+#### Scheduled Plan Changes
+
+The `scheduled_plan` and `scheduled_change_date` fields enable plan downgrades to be deferred until the end of the current billing period:
+
+- **Upgrades**: Applied immediately (both `plan` field updated instantly)
+- **Downgrades**: Scheduled for end of period (`scheduled_plan` populated, `plan` remains current)
+- **Change date**: Set to `current_period_end` for downgrades
+- **Execution**: Background job applies scheduled plan change when `scheduled_change_date` is reached
+
+**Related Endpoints:**
+- `POST /api/organization/{id}/subscription/change_plan` - Schedule plan change
+- `POST /api/organization/{id}/subscription/cancel_scheduled_change` - Cancel scheduled change
 
 #### Stripe Integration
 
