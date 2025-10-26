@@ -3,13 +3,14 @@ import { useProjectStore } from '@/stores/projectStore'
 import { useMemoStore } from '@/stores/memoStore'
 import type { Memo, DetailedMemo, SearchMethod } from '@/lib/types'
 import { Button } from '@/components/ui/button'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Plus } from 'lucide-react'
 import { MemosSearchBar } from './MemosSearchBar'
 import { MemosSearchResultsBanner } from './MemosSearchResultsBanner'
 import { MemosTable } from './MemosTable'
 import { MemosPagination } from './MemosPagination'
 import { DeleteMemoDialog } from './DeleteMemoDialog'
 import { ViewMemoDialog } from './ViewMemoDialog'
+import { CreateMemoModal } from './CreateMemoModal'
 import { PageHeader } from '@/components/AppLayout/PageHeader'
 
 export const MemosDashboard = () => {
@@ -34,6 +35,7 @@ export const MemosDashboard = () => {
     const [selectedMemo, setSelectedMemo] = useState<DetailedMemo | null>(null)
     const [memoToDelete, setMemoToDelete] = useState<Memo | null>(null)
     const [deleting, setDeleting] = useState(false)
+    const [createModalOpen, setCreateModalOpen] = useState(false)
 
     const handleSearch = async () => {
         if (!currentProject) return
@@ -90,10 +92,16 @@ export const MemosDashboard = () => {
     return (
         <div className="container mx-auto py-6 space-y-6">
             <PageHeader title="Memos">
-                <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm">
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => setCreateModalOpen(true)} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Memo
+                    </Button>
+                    <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm">
+                        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
+                </div>
             </PageHeader>
             <MemosSearchBar
                 searchQuery={searchQuery}
@@ -128,6 +136,8 @@ export const MemosDashboard = () => {
                 loading={loading}
                 onPageChange={handlePageChange}
             />
+
+            <CreateMemoModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
 
             <ViewMemoDialog memo={selectedMemo} onClose={() => setSelectedMemo(null)} />
 

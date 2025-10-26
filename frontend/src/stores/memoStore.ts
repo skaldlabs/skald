@@ -11,6 +11,17 @@ interface PaginatedResponse<T> {
     results: T[]
 }
 
+interface CreateMemoPayload {
+    title: string
+    content: string
+    source?: string
+    type?: string
+    client_reference_id?: string
+    expiration_date?: string
+    tags?: string[]
+    metadata?: Record<string, unknown>
+}
+
 interface MemoState {
     memos: Memo[]
     loading: boolean
@@ -23,6 +34,7 @@ interface MemoState {
     pageSize: number
     fetchMemos: (page?: number, pageSize?: number) => Promise<void>
     searchMemos: (query: string, method: SearchMethod) => Promise<void>
+    createMemo: (payload: CreateMemoPayload) => Promise<boolean>
     deleteMemo: (memoUuid: string) => Promise<boolean>
     getMemoDetails: (memoUuid: string) => Promise<DetailedMemo | null>
     setSearchQuery: (query: string) => void
@@ -124,6 +136,40 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             const errorMsg = error instanceof Error ? error.message : 'Search failed'
             set({ loading: false, error: errorMsg })
             toast.error(`Search failed: ${errorMsg}`)
+        }
+    },
+
+    createMemo: async (payload: CreateMemoPayload) => {
+        const currentProject = useProjectStore.getState().currentProject
+        if (!currentProject) {
+            throw new Error('No project selected')
+        }
+
+        try {
+            const apiPayload = {
+                title: payload.title,
+                content: payload.content,
+                source: payload.source,
+                type: payload.type,
+                reference_id: payload.client_reference_id,
+                expiration_date: payload.expiration_date,
+                tags: payload.tags,
+                metadata: payload.metadata,
+            }
+
+            const response = await api.post<{ ok: boolean }>(`/v1/memo/?project_id=${currentProject.uuid}`, apiPayload)
+
+            if (response.error) {
+                toast.error(`Failed to create memo: ${response.error}`)
+                return false
+            }
+
+            await get().fetchMemos()
+            return true
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Failed to create memo'
+            toast.error(`Failed to create memo: ${errorMsg}`)
+            return false
         }
     },
 
