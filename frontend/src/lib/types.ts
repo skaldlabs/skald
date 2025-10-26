@@ -73,4 +73,4 @@ export interface SearchResult {
     distance: number | null
 }
 
-export type SearchMethod = 'title_contains' | 'title_startswith' | 'summary_vector_search' | 'chunk_vector_search'
+export type SearchMethod = 'title_contains' | 'title_startswith' | 'chunk_vector_search'

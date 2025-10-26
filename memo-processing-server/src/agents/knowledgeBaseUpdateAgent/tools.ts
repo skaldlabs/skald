@@ -103,27 +103,6 @@ const vectorSearchSchema = z.object({
     query: z.string().describe('The query to search for'),
 })
 
-export const summaryVectorSearchTool = tool(
-    async (input) => {
-        const parsed = vectorSearchSchema.parse(input)
-        const embeddingVector = await EmbeddingService.generateEmbedding(parsed.query, 'search')
-        const memoSummaries = await memoSummaryVectorSearchWithMemoInfo(embeddingVector)
-        console.log(
-            'summary_vector_search called! query:',
-            parsed.query,
-            'returning memo_summaries:',
-            memoSummaries.map((ms) => ms.uuid)
-        )
-        return JSON.stringify(memoSummaries)
-    },
-    {
-        name: 'summary_vector_search',
-        schema: vectorSearchSchema,
-        description:
-            'Perform a vector search on the knowledge base for summaries of memos that are similar to the given query',
-    }
-)
-
 export const vectorSearchTool = tool(
     async (input) => {
         const parsed = vectorSearchSchema.parse(input)

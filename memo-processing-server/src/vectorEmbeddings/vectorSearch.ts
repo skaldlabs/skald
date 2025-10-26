@@ -1,12 +1,8 @@
-import { runQuery } from "../db/db";
-import { MemoChunk, MemoSummary } from "../db/models";
+import { runQuery } from '../db/db'
+import { MemoChunk, MemoSummary } from '../db/models'
 
 export interface MemoChunkWithDistance extends MemoChunk {
-  distance: number;
-}
-
-export interface MemoSummaryWithDistance extends MemoSummary {
-  distance: number;
+    distance: number
 }
 
 /**
@@ -17,18 +13,19 @@ export interface MemoSummaryWithDistance extends MemoSummary {
  * @returns Array of memo chunks with their cosine distances
  */
 export interface MemoChunkSearchResult {
-  title: string;
-  uuid: string;
-  chunk_index: number;
-  distance: number;
+    title: string
+    uuid: string
+    chunk_index: number
+    distance: number
 }
 
 export const memoChunkVectorSearch = async (
-  embeddingVector: number[],
-  topK: number = 10,
-  similarityThreshold: number = 0.5
+    embeddingVector: number[],
+    topK: number = 10,
+    similarityThreshold: number = 0.5
 ): Promise<MemoChunkWithDistance[]> => {
-  const result = await runQuery<MemoChunkWithDistance>(`
+    const result = await runQuery<MemoChunkWithDistance>(
+        `
     SELECT 
       uuid,
       memo_id,
@@ -40,21 +37,24 @@ export const memoChunkVectorSearch = async (
     WHERE (embedding <=> $1::vector) <= $2
     ORDER BY distance
     LIMIT $3
-  `, [JSON.stringify(embeddingVector), similarityThreshold, topK]);
+  `,
+        [JSON.stringify(embeddingVector), similarityThreshold, topK]
+    )
 
-  if (result.error) {
-    throw new Error(result.error);
-  }
+    if (result.error) {
+        throw new Error(result.error)
+    }
 
-  return result.rows || [];
-};
+    return result.rows || []
+}
 
 export const memoChunkVectorSearchWithMemoInfo = async (
-  embeddingVector: number[],
-  topK: number = 10,
-  similarityThreshold: number = 0.5
+    embeddingVector: number[],
+    topK: number = 10,
+    similarityThreshold: number = 0.5
 ): Promise<MemoChunkSearchResult[]> => {
-  const result = await runQuery<MemoChunkSearchResult>(`
+    const result = await runQuery<MemoChunkSearchResult>(
+        `
     SELECT 
       skald_memo.title,
       skald_memo.uuid,
@@ -65,20 +65,22 @@ export const memoChunkVectorSearchWithMemoInfo = async (
     WHERE (skald_memochunk.embedding <=> $1::vector) <= $2
     ORDER BY distance
     LIMIT $3
-  `, [JSON.stringify(embeddingVector), similarityThreshold, topK]);
+  `,
+        [JSON.stringify(embeddingVector), similarityThreshold, topK]
+    )
 
-  if (result.error) {
-    throw new Error(result.error);
-  }
+    if (result.error) {
+        throw new Error(result.error)
+    }
 
-  return result.rows || [];
-};
+    return result.rows || []
+}
 
 export interface MemoSummarySearchResult {
-  title: string;
-  uuid: string;
-  summary: string;
-  distance: number;
+    title: string
+    uuid: string
+    summary: string
+    distance: number
 }
 
 /**
@@ -88,44 +90,13 @@ export interface MemoSummarySearchResult {
  * @param distanceThreshold - The maximum cosine distance threshold (default: 0.5). The lower the threshold, the more similar the results will be.
  * @returns Array of memo summaries with their cosine distances
  */
-export const memoSummaryVectorSearch = async (
-  embeddingVector: number[],
-  topK: number = 10,
-  distanceThreshold: number = 0.5
-): Promise<MemoSummaryWithDistance[]> => {
-  const result = await runQuery<MemoSummaryWithDistance>(`
-    SELECT 
-      uuid,
-      memo_id,
-      summary,
-      embedding,
-      (embedding <=> $1::vector) as distance
-    FROM skald_memosummary
-    WHERE (embedding <=> $1::vector) <= $2
-    ORDER BY distance
-    LIMIT $3
-  `, [JSON.stringify(embeddingVector), distanceThreshold, topK]);
-
-  if (result.error) {
-    throw new Error(result.error);
-  }
-
-  return result.rows || [];
-};
-
-/**
- * Search for the most similar memo summaries in the knowledge base using cosine distance
- * @param embeddingVector - The embedding vector to search with
- * @param topK - The maximum number of results to return (default: 10)
- * @param distanceThreshold - The maximum cosine distance threshold (default: 0.5). The lower the threshold, the more similar the results will be.
- * @returns Array of memo summaries with their cosine distances
- */
 export const memoSummaryVectorSearchWithMemoInfo = async (
-  embeddingVector: number[],
-  topK: number = 10,
-  distanceThreshold: number = 0.5
+    embeddingVector: number[],
+    topK: number = 10,
+    distanceThreshold: number = 0.5
 ): Promise<MemoSummarySearchResult[]> => {
-  const result = await runQuery<MemoSummarySearchResult>(`
+    const result = await runQuery<MemoSummarySearchResult>(
+        `
     SELECT 
       skald_memo.title,
       skald_memo.uuid,
@@ -136,12 +107,13 @@ export const memoSummaryVectorSearchWithMemoInfo = async (
     WHERE (skald_memosummary.embedding <=> $1::vector) <= $2
     ORDER BY distance
     LIMIT $3
-  `, [JSON.stringify(embeddingVector), distanceThreshold, topK]);
+  `,
+        [JSON.stringify(embeddingVector), distanceThreshold, topK]
+    )
 
-  if (result.error) {
-    throw new Error(result.error);
-  }
+    if (result.error) {
+        throw new Error(result.error)
+    }
 
-  return result.rows || [];
-};
-
+    return result.rows || []
+}

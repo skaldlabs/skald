@@ -262,7 +262,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         try {
             const response = await api.post('/v1/search/', {
                 query: searchQuery,
-                search_method: 'summary_vector_search',
+                search_method: 'chunk_vector_search',
                 limit: 5,
                 project_id: currentProject.uuid,
             })

@@ -7,7 +7,6 @@ import { Search } from 'lucide-react'
 
 const SEARCH_METHODS: { value: SearchMethod; label: string }[] = [
     { value: 'chunk_vector_search', label: 'Semantic Search (Chunks)' },
-    { value: 'summary_vector_search', label: 'Semantic Search (Summary)' },
     { value: 'title_contains', label: 'Title Contains' },
     { value: 'title_startswith', label: 'Title Starts With' },
 ]

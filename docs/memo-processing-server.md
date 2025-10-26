@@ -9,25 +9,29 @@ The Memo Processing Server is a TypeScript-based microservice that handles async
 ### Core Components
 
 #### 1. Main Server (`src/index.ts`)
+
 - Redis pub/sub subscriber that listens on the `process_memo` channel
 - Receives memo UUIDs and triggers processing pipeline
 - Handles graceful shutdown and error management
 - Environment configuration:
-  - `REDIS_HOST`: Redis server host (default: localhost)
-  - `REDIS_PORT`: Redis server port (default: 6379)
-  - `CHANNEL_NAME`: Pub/sub channel name (default: process_memo)
+    - `REDIS_HOST`: Redis server host (default: localhost)
+    - `REDIS_PORT`: Redis server port (default: 6379)
+    - `CHANNEL_NAME`: Pub/sub channel name (default: process_memo)
 
 #### 2. Memo Processing Pipeline (`src/processMemo.ts`)
+
 Primary processing orchestrator with two main workflows:
 
 **Simple Processing** (currently active):
+
 1. Marks memo as not pending
 2. Runs three parallel operations:
-   - Creates memo chunks with embeddings and keywords
-   - Extracts tags from memo content
-   - Generates memo summary with embeddings
+    - Creates memo chunks with embeddings and keywords
+    - Extracts tags from memo content
+    - Generates memo summary with embeddings
 
 **Knowledge Base Update** (currently disabled):
+
 - Uses an AI agent to determine conflicts with existing memos
 - Can INSERT, UPDATE, or DELETE memos to maintain consistency
 - Deletes incoming memo if no INSERT action is performed
@@ -35,45 +39,49 @@ Primary processing orchestrator with two main workflows:
 ### AI Agents
 
 #### 1. Memo Tags Agent (`src/agents/memoTagsAgent.ts`)
+
 - **Model**: GPT-4o-mini
 - **Purpose**: Extract relevant tags from memo content
 - **Features**:
-  - Can reuse existing tags from the knowledge base
-  - Zero temperature for consistent results
-  - Returns structured list of tags
+    - Can reuse existing tags from the knowledge base
+    - Zero temperature for consistent results
+    - Returns structured list of tags
 
 #### 2. Memo Summary Agent (`src/agents/memoSummaryAgent.ts`)
+
 - **Model**: GPT-4o-mini
 - **Purpose**: Generate concise summaries (max 1 paragraph)
 - **Features**:
-  - Includes document outline for structured content
-  - Zero temperature for consistent results
-  - Returns structured summary text
+    - Includes document outline for structured content
+    - Zero temperature for consistent results
+    - Returns structured summary text
 
 #### 3. Keyword Extractor Agent (`src/agents/keywordExtractorAgent.ts`)
+
 - **Model**: GPT-4o-mini
 - **Purpose**: Extract keywords from text chunks
 - **Features**:
-  - Operates on individual chunks
-  - Zero temperature for consistent results
-  - Returns structured list of keywords
+    - Operates on individual chunks
+    - Zero temperature for consistent results
+    - Returns structured list of keywords
 
 #### 4. Knowledge Base Update Agent (`src/agents/knowledgeBaseUpdateAgent/knowledgeBaseUpdateAgent.ts`)
+
 - **Model**: GPT-5-nano (via LangChain React Agent)
 - **Purpose**: Maintain knowledge base consistency by detecting and resolving conflicts
 - **Actions**: INSERT, UPDATE, DELETE
 - **Tools**:
-  - `get_memo_titles_by_tag`: Find memos by tag
-  - `get_memo_metadata`: Get memo metadata
-  - `get_memo_content`: Get full memo content
-  - `keyword_search`: Search by keywords
-  - `vector_search`: Search memo chunks by semantic similarity
-  - `summary_vector_search`: Search summaries by semantic similarity
-  - `insert_action`: Insert new memo
-  - `update_action`: Update existing memo
-  - `delete_action`: Delete memo
+    - `get_memo_titles_by_tag`: Find memos by tag
+    - `get_memo_metadata`: Get memo metadata
+    - `get_memo_content`: Get full memo content
+    - `keyword_search`: Search by keywords
+    - `vector_search`: Search memo chunks by semantic similarity
+    - `insert_action`: Insert new memo
+    - `update_action`: Update existing memo
+    - `delete_action`: Delete memo
 
 **Conflict Resolution Logic**:
+
 - Detects duplicates and removes them
 - Merges overlapping content
 - Updates outdated information
@@ -85,20 +93,23 @@ Primary processing orchestrator with two main workflows:
 #### Memo Operations (`src/agents/knowledgeBaseUpdateAgent/memoOperations.ts`)
 
 **createMemoChunks**:
+
 1. Uses @chonkiejs/core RecursiveChunker
 2. Configuration:
-   - Chunk size: 1024 characters
-   - Min characters per chunk: 128
+    - Chunk size: 1024 characters
+    - Min characters per chunk: 128
 3. For each chunk:
-   - Generates vector embedding via Voyage AI
-   - Stores chunk with embedding
-   - Extracts and stores keywords
+    - Generates vector embedding via Voyage AI
+    - Stores chunk with embedding
+    - Extracts and stores keywords
 
 **extractTagsFromMemo**:
+
 - Uses Memo Tags Agent
 - Stores tags in `skald_memotag` table
 
 **generateMemoSummary**:
+
 - Uses Memo Summary Agent
 - Generates vector embedding for summary
 - Stores summary with embedding in `skald_memosummary` table
@@ -106,12 +117,14 @@ Primary processing orchestrator with two main workflows:
 #### Database Layer (`src/db/`)
 
 **Connection** (`db.ts`):
+
 - PostgreSQL connection pool via `pg` library
 - Configuration via `DATABASE_URL` environment variable
 - Generic query execution: `runQuery<T>(query, params)`
 - Batch insert helper: `insertData<T>(table, records, options)`
 
 **Memo CRUD** (`memo.ts`):
+
 - `fetchMemo(uuid)`: Get memo with content
 - `fetchMemoChunks(uuid)`: Get all chunks for a memo
 - `createMemo(params)`: Create new memo
@@ -129,6 +142,7 @@ Primary processing orchestrator with two main workflows:
 - `keywordSearch(query)`: Search by keyword (ILIKE)
 
 **Data Models** (`models.ts`):
+
 - `Memo`: Core memo entity
 - `MemoContent`: Memo text content (1:1)
 - `MemoSummary`: AI-generated summary with embedding (1:1)
@@ -140,25 +154,30 @@ Primary processing orchestrator with two main workflows:
 ### Vector Embeddings
 
 #### Voyage AI Integration (`src/vectorEmbeddings/voyage.ts`)
+
 - **Model**: voyage-3-large
 - **Dimensions**: 2048
 - **Two input types**:
-  - `generateVectorEmbeddingForStorage`: For documents (uses `inputType: Document`)
-  - `generateVectorEmbeddingForSearch`: For queries (uses `inputType: Query`)
+    - `generateVectorEmbeddingForStorage`: For documents (uses `inputType: Document`)
+    - `generateVectorEmbeddingForSearch`: For queries (uses `inputType: Query`)
 - Requires `VOYAGE_API_KEY` environment variable
 
 #### Vector Search (`src/vectorEmbeddings/vectorSearch.ts`)
+
 Uses PostgreSQL pgvector extension with cosine distance (`<=>`):
 
 **Chunk Search**:
+
 - `memoChunkVectorSearch(vector, topK=10, threshold=0.5)`: Search chunks
 - `memoChunkVectorSearchWithMemoInfo(vector, topK=10, threshold=0.5)`: Search with memo metadata
 
 **Summary Search**:
+
 - `memoSummaryVectorSearch(vector, topK=10, threshold=0.5)`: Search summaries
 - `memoSummaryVectorSearchWithMemoInfo(vector, topK=10, threshold=0.5)`: Search with memo metadata
 
 All searches:
+
 - Use cosine distance as similarity metric
 - Lower distance = higher similarity
 - Configurable similarity threshold (default: 0.5)
@@ -167,18 +186,20 @@ All searches:
 ## Processing Flow
 
 ### Standard Memo Processing
+
 ```
 1. Redis pub/sub message received with memo_uuid
 2. processMemo() fetches memo from database
 3. Mark memo as pending=false
 4. Execute in parallel:
-   a. Create chunks ’ Generate embeddings ’ Extract keywords
-   b. Extract tags ’ Store tags
-   c. Generate summary ’ Generate embedding ’ Store summary
+   a. Create chunks ï¿½ Generate embeddings ï¿½ Extract keywords
+   b. Extract tags ï¿½ Store tags
+   c. Generate summary ï¿½ Generate embedding ï¿½ Store summary
 5. Processing complete
 ```
 
 ### Knowledge Base Update Flow (Currently Disabled)
+
 ```
 1. Redis pub/sub message received with memo_uuid
 2. processMemo() fetches memo from database
@@ -193,6 +214,7 @@ All searches:
 ## Database Schema
 
 ### Core Tables
+
 - `skald_memo`: Memo metadata (uuid, title, created_at, updated_at, content_length, content_hash, archived, pending, metadata, source, client_reference_id, expiration_date)
 - `skald_memocontent`: Memo text content (uuid, memo_id, content)
 - `skald_memosummary`: AI-generated summaries (uuid, memo_id, summary, embedding[2048])
@@ -202,6 +224,7 @@ All searches:
 - `skald_memorelationship`: Memo relationships (uuid, memo_id, related_memo_id, relationship_type)
 
 ### Vector Extensions
+
 Requires PostgreSQL with pgvector extension for vector operations.
 
 ## Environment Variables
@@ -223,27 +246,33 @@ VOYAGE_API_KEY=...
 ## Development
 
 ### Setup
+
 ```bash
 pnpm install
 ```
 
 ### Run Development Server
+
 ```bash
 pnpm dev  # tsx watch mode
 ```
 
 ### Build
+
 ```bash
 pnpm build  # Compiles TypeScript to dist/
 ```
 
 ### Run Production
+
 ```bash
 pnpm start  # Runs compiled JavaScript from dist/
 ```
 
 ### Testing
+
 Publish a test message to Redis:
+
 ```bash
 redis-cli PUBLISH process_memo '{"memo_uuid": "your-memo-uuid-here"}'
 ```
@@ -264,18 +293,23 @@ redis-cli PUBLISH process_memo '{"memo_uuid": "your-memo-uuid-here"}'
 ## Key Design Decisions
 
 ### Why Parallel Processing?
+
 The three main operations (chunking, tagging, summarization) are independent and can run concurrently, reducing total processing time.
 
 ### Why Separate Input Types for Embeddings?
+
 Voyage AI optimizes embeddings differently for documents (storage) vs queries (search), improving retrieval accuracy.
 
 ### Why RecursiveChunker?
+
 Maintains semantic coherence by respecting document structure while ensuring chunks stay within token limits.
 
 ### Why pgvector?
+
 Enables efficient similarity search directly in PostgreSQL without a separate vector database, simplifying architecture.
 
 ### Why Knowledge Base Update Agent is Disabled?
+
 Currently under development. The simpler processing flow ensures memos are processed quickly without complex conflict resolution logic.
 
 ## Future Improvements
