@@ -69,16 +69,16 @@ export const MemosTable = ({
     }
 
     return (
-        <div className="overflow-x-hidden rounded-md border">
-            <Table className="w-full">
+        <div className="rounded-md border overflow-x-auto">
+            <Table className="w-full table-fixed">
                 <TableHeader>
                     <TableRow>
-                        {showRelevanceColumn && <TableHead className="w-[10%]">Relevance</TableHead>}
-                        <TableHead className={showRelevanceColumn ? 'w-[25%]' : 'w-[30%]'}>Title</TableHead>
-                        <TableHead className={showRelevanceColumn ? 'w-[30%]' : 'w-[35%]'}>Summary</TableHead>
-                        <TableHead className="w-[10%]">Length</TableHead>
-                        <TableHead className="w-[12%]">Created</TableHead>
-                        <TableHead className="w-[8%] text-right">Actions</TableHead>
+                        {showRelevanceColumn && <TableHead className="w-[12%]">Relevance</TableHead>}
+                        <TableHead className={showRelevanceColumn ? 'w-[20%]' : 'w-[25%]'}>Title</TableHead>
+                        <TableHead className={showRelevanceColumn ? 'w-[32%]' : 'w-[38%]'}>Summary</TableHead>
+                        <TableHead className="w-[12%]">Length</TableHead>
+                        <TableHead className="w-[14%]">Created</TableHead>
+                        <TableHead className="w-[10%] text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -92,7 +92,7 @@ export const MemosTable = ({
                                 </TableCell>
                             )}
                             <TableCell className="font-medium">
-                                <div className="max-w-xs">
+                                <div className="min-w-0">
                                     <p className="truncate" title={memo.title}>
                                         {memo.title}
                                     </p>
@@ -106,8 +106,11 @@ export const MemosTable = ({
                                     )}
                                 </div>
                             </TableCell>
-                            <TableCell>
-                                <p className="line-clamp-2 text-sm text-muted-foreground" title={memo.summary}>
+                            <TableCell className="min-w-0">
+                                <p
+                                    className="line-clamp-2 text-sm text-muted-foreground break-words"
+                                    title={memo.summary}
+                                >
                                     {truncate(memo.summary, 120)}
                                 </p>
                             </TableCell>
