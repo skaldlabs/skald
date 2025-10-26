@@ -1,4 +1,12 @@
-import { domain } from '@/lib/api'
+import {
+    curlCreateMemoSnippet,
+    nodejsCreateMemoSnippet,
+    pythonCreateMemoSnippet,
+    phpCreateMemoSnippet,
+    rubyCreateMemoSnippet,
+    goCreateMemoSnippet,
+    cliCreateMemoSnippet,
+} from './createMemoCodeSnippets'
 
 interface CreateMemoParams {
     apiKey: string
@@ -17,99 +25,58 @@ export const getCreateMemoExample = (language: string, params: CreateMemoParams)
 
     const generators: Record<string, () => CreateMemoExample> = {
         curl: () => ({
-            code: `curl -X POST '${domain}/api/v1/memo/' \\
-  -H 'Authorization: Bearer ${apiKeyDisplay}' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-  "title": "${title}",
-  "content": "${content}"
-}'`,
+            code: curlCreateMemoSnippet
+                .replace('{apiKey}', apiKeyDisplay)
+                .replace('{title}', title)
+                .replace('{content}', content),
             language: 'bash',
         }),
 
         nodejs: () => ({
-            code: `const { Skald } = require('@skald-labs/skald-node');
-
-const skald = new Skald('${apiKeyDisplay}');
-
-await skald.createMemo({
-  title: '${title}',
-  content: '${content}'
-});`,
+            code: nodejsCreateMemoSnippet
+                .replace('{apiKey}', apiKeyDisplay)
+                .replace('{title}', title)
+                .replace('{content}', content),
             language: 'javascript',
         }),
 
         python: () => ({
-            code: `from skald import Skald
-
-skald = Skald('${apiKeyDisplay}')
-
-skald.create_memo({
-    'title': '${title}',
-    'content': '${content}'
-})`,
+            code: pythonCreateMemoSnippet
+                .replace('{apiKey}', apiKeyDisplay)
+                .replace('{title}', title)
+                .replace('{content}', content),
             language: 'python',
         }),
 
         php: () => ({
-            code: `<?php
-
-require 'vendor/autoload.php';
-
-use Skald\\Skald;
-use Skald\\Types\\MemoData;
-
-$skald = new Skald('${apiKeyDisplay}');
-
-$memoData = new MemoData(
-    title: '${title}',
-    content: '${content}'
-);
-
-$skald->createMemo($memoData);`,
+            code: phpCreateMemoSnippet
+                .replace('{apiKey}', apiKeyDisplay)
+                .replace('{title}', title)
+                .replace('{content}', content),
             language: 'php',
         }),
 
         ruby: () => ({
-            code: `require 'skald'
-
-skald = Skald.new('${apiKeyDisplay}')
-
-skald.create_memo(
-  title: '${title}',
-  content: '${content}'
-)`,
+            code: rubyCreateMemoSnippet
+                .replace('{apiKey}', apiKeyDisplay)
+                .replace('{title}', title)
+                .replace('{content}', content),
             language: 'ruby',
         }),
 
         go: () => ({
-            code: `package main
-
-import (
-    "context"
-    "github.com/skald-org/skald-go"
-)
-
-func main() {
-    client := skald.NewClient("${apiKeyDisplay}")
-
-    client.CreateMemo(context.Background(), skald.MemoData{
-        Title:   "${title}",
-        Content: "${content}",
-    })
-}`,
+            code: goCreateMemoSnippet
+                .replace('{apiKey}', apiKeyDisplay)
+                .replace('{title}', title)
+                .replace('{content}', content),
             language: 'go',
         }),
 
         cli: () => ({
-            code: `# Authenticate with your API key
-skald auth --api-key ${apiKeyDisplay}
-
-# Create a memo by writing content to a file
-echo "${content}" > memo.txt
-
-# Add the memo
-skald memo add --title "${title}" --file-path memo.txt`,
+            code: cliCreateMemoSnippet
+                .replace('{apiKey}', apiKeyDisplay)
+                .replace('{title}', title)
+                .replace('{content}', content),
             language: 'bash',
         }),
     }

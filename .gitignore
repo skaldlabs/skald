@@ -146,3 +146,6 @@ fetch_wikipedia_articles.py
 .coverage
 .env.prod
 .env.dev
+
+# we use pnpm
+package-lock.json 

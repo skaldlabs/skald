@@ -40,6 +40,14 @@ fi
 echo -e "${GREEN}✓ Prerequisites check passed${NC}"
 echo ""
 
+# Clean existing .env.prod file
+if [ -f .env.prod ]; then
+    echo "Removing existing .env.prod file..."
+    rm .env.prod
+    echo -e "${GREEN}✓ Cleaned existing configuration${NC}"
+    echo ""
+fi
+
 # Prompt for domain names
 echo "Domain Configuration"
 echo "--------------------"
@@ -68,11 +76,89 @@ fi
 
 echo ""
 
-# Prompt for optional API keys
-echo "Optional API Keys"
-echo "-----------------"
-read -p "Enter your VOYAGE_API_KEY (press Enter to skip): " VOYAGE_API_KEY
-read -p "Enter your OPENAI_API_KEY (press Enter to skip): " OPENAI_API_KEY
+# Prompt for LLM provider
+echo "LLM Provider Configuration"
+echo "--------------------------"
+echo "Select your LLM provider:"
+echo "  1) OpenAI"
+echo "  2) Anthropic"
+echo "  3) Local/Self-hosted"
+echo ""
+read -p "Enter your choice (1-3): " LLM_CHOICE
+
+case $LLM_CHOICE in
+    1)
+        LLM_PROVIDER="openai"
+        read -p "Enter your OPENAI_API_KEY: " OPENAI_API_KEY
+        if [ -z "$OPENAI_API_KEY" ]; then
+            echo -e "${RED}Error: OpenAI API key is required.${NC}"
+            exit 1
+        fi
+        ;;
+    2)
+        LLM_PROVIDER="anthropic"
+        read -p "Enter your ANTHROPIC_API_KEY: " ANTHROPIC_API_KEY
+        if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo -e "${RED}Error: Anthropic API key is required.${NC}"
+            exit 1
+        fi
+        ;;
+    3)
+        LLM_PROVIDER="local"
+        read -p "Enter your LOCAL_LLM_BASE_URL: " LOCAL_LLM_BASE_URL
+        if [ -z "$LOCAL_LLM_BASE_URL" ]; then
+            echo -e "${RED}Error: Local LLM base URL is required.${NC}"
+            exit 1
+        fi
+        ;;
+    *)
+        echo -e "${RED}Error: Invalid choice. Please select 1, 2, or 3.${NC}"
+        exit 1
+        ;;
+esac
+
+echo ""
+
+# Prompt for embeddings provider
+echo "Embeddings Provider Configuration"
+echo "----------------------------------"
+echo "Select your embeddings provider:"
+echo "  1) Voyage AI (recommended - https://www.voyageai.com/)"
+echo "  2) OpenAI"
+echo "  3) Local"
+echo ""
+read -p "Enter your choice (1-3): " EMBEDDING_CHOICE
+
+case $EMBEDDING_CHOICE in
+    1)
+        EMBEDDING_PROVIDER="voyage"
+        read -p "Enter your VOYAGE_API_KEY: " VOYAGE_API_KEY
+        if [ -z "$VOYAGE_API_KEY" ]; then
+            echo -e "${RED}Error: Voyage API key is required.${NC}"
+            exit 1
+        fi
+        ;;
+    2)
+        EMBEDDING_PROVIDER="openai"
+        # Only ask for OpenAI key if not already set from LLM provider
+        if [ -z "$OPENAI_API_KEY" ]; then
+            read -p "Enter your OPENAI_API_KEY: " OPENAI_API_KEY
+            if [ -z "$OPENAI_API_KEY" ]; then
+                echo -e "${RED}Error: OpenAI API key is required.${NC}"
+                exit 1
+            fi
+        else
+            echo "Using OpenAI API key from LLM provider configuration."
+        fi
+        ;;
+    3)
+        EMBEDDING_PROVIDER="local"
+        ;;
+    *)
+        echo -e "${RED}Error: Invalid choice. Please select 1, 2, or 3.${NC}"
+        exit 1
+        ;;
+esac
 
 echo ""
 
@@ -123,23 +209,10 @@ if [ "$API_DNS_OK" = false ] || [ "$UI_DNS_OK" = false ]; then
     fi
 fi
 
-# Generate random passwords/keys if not exists
+# Generate random passwords/keys
 echo "Generating secure credentials..."
-
-if [ ! -f .env.prod ]; then
-    SECRET_KEY=$(openssl rand -hex 32)
-    POSTGRES_PASSWORD=$(openssl rand -base64 32)
-else
-    # Load existing credentials
-    source .env.prod
-    if [ -z "$SECRET_KEY" ]; then
-        SECRET_KEY=$(openssl rand -hex 32)
-    fi
-    if [ -z "$POSTGRES_PASSWORD" ]; then
-        POSTGRES_PASSWORD=$(openssl rand -base64 32)
-    fi
-fi
-
+SECRET_KEY=$(openssl rand -hex 32)
+POSTGRES_PASSWORD=$(openssl rand -base64 32)
 echo -e "${GREEN}✓ Credentials generated${NC}"
 echo ""
 
@@ -159,9 +232,38 @@ POSTGRES_DB=skald2
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 
-# API Keys (optional)
-VOYAGE_API_KEY=$VOYAGE_API_KEY
-OPENAI_API_KEY=$OPENAI_API_KEY
+# LLM Provider Configuration
+LLM_PROVIDER=$LLM_PROVIDER
+EOF
+
+# Add LLM-specific keys
+if [ "$LLM_PROVIDER" = "openai" ]; then
+    echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> .env.prod
+elif [ "$LLM_PROVIDER" = "anthropic" ]; then
+    echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> .env.prod
+elif [ "$LLM_PROVIDER" = "local" ]; then
+    echo "LOCAL_LLM_BASE_URL=$LOCAL_LLM_BASE_URL" >> .env.prod
+fi
+
+# Add embeddings provider configuration
+cat >> .env.prod << EOF
+
+# Embeddings Provider Configuration
+EMBEDDING_PROVIDER=$EMBEDDING_PROVIDER
+EOF
+
+# Add embeddings-specific keys
+if [ "$EMBEDDING_PROVIDER" = "voyage" ]; then
+    echo "VOYAGE_API_KEY=$VOYAGE_API_KEY" >> .env.prod
+elif [ "$EMBEDDING_PROVIDER" = "openai" ]; then
+    # Only add if not already added by LLM provider
+    if [ "$LLM_PROVIDER" != "openai" ]; then
+        echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> .env.prod
+    fi
+fi
+
+# Add deployment flag
+cat >> .env.prod << EOF
 
 # Deployment
 IS_SELF_HOSTED_DEPLOY=true
