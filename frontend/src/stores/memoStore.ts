@@ -41,7 +41,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
     currentPage: 1,
     pageSize: 20,
 
-    fetchMemos: async (page = 1, pageSize = 20) => {
+    fetchMemos: async (page = 1, pageSize = 50) => {
         set({ loading: true, error: null, isSearchMode: false })
         const currentProject = useProjectStore.getState().currentProject
         if (!currentProject) {
@@ -103,7 +103,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
 
             // Convert search results to memo format
             const searchResultMemos: Memo[] = response.data.results.map((result) => ({
-                uuid: result.id,
+                uuid: result.uuid,
                 title: result.title,
                 summary: result.summary,
                 content_length: result.content_snippet.length,
@@ -111,10 +111,12 @@ export const useMemoStore = create<MemoState>((set, get) => ({
                 client_reference_id: null,
                 created_at: '',
                 updated_at: '',
+                distance: result.distance,
             }))
 
             set({
                 memos: searchResultMemos,
+                totalCount: searchResultMemos.length,
                 loading: false,
                 error: null,
             })

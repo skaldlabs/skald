@@ -5,6 +5,7 @@ import type { Memo, DetailedMemo, SearchMethod } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
 import { MemosSearchBar } from './MemosSearchBar'
+import { MemosSearchResultsBanner } from './MemosSearchResultsBanner'
 import { MemosTable } from './MemosTable'
 import { MemosPagination } from './MemosPagination'
 import { DeleteMemoDialog } from './DeleteMemoDialog'
@@ -28,6 +29,7 @@ export const MemosDashboard = () => {
     const setSearchQuery = useMemoStore((state) => state.setSearchQuery)
     const setSearchMethod = useMemoStore((state) => state.setSearchMethod)
     const clearSearch = useMemoStore((state) => state.clearSearch)
+    const isSearchMode = useMemoStore((state) => state.isSearchMode)
 
     const [selectedMemo, setSelectedMemo] = useState<DetailedMemo | null>(null)
     const [memoToDelete, setMemoToDelete] = useState<Memo | null>(null)
@@ -39,7 +41,9 @@ export const MemosDashboard = () => {
     }
 
     const handlePageChange = async (page: number) => {
-        await fetchMemos(page, pageSize)
+        if (!isSearchMode) {
+            await fetchMemos(page, pageSize)
+        }
     }
 
     const handleDelete = async () => {
@@ -91,7 +95,6 @@ export const MemosDashboard = () => {
                     Refresh
                 </Button>
             </PageHeader>
-
             <MemosSearchBar
                 searchQuery={searchQuery}
                 searchMethod={searchMethod}
@@ -102,10 +105,18 @@ export const MemosDashboard = () => {
                 onClear={handleClearSearch}
             />
 
+            <MemosSearchResultsBanner
+                searchQuery={searchQuery}
+                searchMethod={searchMethod}
+                totalCount={totalCount}
+                onClear={handleClearSearch}
+            />
+
             <MemosTable
                 memos={memos}
                 loading={loading}
                 searchQuery={searchQuery}
+                searchMethod={searchMethod}
                 onViewMemo={handleViewMemo}
                 onDeleteMemo={setMemoToDelete}
             />
