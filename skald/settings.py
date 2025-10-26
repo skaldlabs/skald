@@ -159,20 +159,7 @@ TEMPLATES = [
     },
 ]
 
-if DEBUG:
-    ALLOWED_HOSTS = ["*"]
-else:
-    if IS_SELF_HOSTED_DEPLOY:
-        ALLOWED_HOSTS = [
-            API_URL.rstrip("/").replace("https://", ""),
-        ]
-    else:
-        ALLOWED_HOSTS = [
-            "app.useskald.com",
-            "api.useskald.com",
-            "platform.useskald.com",
-        ]
-
+ALLOWED_HOSTS = ["*"]
 
 WSGI_APPLICATION = "skald.wsgi.application"
 
