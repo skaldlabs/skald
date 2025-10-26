@@ -49,9 +49,10 @@ DEBUG = str_to_bool(os.getenv("DEBUG", False))
 IS_SELF_HOSTED_DEPLOY = str_to_bool(os.getenv("IS_SELF_HOSTED_DEPLOY", True))
 
 
-if not DEBUG:
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if not (DEBUG or IS_SELF_HOSTED_DEPLOY) and SENTRY_DSN:
     sentry_sdk.init(
-        dsn="https://d9311bc8f81f566a5bcedac72e22427d@o4509092419076096.ingest.de.sentry.io/4510188083216464",
+        dsn=SENTRY_DSN,
         # Add data like request headers and IP for users,
         # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
         send_default_pii=True,

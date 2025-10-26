@@ -1,5 +1,3 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework import serializers, status, views
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework.response import Response

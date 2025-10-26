@@ -99,3 +99,5 @@ if (EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
 } else if (EMBEDDING_PROVIDER === 'local' && !EMBEDDING_SERVICE_URL) {
     console.warn('EMBEDDING_SERVICE_URL not set for local provider')
 }
+
+export const SENTRY_DSN = process.env.SENTRY_DSN

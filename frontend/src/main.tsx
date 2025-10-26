@@ -12,7 +12,7 @@ const isLocalhost = window.location.hostname === 'localhost'
 
 if (!isLocalhost && !isSelfHostedDeploy) {
     Sentry.init({
-        dsn: 'https://b253885bf8381ce9188e516a32437dd6@o4509092419076096.ingest.de.sentry.io/4509092455448656',
+        dsn: 'https://7354207998ee26186ca556d398da8f0a@o4509092419076096.ingest.de.sentry.io/4510255948496976',
     })
 }
 

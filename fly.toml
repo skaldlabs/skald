@@ -20,9 +20,7 @@ console_command = '/code/manage.py shell'
   APP_LOG_LEVEL = 'DEBUG'
   LANGSMITH_TRACING = 'true'
   INTER_PROCESS_QUEUE = 'sqs'
-  SQS_QUEUE_URL='https://sqs.us-east-2.amazonaws.com/295993620487/SkaldMemoProcessingQueue'
   LANGSMITH_ENDPOINT='https://api.smith.langchain.com'
-  LANGSMITH_PROJECT='pr-abandoned-corporatism-94'
 
 
 [http_service]
