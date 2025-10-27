@@ -2,10 +2,12 @@
 
 set -e
 
-# Run migrations
 python manage.py migrate
 
-gunicorn --workers=2 \
+# TODO: make the number of workers configurable based on the number of cores
+gunicorn -k gthread \
+  --workers=2 \
+  --threads=8 \
   --bind 0.0.0.0:8000 \
   --forwarded-allow-ips='*' \
   --access-logfile - \
