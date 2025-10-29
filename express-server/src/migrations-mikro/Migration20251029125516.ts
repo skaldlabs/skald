@@ -1,15 +1,19 @@
 import { Migration } from '@mikro-orm/migrations'
 
-export class Migration20251029123400 extends Migration {
+export class Migration20251029125516 extends Migration {
     override async up(): Promise<void> {
         this.addSql(
             `create table "skald_plan" ("id" bigserial primary key, "slug" varchar(50) not null, "name" varchar(100) not null, "stripe_price_id" varchar(255) null, "monthly_price" numeric(10,2) not null, "memo_operations_limit" int null, "chat_queries_limit" int null, "projects_limit" int null, "features" jsonb not null, "is_active" boolean not null, "is_default" boolean not null, "created_at" timestamptz not null, "updated_at" timestamptz not null);`
         )
-        this.addSql(`create index "skald_plan_slug_0a0cac0f_like" on "skald_plan" ("slug");`)
         this.addSql(`alter table "skald_plan" add constraint "skald_plan_slug_key" unique ("slug");`)
-        this.addSql(`create index "skald_plan_stripe_price_id_3080b1eb_like" on "skald_plan" ("stripe_price_id");`)
         this.addSql(
             `alter table "skald_plan" add constraint "skald_plan_stripe_price_id_key" unique ("stripe_price_id");`
+        )
+        this.addSql(
+            `CREATE INDEX skald_plan_stripe_price_id_3080b1eb_like ON public.skald_plan USING btree (stripe_price_id varchar_pattern_ops);;`
+        )
+        this.addSql(
+            `CREATE INDEX skald_plan_slug_0a0cac0f_like ON public.skald_plan USING btree (slug varchar_pattern_ops);;`
         )
 
         this.addSql(
@@ -20,19 +24,21 @@ export class Migration20251029123400 extends Migration {
             `alter table "skald_stripeevent" add constraint "skald_stripeevent_stripe_event_id_key" unique ("stripe_event_id");`
         )
         this.addSql(
-            `create index "skald_stripeevent_stripe_event_id_5dfbba10_like" on "skald_stripeevent" ("stripe_event_id");`
+            `CREATE INDEX skald_stripeevent_stripe_event_id_5dfbba10_like ON public.skald_stripeevent USING btree (stripe_event_id varchar_pattern_ops);;`
         )
         this.addSql(`create index "skald_strip_event_t_1ffd58_idx" on "skald_stripeevent" ("event_type", "processed");`)
 
         this.addSql(
             `create table "skald_user" ("id" bigserial primary key, "password" varchar(128) not null, "last_login" timestamptz null, "is_superuser" boolean not null, "first_name" varchar(150) not null, "last_name" varchar(150) not null, "is_staff" boolean not null, "is_active" boolean not null, "date_joined" timestamptz not null, "email" varchar(254) not null, "email_verified" boolean not null, "name" varchar(255) not null, "default_organization_id" uuid null, "current_project_id" uuid null);`
         )
-        this.addSql(`create index "skald_user_email_16347cfd_like" on "skald_user" ("email");`)
         this.addSql(`alter table "skald_user" add constraint "skald_user_email_key" unique ("email");`)
         this.addSql(
             `create index "skald_user_default_organization_id_0d57be46" on "skald_user" ("default_organization_id");`
         )
         this.addSql(`create index "skald_user_current_project_id_ed8d14d2" on "skald_user" ("current_project_id");`)
+        this.addSql(
+            `CREATE INDEX skald_user_email_16347cfd_like ON public.skald_user USING btree (email varchar_pattern_ops);;`
+        )
 
         this.addSql(
             `create table "skald_organization" ("uuid" uuid not null, "created_at" timestamptz not null, "updated_at" timestamptz not null, "name" varchar(255) not null, "owner_id" bigint not null, constraint "skald_organization_pkey" primary key ("uuid"));`
@@ -62,16 +68,16 @@ export class Migration20251029123400 extends Migration {
         this.addSql(
             `create table "skald_projectapikey" ("api_key_hash" varchar(255) not null, "first_12_digits" varchar(12) not null, "created_at" timestamptz not null, "project_id" uuid not null, constraint "skald_projectapikey_pkey" primary key ("api_key_hash"));`
         )
-        this.addSql(
-            `create index "skald_projectapikey_api_key_hash_a9fcb967_like" on "skald_projectapikey" ("api_key_hash");`
-        )
         this.addSql(`create index "skald_projectapikey_project_id_398f2e74" on "skald_projectapikey" ("project_id");`)
+        this.addSql(
+            `CREATE INDEX skald_projectapikey_api_key_hash_a9fcb967_like ON public.skald_projectapikey USING btree (api_key_hash varchar_pattern_ops);;`
+        )
 
         this.addSql(
             `create table "skald_memo" ("uuid" uuid not null, "created_at" timestamptz not null, "updated_at" timestamptz not null, "title" varchar(255) not null, "content_length" int not null, "metadata" jsonb not null, "expiration_date" timestamptz null, "archived" boolean not null, "content_hash" varchar(255) not null, "pending" boolean not null, "type" varchar(255) null, "source" varchar(255) null, "client_reference_id" varchar(255) null, "project_id" uuid not null, constraint "skald_memo_pkey" primary key ("uuid"));`
         )
-        this.addSql(`create index "skald_memo_metadat_9c96be_gin" on "skald_memo" ("metadata");`)
         this.addSql(`create index "skald_memo_project_id_b4c56bf7" on "skald_memo" ("project_id");`)
+        this.addSql(`CREATE INDEX skald_memo_metadat_9c96be_gin ON public.skald_memo USING gin (metadata);;`)
         this.addSql(`create index "skald_memo_project_88bd2e_idx" on "skald_memo" ("project_id", "source");`)
         this.addSql(
             `create index "skald_memo_project_8101aa_idx" on "skald_memo" ("project_id", "client_reference_id");`
@@ -133,13 +139,13 @@ export class Migration20251029123400 extends Migration {
             `alter table "skald_organizationsubscription" add constraint "skald_organizationsubscription_stripe_schedule_id_key" unique ("stripe_schedule_id");`
         )
         this.addSql(
-            `create index "skald_organizationsubscription_stripe_customer_id_aa0de48c_like" on "skald_organizationsubscription" ("stripe_customer_id");`
+            `CREATE INDEX skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like ON public.skald_organizationsubscription USING btree (stripe_schedule_id varchar_pattern_ops);;`
         )
         this.addSql(
-            `create index "skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like" on "skald_organizationsubscription" ("stripe_subscription_id");`
+            `CREATE INDEX skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like ON public.skald_organizationsubscription USING btree (stripe_subscription_id varchar_pattern_ops);;`
         )
         this.addSql(
-            `create index "skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like" on "skald_organizationsubscription" ("stripe_schedule_id");`
+            `CREATE INDEX skald_organizationsubscription_stripe_customer_id_aa0de48c_like ON public.skald_organizationsubscription USING btree (stripe_customer_id varchar_pattern_ops);;`
         )
 
         this.addSql(
@@ -179,9 +185,11 @@ export class Migration20251029123400 extends Migration {
         this.addSql(
             `create table "authtoken_token" ("key" varchar(40) not null, "created" timestamptz not null, "user_id" bigint not null, constraint "authtoken_token_pkey" primary key ("key"));`
         )
-        this.addSql(`create index "authtoken_token_key_10f0b77e_like" on "authtoken_token" ("key");`)
         this.addSql(
             `alter table "authtoken_token" add constraint "authtoken_token_user_id_key" unique ("user_id") deferrable initially deferred;`
+        )
+        this.addSql(
+            `CREATE INDEX authtoken_token_key_10f0b77e_like ON public.authtoken_token USING btree (key varchar_pattern_ops);;`
         )
 
         this.addSql(

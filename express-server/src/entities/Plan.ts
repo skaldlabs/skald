@@ -1,11 +1,21 @@
-import { Entity, type Opt, PrimaryKey, Property } from '@mikro-orm/core'
+import { Entity, Index, type Opt, PrimaryKey, Property } from '@mikro-orm/core'
 
 @Entity({ tableName: 'skald_plan' })
+@Index({
+    expression:
+        'CREATE INDEX skald_plan_slug_0a0cac0f_like ON public.skald_plan USING btree (slug varchar_pattern_ops);',
+    name: 'skald_plan_slug_0a0cac0f_like',
+})
+@Index({
+    expression:
+        'CREATE INDEX skald_plan_stripe_price_id_3080b1eb_like ON public.skald_plan USING btree (stripe_price_id varchar_pattern_ops);',
+    name: 'skald_plan_stripe_price_id_3080b1eb_like',
+})
 export class Plan {
     @PrimaryKey({ type: 'bigint', autoincrement: true })
     id!: bigint & Opt
 
-    @Property({ length: 50, index: 'skald_plan_slug_0a0cac0f_like', unique: 'skald_plan_slug_key' })
+    @Property({ length: 50, unique: 'skald_plan_slug_key' })
     slug!: string
 
     @Property({ length: 100 })
@@ -13,7 +23,6 @@ export class Plan {
 
     @Property({
         nullable: true,
-        index: 'skald_plan_stripe_price_id_3080b1eb_like',
         unique: 'skald_plan_stripe_price_id_key',
     })
     stripe_price_id?: string

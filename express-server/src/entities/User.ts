@@ -1,8 +1,13 @@
-import { DeferMode, Entity, ManyToOne, type Opt, PrimaryKey, Property } from '@mikro-orm/core'
+import { DeferMode, Entity, Index, ManyToOne, type Opt, PrimaryKey, Property } from '@mikro-orm/core'
 import { Organization } from './Organization'
 import { Project } from './Project'
 
 @Entity({ tableName: 'skald_user' })
+@Index({
+    expression:
+        'CREATE INDEX skald_user_email_16347cfd_like ON public.skald_user USING btree (email varchar_pattern_ops);',
+    name: 'skald_user_email_16347cfd_like',
+})
 export class User {
     @PrimaryKey({ type: 'bigint', autoincrement: true })
     id!: bigint & Opt
@@ -31,7 +36,7 @@ export class User {
     @Property()
     date_joined!: Date
 
-    @Property({ length: 254, index: 'skald_user_email_16347cfd_like', unique: 'skald_user_email_key' })
+    @Property({ length: 254, unique: 'skald_user_email_key' })
     email!: string
 
     @Property()

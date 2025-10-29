@@ -778,7 +778,7 @@ ALTER TABLE ONLY public.skald_user
 -- Name: authtoken_token_key_10f0b77e_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX authtoken_token_key_10f0b77e_like ON public.authtoken_token USING btree (key);
+CREATE INDEX authtoken_token_key_10f0b77e_like ON public.authtoken_token USING btree (key varchar_pattern_ops);
 
 
 --
@@ -792,7 +792,7 @@ CREATE INDEX skald_email_code_27ca5e_idx ON public.skald_emailverificationcode U
 -- Name: skald_memo_metadat_9c96be_gin; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_memo_metadat_9c96be_gin ON public.skald_memo USING btree (metadata);
+CREATE INDEX skald_memo_metadat_9c96be_gin ON public.skald_memo USING gin (metadata);
 
 
 --
@@ -939,7 +939,7 @@ CREATE INDEX skald_organizationmembershipinvite_organization_id_f922971e ON publ
 -- Name: skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like ON public.skald_organizationsubscription USING btree (stripe_subscription_id);
+CREATE INDEX skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like ON public.skald_organizationsubscription USING btree (stripe_subscription_id varchar_pattern_ops);
 
 
 --
@@ -960,28 +960,28 @@ CREATE INDEX skald_organizationsubscription_scheduled_plan_id_607e5f4d ON public
 -- Name: skald_organizationsubscription_stripe_customer_id_aa0de48c_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_organizationsubscription_stripe_customer_id_aa0de48c_like ON public.skald_organizationsubscription USING btree (stripe_customer_id);
+CREATE INDEX skald_organizationsubscription_stripe_customer_id_aa0de48c_like ON public.skald_organizationsubscription USING btree (stripe_customer_id varchar_pattern_ops);
 
 
 --
 -- Name: skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like ON public.skald_organizationsubscription USING btree (stripe_schedule_id);
+CREATE INDEX skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like ON public.skald_organizationsubscription USING btree (stripe_schedule_id varchar_pattern_ops);
 
 
 --
 -- Name: skald_plan_slug_0a0cac0f_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_plan_slug_0a0cac0f_like ON public.skald_plan USING btree (slug);
+CREATE INDEX skald_plan_slug_0a0cac0f_like ON public.skald_plan USING btree (slug varchar_pattern_ops);
 
 
 --
 -- Name: skald_plan_stripe_price_id_3080b1eb_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_plan_stripe_price_id_3080b1eb_like ON public.skald_plan USING btree (stripe_price_id);
+CREATE INDEX skald_plan_stripe_price_id_3080b1eb_like ON public.skald_plan USING btree (stripe_price_id varchar_pattern_ops);
 
 
 --
@@ -1002,7 +1002,7 @@ CREATE INDEX skald_project_owner_id_5fc4828a ON public.skald_project USING btree
 -- Name: skald_projectapikey_api_key_hash_a9fcb967_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_projectapikey_api_key_hash_a9fcb967_like ON public.skald_projectapikey USING btree (api_key_hash);
+CREATE INDEX skald_projectapikey_api_key_hash_a9fcb967_like ON public.skald_projectapikey USING btree (api_key_hash varchar_pattern_ops);
 
 
 --
@@ -1030,7 +1030,7 @@ CREATE INDEX skald_strip_stripe__efbcc3_idx ON public.skald_stripeevent USING bt
 -- Name: skald_stripeevent_stripe_event_id_5dfbba10_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_stripeevent_stripe_event_id_5dfbba10_like ON public.skald_stripeevent USING btree (stripe_event_id);
+CREATE INDEX skald_stripeevent_stripe_event_id_5dfbba10_like ON public.skald_stripeevent USING btree (stripe_event_id varchar_pattern_ops);
 
 
 --
@@ -1072,7 +1072,7 @@ CREATE INDEX skald_user_default_organization_id_0d57be46 ON public.skald_user US
 -- Name: skald_user_email_16347cfd_like; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX skald_user_email_16347cfd_like ON public.skald_user USING btree (email);
+CREATE INDEX skald_user_email_16347cfd_like ON public.skald_user USING btree (email varchar_pattern_ops);
 
 
 --

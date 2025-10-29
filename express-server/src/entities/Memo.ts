@@ -4,6 +4,10 @@ import { Project } from './Project'
 @Entity({ tableName: 'skald_memo' })
 @Index({ name: 'skald_memo_project_8101aa_idx', properties: ['project', 'client_reference_id'] })
 @Index({ name: 'skald_memo_project_88bd2e_idx', properties: ['project', 'source'] })
+@Index({
+    expression: 'CREATE INDEX skald_memo_metadat_9c96be_gin ON public.skald_memo USING gin (metadata);',
+    name: 'skald_memo_metadat_9c96be_gin',
+})
 export class Memo {
     @PrimaryKey({ type: 'uuid' })
     uuid!: string
@@ -20,7 +24,7 @@ export class Memo {
     @Property()
     contentLength!: number
 
-    @Property({ type: 'json', index: 'skald_memo_metadat_9c96be_gin' })
+    @Property({ type: 'json' })
     metadata!: any
 
     @Property({ nullable: true })

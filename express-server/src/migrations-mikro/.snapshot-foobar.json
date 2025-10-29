@@ -135,14 +135,6 @@
                 {
                     "columnNames": ["slug"],
                     "composite": false,
-                    "keyName": "skald_plan_slug_0a0cac0f_like",
-                    "constraint": false,
-                    "primary": false,
-                    "unique": false
-                },
-                {
-                    "columnNames": ["slug"],
-                    "composite": false,
                     "keyName": "skald_plan_slug_key",
                     "constraint": true,
                     "primary": false,
@@ -151,18 +143,28 @@
                 {
                     "columnNames": ["stripe_price_id"],
                     "composite": false,
-                    "keyName": "skald_plan_stripe_price_id_3080b1eb_like",
-                    "constraint": false,
-                    "primary": false,
-                    "unique": false
-                },
-                {
-                    "columnNames": ["stripe_price_id"],
-                    "composite": false,
                     "keyName": "skald_plan_stripe_price_id_key",
                     "constraint": true,
                     "primary": false,
                     "unique": true
+                },
+                {
+                    "keyName": "skald_plan_stripe_price_id_3080b1eb_like",
+                    "columnNames": [],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_plan_stripe_price_id_3080b1eb_like ON public.skald_plan USING btree (stripe_price_id varchar_pattern_ops);"
+                },
+                {
+                    "keyName": "skald_plan_slug_0a0cac0f_like",
+                    "columnNames": [],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_plan_slug_0a0cac0f_like ON public.skald_plan USING btree (slug varchar_pattern_ops);"
                 },
                 {
                     "keyName": "skald_plan_pkey",
@@ -277,11 +279,12 @@
                 },
                 {
                     "keyName": "skald_stripeevent_stripe_event_id_5dfbba10_like",
-                    "columnNames": ["stripe_event_id"],
+                    "columnNames": [],
                     "composite": false,
                     "constraint": false,
                     "primary": false,
-                    "unique": false
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_stripeevent_stripe_event_id_5dfbba10_like ON public.skald_stripeevent USING btree (stripe_event_id varchar_pattern_ops);"
                 },
                 {
                     "keyName": "skald_strip_event_t_1ffd58_idx",
@@ -446,14 +449,6 @@
                 {
                     "columnNames": ["email"],
                     "composite": false,
-                    "keyName": "skald_user_email_16347cfd_like",
-                    "constraint": false,
-                    "primary": false,
-                    "unique": false
-                },
-                {
-                    "columnNames": ["email"],
-                    "composite": false,
                     "keyName": "skald_user_email_key",
                     "constraint": true,
                     "primary": false,
@@ -474,6 +469,15 @@
                     "constraint": false,
                     "primary": false,
                     "unique": false
+                },
+                {
+                    "keyName": "skald_user_email_16347cfd_like",
+                    "columnNames": [],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_user_email_16347cfd_like ON public.skald_user USING btree (email varchar_pattern_ops);"
                 },
                 {
                     "keyName": "skald_user_pkey",
@@ -897,20 +901,21 @@
             "schema": "public",
             "indexes": [
                 {
-                    "columnNames": ["api_key_hash"],
-                    "composite": false,
-                    "keyName": "skald_projectapikey_api_key_hash_a9fcb967_like",
-                    "constraint": false,
-                    "primary": false,
-                    "unique": false
-                },
-                {
                     "columnNames": ["project_id"],
                     "composite": false,
                     "keyName": "skald_projectapikey_project_id_398f2e74",
                     "constraint": false,
                     "primary": false,
                     "unique": false
+                },
+                {
+                    "keyName": "skald_projectapikey_api_key_hash_a9fcb967_like",
+                    "columnNames": [],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_projectapikey_api_key_hash_a9fcb967_like ON public.skald_projectapikey USING btree (api_key_hash varchar_pattern_ops);"
                 },
                 {
                     "keyName": "skald_projectapikey_pkey",
@@ -1076,20 +1081,21 @@
             "schema": "public",
             "indexes": [
                 {
-                    "columnNames": ["metadata"],
-                    "composite": false,
-                    "keyName": "skald_memo_metadat_9c96be_gin",
-                    "constraint": false,
-                    "primary": false,
-                    "unique": false
-                },
-                {
                     "columnNames": ["project_id"],
                     "composite": false,
                     "keyName": "skald_memo_project_id_b4c56bf7",
                     "constraint": false,
                     "primary": false,
                     "unique": false
+                },
+                {
+                    "keyName": "skald_memo_metadat_9c96be_gin",
+                    "columnNames": [],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_memo_metadat_9c96be_gin ON public.skald_memo USING gin (metadata);"
                 },
                 {
                     "keyName": "skald_memo_project_88bd2e_idx",
@@ -1774,28 +1780,31 @@
                     "unique": true
                 },
                 {
-                    "keyName": "skald_organizationsubscription_stripe_customer_id_aa0de48c_like",
-                    "columnNames": ["stripe_customer_id"],
+                    "keyName": "skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like",
+                    "columnNames": [],
                     "composite": false,
                     "constraint": false,
                     "primary": false,
-                    "unique": false
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like ON public.skald_organizationsubscription USING btree (stripe_schedule_id varchar_pattern_ops);"
                 },
                 {
                     "keyName": "skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like",
-                    "columnNames": ["stripe_subscription_id"],
+                    "columnNames": [],
                     "composite": false,
                     "constraint": false,
                     "primary": false,
-                    "unique": false
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like ON public.skald_organizationsubscription USING btree (stripe_subscription_id varchar_pattern_ops);"
                 },
                 {
-                    "keyName": "skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like",
-                    "columnNames": ["stripe_schedule_id"],
+                    "keyName": "skald_organizationsubscription_stripe_customer_id_aa0de48c_like",
+                    "columnNames": [],
                     "composite": false,
                     "constraint": false,
                     "primary": false,
-                    "unique": false
+                    "unique": false,
+                    "expression": "CREATE INDEX skald_organizationsubscription_stripe_customer_id_aa0de48c_like ON public.skald_organizationsubscription USING btree (stripe_customer_id varchar_pattern_ops);"
                 },
                 {
                     "keyName": "skald_organizationsubscription_pkey",
@@ -2205,14 +2214,6 @@
             "schema": "public",
             "indexes": [
                 {
-                    "columnNames": ["key"],
-                    "composite": false,
-                    "keyName": "authtoken_token_key_10f0b77e_like",
-                    "constraint": false,
-                    "primary": false,
-                    "unique": false
-                },
-                {
                     "columnNames": ["user_id"],
                     "composite": false,
                     "keyName": "authtoken_token_user_id_key",
@@ -2220,6 +2221,15 @@
                     "primary": false,
                     "unique": true,
                     "deferMode": "deferred"
+                },
+                {
+                    "keyName": "authtoken_token_key_10f0b77e_like",
+                    "columnNames": [],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false,
+                    "expression": "CREATE INDEX authtoken_token_key_10f0b77e_like ON public.authtoken_token USING btree (key varchar_pattern_ops);"
                 },
                 {
                     "keyName": "authtoken_token_pkey",

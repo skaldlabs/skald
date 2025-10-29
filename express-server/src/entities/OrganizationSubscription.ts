@@ -3,11 +3,25 @@ import { Organization } from './Organization'
 import { Plan } from './Plan'
 
 @Entity({ tableName: 'skald_organizationsubscription' })
+@Index({
+    expression:
+        'CREATE INDEX skald_organizationsubscription_stripe_customer_id_aa0de48c_like ON public.skald_organizationsubscription USING btree (stripe_customer_id varchar_pattern_ops);',
+    name: 'skald_organizationsubscription_stripe_customer_id_aa0de48c_like',
+})
+@Index({
+    expression:
+        'CREATE INDEX skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like ON public.skald_organizationsubscription USING btree (stripe_subscription_id varchar_pattern_ops);',
+    name: 'skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like',
+})
+@Index({
+    expression:
+        'CREATE INDEX skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like ON public.skald_organizationsubscription USING btree (stripe_schedule_id varchar_pattern_ops);',
+    name: 'skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like',
+})
 export class OrganizationSubscription {
     @PrimaryKey({ type: 'bigint', autoincrement: true })
     id!: bigint & Opt
 
-    @Index({ name: 'skald_organizationsubscription_stripe_customer_id_aa0de48c_like' })
     @Property({
         nullable: true,
         index: 'skald_organ_stripe__787c7f_idx',
@@ -15,7 +29,6 @@ export class OrganizationSubscription {
     })
     stripe_customer_id?: string
 
-    @Index({ name: 'skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like' })
     @Property({
         nullable: true,
         index: 'skald_organ_stripe__4bbed4_idx',
@@ -76,7 +89,6 @@ export class OrganizationSubscription {
     })
     scheduled_plan?: Plan
 
-    @Index({ name: 'skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like' })
     @Property({
         nullable: true,
         index: 'skald_organ_stripe__fb7b46_idx',
