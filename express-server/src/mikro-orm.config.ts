@@ -10,6 +10,7 @@ export default defineConfig({
     host: 'localhost',
     port: 5432,
     extensions: [Migrator],
+    // debug: ['query', 'query-params'],
     migrations: {
         path: './src/migrations', // path to migration folder
         pathTs: './src/migrations', // path to TS migration files

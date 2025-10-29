@@ -4,7 +4,7 @@ import { EmbeddingService } from '../../services/embeddingService'
 import { RerankService } from '../../services/rerankService'
 import { memoChunkVectorSearch } from '../../embeddings/vectorSearch'
 import { VECTOR_SEARCH_TOP_K, POST_RERANK_TOP_K } from '../../settings'
-import { DI } from '../../di'
+import { getTitleAndSummaryForMemoList } from '../../queries/memo'
 
 interface RerankResult {
     index: number
@@ -15,28 +15,15 @@ interface RerankResult {
 async function chunkVectorSearch(query: string, project: Project, filters?: MemoFilter[]): Promise<string[]> {
     const embeddingVector = await EmbeddingService.generateEmbedding(query, 'search')
     const chunkResults = await memoChunkVectorSearch(project, embeddingVector, VECTOR_SEARCH_TOP_K, 0.55, filters)
-    const relevantMemoUuids = Array.from(new Set(chunkResults.map((c) => c.chunk.memo)))
+    const relevantMemoUuids = Array.from(new Set(chunkResults.map((c) => c.chunk.memo_uuid)))
 
-    const memoProperties = await DI.em.getConnection().execute<{ uuid: string; title: string; summary: string }[]>(
-        `
-        SELECT skald_memo.uuid, skald_memo.title, skald_memosummary.summary
-        FROM skald_memo
-        JOIN skald_memosummary ON skald_memo.uuid = skald_memosummary.memo_id
-        WHERE skald_memo.project_id = ? AND skald_memo.uuid IN (?)
-    `,
-        [project.uuid, relevantMemoUuids]
-    )
-
-    const memoPropertiesMap = new Map<string, { title: string; summary: string }>()
-    for (const memoProperty of memoProperties) {
-        memoPropertiesMap.set(memoProperty.uuid, { title: memoProperty.title, summary: memoProperty.summary })
-    }
+    const memoPropertiesMap = await getTitleAndSummaryForMemoList(project.uuid, relevantMemoUuids)
 
     const rerankData: string[] = []
     for (const chunkResult of chunkResults) {
         const chunk = chunkResult.chunk
 
-        const memo = memoPropertiesMap.get(chunk.memo.uuid)
+        const memo = memoPropertiesMap.get(chunk.memo_uuid)
 
         const rerankSnippet = `Title: ${memo?.title}\n\nFull content summary: ${memo?.summary}\n\nChunk content: ${chunk.chunk_content}\n\n`
         rerankData.push(rerankSnippet)
