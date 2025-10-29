@@ -8,6 +8,7 @@ import { Memo } from './entities/Memo'
 import { User } from './entities/User'
 import { AuthToken } from './entities/AuthToken'
 import { chat } from './api/chat'
+import { Project } from './entities/Project'
 
 export const DI = {} as {
     server: http.Server
@@ -16,6 +17,7 @@ export const DI = {} as {
     memos: EntityRepository<Memo>
     users: EntityRepository<User>
     authTokens: EntityRepository<AuthToken>
+    projects: EntityRepository<Project>
 }
 
 const app = express()
@@ -28,6 +30,7 @@ export const init = (async () => {
     DI.memos = DI.orm.em.getRepository(Memo)
     DI.users = DI.orm.em.getRepository(User)
     DI.authTokens = DI.orm.em.getRepository(AuthToken)
+    DI.projects = DI.orm.em.getRepository(Project)
 
     app.use(express.json())
     app.use(userMiddleware())

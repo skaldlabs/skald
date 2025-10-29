@@ -32,7 +32,7 @@ export const chat = async (req: Request, res: Response) => {
     // Get the first project from the database as a placeholder
     let project
     try {
-        project = await DI.em.findOne('Project', {})
+        project = await DI.projects.findOne('27e4cdfd-6678-4853-9432-f9eab38c7956')
         if (!project) {
             return res.status(404).json({ error: 'No project found. Please create a project first.' })
         }

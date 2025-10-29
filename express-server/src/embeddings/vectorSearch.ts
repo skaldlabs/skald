@@ -15,7 +15,6 @@ export interface MemoChunkWithDistance {
 function buildFilterConditions(filters?: MemoFilter[]): { whereConditions: string[]; params: any[] } {
     const whereConditions: string[] = []
     const params: any[] = []
-    let paramIndex = 1
 
     if (!filters || filters.length === 0) {
         return { whereConditions, params }
@@ -27,76 +26,61 @@ function buildFilterConditions(filters?: MemoFilter[]): { whereConditions: strin
             const tagSubquery = `EXISTS (
                 SELECT 1 FROM skald_memotag
                 WHERE skald_memotag.memo_id = skald_memo.uuid
-                AND skald_memotag.tag = ANY($${paramIndex})
+                AND skald_memotag.tag = ANY(?)
             )`
             whereConditions.push(tagSubquery)
             params.push(filter.value)
-            paramIndex++
         } else if (filter.filter_type === 'native_field') {
             // Native fields like title, source, client_reference_id
             const fieldPath = `skald_memo.${filter.field}`
 
             if (filter.operator === 'eq') {
-                whereConditions.push(`${fieldPath} = $${paramIndex}`)
+                whereConditions.push(`${fieldPath} = ?`)
                 params.push(filter.value)
-                paramIndex++
             } else if (filter.operator === 'neq') {
-                whereConditions.push(`${fieldPath} != $${paramIndex}`)
+                whereConditions.push(`${fieldPath} != ?`)
                 params.push(filter.value)
-                paramIndex++
             } else if (filter.operator === 'contains') {
-                whereConditions.push(`${fieldPath} ILIKE $${paramIndex}`)
+                whereConditions.push(`${fieldPath} ILIKE ?`)
                 params.push(`%${filter.value}%`)
-                paramIndex++
             } else if (filter.operator === 'startswith') {
-                whereConditions.push(`${fieldPath} LIKE $${paramIndex}`)
+                whereConditions.push(`${fieldPath} LIKE ?`)
                 params.push(`${filter.value}%`)
-                paramIndex++
             } else if (filter.operator === 'endswith') {
-                whereConditions.push(`${fieldPath} LIKE $${paramIndex}`)
+                whereConditions.push(`${fieldPath} LIKE ?`)
                 params.push(`%${filter.value}`)
-                paramIndex++
             } else if (filter.operator === 'in') {
-                whereConditions.push(`${fieldPath} = ANY($${paramIndex})`)
+                whereConditions.push(`${fieldPath} = ANY(?)`)
                 params.push(filter.value)
-                paramIndex++
             } else if (filter.operator === 'not_in') {
-                whereConditions.push(`${fieldPath} != ALL($${paramIndex})`)
+                whereConditions.push(`${fieldPath} != ALL(?)`)
                 params.push(filter.value)
-                paramIndex++
             }
         } else if (filter.filter_type === 'custom_metadata') {
             // Custom metadata fields
             const metadataPath = `skald_memo.metadata->>'${filter.field}'`
 
             if (filter.operator === 'eq') {
-                whereConditions.push(`${metadataPath} = $${paramIndex}`)
+                whereConditions.push(`${metadataPath} = ?`)
                 params.push(filter.value)
-                paramIndex++
             } else if (filter.operator === 'neq') {
-                whereConditions.push(`${metadataPath} != $${paramIndex}`)
+                whereConditions.push(`${metadataPath} != ?`)
                 params.push(filter.value)
-                paramIndex++
             } else if (filter.operator === 'contains') {
-                whereConditions.push(`${metadataPath} ILIKE $${paramIndex}`)
+                whereConditions.push(`${metadataPath} ILIKE ?`)
                 params.push(`%${filter.value}%`)
-                paramIndex++
             } else if (filter.operator === 'startswith') {
-                whereConditions.push(`${metadataPath} LIKE $${paramIndex}`)
+                whereConditions.push(`${metadataPath} LIKE ?`)
                 params.push(`${filter.value}%`)
-                paramIndex++
             } else if (filter.operator === 'endswith') {
-                whereConditions.push(`${metadataPath} LIKE $${paramIndex}`)
+                whereConditions.push(`${metadataPath} LIKE ?`)
                 params.push(`%${filter.value}`)
-                paramIndex++
             } else if (filter.operator === 'in') {
-                whereConditions.push(`${metadataPath} = ANY($${paramIndex})`)
+                whereConditions.push(`${metadataPath} = ANY(?)`)
                 params.push(filter.value)
-                paramIndex++
             } else if (filter.operator === 'not_in') {
-                whereConditions.push(`${metadataPath} != ALL($${paramIndex})`)
+                whereConditions.push(`${metadataPath} != ALL(?)`)
                 params.push(filter.value)
-                paramIndex++
             }
         }
     }
@@ -115,15 +99,12 @@ export const memoChunkVectorSearch = async (
     filters?: MemoFilter[]
 ): Promise<MemoChunkWithDistance[]> => {
     const { whereConditions, params } = buildFilterConditions(filters)
-
-    // Base parameters: embedding vector, similarity threshold, project UUID, topK
-    const baseParams = [JSON.stringify(embeddingVector), similarityThreshold, project.uuid, topK]
-    const allParams = [...baseParams, ...params]
+    const allParams = [JSON.stringify(embeddingVector), JSON.stringify(embeddingVector), ...params]
 
     // Build WHERE clause
     let whereClause = `
-        WHERE (skald_memochunk.embedding <=> $1::vector) <= $2
-        AND skald_memochunk.project_id = $3
+        WHERE (skald_memochunk.embedding <=> ?::vector) <= ${similarityThreshold}
+        AND skald_memochunk.project_id = '${project.uuid}'
     `
 
     if (whereConditions.length > 0) {
@@ -138,12 +119,12 @@ export const memoChunkVectorSearch = async (
     const sql = `
         SELECT
             skald_memochunk.*,
-            (skald_memochunk.embedding <=> $1::vector) as distance
+            (skald_memochunk.embedding <=> ?::vector) as distance
         FROM skald_memochunk
         JOIN skald_memo ON skald_memochunk.memo_id = skald_memo.uuid
         ${whereClause}
         ORDER BY distance
-        LIMIT $4
+        LIMIT ${topK}
     `
 
     try {
