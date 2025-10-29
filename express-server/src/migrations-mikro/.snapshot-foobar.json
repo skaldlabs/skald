@@ -1,0 +1,2249 @@
+{
+    "namespaces": ["public"],
+    "name": "public",
+    "tables": [
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "unsigned": false,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "slug": {
+                    "name": "slug",
+                    "type": "varchar(50)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 50,
+                    "mappedType": "string"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(100)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 100,
+                    "mappedType": "string"
+                },
+                "stripe_price_id": {
+                    "name": "stripe_price_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "monthly_price": {
+                    "name": "monthly_price",
+                    "type": "numeric(10,2)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "precision": 10,
+                    "scale": 2,
+                    "mappedType": "decimal"
+                },
+                "memo_operations_limit": {
+                    "name": "memo_operations_limit",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "integer"
+                },
+                "chat_queries_limit": {
+                    "name": "chat_queries_limit",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "integer"
+                },
+                "projects_limit": {
+                    "name": "projects_limit",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "integer"
+                },
+                "features": {
+                    "name": "features",
+                    "type": "jsonb",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "json"
+                },
+                "is_active": {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "is_default": {
+                    "name": "is_default",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                }
+            },
+            "name": "skald_plan",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["slug"],
+                    "composite": false,
+                    "keyName": "skald_plan_slug_0a0cac0f_like",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["slug"],
+                    "composite": false,
+                    "keyName": "skald_plan_slug_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "columnNames": ["stripe_price_id"],
+                    "composite": false,
+                    "keyName": "skald_plan_stripe_price_id_3080b1eb_like",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["stripe_price_id"],
+                    "composite": false,
+                    "keyName": "skald_plan_stripe_price_id_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "keyName": "skald_plan_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {},
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "unsigned": false,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "stripe_event_id": {
+                    "name": "stripe_event_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "event_type": {
+                    "name": "event_type",
+                    "type": "varchar(100)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 100,
+                    "mappedType": "string"
+                },
+                "payload": {
+                    "name": "payload",
+                    "type": "jsonb",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "json"
+                },
+                "processed": {
+                    "name": "processed",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "processing_error": {
+                    "name": "processing_error",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "text"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "processed_at": {
+                    "name": "processed_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 6,
+                    "mappedType": "datetime"
+                }
+            },
+            "name": "skald_stripeevent",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["stripe_event_id"],
+                    "composite": false,
+                    "keyName": "skald_strip_stripe__efbcc3_idx",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["stripe_event_id"],
+                    "composite": false,
+                    "keyName": "skald_stripeevent_stripe_event_id_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "keyName": "skald_stripeevent_stripe_event_id_5dfbba10_like",
+                    "columnNames": ["stripe_event_id"],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_strip_event_t_1ffd58_idx",
+                    "columnNames": ["event_type", "processed"],
+                    "composite": true,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_stripeevent_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {},
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "unsigned": false,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "password": {
+                    "name": "password",
+                    "type": "varchar(128)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 128,
+                    "mappedType": "string"
+                },
+                "last_login": {
+                    "name": "last_login",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "is_superuser": {
+                    "name": "is_superuser",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "first_name": {
+                    "name": "first_name",
+                    "type": "varchar(150)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 150,
+                    "mappedType": "string"
+                },
+                "last_name": {
+                    "name": "last_name",
+                    "type": "varchar(150)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 150,
+                    "mappedType": "string"
+                },
+                "is_staff": {
+                    "name": "is_staff",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "is_active": {
+                    "name": "is_active",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "date_joined": {
+                    "name": "date_joined",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "email": {
+                    "name": "email",
+                    "type": "varchar(254)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 254,
+                    "mappedType": "string"
+                },
+                "email_verified": {
+                    "name": "email_verified",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "default_organization_id": {
+                    "name": "default_organization_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "uuid"
+                },
+                "current_project_id": {
+                    "name": "current_project_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "uuid"
+                }
+            },
+            "name": "skald_user",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["email"],
+                    "composite": false,
+                    "keyName": "skald_user_email_16347cfd_like",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["email"],
+                    "composite": false,
+                    "keyName": "skald_user_email_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "columnNames": ["default_organization_id"],
+                    "composite": false,
+                    "keyName": "skald_user_default_organization_id_0d57be46",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["current_project_id"],
+                    "composite": false,
+                    "keyName": "skald_user_current_project_id_ed8d14d2",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_user_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_user_default_organization_id_foreign": {
+                    "constraintName": "skald_user_default_organization_id_foreign",
+                    "columnNames": ["default_organization_id"],
+                    "localTableName": "public.skald_user",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_organization",
+                    "deleteRule": "set null",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_user_current_project_id_foreign": {
+                    "constraintName": "skald_user_current_project_id_foreign",
+                    "columnNames": ["current_project_id"],
+                    "localTableName": "public.skald_user",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_project",
+                    "deleteRule": "set null",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "uuid": {
+                    "name": "uuid",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "owner_id": {
+                    "name": "owner_id",
+                    "type": "bigint",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                }
+            },
+            "name": "skald_organization",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["owner_id"],
+                    "composite": false,
+                    "keyName": "skald_organization_owner_id_c9bf676b",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_organization_pkey",
+                    "columnNames": ["uuid"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_organization_owner_id_foreign": {
+                    "constraintName": "skald_organization_owner_id_foreign",
+                    "columnNames": ["owner_id"],
+                    "localTableName": "public.skald_organization",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.skald_user",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "unsigned": false,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "billing_period_start": {
+                    "name": "billing_period_start",
+                    "type": "date",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "date"
+                },
+                "billing_period_end": {
+                    "name": "billing_period_end",
+                    "type": "date",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 0,
+                    "mappedType": "date"
+                },
+                "memo_operations_count": {
+                    "name": "memo_operations_count",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "chat_queries_count": {
+                    "name": "chat_queries_count",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "alerts_sent": {
+                    "name": "alerts_sent",
+                    "type": "jsonb",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "json"
+                }
+            },
+            "name": "skald_usagerecord",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["billing_period_start"],
+                    "composite": false,
+                    "keyName": "skald_usage_billing_07f781_idx",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["organization_id"],
+                    "composite": false,
+                    "keyName": "skald_usagerecord_organization_id_b31763fe",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_usage_organiz_41ff84_idx",
+                    "columnNames": ["organization_id", "billing_period_start"],
+                    "composite": true,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_usagerecord_organization_id_billing__7c9da398_uniq",
+                    "columnNames": ["organization_id", "billing_period_start"],
+                    "composite": true,
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "keyName": "skald_usagerecord_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_usagerecord_organization_id_foreign": {
+                    "constraintName": "skald_usagerecord_organization_id_foreign",
+                    "columnNames": ["organization_id"],
+                    "localTableName": "public.skald_usagerecord",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_organization",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "uuid": {
+                    "name": "uuid",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "owner_id": {
+                    "name": "owner_id",
+                    "type": "bigint",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                }
+            },
+            "name": "skald_project",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["organization_id"],
+                    "composite": false,
+                    "keyName": "skald_project_organization_id_826910ec",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["owner_id"],
+                    "composite": false,
+                    "keyName": "skald_project_owner_id_5fc4828a",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_project_pkey",
+                    "columnNames": ["uuid"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_project_organization_id_foreign": {
+                    "constraintName": "skald_project_organization_id_foreign",
+                    "columnNames": ["organization_id"],
+                    "localTableName": "public.skald_project",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_organization",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_project_owner_id_foreign": {
+                    "constraintName": "skald_project_owner_id_foreign",
+                    "columnNames": ["owner_id"],
+                    "localTableName": "public.skald_project",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.skald_user",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "api_key_hash": {
+                    "name": "api_key_hash",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "first_12_digits": {
+                    "name": "first_12_digits",
+                    "type": "varchar(12)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 12,
+                    "mappedType": "string"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "project_id": {
+                    "name": "project_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                }
+            },
+            "name": "skald_projectapikey",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["api_key_hash"],
+                    "composite": false,
+                    "keyName": "skald_projectapikey_api_key_hash_a9fcb967_like",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["project_id"],
+                    "composite": false,
+                    "keyName": "skald_projectapikey_project_id_398f2e74",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_projectapikey_pkey",
+                    "columnNames": ["api_key_hash"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_projectapikey_project_id_foreign": {
+                    "constraintName": "skald_projectapikey_project_id_foreign",
+                    "columnNames": ["project_id"],
+                    "localTableName": "public.skald_projectapikey",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_project",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "uuid": {
+                    "name": "uuid",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "title": {
+                    "name": "title",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "content_length": {
+                    "name": "content_length",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "metadata": {
+                    "name": "metadata",
+                    "type": "jsonb",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "json"
+                },
+                "expiration_date": {
+                    "name": "expiration_date",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "archived": {
+                    "name": "archived",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "content_hash": {
+                    "name": "content_hash",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "pending": {
+                    "name": "pending",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "type": {
+                    "name": "type",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "source": {
+                    "name": "source",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "client_reference_id": {
+                    "name": "client_reference_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "project_id": {
+                    "name": "project_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                }
+            },
+            "name": "skald_memo",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["metadata"],
+                    "composite": false,
+                    "keyName": "skald_memo_metadat_9c96be_gin",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["project_id"],
+                    "composite": false,
+                    "keyName": "skald_memo_project_id_b4c56bf7",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_memo_project_88bd2e_idx",
+                    "columnNames": ["project_id", "source"],
+                    "composite": true,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_memo_project_8101aa_idx",
+                    "columnNames": ["project_id", "client_reference_id"],
+                    "composite": true,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_memo_pkey",
+                    "columnNames": ["uuid"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_memo_project_id_foreign": {
+                    "constraintName": "skald_memo_project_id_foreign",
+                    "columnNames": ["project_id"],
+                    "localTableName": "public.skald_memo",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_project",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "uuid": {
+                    "name": "uuid",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "tag": {
+                    "name": "tag",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "text"
+                },
+                "memo_id": {
+                    "name": "memo_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "project_id": {
+                    "name": "project_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                }
+            },
+            "name": "skald_memotag",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["memo_id"],
+                    "composite": false,
+                    "keyName": "skald_memotag_memo_id_a7433d48",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["project_id"],
+                    "composite": false,
+                    "keyName": "skald_memotag_project_id_968368ae",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_memotag_pkey",
+                    "columnNames": ["uuid"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_memotag_memo_id_foreign": {
+                    "constraintName": "skald_memotag_memo_id_foreign",
+                    "columnNames": ["memo_id"],
+                    "localTableName": "public.skald_memotag",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_memo",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_memotag_project_id_foreign": {
+                    "constraintName": "skald_memotag_project_id_foreign",
+                    "columnNames": ["project_id"],
+                    "localTableName": "public.skald_memotag",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_project",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "uuid": {
+                    "name": "uuid",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "summary": {
+                    "name": "summary",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "text"
+                },
+                "embedding": {
+                    "name": "embedding",
+                    "type": "vector(2048)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 2048,
+                    "ignoreSchemaChanges": ["type"],
+                    "mappedType": "unknown"
+                },
+                "memo_id": {
+                    "name": "memo_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "project_id": {
+                    "name": "project_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                }
+            },
+            "name": "skald_memosummary",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["memo_id"],
+                    "composite": false,
+                    "keyName": "skald_memosummary_memo_id_43ac3024",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["project_id"],
+                    "composite": false,
+                    "keyName": "skald_memosummary_project_id_95cfb327",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_memosummary_pkey",
+                    "columnNames": ["uuid"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_memosummary_memo_id_foreign": {
+                    "constraintName": "skald_memosummary_memo_id_foreign",
+                    "columnNames": ["memo_id"],
+                    "localTableName": "public.skald_memosummary",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_memo",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_memosummary_project_id_foreign": {
+                    "constraintName": "skald_memosummary_project_id_foreign",
+                    "columnNames": ["project_id"],
+                    "localTableName": "public.skald_memosummary",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_project",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "uuid": {
+                    "name": "uuid",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "content": {
+                    "name": "content",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "text"
+                },
+                "memo_id": {
+                    "name": "memo_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "project_id": {
+                    "name": "project_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                }
+            },
+            "name": "skald_memocontent",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["memo_id"],
+                    "composite": false,
+                    "keyName": "skald_memocontent_memo_id_f2eae36a",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["project_id"],
+                    "composite": false,
+                    "keyName": "skald_memocontent_project_id_fa46c46d",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_memocontent_pkey",
+                    "columnNames": ["uuid"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_memocontent_memo_id_foreign": {
+                    "constraintName": "skald_memocontent_memo_id_foreign",
+                    "columnNames": ["memo_id"],
+                    "localTableName": "public.skald_memocontent",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_memo",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_memocontent_project_id_foreign": {
+                    "constraintName": "skald_memocontent_project_id_foreign",
+                    "columnNames": ["project_id"],
+                    "localTableName": "public.skald_memocontent",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_project",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "uuid": {
+                    "name": "uuid",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "chunk_content": {
+                    "name": "chunk_content",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "text"
+                },
+                "chunk_index": {
+                    "name": "chunk_index",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "embedding": {
+                    "name": "embedding",
+                    "type": "vector(2048)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 2048,
+                    "ignoreSchemaChanges": ["type"],
+                    "mappedType": "unknown"
+                },
+                "memo_id": {
+                    "name": "memo_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "project_id": {
+                    "name": "project_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                }
+            },
+            "name": "skald_memochunk",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["memo_id"],
+                    "composite": false,
+                    "keyName": "skald_memochunk_memo_id_0faad25b",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["project_id"],
+                    "composite": false,
+                    "keyName": "skald_memochunk_project_id_6ec66677",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_memochunk_pkey",
+                    "columnNames": ["uuid"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_memochunk_memo_id_foreign": {
+                    "constraintName": "skald_memochunk_memo_id_foreign",
+                    "columnNames": ["memo_id"],
+                    "localTableName": "public.skald_memochunk",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_memo",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_memochunk_project_id_foreign": {
+                    "constraintName": "skald_memochunk_project_id_foreign",
+                    "columnNames": ["project_id"],
+                    "localTableName": "public.skald_memochunk",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_project",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "unsigned": false,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "stripe_customer_id": {
+                    "name": "stripe_customer_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "stripe_subscription_id": {
+                    "name": "stripe_subscription_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 255,
+                    "mappedType": "string"
+                },
+                "status": {
+                    "name": "status",
+                    "type": "varchar(50)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 50,
+                    "mappedType": "string"
+                },
+                "current_period_start": {
+                    "name": "current_period_start",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "current_period_end": {
+                    "name": "current_period_end",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "cancel_at_period_end": {
+                    "name": "cancel_at_period_end",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "boolean"
+                },
+                "canceled_at": {
+                    "name": "canceled_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "trial_start": {
+                    "name": "trial_start",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "trial_end": {
+                    "name": "trial_end",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "plan_id": {
+                    "name": "plan_id",
+                    "type": "bigint",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "scheduled_change_date": {
+                    "name": "scheduled_change_date",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "scheduled_plan_id": {
+                    "name": "scheduled_plan_id",
+                    "type": "bigint",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "mappedType": "bigint"
+                },
+                "stripe_schedule_id": {
+                    "name": "stripe_schedule_id",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 255,
+                    "mappedType": "string"
+                }
+            },
+            "name": "skald_organizationsubscription",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["stripe_customer_id"],
+                    "composite": false,
+                    "keyName": "skald_organ_stripe__787c7f_idx",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["stripe_customer_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationsubscription_stripe_customer_id_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "columnNames": ["stripe_subscription_id"],
+                    "composite": false,
+                    "keyName": "skald_organ_stripe__4bbed4_idx",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["stripe_subscription_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationsubscription_stripe_subscription_id_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "columnNames": ["status"],
+                    "composite": false,
+                    "keyName": "skald_organ_status_b30bd1_idx",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["organization_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationsubscription_organization_id_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true,
+                    "deferMode": "deferred"
+                },
+                {
+                    "columnNames": ["plan_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationsubscription_plan_id_f66eaa4c",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["scheduled_plan_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationsubscription_scheduled_plan_id_607e5f4d",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["stripe_schedule_id"],
+                    "composite": false,
+                    "keyName": "skald_organ_stripe__fb7b46_idx",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["stripe_schedule_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationsubscription_stripe_schedule_id_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "keyName": "skald_organizationsubscription_stripe_customer_id_aa0de48c_like",
+                    "columnNames": ["stripe_customer_id"],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_organizationsubscr_stripe_subscription_id_e67d0e5c_like",
+                    "columnNames": ["stripe_subscription_id"],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_organizationsubscription_stripe_schedule_id_3e51e1c3_like",
+                    "columnNames": ["stripe_schedule_id"],
+                    "composite": false,
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_organizationsubscription_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_organizationsubscription_organization_id_foreign": {
+                    "constraintName": "skald_organizationsubscription_organization_id_foreign",
+                    "columnNames": ["organization_id"],
+                    "localTableName": "public.skald_organizationsubscription",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_organization",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_organizationsubscription_plan_id_foreign": {
+                    "constraintName": "skald_organizationsubscription_plan_id_foreign",
+                    "columnNames": ["plan_id"],
+                    "localTableName": "public.skald_organizationsubscription",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.skald_plan",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_organizationsubscription_scheduled_plan_id_foreign": {
+                    "constraintName": "skald_organizationsubscription_scheduled_plan_id_foreign",
+                    "columnNames": ["scheduled_plan_id"],
+                    "localTableName": "public.skald_organizationsubscription",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.skald_plan",
+                    "deleteRule": "set null",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "email": {
+                    "name": "email",
+                    "type": "varchar(254)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 254,
+                    "mappedType": "string"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "accepted_at": {
+                    "name": "accepted_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "invited_by_id": {
+                    "name": "invited_by_id",
+                    "type": "bigint",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                }
+            },
+            "name": "skald_organizationmembershipinvite",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["invited_by_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationmembershipinvite_invited_by_id_bb70bb84",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["organization_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationmembershipinvite_organization_id_f922971e",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_organizationmember_organization_id_email_a6273e0c_uniq",
+                    "columnNames": ["organization_id", "email"],
+                    "composite": true,
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "keyName": "skald_organizationmembershipinvite_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_organizationmembershipinvite_invited_by_id_foreign": {
+                    "constraintName": "skald_organizationmembershipinvite_invited_by_id_foreign",
+                    "columnNames": ["invited_by_id"],
+                    "localTableName": "public.skald_organizationmembershipinvite",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.skald_user",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_organizationmembershipinvite_organization_id_foreign": {
+                    "constraintName": "skald_organizationmembershipinvite_organization_id_foreign",
+                    "columnNames": ["organization_id"],
+                    "localTableName": "public.skald_organizationmembershipinvite",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_organization",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "unsigned": false,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "access_level": {
+                    "name": "access_level",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "joined_at": {
+                    "name": "joined_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "organization_id": {
+                    "name": "organization_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "uuid"
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "bigint",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                }
+            },
+            "name": "skald_organizationmembership",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["organization_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationmembership_organization_id_21fd5aa7",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["user_id"],
+                    "composite": false,
+                    "keyName": "skald_organizationmembership_user_id_938634a4",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "keyName": "skald_organizationmember_user_id_organization_id_539edeac_uniq",
+                    "columnNames": ["user_id", "organization_id"],
+                    "composite": true,
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
+                },
+                {
+                    "keyName": "skald_organizationmembership_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_organizationmembership_organization_id_foreign": {
+                    "constraintName": "skald_organizationmembership_organization_id_foreign",
+                    "columnNames": ["organization_id"],
+                    "localTableName": "public.skald_organizationmembership",
+                    "referencedColumnNames": ["uuid"],
+                    "referencedTableName": "public.skald_organization",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                },
+                "skald_organizationmembership_user_id_foreign": {
+                    "constraintName": "skald_organizationmembership_user_id_foreign",
+                    "columnNames": ["user_id"],
+                    "localTableName": "public.skald_organizationmembership",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.skald_user",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "bigserial",
+                    "unsigned": false,
+                    "autoincrement": true,
+                    "primary": true,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                },
+                "code": {
+                    "name": "code",
+                    "type": "varchar(6)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "string"
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "attempts": {
+                    "name": "attempts",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "integer"
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "bigint",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                }
+            },
+            "name": "skald_emailverificationcode",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["code"],
+                    "composite": false,
+                    "keyName": "skald_email_code_27ca5e_idx",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["user_id"],
+                    "composite": false,
+                    "keyName": "skald_emailverificationcode_user_id_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true,
+                    "deferMode": "deferred"
+                },
+                {
+                    "keyName": "skald_emailverificationcode_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "skald_emailverificationcode_user_id_foreign": {
+                    "constraintName": "skald_emailverificationcode_user_id_foreign",
+                    "columnNames": ["user_id"],
+                    "localTableName": "public.skald_emailverificationcode",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.skald_user",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "columns": {
+                "key": {
+                    "name": "key",
+                    "type": "varchar(40)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 40,
+                    "mappedType": "string"
+                },
+                "created": {
+                    "name": "created",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "length": 6,
+                    "mappedType": "datetime"
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "bigint",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "mappedType": "bigint"
+                }
+            },
+            "name": "authtoken_token",
+            "schema": "public",
+            "indexes": [
+                {
+                    "columnNames": ["key"],
+                    "composite": false,
+                    "keyName": "authtoken_token_key_10f0b77e_like",
+                    "constraint": false,
+                    "primary": false,
+                    "unique": false
+                },
+                {
+                    "columnNames": ["user_id"],
+                    "composite": false,
+                    "keyName": "authtoken_token_user_id_key",
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true,
+                    "deferMode": "deferred"
+                },
+                {
+                    "keyName": "authtoken_token_pkey",
+                    "columnNames": ["key"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "authtoken_token_user_id_foreign": {
+                    "constraintName": "authtoken_token_user_id_foreign",
+                    "columnNames": ["user_id"],
+                    "localTableName": "public.authtoken_token",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.skald_user",
+                    "updateRule": "cascade",
+                    "deferMode": "deferred"
+                }
+            },
+            "nativeEnums": {}
+        }
+    ],
+    "nativeEnums": {}
+}

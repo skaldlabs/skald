@@ -1,0 +1,44 @@
+{
+    "name": "express-server",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/index.js",
+    "scripts": {
+        "dev": "nodemon --exec ts-node src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage",
+        "migrate": "tsx src/migrate.ts migrate",
+        "migration:create": "mikro-orm migration:create",
+        "migration:up": "mikro-orm migration:up",
+        "migration:down": "mikro-orm migration:down",
+        "migration:pending": "mikro-orm migration:pending"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@mikro-orm/core": "^6.5.9",
+        "@mikro-orm/migrations": "^6.5.9",
+        "@mikro-orm/postgresql": "^6.5.9",
+        "dotenv": "^17.2.3",
+        "express": "^5.1.0",
+        "pg": "^8.16.3",
+        "tsx": "^4.20.6"
+    },
+    "devDependencies": {
+        "@mikro-orm/cli": "^6.5.9",
+        "@mikro-orm/entity-generator": "^6.5.9",
+        "@types/express": "^5.0.5",
+        "@types/jest": "^30.0.0",
+        "@types/node": "^24.9.2",
+        "@types/pg": "^8.15.6",
+        "jest": "^30.2.0",
+        "nodemon": "^3.1.10",
+        "ts-jest": "^29.4.5",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.9.3"
+    }
+}
