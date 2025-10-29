@@ -23,10 +23,16 @@
         "@mikro-orm/core": "^6.5.9",
         "@mikro-orm/migrations": "^6.5.9",
         "@mikro-orm/postgresql": "^6.5.9",
+        "@langchain/anthropic": "^0.3.0",
+        "@langchain/core": "^0.3.78",
+        "@langchain/langgraph": "^0.4.9",
+        "@langchain/openai": "^0.6.14",
         "dotenv": "^17.2.3",
         "express": "^5.1.0",
+        "openai": "^6.7.0",
         "pg": "^8.16.3",
-        "tsx": "^4.20.6"
+        "tsx": "^4.20.6",
+        "voyageai": "^0.0.8"
     },
     "devDependencies": {
         "@mikro-orm/cli": "^6.5.9",

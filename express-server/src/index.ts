@@ -1,29 +1,47 @@
 import 'dotenv/config'
-import express, { Request, Response } from 'express'
+import express from 'express'
+import http from 'http'
+import { EntityManager, EntityRepository, MikroORM, RequestContext } from '@mikro-orm/postgresql'
+import config from './mikro-orm.config'
+import { userMiddleware } from './middleware/userMiddleware'
+import { Memo } from './entities/Memo'
+import { User } from './entities/User'
+import { AuthToken } from './entities/AuthToken'
+import { chat } from './api/chat'
+
+export const DI = {} as {
+    server: http.Server
+    orm: MikroORM
+    em: EntityManager
+    memos: EntityRepository<Memo>
+    users: EntityRepository<User>
+    authTokens: EntityRepository<AuthToken>
+}
 
 const app = express()
+
 const PORT = process.env.PORT || 3000
 
-app.use(express.json())
+export const init = (async () => {
+    DI.orm = await MikroORM.init(config)
+    DI.em = DI.orm.em
+    DI.memos = DI.orm.em.getRepository(Memo)
+    DI.users = DI.orm.em.getRepository(User)
+    DI.authTokens = DI.orm.em.getRepository(AuthToken)
 
-app.get('/', async (req: Request, res: Response) => {
-    // promise.all on three timer promises, each returning a random number between 0 and 1000
-    const [result1, result2, result3] = await Promise.all([
-        new Promise((resolve) => setTimeout(() => resolve(Math.random() * 1000), Math.random() * 1000)),
-        new Promise((resolve) => setTimeout(() => resolve(Math.random() * 1000), Math.random() * 2000)),
-        new Promise((resolve) => setTimeout(() => resolve(Math.random() * 1000), Math.random() * 3000)),
-    ])
-    res.json({ message: 'Hello from Express + TypeScript!', result1, result2, result3 })
-})
+    app.use(express.json())
+    app.use(userMiddleware())
+    app.use((req, res, next) => RequestContext.create(DI.orm.em, next))
+    app.get('/', (req, res) => {
+        console.log(req.context?.user)
+        res.json({ message: 'Welcome to Skald Express Server' })
+    })
 
-// app.post('/api/v1/chat', async (req: Request, res: Response) => {
-//   console.log('hello')
-// })
+    app.post('/api/v1/chat', chat)
 
-app.get('/health', (req: Request, res: Response) => {
-    res.json({ status: 'ok' })
-})
+    app.use((req, res) => res.status(404).json({ message: 'No route found' }))
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`)
-})
+    DI.server = app.listen(PORT, () => {
+        console.log(`MikroORM express TS example started at http://localhost:${PORT}`)
+    })
+})()
