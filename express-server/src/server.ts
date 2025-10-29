@@ -6,6 +6,7 @@ import express from 'express'
 import { RequestContext } from '@mikro-orm/postgresql'
 import { userMiddleware } from './middleware/userMiddleware'
 import { chat } from './api/chat'
+import { health } from './api/health'
 import { requireAuth, requireProjectAccess } from './middleware/authMiddleware'
 import { projectMiddleware } from './middleware/projectMiddleware'
 import { initDI } from './di'
@@ -30,9 +31,7 @@ export const init = (async () => {
     app.use(userMiddleware())
     app.use(projectMiddleware())
 
-    app.get('/api/health', (req, res) => {
-        res.json({ status: 'ok', checks: { database: true } })
-    })
+    app.get('/api/health', health)
 
     app.get('/', (req, res) => {
         console.log(req.context?.requestUser)
