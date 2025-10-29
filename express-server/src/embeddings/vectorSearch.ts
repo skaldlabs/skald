@@ -1,12 +1,18 @@
-import { MemoChunk } from '../entities/MemoChunk'
 import { Project } from '../entities/Project'
-import { MemoFilter } from '../lib/filterUtils'
+import { buildFilterConditions, MemoFilter } from '../lib/filterUtils'
 import { DI } from '../di'
 import { VECTOR_SEARCH_TOP_K } from '../settings'
 import { Operator } from '../lib/filterUtils'
 
 export interface MemoChunkWithDistance {
-    chunk: MemoChunk
+    chunk: {
+        uuid: string
+        chunk_content: string
+        chunk_index: number
+        embedding: number[]
+        memo_uuid: string
+        project_uuid: string
+    }
     distance: number
 }
 
@@ -15,7 +21,7 @@ interface FieldFilterDefinition {
     getFormattedValue: (value: any) => any
 }
 
-const filterByOperator: Record<Operator, FieldFilterDefinition> = {
+export const filterByOperator: Record<Operator, FieldFilterDefinition> = {
     eq: {
         getWhereClause: (field: string) => `${field} = ?`,
         getFormattedValue: (value: any) => value,
@@ -44,40 +50,6 @@ const filterByOperator: Record<Operator, FieldFilterDefinition> = {
         getWhereClause: (field: string) => `${field} != ALL(?)`,
         getFormattedValue: (value: any) => value,
     },
-}
-
-/**
- * Build WHERE clause conditions for filters
- */
-function buildFilterConditions(filters?: MemoFilter[]): { whereConditions: string[]; params: any[] } {
-    const whereConditions: string[] = []
-    const params: any[] = []
-
-    if (!filters || filters.length === 0) {
-        return { whereConditions, params }
-    }
-
-    for (const filter of filters) {
-        if (filter.filter_type === 'native_field' && filter.field === 'tags') {
-            // tags are in a separate MemoTag table
-            // TODO: determine if we should do a join here instead.
-            const tagSubquery = `EXISTS (
-                SELECT 1 FROM skald_memotag
-                WHERE skald_memotag.memo_id = skald_memo.uuid
-                AND skald_memotag.tag = ANY(?)
-            )`
-            whereConditions.push(tagSubquery)
-            params.push(filter.value)
-        }
-        const fieldPath =
-            filter.filter_type === 'native_field'
-                ? `skald_memo.${filter.field}`
-                : `skald_memo.metadata->>'${filter.field}'`
-        whereConditions.push(filterByOperator[filter.operator].getWhereClause(fieldPath))
-        params.push(filterByOperator[filter.operator].getFormattedValue(filter.value))
-    }
-
-    return { whereConditions, params }
 }
 
 /**
@@ -124,8 +96,8 @@ export const memoChunkVectorSearch = async (
                     chunk_content: row.chunk_content,
                     chunk_index: row.chunk_index,
                     embedding: row.embedding,
-                    memo: row.memo_id,
-                    project: row.project_id,
+                    memo_uuid: row.memo_id,
+                    project_uuid: row.project_id,
                 } as any,
                 distance: row.distance,
             })) || []

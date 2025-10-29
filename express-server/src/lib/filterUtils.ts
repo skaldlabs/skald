@@ -1,3 +1,5 @@
+import { filterByOperator } from '../embeddings/vectorSearch'
+
 export type Operator = 'eq' | 'neq' | 'contains' | 'startswith' | 'endswith' | 'in' | 'not_in'
 type FilterType = 'native_field' | 'custom_metadata'
 type NativeField = 'title' | 'source' | 'client_reference_id' | 'tags'
@@ -84,4 +86,36 @@ export function parseFilter(filterDict: Record<string, any>): ParseFilterResult 
     }
 
     return { filter: memoFilter, error: null }
+} /**
+ * Build WHERE clause conditions for filters
+ */
+export function buildFilterConditions(filters?: MemoFilter[]): { whereConditions: string[]; params: any[] } {
+    const whereConditions: string[] = []
+    const params: any[] = []
+
+    if (!filters || filters.length === 0) {
+        return { whereConditions, params }
+    }
+
+    for (const filter of filters) {
+        if (filter.filter_type === 'native_field' && filter.field === 'tags') {
+            // tags are in a separate MemoTag table
+            // TODO: determine if we should do a join here instead.
+            const tagSubquery = `EXISTS (
+                SELECT 1 FROM skald_memotag
+                WHERE skald_memotag.memo_id = skald_memo.uuid
+                AND skald_memotag.tag = ANY(?)
+            )`
+            whereConditions.push(tagSubquery)
+            params.push(filter.value)
+        }
+        const fieldPath =
+            filter.filter_type === 'native_field'
+                ? `skald_memo.${filter.field}`
+                : `skald_memo.metadata->>'${filter.field}'`
+        whereConditions.push(filterByOperator[filter.operator].getWhereClause(fieldPath))
+        params.push(filterByOperator[filter.operator].getFormattedValue(filter.value))
+    }
+
+    return { whereConditions, params }
 }

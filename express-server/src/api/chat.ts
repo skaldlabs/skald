@@ -3,48 +3,6 @@ import { parseFilter } from '../lib/filterUtils'
 import { prepareContextForChatAgent } from '../agents/chatAgent/preprocessing'
 import { runChatAgent, streamChatAgent } from '../agents/chatAgent/chatAgent'
 
-export const _setStreamingResponseHeaders = (res: Response) => {
-    // set headers for Server-Sent Events (SSE)
-    res.setHeader('Content-Type', 'text/event-stream')
-    res.setHeader('Cache-Control', 'no-cache')
-    res.setHeader('X-Accel-Buffering', 'no')
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-}
-
-export const _generateStreamingResponse = async (query: string, contextStr: string, res: Response) => {
-    _setStreamingResponseHeaders(res)
-
-    // establish connection
-    res.write(': ping\n\n')
-
-    try {
-        for await (const chunk of streamChatAgent(query, contextStr)) {
-            // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
-            if (chunk.content && typeof chunk.content === 'object') {
-                // extract text from dict (Anthropic format)
-                const content = chunk.content as any
-                chunk.content = content.text || content.content || String(content)
-            } else if (chunk.content && typeof chunk.content !== 'string') {
-                chunk.content = String(chunk.content)
-            }
-
-            // format as Server-Sent Event
-            const data = JSON.stringify(chunk)
-            res.write(`data: ${data}\n\n`)
-        }
-    } catch (error) {
-        const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error)
-        const errorData = JSON.stringify({ type: 'error', content: errorMsg })
-        res.write(`data: ${errorData}\n\n`)
-    } finally {
-        // send a done event
-        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
-        res.end()
-    }
-}
-
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
     const stream = req.body.stream || false
@@ -97,5 +55,47 @@ export const chat = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Chat agent error:', error)
         return res.status(500).json({ error: `Chat agent temporarily unavailable` })
+    }
+}
+
+export const _setStreamingResponseHeaders = (res: Response) => {
+    // set headers for Server-Sent Events (SSE)
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('X-Accel-Buffering', 'no')
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+}
+
+export const _generateStreamingResponse = async (query: string, contextStr: string, res: Response) => {
+    _setStreamingResponseHeaders(res)
+
+    // establish connection
+    res.write(': ping\n\n')
+
+    try {
+        for await (const chunk of streamChatAgent(query, contextStr)) {
+            // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
+            if (chunk.content && typeof chunk.content === 'object') {
+                // extract text from dict (Anthropic format)
+                const content = chunk.content as any
+                chunk.content = content.text || content.content || String(content)
+            } else if (chunk.content && typeof chunk.content !== 'string') {
+                chunk.content = String(chunk.content)
+            }
+
+            // format as Server-Sent Event
+            const data = JSON.stringify(chunk)
+            res.write(`data: ${data}\n\n`)
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error)
+        const errorData = JSON.stringify({ type: 'error', content: errorMsg })
+        res.write(`data: ${errorData}\n\n`)
+    } finally {
+        // send a done event
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
+        res.end()
     }
 }
