@@ -68,6 +68,8 @@ export const EMBEDDING_SERVICE_URL = process.env.EMBEDDING_SERVICE_URL || 'http:
 
 // Constants
 export const EMBEDDING_VECTOR_DIMENSION = 2048
+export const VECTOR_SEARCH_TOP_K = parseInt(process.env.VECTOR_SEARCH_TOP_K || '100')
+export const POST_RERANK_TOP_K = parseInt(process.env.POST_RERANK_TOP_K || '50')
 
 // Validation of LLM and embedding provider configuration on startup
 const SUPPORTED_LLM_PROVIDERS = ['openai', 'anthropic', 'local']
