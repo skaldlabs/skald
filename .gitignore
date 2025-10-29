@@ -151,4 +151,5 @@ fetch_wikipedia_articles.py
 package-lock.json 
 
 ignore/
-express-server/src/migrations/snapshot-foobar.json
+snapshot-foobar.json
+.snapshot-foobar.json

@@ -12,6 +12,8 @@ import { initDI } from './di'
 import { Request, Response } from 'express'
 import { search } from './api/search'
 import { organization } from './api/organization'
+import { userRouter } from './api/user'
+import cookieParser from 'cookie-parser'
 
 const app = express()
 
@@ -28,6 +30,7 @@ export const init = (async () => {
     const DI = await initDI()
 
     app.use(express.json())
+    app.use(cookieParser())
     app.use((req, res, next) => RequestContext.create(DI.orm.em, next))
     app.use(userMiddleware())
 
@@ -37,6 +40,8 @@ export const init = (async () => {
         console.log(req.context?.requestUser)
         res.json({ message: 'Welcome to Skald Express Server' })
     })
+
+    app.use('/api/user', userRouter)
 
     // Routers
     const privateRoutesRouter = express.Router({ mergeParams: true })

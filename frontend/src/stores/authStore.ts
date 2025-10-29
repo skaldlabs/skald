@@ -23,11 +23,6 @@ interface UserDetailsResponse {
     organization_name: string
     is_superuser: boolean
     name: string
-    access_levels: {
-        organization_access_levels: {
-            [key: string]: OrganizationAccessLevel
-        }
-    }
 }
 
 export interface UserDetails extends UserDetailsResponse {
