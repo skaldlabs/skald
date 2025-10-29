@@ -22,15 +22,15 @@ export const userMiddleware = () => {
 
         const key = match[1]
 
-        const authToken = await DI.authTokens.findOne({ key }, { populate: ['user'] })
-        if (authToken && authToken.user) {
-            req.context.requestUser = new RequestUser(authToken.user, 'authenticatedUser', null)
-            return next()
-        }
-
         const projectAPIKey = await DI.projectAPIKeys.findOne(sha3_256(key), { populate: ['project'] })
         if (projectAPIKey) {
             req.context.requestUser = new RequestUser(null, 'projectAPIKeyUser', projectAPIKey.project)
+            return next()
+        }
+
+        const authToken = await DI.authTokens.findOne({ key }, { populate: ['user'] })
+        if (authToken && authToken.user) {
+            req.context.requestUser = new RequestUser(authToken.user, 'authenticatedUser', null)
             return next()
         }
 

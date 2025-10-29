@@ -22,7 +22,7 @@ export class Memo {
     title!: string
 
     @Property()
-    contentLength!: number
+    content_length!: number
 
     @Property({ type: 'json' })
     metadata!: any

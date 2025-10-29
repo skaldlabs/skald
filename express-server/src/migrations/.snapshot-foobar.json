@@ -1428,8 +1428,8 @@
                     "nullable": false,
                     "mappedType": "uuid"
                 },
-                "chunk_content": {
-                    "name": "chunk_content",
+                "chunk_content_foo": {
+                    "name": "chunk_content_foo",
                     "type": "text",
                     "unsigned": false,
                     "autoincrement": false,

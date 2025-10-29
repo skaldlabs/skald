@@ -39,11 +39,11 @@ export const init = (async () => {
         res.json({ message: 'Welcome to Skald Express Server' })
     })
 
-    const privateRoutes = express.Router({ mergeParams: true })
-    privateRoutes.use(requireAuth())
-    privateRoutes.post('/v1/chat', [requireProjectAccess()], chat)
+    const privateRoutesRouter = express.Router({ mergeParams: true })
+    privateRoutesRouter.use(requireAuth())
+    privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
 
-    app.use('/api', privateRoutes)
+    app.use('/api', privateRoutesRouter)
     app.use(route404)
 
     DI.server = app.listen(PORT, () => {
