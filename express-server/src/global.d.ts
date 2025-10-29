@@ -1,10 +1,10 @@
-import type { User } from './entities/User'
+import type { RequestUser } from './middleware/requestUser'
 
 declare global {
     namespace Express {
         interface Request {
             context?: {
-                user?: User
+                requestUser?: RequestUser
             }
         }
     }

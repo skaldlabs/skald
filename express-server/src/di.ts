@@ -1,0 +1,47 @@
+import http from 'http'
+import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/postgresql'
+import config from './mikro-orm.config'
+import { Memo } from './entities/Memo'
+import { User } from './entities/User'
+import { AuthToken } from './entities/AuthToken'
+import { Project } from './entities/Project'
+import { OrganizationMembership } from './entities/OrganizationMembership'
+import { ProjectAPIKey } from './entities/ProjectAPIKey'
+import { MemoSummary } from './entities/MemoSummary'
+import { MemoChunk } from './entities/MemoChunk'
+import { MemoTag } from './entities/MemoTag'
+import { MemoContent } from './entities/MemoContent'
+
+export const DI = {} as {
+    server: http.Server
+    orm: MikroORM
+    em: EntityManager
+    memos: EntityRepository<Memo>
+    users: EntityRepository<User>
+    authTokens: EntityRepository<AuthToken>
+    projects: EntityRepository<Project>
+    organizationMemberships: EntityRepository<OrganizationMembership>
+    projectAPIKeys: EntityRepository<ProjectAPIKey>
+    memoSummaries: EntityRepository<MemoSummary>
+    memoChunks: EntityRepository<MemoChunk>
+    memoTags: EntityRepository<MemoTag>
+    memoContents: EntityRepository<MemoContent>
+}
+
+export const initDI = async (): Promise<typeof DI> => {
+    DI.orm = await MikroORM.init(config)
+    DI.em = DI.orm.em
+    DI.memos = DI.orm.em.getRepository(Memo)
+    DI.users = DI.orm.em.getRepository(User)
+    DI.authTokens = DI.orm.em.getRepository(AuthToken)
+    DI.projects = DI.orm.em.getRepository(Project)
+    DI.organizationMemberships = DI.orm.em.getRepository(OrganizationMembership)
+    DI.projectAPIKeys = DI.orm.em.getRepository(ProjectAPIKey)
+    DI.memoSummaries = DI.orm.em.getRepository(MemoSummary)
+    DI.memoChunks = DI.orm.em.getRepository(MemoChunk)
+    DI.memoTags = DI.orm.em.getRepository(MemoTag)
+    DI.memoContents = DI.orm.em.getRepository(MemoContent)
+    DI.memoContents = DI.orm.em.getRepository(MemoContent)
+
+    return DI
+}

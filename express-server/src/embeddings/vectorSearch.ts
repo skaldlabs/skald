@@ -1,12 +1,49 @@
 import { MemoChunk } from '../entities/MemoChunk'
 import { Project } from '../entities/Project'
 import { MemoFilter } from '../lib/filterUtils'
-import { DI } from '../index'
+import { DI } from '../di'
 import { VECTOR_SEARCH_TOP_K } from '../settings'
+import { Operator } from '../lib/filterUtils'
 
 export interface MemoChunkWithDistance {
     chunk: MemoChunk
     distance: number
+}
+
+interface FieldFilterDefinition {
+    getWhereClause: (field: string) => string
+    getFormattedValue: (value: any) => any
+}
+
+const filterByOperator: Record<Operator, FieldFilterDefinition> = {
+    eq: {
+        getWhereClause: (field: string) => `${field} = ?`,
+        getFormattedValue: (value: any) => value,
+    },
+    neq: {
+        getWhereClause: (field: string) => `${field} != ?`,
+        getFormattedValue: (value: any) => value,
+    },
+    contains: {
+        getWhereClause: (field: string) => `${field} ILIKE ?`,
+        getFormattedValue: (value: any) => `%${value}%`,
+    },
+    startswith: {
+        getWhereClause: (field: string) => `${field} LIKE ?`,
+        getFormattedValue: (value: any) => `${value}%`,
+    },
+    endswith: {
+        getWhereClause: (field: string) => `${field} LIKE ?`,
+        getFormattedValue: (value: any) => `%${value}`,
+    },
+    in: {
+        getWhereClause: (field: string) => `${field} = ANY(?)`,
+        getFormattedValue: (value: any) => value,
+    },
+    not_in: {
+        getWhereClause: (field: string) => `${field} != ALL(?)`,
+        getFormattedValue: (value: any) => value,
+    },
 }
 
 /**
@@ -22,7 +59,8 @@ function buildFilterConditions(filters?: MemoFilter[]): { whereConditions: strin
 
     for (const filter of filters) {
         if (filter.filter_type === 'native_field' && filter.field === 'tags') {
-            // Tags are in a separate MemoTag table
+            // tags are in a separate MemoTag table
+            // TODO: determine if we should do a join here instead.
             const tagSubquery = `EXISTS (
                 SELECT 1 FROM skald_memotag
                 WHERE skald_memotag.memo_id = skald_memo.uuid
@@ -30,59 +68,13 @@ function buildFilterConditions(filters?: MemoFilter[]): { whereConditions: strin
             )`
             whereConditions.push(tagSubquery)
             params.push(filter.value)
-        } else if (filter.filter_type === 'native_field') {
-            // Native fields like title, source, client_reference_id
-            const fieldPath = `skald_memo.${filter.field}`
-
-            if (filter.operator === 'eq') {
-                whereConditions.push(`${fieldPath} = ?`)
-                params.push(filter.value)
-            } else if (filter.operator === 'neq') {
-                whereConditions.push(`${fieldPath} != ?`)
-                params.push(filter.value)
-            } else if (filter.operator === 'contains') {
-                whereConditions.push(`${fieldPath} ILIKE ?`)
-                params.push(`%${filter.value}%`)
-            } else if (filter.operator === 'startswith') {
-                whereConditions.push(`${fieldPath} LIKE ?`)
-                params.push(`${filter.value}%`)
-            } else if (filter.operator === 'endswith') {
-                whereConditions.push(`${fieldPath} LIKE ?`)
-                params.push(`%${filter.value}`)
-            } else if (filter.operator === 'in') {
-                whereConditions.push(`${fieldPath} = ANY(?)`)
-                params.push(filter.value)
-            } else if (filter.operator === 'not_in') {
-                whereConditions.push(`${fieldPath} != ALL(?)`)
-                params.push(filter.value)
-            }
-        } else if (filter.filter_type === 'custom_metadata') {
-            // Custom metadata fields
-            const metadataPath = `skald_memo.metadata->>'${filter.field}'`
-
-            if (filter.operator === 'eq') {
-                whereConditions.push(`${metadataPath} = ?`)
-                params.push(filter.value)
-            } else if (filter.operator === 'neq') {
-                whereConditions.push(`${metadataPath} != ?`)
-                params.push(filter.value)
-            } else if (filter.operator === 'contains') {
-                whereConditions.push(`${metadataPath} ILIKE ?`)
-                params.push(`%${filter.value}%`)
-            } else if (filter.operator === 'startswith') {
-                whereConditions.push(`${metadataPath} LIKE ?`)
-                params.push(`${filter.value}%`)
-            } else if (filter.operator === 'endswith') {
-                whereConditions.push(`${metadataPath} LIKE ?`)
-                params.push(`%${filter.value}`)
-            } else if (filter.operator === 'in') {
-                whereConditions.push(`${metadataPath} = ANY(?)`)
-                params.push(filter.value)
-            } else if (filter.operator === 'not_in') {
-                whereConditions.push(`${metadataPath} != ALL(?)`)
-                params.push(filter.value)
-            }
         }
+        const fieldPath =
+            filter.filter_type === 'native_field'
+                ? `skald_memo.${filter.field}`
+                : `skald_memo.metadata->>'${filter.field}'`
+        whereConditions.push(filterByOperator[filter.operator].getWhereClause(fieldPath))
+        params.push(filterByOperator[filter.operator].getFormattedValue(filter.value))
     }
 
     return { whereConditions, params }
@@ -101,19 +93,13 @@ export const memoChunkVectorSearch = async (
     const { whereConditions, params } = buildFilterConditions(filters)
     const allParams = [JSON.stringify(embeddingVector), JSON.stringify(embeddingVector), ...params]
 
-    // Build WHERE clause
     let whereClause = `
         WHERE (skald_memochunk.embedding <=> ?::vector) <= ${similarityThreshold}
         AND skald_memochunk.project_id = '${project.uuid}'
     `
 
     if (whereConditions.length > 0) {
-        // Adjust parameter indices in where conditions since we have 4 base params
-        const adjustedConditions = whereConditions.map((condition) => {
-            // Replace parameter indices by adding 4 (for the base params)
-            return condition.replace(/\$(\d+)/g, (match, num) => `$${parseInt(num) + 4}`)
-        })
-        whereClause += ' AND ' + adjustedConditions.join(' AND ')
+        whereClause += ' AND ' + whereConditions.join(' AND ')
     }
 
     const sql = `

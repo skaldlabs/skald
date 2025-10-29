@@ -11,8 +11,8 @@ export default defineConfig({
     port: 5432,
     extensions: [Migrator],
     migrations: {
-        path: './src/migrations-mikro', // path to migration folder
-        pathTs: './src/migrations-mikro', // path to TS migration files
+        path: './src/migrations', // path to migration folder
+        pathTs: './src/migrations', // path to TS migration files
         glob: '!(*.d).{js,ts}', // how to match migration files
         transactional: true, // wrap each migration in a transaction
         disableForeignKeys: false, // disable foreign key checks during migrations

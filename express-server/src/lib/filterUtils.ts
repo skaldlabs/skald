@@ -1,4 +1,4 @@
-type Operator = 'eq' | 'neq' | 'contains' | 'startswith' | 'endswith' | 'in' | 'not_in'
+export type Operator = 'eq' | 'neq' | 'contains' | 'startswith' | 'endswith' | 'in' | 'not_in'
 type FilterType = 'native_field' | 'custom_metadata'
 type NativeField = 'title' | 'source' | 'client_reference_id' | 'tags'
 
@@ -23,7 +23,6 @@ export function parseFilter(filterDict: Record<string, any>): ParseFilterResult 
      * - error: The first error encountered if parsing was not successful or null if it was successful
      */
 
-    // Validate required fields
     const { field, operator, value, filter_type } = filterDict
 
     if (!field || !operator || value === undefined || !filter_type) {

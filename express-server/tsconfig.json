@@ -2,7 +2,7 @@
     "ts-node": {
         "files": true
     },
-    "files": ["src/index.ts", "src/global.d.ts"],
+    "files": ["src/server.ts", "src/global.d.ts"],
     "compilerOptions": {
         "target": "ES2020",
         "module": "commonjs",

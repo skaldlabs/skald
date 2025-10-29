@@ -1,16 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
-import { DI } from '../index'
-import { User } from '../entities/User'
-
-class UnauthenticatedUser extends User {
-    isAuthenticated = false
-}
+import { DI } from '../di'
+import { sha3_256 } from '../lib/hashUtils'
+import { RequestUser } from './requestUser'
 
 export const userMiddleware = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
-        // Initialize context
         req.context = {
-            user: new UnauthenticatedUser(),
+            requestUser: new RequestUser(null, 'unauthenticatedUser', null),
         }
 
         const authHeader = req.headers.authorization
@@ -26,17 +22,18 @@ export const userMiddleware = () => {
 
         const key = match[1]
 
-        try {
-            const authToken = await DI.authTokens.findOneOrFail(key, { populate: ['user'] })
-
-            if (authToken && authToken.user) {
-                req.context.user = authToken.user
-            }
-        } catch (error) {
-            // Log error but continue without user
-            console.error('Error authenticating user:', error)
+        const authToken = await DI.authTokens.findOne({ key }, { populate: ['user'] })
+        if (authToken && authToken.user) {
+            req.context.requestUser = new RequestUser(authToken.user, 'authenticatedUser', null)
+            return next()
         }
 
-        next()
+        const projectAPIKey = await DI.projectAPIKeys.findOne(sha3_256(key), { populate: ['project'] })
+        if (projectAPIKey) {
+            req.context.requestUser = new RequestUser(null, 'projectAPIKeyUser', projectAPIKey.project)
+            return next()
+        }
+
+        return next()
     }
 }
