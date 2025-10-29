@@ -8,10 +8,10 @@ import { userMiddleware } from './middleware/userMiddleware'
 import { chat } from './api/chat'
 import { health } from './api/health'
 import { requireAuth, requireProjectAccess } from './middleware/authMiddleware'
-import { projectMiddleware } from './middleware/projectMiddleware'
 import { initDI } from './di'
 import { Request, Response } from 'express'
 import { search } from './api/search'
+import { organization } from './api/organization'
 
 const app = express()
 
@@ -30,7 +30,6 @@ export const init = (async () => {
     app.use(express.json())
     app.use((req, res, next) => RequestContext.create(DI.orm.em, next))
     app.use(userMiddleware())
-    app.use(projectMiddleware())
 
     app.get('/api/health', health)
 
@@ -39,11 +38,16 @@ export const init = (async () => {
         res.json({ message: 'Welcome to Skald Express Server' })
     })
 
+    // Routers
     const privateRoutesRouter = express.Router({ mergeParams: true })
+    const organizationRoutesRouter = express.Router({ mergeParams: true })
+
     privateRoutesRouter.use(requireAuth())
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
 
+    privateRoutesRouter.use('/organization', organizationRoutesRouter)
+    organizationRoutesRouter.use('/', organization)
     app.use('/api', privateRoutesRouter)
     app.use(route404)
 
