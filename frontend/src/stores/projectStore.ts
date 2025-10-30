@@ -29,7 +29,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     fetchProjects: async () => {
         set({ loading: true, error: null })
 
-        const response = await api.get<Project[]>(`${getOrgPath()}/projects/`)
+        const response = await api.get<Project[]>(`${getOrgPath()}/project/`)
         console.log('response', response)
         if (response.error || !response.data) {
             set({
@@ -58,7 +58,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
         set({ loading: true, error: null })
 
-        const response = await api.post<Project>(`${getOrgPath()}/projects/`, {
+        const response = await api.post<Project>(`${getOrgPath()}/project/`, {
             name,
             organization: organizationId,
         })
@@ -91,7 +91,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     updateProject: async (uuid: string, name: string) => {
         set({ loading: true, error: null })
 
-        const response = await api.put(`${getOrgPath()}/projects/${uuid}/`, {
+        const response = await api.put(`${getOrgPath()}/project/${uuid}/`, {
             name,
         })
 
@@ -118,7 +118,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     deleteProject: async (uuid: string) => {
         set({ loading: true, error: null })
 
-        const response = await api.delete(`${getOrgPath()}/projects/${uuid}/`)
+        const response = await api.delete(`${getOrgPath()}/project/${uuid}/`)
 
         if (response.error) {
             set({
@@ -208,9 +208,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             return null
         }
 
-        const response = await api.post<{ api_key: string }>(
-            `${getOrgPath()}/projects/${projectUuid}/generate_api_key/`
-        )
+        const response = await api.post<{ api_key: string }>(`${getOrgPath()}/project/${projectUuid}/generate_api_key/`)
 
         if (response.error || !response.data) {
             toast.error(`Failed to generate API key: ${response.error}`)

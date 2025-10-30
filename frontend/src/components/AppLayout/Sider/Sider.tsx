@@ -1,6 +1,6 @@
 import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings, CreditCard, BookOpen } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { OrganizationAccessLevel, useAuthStore, UserDetails } from '@/stores/authStore'
+import { useAuthStore, UserDetails } from '@/stores/authStore'
 import {
     Sidebar,
     SidebarContent,
@@ -37,25 +37,25 @@ export const Sider = () => {
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
             {
-                key: `/projects/${currentProject?.uuid}/get-started`,
+                key: `/project/${currentProject?.uuid}/get-started`,
                 icon: <Rocket className="h-4 w-4" />,
                 label: 'Get Started',
                 hasAccess: () => true,
             },
             {
-                key: `/projects/${currentProject?.uuid}/memos`,
+                key: `/project/${currentProject?.uuid}/memos`,
                 icon: <Files className="h-4 w-4" />,
                 label: 'Memos',
                 hasAccess: () => true,
             },
             {
-                key: `/projects/${currentProject?.uuid}/playground`,
+                key: `/project/${currentProject?.uuid}/playground`,
                 icon: <MessageSquare className="h-4 w-4" />,
                 label: 'Playground',
                 hasAccess: () => true,
             },
             {
-                key: `/projects/${currentProject?.uuid}/settings`,
+                key: `/project/${currentProject?.uuid}/settings`,
                 icon: <Settings className="h-4 w-4" />,
                 label: 'Settings',
                 hasAccess: () => true,
@@ -68,10 +68,7 @@ export const Sider = () => {
             key: '/organization',
             icon: <Hotel className="h-4 w-4" />,
             label: 'Organization',
-            hasAccess: () =>
-                !!user &&
-                user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
-                    OrganizationAccessLevel.SUPER_ADMIN,
+            hasAccess: () => true,
         },
         {
             key: 'https://docs.useskald.com',

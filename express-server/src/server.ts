@@ -57,7 +57,7 @@ export const init = (async () => {
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
     privateRoutesRouter.use('/organization', organizationRouter)
-    organizationRouter.use('/project', projectRouter)
+    organizationRouter.use('/:organization_uuid/project', projectRouter)
 
     app.use('/api', privateRoutesRouter)
     app.use(route404)

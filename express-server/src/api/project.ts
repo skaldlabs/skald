@@ -319,9 +319,9 @@ const generateApiKeyEndpoint = async (req: Request, res: Response) => {
     res.status(200).json(response)
 }
 
-projectRouter.get('/:organization_uuid/projects', list)
-projectRouter.post('/:organization_uuid/projects', create)
-projectRouter.get('/:organization_uuid/projects/:uuid', retrieve)
-projectRouter.patch('/:organization_uuid/projects/:uuid', update)
-projectRouter.delete('/:organization_uuid/projects/:uuid', destroy)
-projectRouter.post('/:organization_uuid/projects/:uuid/generate_api_key', generateApiKeyEndpoint)
+projectRouter.get('/', list)
+projectRouter.post('/', create)
+projectRouter.get('/:uuid', retrieve)
+projectRouter.patch('/:uuid', update)
+projectRouter.delete('/:uuid', destroy)
+projectRouter.post('/:uuid/generate_api_key', generateApiKeyEndpoint)
