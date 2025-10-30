@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express'
 import { z } from 'zod'
 import { DI } from '../di'
-import { sha256 } from '../lib/hashUtils'
-import { randomUUID } from 'crypto'
+
+import { createNewMemo } from '../lib/createMemoUtils'
 
 const CreateMemoRequest = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
@@ -25,21 +25,7 @@ const createMemo = async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Invalid request data', details: validatedData.error.issues })
     }
 
-    console.log('validatedData', validatedData.data)
-    const memo = DI.memos.create({
-        ...validatedData.data,
-        uuid: randomUUID(),
-        project,
-        // KLUDGE: users send us reference_id, but we store it as client_reference_id
-        client_reference_id: validatedData.data.reference_id,
-        created_at: new Date(),
-        updated_at: new Date(),
-        content_length: validatedData.data.content.length,
-        archived: false,
-        content_hash: sha256(validatedData.data.content),
-        pending: true,
-    })
-    await DI.em.persistAndFlush(memo)
+    await createNewMemo(validatedData.data, project)
 
     return res.status(201).json({ ok: true })
 }
