@@ -37,25 +37,25 @@ export const Sider = () => {
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
             {
-                key: `/project/${currentProject?.uuid}/get-started`,
+                key: `/projects/${currentProject?.uuid}/get-started`,
                 icon: <Rocket className="h-4 w-4" />,
                 label: 'Get Started',
                 hasAccess: () => true,
             },
             {
-                key: `/project/${currentProject?.uuid}/memos`,
+                key: `/projects/${currentProject?.uuid}/memos`,
                 icon: <Files className="h-4 w-4" />,
                 label: 'Memos',
                 hasAccess: () => true,
             },
             {
-                key: `/project/${currentProject?.uuid}/playground`,
+                key: `/projects/${currentProject?.uuid}/playground`,
                 icon: <MessageSquare className="h-4 w-4" />,
                 label: 'Playground',
                 hasAccess: () => true,
             },
             {
-                key: `/project/${currentProject?.uuid}/settings`,
+                key: `/projects/${currentProject?.uuid}/settings`,
                 icon: <Settings className="h-4 w-4" />,
                 label: 'Settings',
                 hasAccess: () => true,

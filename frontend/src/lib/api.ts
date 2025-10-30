@@ -282,7 +282,7 @@ export const getOrgPath = () => {
         // this should not happen but we handle it nevertheless
         throw new Error('No organization ID found')
     }
-    return `/organization/${user.current_organization_uuid}`
+    return `/organizations/${user.current_organization_uuid}`
 }
 
 export const getProjectPath = () => {

@@ -13,6 +13,7 @@ import { MemoContent } from './entities/MemoContent'
 import { Organization } from './entities/Organization'
 import { OrganizationMembershipInvite } from './entities/OrganizationMembershipInvite'
 import { EmailVerificationCode } from './entities/EmailVerificationCode'
+import { Plan } from './entities/Plan'
 
 export const DI = {} as {
     server: http.Server
@@ -30,6 +31,7 @@ export const DI = {} as {
     memoTags: EntityRepository<MemoTag>
     memoContents: EntityRepository<MemoContent>
     emailVerificationCodes: EntityRepository<EmailVerificationCode>
+    plans: EntityRepository<Plan>
 }
 
 export const initDI = async (): Promise<typeof DI> => {
@@ -47,6 +49,7 @@ export const initDI = async (): Promise<typeof DI> => {
     DI.memoTags = DI.orm.em.getRepository(MemoTag)
     DI.memoContents = DI.orm.em.getRepository(MemoContent)
     DI.emailVerificationCodes = DI.orm.em.getRepository(EmailVerificationCode)
+    DI.plans = DI.orm.em.getRepository(Plan)
 
     return DI
 }
