@@ -21,7 +21,7 @@ interface ApiResponse<T = unknown> {
     error?: string
 }
 
-const LOCAL_URL = 'http://localhost:8000'
+const LOCAL_URL = 'http://localhost:3000'
 
 export const domain = import.meta.env.VITE_API_HOST || LOCAL_URL
 
