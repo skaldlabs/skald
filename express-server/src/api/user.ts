@@ -69,7 +69,7 @@ const createUser = async (req: Request, res: Response) => {
     const existingUser = await DI.users.findOne({ email: normalizedEmail })
     if (existingUser) {
         return res.status(400).json({
-            email: ['User with this email already exists.'],
+            error: ['User with this email already exists.'],
         })
     }
 

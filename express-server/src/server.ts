@@ -12,7 +12,8 @@ import { requireAuth, requireProjectAccess } from './middleware/authMiddleware'
 import { initDI } from './di'
 import { Request, Response } from 'express'
 import { search } from './api/search'
-import { organization } from './api/organization'
+import { organizationRouter } from './api/organization'
+import { projectRouter } from './api/project'
 import { userRouter } from './api/user'
 import cookieParser from 'cookie-parser'
 import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS } from './settings'
@@ -48,7 +49,7 @@ export const init = (async () => {
 
     // Routers
     const privateRoutesRouter = express.Router({ mergeParams: true })
-    const organizationRoutesRouter = express.Router({ mergeParams: true })
+
     privateRoutesRouter.use(requireAuth())
 
     app.get('/api/health', health)
@@ -57,9 +58,9 @@ export const init = (async () => {
     privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
+    privateRoutesRouter.use('/organization', organizationRouter)
+    organizationRouter.use('/:organization_uuid/project', projectRouter)
 
-    privateRoutesRouter.use('/organization', organizationRoutesRouter)
-    organizationRoutesRouter.use('/', organization)
     app.use('/api', privateRoutesRouter)
     app.use(route404)
 
