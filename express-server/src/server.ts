@@ -17,6 +17,7 @@ import { userRouter } from './api/user'
 import cookieParser from 'cookie-parser'
 import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS } from './settings'
 import { emailVerificationRouter } from './api/emailVerification'
+import { memoRouter } from './api/memo'
 
 const app = express()
 
@@ -53,6 +54,7 @@ export const init = (async () => {
     app.get('/api/health', health)
     app.use('/api/user', userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)
+    privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
 
