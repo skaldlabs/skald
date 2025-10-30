@@ -13,6 +13,7 @@ import { initDI } from './di'
 import { Request, Response } from 'express'
 import { search } from './api/search'
 import { organizationRouter } from './api/organization'
+import { projectRouter } from './api/project'
 import { userRouter } from './api/user'
 import cookieParser from 'cookie-parser'
 import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS } from './settings'
@@ -56,6 +57,7 @@ export const init = (async () => {
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
     privateRoutesRouter.use('/organization', organizationRouter)
+    organizationRouter.use('/project', projectRouter)
 
     app.use('/api', privateRoutesRouter)
     app.use(route404)
