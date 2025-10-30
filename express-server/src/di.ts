@@ -10,6 +10,7 @@ import { MemoSummary } from './entities/MemoSummary'
 import { MemoChunk } from './entities/MemoChunk'
 import { MemoTag } from './entities/MemoTag'
 import { MemoContent } from './entities/MemoContent'
+import { EmailVerificationCode } from './entities/EmailVerificationCode'
 
 export const DI = {} as {
     server: http.Server
@@ -24,6 +25,7 @@ export const DI = {} as {
     memoChunks: EntityRepository<MemoChunk>
     memoTags: EntityRepository<MemoTag>
     memoContents: EntityRepository<MemoContent>
+    emailVerificationCodes: EntityRepository<EmailVerificationCode>
 }
 
 export const initDI = async (): Promise<typeof DI> => {
@@ -38,7 +40,7 @@ export const initDI = async (): Promise<typeof DI> => {
     DI.memoChunks = DI.orm.em.getRepository(MemoChunk)
     DI.memoTags = DI.orm.em.getRepository(MemoTag)
     DI.memoContents = DI.orm.em.getRepository(MemoContent)
-    DI.memoContents = DI.orm.em.getRepository(MemoContent)
+    DI.emailVerificationCodes = DI.orm.em.getRepository(EmailVerificationCode)
 
     return DI
 }

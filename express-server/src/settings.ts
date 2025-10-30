@@ -169,3 +169,5 @@ export const EMAIL_VERIFICATION_ENABLED = strToBool(
     process.env.EMAIL_VERIFICATION_ENABLED,
     DEFAULT_EMAIL_VERIFICATION_ENABLED
 )
+export const RESEND_API_KEY = process.env.RESEND_API_KEY
+export const EMAIL_DOMAIN = process.env.EMAIL_DOMAIN || 'useskald.com'
