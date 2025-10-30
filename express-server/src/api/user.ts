@@ -3,6 +3,7 @@ import { DI } from '../di'
 import { checkPassword, makePassword } from '../lib/passwordUtils'
 import { generateAccessToken } from '../lib/tokenUtils'
 import { requireAuth } from '../middleware/authMiddleware'
+import { EMAIL_VERIFICATION_ENABLED } from '../settings'
 export const userRouter = express.Router({ mergeParams: true })
 
 interface UserResponse {
@@ -77,7 +78,7 @@ const createUser = async (req: Request, res: Response) => {
     const user = DI.users.create({
         email: normalizedEmail,
         password: hashedPassword,
-        emailVerified: false,
+        emailVerified: !EMAIL_VERIFICATION_ENABLED,
         name: '',
         first_name: '',
         last_name: '',

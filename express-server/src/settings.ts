@@ -8,9 +8,36 @@ if (process.env.NODE_ENV === 'development') {
     config({ path: resolve(__dirname, '.env') })
 }
 
+function strToBool(input: string | boolean | undefined, defaultValue: boolean = false): boolean {
+    if (!input) {
+        return defaultValue
+    }
+
+    if (typeof input === 'boolean') {
+        return input
+    }
+
+    if (input === undefined) {
+        return false
+    }
+
+    const trueTerms = ['true', '1', 'yes', 'y', 't']
+    const falseTerms = ['false', '0', 'no', 'n', 'f']
+
+    const normalizedStr = input.trim().toLowerCase()
+
+    if (trueTerms.includes(normalizedStr)) {
+        return true
+    } else if (falseTerms.includes(normalizedStr)) {
+        return false
+    } else {
+        throw new Error('Input string does not represent a boolean value')
+    }
+}
+
 export const SECRET_KEY = process.env.SECRET_KEY || 'UNSAFE_DEFAULT_SECRET_KEY'
 
-export const DEBUG = process.env.DEBUG === 'true'
+export const DEBUG = strToBool(process.env.DEBUG)
 
 export const NODE_ENV = process.env.NODE_ENV
 
@@ -122,7 +149,7 @@ if (CORS_ORIGINS_ENV) {
 }
 
 // Add self-hosted deployment URLs
-const IS_SELF_HOSTED_DEPLOY = process.env.IS_SELF_HOSTED_DEPLOY === 'true'
+export const IS_SELF_HOSTED_DEPLOY = strToBool(process.env.IS_SELF_HOSTED_DEPLOY)
 if (IS_SELF_HOSTED_DEPLOY) {
     const FRONTEND_URL = process.env.FRONTEND_URL
     const API_URL = process.env.API_URL
@@ -135,3 +162,10 @@ if (IS_SELF_HOSTED_DEPLOY) {
 }
 
 export { CORS_ALLOWED_ORIGINS }
+
+// ---- Email Configuration ----
+const DEFAULT_EMAIL_VERIFICATION_ENABLED = !(DEBUG || IS_SELF_HOSTED_DEPLOY)
+export const EMAIL_VERIFICATION_ENABLED = strToBool(
+    process.env.EMAIL_VERIFICATION_ENABLED,
+    DEFAULT_EMAIL_VERIFICATION_ENABLED
+)
