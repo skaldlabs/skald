@@ -1,15 +1,18 @@
 import { Resend } from 'resend'
-import { RESEND_API_KEY, EMAIL_DOMAIN } from '../settings'
+import { EMAIL_DOMAIN, RESEND_API_KEY } from '../settings'
 
 const resend = new Resend(RESEND_API_KEY)
 
-export const sendEmail = async (to: string, subject: string, html: string, from_user: string = 'noreply') => {
-    const { data, error } = await resend.emails.send({
-        from: `${from_user}@${EMAIL_DOMAIN}`,
-        to,
+export async function sendEmail(
+    toEmail: string,
+    subject: string,
+    html: string,
+    fromUser: string = 'noreply'
+): Promise<void> {
+    await resend.emails.send({
+        from: `${fromUser}@${EMAIL_DOMAIN}`,
+        to: toEmail,
         subject,
-        html: html,
+        html,
     })
-
-    return { data, error }
 }
