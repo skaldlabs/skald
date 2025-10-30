@@ -16,6 +16,7 @@ import { organization } from './api/organization'
 import { userRouter } from './api/user'
 import cookieParser from 'cookie-parser'
 import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS } from './settings'
+import { emailVerificationRouter } from './api/emailVerification'
 
 const app = express()
 
@@ -44,20 +45,14 @@ export const init = (async () => {
     app.use((req, res, next) => RequestContext.create(DI.orm.em, next))
     app.use(userMiddleware())
 
-    app.get('/api/health', health)
-
-    app.get('/', (req, res) => {
-        console.log(req.context?.requestUser)
-        res.json({ message: 'Welcome to Skald Express Server' })
-    })
-
-    app.use('/api/user', userRouter)
-
     // Routers
     const privateRoutesRouter = express.Router({ mergeParams: true })
     const organizationRoutesRouter = express.Router({ mergeParams: true })
-
     privateRoutesRouter.use(requireAuth())
+
+    app.get('/api/health', health)
+    app.use('/api/user', userRouter)
+    app.use('/api/email_verification', emailVerificationRouter)
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
 

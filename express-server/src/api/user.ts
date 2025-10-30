@@ -4,7 +4,6 @@ import { checkPassword, makePassword } from '../lib/passwordUtils'
 import { generateAccessToken } from '../lib/tokenUtils'
 import { requireAuth } from '../middleware/authMiddleware'
 import { EMAIL_VERIFICATION_ENABLED } from '../settings'
-export const userRouter = express.Router({ mergeParams: true })
 
 interface UserResponse {
     email: string
@@ -210,6 +209,7 @@ const setCurrentProject = async (req: Request, res: Response) => {
     res.status(200).json(userResponse)
 }
 
+export const userRouter = express.Router({ mergeParams: true })
 userRouter.post('/login', login)
 userRouter.post('/logout', [requireAuth()], logout)
 userRouter.post('/', createUser)
