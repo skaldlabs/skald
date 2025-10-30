@@ -4,17 +4,10 @@ import { Progress } from '@/components/ui/progress'
 import { TrendingUp, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
-import { OrganizationAccessLevel, useAuthStore } from '@/stores/authStore'
 
 export const UsageTracker = () => {
     const navigate = useNavigate()
-    const user = useAuthStore((state) => state.user)
     const { usage, loading, fetchUsage } = useSubscriptionStore()
-
-    const canManageBilling =
-        !!user &&
-        user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
-            OrganizationAccessLevel.SUPER_ADMIN
 
     useEffect(() => {
         fetchUsage()
@@ -83,7 +76,7 @@ export const UsageTracker = () => {
                     Extra usage will be charged at the end of the month separately.
                 </p>
             )}
-            {canManageBilling && (isNearLimit || isAtLimit) && (
+            {(isNearLimit || isAtLimit) && (
                 <Button
                     onClick={() => navigate('/organization/subscription')}
                     size="sm"
@@ -95,7 +88,7 @@ export const UsageTracker = () => {
                 </Button>
             )}
 
-            {canManageBilling && !isNearLimit && !isAtLimit && (
+            {!isNearLimit && !isAtLimit && (
                 <Button
                     onClick={() => navigate('/organization/subscription')}
                     size="sm"

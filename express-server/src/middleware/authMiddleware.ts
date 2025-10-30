@@ -9,8 +9,6 @@ export const isUserOrgMember = async (user: User, organization: Organization): P
 
 export const requireAuth = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
-        console.log('requireAuth')
-        console.log(req.context?.requestUser || 'no request user')
         if (!req.context || !req.context.requestUser || req.context.requestUser.userType === 'unauthenticatedUser') {
             return res.status(401).json({ error: 'Unauthorized' })
         }

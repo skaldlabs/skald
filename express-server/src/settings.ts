@@ -8,7 +8,36 @@ if (process.env.NODE_ENV === 'development') {
     config({ path: resolve(__dirname, '.env') })
 }
 
-export const DEBUG = process.env.DEBUG === 'true'
+function strToBool(input: string | boolean | undefined, defaultValue: boolean = false): boolean {
+    if (!input) {
+        return defaultValue
+    }
+
+    if (typeof input === 'boolean') {
+        return input
+    }
+
+    if (input === undefined) {
+        return false
+    }
+
+    const trueTerms = ['true', '1', 'yes', 'y', 't']
+    const falseTerms = ['false', '0', 'no', 'n', 'f']
+
+    const normalizedStr = input.trim().toLowerCase()
+
+    if (trueTerms.includes(normalizedStr)) {
+        return true
+    } else if (falseTerms.includes(normalizedStr)) {
+        return false
+    } else {
+        throw new Error('Input string does not represent a boolean value')
+    }
+}
+
+export const SECRET_KEY = process.env.SECRET_KEY || 'UNSAFE_DEFAULT_SECRET_KEY'
+
+export const DEBUG = strToBool(process.env.DEBUG)
 
 export const NODE_ENV = process.env.NODE_ENV
 
@@ -103,3 +132,40 @@ if (EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
 }
 
 export const SENTRY_DSN = process.env.SENTRY_DSN
+
+// ---- CORS Configuration ----
+export const CORS_ALLOW_CREDENTIALS = true
+
+// Get allowed origins from environment or use defaults
+const CORS_ORIGINS_ENV = process.env.CORS_ALLOWED_ORIGINS || ''
+let CORS_ALLOWED_ORIGINS: string[]
+
+if (CORS_ORIGINS_ENV) {
+    CORS_ALLOWED_ORIGINS = CORS_ORIGINS_ENV.split(',').map((origin) => origin.trim())
+} else if (DEBUG) {
+    CORS_ALLOWED_ORIGINS = ['http://localhost:8000', 'http://localhost:3000', 'http://localhost:5173']
+} else {
+    CORS_ALLOWED_ORIGINS = ['https://app.useskald.com', 'https://api.useskald.com', 'https://platform.useskald.com']
+}
+
+// Add self-hosted deployment URLs
+export const IS_SELF_HOSTED_DEPLOY = strToBool(process.env.IS_SELF_HOSTED_DEPLOY)
+if (IS_SELF_HOSTED_DEPLOY) {
+    const FRONTEND_URL = process.env.FRONTEND_URL
+    const API_URL = process.env.API_URL
+    if (FRONTEND_URL) {
+        CORS_ALLOWED_ORIGINS.push(FRONTEND_URL)
+    }
+    if (API_URL) {
+        CORS_ALLOWED_ORIGINS.push(API_URL)
+    }
+}
+
+export { CORS_ALLOWED_ORIGINS }
+
+// ---- Email Configuration ----
+const DEFAULT_EMAIL_VERIFICATION_ENABLED = !(DEBUG || IS_SELF_HOSTED_DEPLOY)
+export const EMAIL_VERIFICATION_ENABLED = strToBool(
+    process.env.EMAIL_VERIFICATION_ENABLED,
+    DEFAULT_EMAIL_VERIFICATION_ENABLED
+)
