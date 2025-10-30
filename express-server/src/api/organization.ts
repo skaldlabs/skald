@@ -6,8 +6,17 @@ import { Organization } from '../entities/Organization'
 import { FRONTEND_URL, IS_SELF_HOSTED_DEPLOY } from '../settings'
 import { OrganizationMembershipRole } from '../entities/OrganizationMembership'
 import { sendEmail } from '../lib/emailUtils'
+import { v4 as uuidv4 } from 'uuid'
 
 export const organizationRouter = express.Router({ mergeParams: true })
+
+interface OrganizationResponse {
+    uuid: string
+    name: string
+    owner: string
+    created_at: Date
+    updated_at: Date
+}
 
 const getUserOrganization = async (user: User): Promise<Organization | null> => {
     const memberships = await DI.organizationMemberships.find(
@@ -36,7 +45,15 @@ const organization = async (req: Request, res: Response) => {
         return res.status(404).json({ error: 'Organization not found' })
     }
 
-    res.json(organization)
+    const organizationResponse: OrganizationResponse = {
+        uuid: organization.uuid,
+        name: organization.name,
+        owner: organization.owner.email,
+        created_at: organization.created_at,
+        updated_at: organization.updated_at,
+    }
+
+    res.status(200).json(organizationResponse)
 }
 
 const create = async (req: Request, res: Response) => {
@@ -53,32 +70,42 @@ const create = async (req: Request, res: Response) => {
     }
 
     const organization = DI.organizations.create({
+        uuid: uuidv4(),
         name,
         owner: user,
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
     })
 
     DI.organizationMemberships.create({
         organization,
         user,
-        joinedAt: new Date(),
+        joinedAt: new Date().toISOString(),
         accessLevel: OrganizationMembershipRole.OWNER,
     })
 
     user.defaultOrganization = organization
 
     DI.projects.create({
+        uuid: uuidv4(),
         name: `${organization.name.split(' ')[0]} Default Project`,
         organization,
         owner: user,
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
     })
 
     await DI.em.flush()
 
-    res.status(201).json({ organization })
+    const organizationResponse: OrganizationResponse = {
+        uuid: organization.uuid,
+        name: organization.name,
+        owner: organization.owner.email,
+        created_at: organization.created_at,
+        updated_at: organization.updated_at,
+    }
+
+    res.status(201).json(organizationResponse)
 }
 
 const members = async (req: Request, res: Response) => {
@@ -144,6 +171,7 @@ const inviteMember = async (req: Request, res: Response) => {
     }
 
     DI.organizationMembershipInvites.create({
+        id: uuidv4(),
         organization: organization,
         invitedBy: user,
         email: email,
@@ -162,11 +190,57 @@ const inviteMember = async (req: Request, res: Response) => {
 }
 
 const pendingInvites = async (req: Request, res: Response) => {
-    res.json({ status: 'ok' })
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+    const organization = await getUserOrganization(user)
+    if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' })
+    }
+
+    const invites = await DI.organizationMembershipInvites.find({ organization: organization })
+    if (invites.length === 0) {
+        return res.status(200).json([])
+    }
+
+    const invitesInfo = invites.map((i) => ({
+        id: i.id,
+        organization_uuid: i.organization.uuid,
+        organization_name: i.organization.name,
+    }))
+    res.status(200).json(invitesInfo)
 }
 
 const acceptInvite = async (req: Request, res: Response) => {
-    res.json({ status: 'ok' })
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const inviteId = req.params.id
+    if (!inviteId) {
+        return res.status(400).json({ error: 'Invite ID is required' })
+    }
+
+    const invite = await DI.organizationMembershipInvites.findOne({ id: inviteId, email: user.email, acceptedAt: null })
+    if (!invite) {
+        return res.status(404).json({ error: 'No pending invite found' })
+    }
+
+    const organization = invite.organization
+    DI.organizationMemberships.create({
+        user,
+        organization,
+        accessLevel: OrganizationMembershipRole.MEMBER,
+        joinedAt: new Date().toISOString(),
+    })
+    invite.acceptedAt = new Date()
+    user.defaultOrganization = organization
+
+    await DI.em.flush()
+
+    res.status(200).json({ detail: 'Invite accepted successfully' })
 }
 
 const removeMember = async (req: Request, res: Response) => {

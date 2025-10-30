@@ -56,6 +56,9 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
+      uuid:
+        specifier: ^13.0.0
+        version: 13.0.0
       voyageai:
         specifier: ^0.0.8
         version: 0.0.8
@@ -2680,6 +2683,10 @@ packages:
 
   uuid@10.0.0:
     resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
+    hasBin: true
+
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
     hasBin: true
 
   uuid@9.0.1:
@@ -5585,6 +5592,8 @@ snapshots:
       requires-port: 1.0.0
 
   uuid@10.0.0: {}
+
+  uuid@13.0.0: {}
 
   uuid@9.0.1: {}
 

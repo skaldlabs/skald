@@ -47,7 +47,7 @@ export const init = (async () => {
 
     // Routers
     const privateRoutesRouter = express.Router({ mergeParams: true })
-    const organizationRouter = express.Router({ mergeParams: true })
+
     privateRoutesRouter.use(requireAuth())
 
     app.get('/api/health', health)
