@@ -107,3 +107,10 @@ if (EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
 }
 
 export const SENTRY_DSN = process.env.SENTRY_DSN
+
+// Resend
+export const RESEND_API_KEY = process.env.RESEND_API_KEY
+export const EMAIL_DOMAIN = process.env.EMAIL_DOMAIN || 'useskald.com'
+
+// Frontend URL
+export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'

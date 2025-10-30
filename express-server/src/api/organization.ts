@@ -3,8 +3,9 @@ import { Request, Response } from 'express'
 import { DI } from '../di'
 import { User } from '../entities/User'
 import { Organization } from '../entities/Organization'
-import { IS_SELF_HOSTED_DEPLOY } from '../settings'
+import { FRONTEND_URL, IS_SELF_HOSTED_DEPLOY } from '../settings'
 import { OrganizationMembership, OrganizationMembershipRole } from '../entities/OrganizationMembership'
+import { sendEmail } from '../lib/emailUtils'
 
 export const organizationRouter = express.Router({ mergeParams: true })
 
@@ -106,6 +107,17 @@ const members = async (req: Request, res: Response) => {
     res.status(200).json(membersInfo)
 }
 
+const _generateInviteEmailContent = (organizationName: string, inviteeEmail: string) => {
+    const signupUrl = `${FRONTEND_URL}/signup?email=${inviteeEmail}`
+    const subject = `Invitation to join ${organizationName} on Skald`
+    const html_content = `
+    <h2>You've been invited to join ${organizationName} on Skald!</h2>
+    <p>Click the link below to sign up and join the organization:</p>
+    <p><a href="${signupUrl}">Join ${organizationName}</a></p>
+    `
+    return { subject, html_content }
+}
+
 const inviteMember = async (req: Request, res: Response) => {
     let email = req.body.email
     const user = req.context?.requestUser?.userInstance
@@ -137,8 +149,15 @@ const inviteMember = async (req: Request, res: Response) => {
         email: email,
         createdAt: new Date(),
     })
-    // TODO: Send invite email
+
     await DI.em.flush()
+
+    const { subject, html_content } = _generateInviteEmailContent(organization.name, email)
+    const { data: _, error } = await sendEmail(email, subject, html_content)
+    if (error) {
+        return res.status(503).json({ error: 'Failed to send invitation email' })
+    }
+
     res.status(200).json({ detail: 'Invitation sent successfully' })
 }
 
