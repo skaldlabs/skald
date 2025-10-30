@@ -4,7 +4,7 @@
     "description": "",
     "main": "dist/server.js",
     "scripts": {
-        "dev": "NODE_ENV=development nodemon --exec ts-node src/server.ts",
+        "dev": "NODE_ENV=development DEBUG=true nodemon --exec ts-node src/server.ts",
         "build": "tsc",
         "start": "node dist/server.js",
         "test": "jest",
@@ -36,6 +36,7 @@
         "pg": "^8.16.3",
         "resend": "^6.3.0",
         "tsx": "^4.20.6",
+        "uuid": "^13.0.0",
         "voyageai": "^0.0.8"
     },
     "devDependencies": {
