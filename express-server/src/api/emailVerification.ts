@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express'
 import { DI } from '../di'
-import { requireAuth } from '../middleware/authMiddleware'
 import { User } from '../entities/User'
 import { EmailVerificationCode } from '../entities/EmailVerificationCode'
 import { sendEmail } from '../lib/emailUtils'
@@ -38,7 +37,7 @@ async function sendVerificationEmail(user: User): Promise<void> {
 
     await sendEmail(
         user.email,
-        'Your Email Verification Code',
+        'Your Skald Email Verification Code',
         `
             <h1>Verify your email address</h1>
             <p>Your verification code is:</p>
@@ -130,5 +129,5 @@ const sendEmailVerification = async (req: Request, res: Response) => {
 }
 
 export const emailVerificationRouter = express.Router({ mergeParams: true })
-emailVerificationRouter.post('/send', [requireAuth()], sendEmailVerification)
-emailVerificationRouter.post('/verify', [requireAuth()], verifyEmailVerification)
+emailVerificationRouter.post('/send', sendEmailVerification)
+emailVerificationRouter.post('/verify', verifyEmailVerification)
