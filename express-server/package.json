@@ -4,7 +4,7 @@
     "description": "",
     "main": "dist/server.js",
     "scripts": {
-        "dev": "NODE_ENV=development nodemon --exec ts-node src/server.ts",
+        "dev": "NODE_ENV=development DEBUG=true nodemon --exec ts-node src/server.ts",
         "build": "tsc",
         "start": "node dist/server.js",
         "test": "jest",
