@@ -105,3 +105,33 @@ if (EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
 }
 
 export const SENTRY_DSN = process.env.SENTRY_DSN
+
+// ---- CORS Configuration ----
+export const CORS_ALLOW_CREDENTIALS = true
+
+// Get allowed origins from environment or use defaults
+const CORS_ORIGINS_ENV = process.env.CORS_ALLOWED_ORIGINS || ''
+let CORS_ALLOWED_ORIGINS: string[]
+
+if (CORS_ORIGINS_ENV) {
+    CORS_ALLOWED_ORIGINS = CORS_ORIGINS_ENV.split(',').map((origin) => origin.trim())
+} else if (DEBUG) {
+    CORS_ALLOWED_ORIGINS = ['http://localhost:8000', 'http://localhost:3000', 'http://localhost:5173']
+} else {
+    CORS_ALLOWED_ORIGINS = ['https://app.useskald.com', 'https://api.useskald.com', 'https://platform.useskald.com']
+}
+
+// Add self-hosted deployment URLs
+const IS_SELF_HOSTED_DEPLOY = process.env.IS_SELF_HOSTED_DEPLOY === 'true'
+if (IS_SELF_HOSTED_DEPLOY) {
+    const FRONTEND_URL = process.env.FRONTEND_URL
+    const API_URL = process.env.API_URL
+    if (FRONTEND_URL) {
+        CORS_ALLOWED_ORIGINS.push(FRONTEND_URL)
+    }
+    if (API_URL) {
+        CORS_ALLOWED_ORIGINS.push(API_URL)
+    }
+}
+
+export { CORS_ALLOWED_ORIGINS }

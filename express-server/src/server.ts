@@ -3,6 +3,7 @@ import './settings'
 
 import 'dotenv/config'
 import express from 'express'
+import cors from 'cors'
 import { RequestContext } from '@mikro-orm/postgresql'
 import { userMiddleware } from './middleware/userMiddleware'
 import { chat } from './api/chat'
@@ -14,6 +15,7 @@ import { search } from './api/search'
 import { organization } from './api/organization'
 import { userRouter } from './api/user'
 import cookieParser from 'cookie-parser'
+import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS } from './settings'
 
 const app = express()
 
@@ -28,6 +30,14 @@ export const init = (async () => {
     // because it's the established patter used by mikro-orm, and we want to be able to easily find information
     // about our setup online. see e.g. https://github.com/mikro-orm/express-ts-example-app/blob/master/app/server.ts
     const DI = await initDI()
+
+    // CORS middleware - must come first
+    app.use(
+        cors({
+            origin: CORS_ALLOWED_ORIGINS,
+            credentials: CORS_ALLOW_CREDENTIALS,
+        })
+    )
 
     app.use(express.json())
     app.use(cookieParser())
