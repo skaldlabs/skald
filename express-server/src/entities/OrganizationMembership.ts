@@ -32,3 +32,9 @@ export class OrganizationMembership {
     })
     user!: User
 }
+
+export enum OrganizationMembershipRole {
+    MEMBER = 1,
+    SUPER_ADMIN = 19,
+    OWNER = 20,
+}

@@ -15,6 +15,10 @@ export const NODE_ENV = process.env.NODE_ENV
 // postgres
 export const DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:12345678@localhost/skald2'
 
+// self-hosted option for deployment
+// they don't have billing, are single-tenant, etc.
+export const IS_SELF_HOSTED_DEPLOY = process.env.IS_SELF_HOSTED_DEPLOY === 'true'
+
 // queue configuration
 export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'redis'
 

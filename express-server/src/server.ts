@@ -11,7 +11,7 @@ import { requireAuth, requireProjectAccess } from './middleware/authMiddleware'
 import { initDI } from './di'
 import { Request, Response } from 'express'
 import { search } from './api/search'
-import { organization } from './api/organization'
+import { organizationRouter } from './api/organization'
 
 const app = express()
 
@@ -40,14 +40,12 @@ export const init = (async () => {
 
     // Routers
     const privateRoutesRouter = express.Router({ mergeParams: true })
-    const organizationRoutesRouter = express.Router({ mergeParams: true })
 
     privateRoutesRouter.use(requireAuth())
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
+    privateRoutesRouter.use('/organization', organizationRouter)
 
-    privateRoutesRouter.use('/organization', organizationRoutesRouter)
-    organizationRoutesRouter.use('/', organization)
     app.use('/api', privateRoutesRouter)
     app.use(route404)
 
