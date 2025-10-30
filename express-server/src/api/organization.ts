@@ -244,19 +244,146 @@ const acceptInvite = async (req: Request, res: Response) => {
 }
 
 const removeMember = async (req: Request, res: Response) => {
-    res.json({ status: 'ok' })
+    let email = req.body.email
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' })
+    }
+
+    email = email.toLowerCase().trim()
+    const organization = await getUserOrganization(user)
+    if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' })
+    }
+
+    const membership = await DI.organizationMemberships.findOne(
+        {
+            organization: organization,
+            user: { email: email },
+        },
+        { populate: ['user'] }
+    )
+
+    if (!membership) {
+        return res.status(404).json({ error: 'User is not a member of this organization' })
+    }
+
+    if (membership.user.email === user.email) {
+        return res.status(400).json({ error: 'You cannot remove yourself from the organization' })
+    }
+
+    if (membership.accessLevel === OrganizationMembershipRole.OWNER) {
+        return res.status(400).json({ error: 'Cannot remove organization owner' })
+    }
+
+    await DI.organizationMemberships.nativeDelete({ id: membership.id })
+
+    if (membership.user.defaultOrganization?.uuid === organization.uuid) {
+        membership.user.defaultOrganization = undefined
+        await DI.em.flush()
+    }
+
+    res.status(200).json({ detail: 'Member removed successfully' })
 }
 
 const sentInvites = async (req: Request, res: Response) => {
-    res.json({ status: 'ok' })
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const organization = await getUserOrganization(user)
+    if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' })
+    }
+
+    const invites = await DI.organizationMembershipInvites.find(
+        {
+            organization: organization,
+            acceptedAt: null,
+        },
+        {
+            populate: ['invitedBy'],
+            orderBy: { createdAt: 'DESC' },
+        }
+    )
+
+    const invitesInfo = invites.map((i) => ({
+        id: i.id,
+        email: i.email,
+        created_at: i.createdAt.toISOString(),
+        invited_by_name: i.invitedBy.name || '',
+        invited_by_email: i.invitedBy.email,
+    }))
+
+    res.status(200).json(invitesInfo)
 }
 
 const cancelInvite = async (req: Request, res: Response) => {
-    res.json({ status: 'ok' })
+    const inviteId = req.body.invite_id
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+    if (!inviteId) {
+        return res.status(400).json({ error: 'Invite ID is required' })
+    }
+
+    const organization = await getUserOrganization(user)
+    if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' })
+    }
+
+    const invite = await DI.organizationMembershipInvites.findOne({
+        id: inviteId,
+        organization: organization,
+        acceptedAt: null,
+    })
+
+    if (!invite) {
+        return res.status(404).json({ error: 'Invite not found or already accepted' })
+    }
+
+    await DI.organizationMembershipInvites.nativeDelete({ id: invite.id })
+
+    res.status(200).json({ detail: 'Invite cancelled successfully' })
 }
 
 const resendInvite = async (req: Request, res: Response) => {
-    res.json({ status: 'ok' })
+    const inviteId = req.body.invite_id
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+    if (!inviteId) {
+        return res.status(400).json({ error: 'Invite ID is required' })
+    }
+
+    const organization = await getUserOrganization(user)
+    if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' })
+    }
+
+    const invite = await DI.organizationMembershipInvites.findOne({
+        id: inviteId,
+        organization: organization,
+        acceptedAt: null,
+    })
+
+    if (!invite) {
+        return res.status(404).json({ error: 'Invite not found or already accepted' })
+    }
+
+    const { subject, html_content } = _generateInviteEmailContent(organization.name, invite.email)
+    const { data: _, error } = await sendEmail(invite.email, subject, html_content)
+    if (error) {
+        return res.status(503).json({ error: 'Failed to resend invitation' })
+    }
+
+    res.status(200).json({ detail: 'Invitation resent successfully' })
 }
 
 organizationRouter.get('/', organization)
