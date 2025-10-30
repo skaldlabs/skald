@@ -107,7 +107,7 @@ def _chunk_vector_search(
 ):
     embedding_vector = EmbeddingService.generate_embedding(query, usage="search")
     memo_chunk_results = memo_chunk_vector_search(
-        project, embedding_vector, limit, filters=filters
+        project, embedding_vector, limit, similarity_threshold=0.7, filters=filters
     )
     results = []
     memo_uuids = set()

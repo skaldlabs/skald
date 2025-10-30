@@ -13,6 +13,7 @@ from skald.api.permissions import (
     get_project_for_request,
 )
 from skald.decorators import require_usage_limit
+from skald.models.chat_message import ChatMessageGroup
 from skald.utils.filter_utils import parse_filter
 
 
@@ -83,6 +84,8 @@ class ChatView(views.APIView):
             if stream:
 
                 def event_stream():
+                    response_str = ""
+
                     """Generator function for Server-Sent Events."""
                     # Send initial ping to establish connection
                     yield f": ping\n\n"
@@ -119,6 +122,7 @@ class ChatView(views.APIView):
                                     )
                                     chunk["content"] = str(content)
 
+                            response_str += chunk["content"]
                             # Format as Server-Sent Event
                             data = json.dumps(chunk)
                             yield f"data: {data}\n\n"
@@ -129,6 +133,13 @@ class ChatView(views.APIView):
                         error_data = json.dumps({"type": "error", "content": error_msg})
                         yield f"data: {error_data}\n\n"
                     finally:
+                        ChatMessageGroup.objects.create(
+                            organization=project.organization,
+                            project=project,
+                            user_query=query,
+                            model_response=response_str,
+                            context_str=context_str,
+                        )
                         # Send a done event
                         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
@@ -145,6 +156,14 @@ class ChatView(views.APIView):
             else:
                 # Non-streaming response
                 result = run_chat_agent(query, context_str)
+
+                ChatMessageGroup.objects.create(
+                    organization=project.organization,
+                    project=project,
+                    user_query=query,
+                    model_response=result.get("output"),
+                    context_str=context_str,
+                )
 
                 return Response(
                     {

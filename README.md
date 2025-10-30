@@ -20,6 +20,9 @@
     <a href="https://github.com/skaldlabs/skald-go">
         <img src="https://img.shields.io/badge/go-v.0.1.0-blue" alt="skald-go">
     </a>
+    <a href="https://github.com/skaldlabs/skald-csharp">
+        <img src="https://img.shields.io/badge/csharp-v.0.1.0-blue" alt="skald-csharp">
+    </a>
     <a href="https://github.com/skaldlabs/skald-mcp">
         <img src="https://img.shields.io/badge/mcp-v.0.1.0-blue" alt="skald-mcp">
     </a>
@@ -49,7 +52,7 @@ const result = await skald.chat({
 });
 ```
 
-<small>[Python](https://docs.useskald.com/docs/sdks/python#usage) - [Ruby](https://docs.useskald.com/docs/sdks/ruby#usage) - [Go](https://docs.useskald.com/docs/sdks/go#usage) - [PHP](https://docs.useskald.com/docs/sdks/php#quick-start) - [MCP](https://docs.useskald.com/docs/sdks/mcp) - [CLI](https://docs.useskald.com/docs/sdks/cli)</small>
+<small>[Python](https://docs.useskald.com/docs/sdks/python#usage) - [Ruby](https://docs.useskald.com/docs/sdks/ruby#usage) - [Go](https://docs.useskald.com/docs/sdks/go#usage) - [PHP](https://docs.useskald.com/docs/sdks/php#quick-start) - [C#](https://github.com/skaldlabs/skald-csharp) - [MCP](https://docs.useskald.com/docs/sdks/mcp) - [CLI](https://docs.useskald.com/docs/sdks/cli)</small>
 
 ## ⚡ Try it
 
