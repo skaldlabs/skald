@@ -1,4 +1,4 @@
-import '@/settings'
+import '@/config'
 import { createRoot } from 'react-dom/client'
 import App from '@/App'
 import '@/styles/global.scss'
@@ -6,7 +6,7 @@ import { PostHogProvider } from 'posthog-js/react'
 import * as Sentry from '@sentry/react'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
-import { isSelfHostedDeploy } from '@/settings'
+import { isSelfHostedDeploy } from '@/config'
 
 const isLocalhost = window.location.hostname === 'localhost'
 

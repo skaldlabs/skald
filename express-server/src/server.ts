@@ -20,19 +20,19 @@ import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS } from './settings'
 import { emailVerificationRouter } from './api/emailVerification'
 import { memoRouter } from './api/memo'
 
-const app = express()
-
 const PORT = process.env.PORT || 3000
-
-const route404 = (req: Request, res: Response) => {
-    res.status(404).json({ error: 'Not found' })
-}
 
 export const init = (async () => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
     // because it's the established patter used by mikro-orm, and we want to be able to easily find information
     // about our setup online. see e.g. https://github.com/mikro-orm/express-ts-example-app/blob/master/app/server.ts
     const DI = await initDI()
+
+    const app = express()
+
+    const route404 = (req: Request, res: Response) => {
+        res.status(404).json({ error: 'Not found' })
+    }
 
     // CORS middleware - must come first
     app.use(
