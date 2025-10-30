@@ -3,7 +3,6 @@ import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/postgresql
 import config from './mikro-orm.config'
 import { Memo } from './entities/Memo'
 import { User } from './entities/User'
-import { AuthToken } from './entities/AuthToken'
 import { Project } from './entities/Project'
 import { OrganizationMembership } from './entities/OrganizationMembership'
 import { ProjectAPIKey } from './entities/ProjectAPIKey'
@@ -21,7 +20,6 @@ export const DI = {} as {
     organizations: EntityRepository<Organization>
     memos: EntityRepository<Memo>
     users: EntityRepository<User>
-    authTokens: EntityRepository<AuthToken>
     projects: EntityRepository<Project>
     organizationMemberships: EntityRepository<OrganizationMembership>
     organizationMembershipInvites: EntityRepository<OrganizationMembershipInvite>
@@ -38,7 +36,6 @@ export const initDI = async (): Promise<typeof DI> => {
     DI.organizations = DI.orm.em.getRepository(Organization)
     DI.memos = DI.orm.em.getRepository(Memo)
     DI.users = DI.orm.em.getRepository(User)
-    DI.authTokens = DI.orm.em.getRepository(AuthToken)
     DI.projects = DI.orm.em.getRepository(Project)
     DI.organizationMemberships = DI.orm.em.getRepository(OrganizationMembership)
     DI.organizationMembershipInvites = DI.orm.em.getRepository(OrganizationMembershipInvite)

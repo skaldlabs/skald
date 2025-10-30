@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form'
 import { Users, UserPlus, UserMinus } from 'lucide-react'
 import { useOrganizationStore } from '@/stores/organizationStore'
 
-import { OrganizationAccessLevel, useAuthStore } from '@/stores/authStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,7 +23,6 @@ import { OrganizationInvitesList } from './OrganizationInvitesList'
 import { Separator } from '@/components/ui/separator'
 
 export const OrganizationMembers = () => {
-    const user = useAuthStore((state) => state.user)
     const members = useOrganizationStore((state) => state.members)
     const sentInvites = useOrganizationStore((state) => state.sentInvites)
     const loading = useOrganizationStore((state) => state.loading)
@@ -85,17 +83,6 @@ export const OrganizationMembers = () => {
         }
     }
 
-    const isOrganizationOwner =
-        user?.access_levels?.organization_access_levels?.[user?.current_organization_uuid] ===
-        OrganizationAccessLevel.OWNER
-
-    const canRemoveMember = (member: { email: string; role: string }) => {
-        if (!isOrganizationOwner) return false
-        if (member.email === user?.email) return false
-        if (member.role === 'OWNER') return false
-        return true
-    }
-
     return (
         <div>
             <Card className="mt-4">
@@ -137,17 +124,15 @@ export const OrganizationMembers = () => {
 
                                         <TableCell>
                                             <div className="flex gap-2">
-                                                {canRemoveMember(member) && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openRemoveModal(member)}
-                                                        className="text-destructive hover:text-destructive border-destructive/20 hover:border-destructive"
-                                                    >
-                                                        <UserMinus className="h-4 w-4 mr-1" />
-                                                        Remove
-                                                    </Button>
-                                                )}
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => openRemoveModal(member)}
+                                                    className="text-destructive hover:text-destructive border-destructive/20 hover:border-destructive"
+                                                >
+                                                    <UserMinus className="h-4 w-4 mr-1" />
+                                                    Remove
+                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>

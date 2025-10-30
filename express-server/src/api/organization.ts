@@ -4,7 +4,7 @@ import { DI } from '../di'
 import { User } from '../entities/User'
 import { Organization } from '../entities/Organization'
 import { FRONTEND_URL, IS_SELF_HOSTED_DEPLOY } from '../settings'
-import { OrganizationMembership, OrganizationMembershipRole } from '../entities/OrganizationMembership'
+import { OrganizationMembershipRole } from '../entities/OrganizationMembership'
 import { sendEmail } from '../lib/emailUtils'
 
 export const organizationRouter = express.Router({ mergeParams: true })
