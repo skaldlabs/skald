@@ -52,7 +52,7 @@ export const init = (async () => {
 
     app.get('/api/health', health)
     app.use('/api/user', userRouter)
-    app.use('/api/email_verification', emailVerificationRouter)
+    privateRoutesRouter.use('/email_verification', emailVerificationRouter)
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
 
