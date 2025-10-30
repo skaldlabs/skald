@@ -176,3 +176,5 @@ export const EMAIL_DOMAIN = process.env.EMAIL_DOMAIN || 'useskald.com'
 
 // Frontend URL
 export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+
+export const EXPRESS_SERVER_PORT = parseInt(process.env.EXPRESS_SERVER_PORT || '3000')
