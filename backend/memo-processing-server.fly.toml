@@ -1,0 +1,21 @@
+# fly.toml app configuration file generated for skald-memo-processing-worker on 2025-10-31T17:15:32-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'skald-memo-processing-worker'
+primary_region = 'dfw'
+
+[experimental]
+  cmd = ['node', 'dist/index.js', '--mode=memo-processing-server']
+
+[build]
+
+[env]
+  LANGSMITH_TRACING = 'true'
+  INTER_PROCESS_QUEUE = 'sqs'
+
+[[vm]]
+  memory = '2gb'
+  cpu_kind = 'shared'
+  cpus = 2

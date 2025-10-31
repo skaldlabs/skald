@@ -1,0 +1,35 @@
+# fly.toml app configuration file generated for skald-api-server on 2025-10-31T13:10:42-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'skald-api-server'
+primary_region = 'dfw'
+
+[experimental]
+  cmd = ['node', 'dist/index.js', '--mode=express-server']
+
+[build]
+
+[deploy]
+  release_command = 'pnpm run migration:up'
+
+[env]
+  EXPRESS_SERVER_PORT = 8080
+  LANGSMITH_TRACING = 'true'
+  FRONTEND_URL = 'https://platform2.useskald.com'
+  INTER_PROCESS_QUEUE = 'sqs'
+
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '2gb'
+  cpu_kind = 'shared'
+  cpus = 2
