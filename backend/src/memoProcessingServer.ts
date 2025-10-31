@@ -6,8 +6,8 @@ import {
     LLM_PROVIDER,
     EMBEDDING_PROVIDER,
     SQS_QUEUE_URL,
-} from './settings'
-import './sentry'
+} from '@/settings'
+import '@/sentry'
 import { createClient } from 'redis'
 import { processMemo } from '@/memoProcessingServer/processMemo'
 import { runSQSConsumer } from '@/memoProcessingServer/sqsConsumer'
