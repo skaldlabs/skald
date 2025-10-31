@@ -68,6 +68,7 @@ export interface MemoChunk {
 
 export interface SearchResult {
     memo_title: string
+    memo_uuid: string
     chunk_uuid: string
     content_snippet: string
     memo_summary: string

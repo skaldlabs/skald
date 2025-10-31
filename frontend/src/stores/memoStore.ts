@@ -114,7 +114,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
 
             // Convert search results to memo format
             const searchResultMemos: Memo[] = response.data.results.map((result) => ({
-                uuid: result.chunk_uuid,
+                uuid: result.memo_uuid,
                 title: result.memo_title,
                 summary: result.memo_summary,
                 content_length: result.content_snippet.length,

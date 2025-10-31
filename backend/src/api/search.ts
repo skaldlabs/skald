@@ -64,6 +64,7 @@ const _chunkVectorSearch = async (
     )
 
     const results = chunkResults.map((result) => ({
+        memo_uuid: result.chunk.memo_uuid,
         chunk_uuid: result.chunk.uuid,
         memo_title: memoPropertiesMap.get(result.chunk.memo_uuid)?.title || '',
         memo_summary: memoPropertiesMap.get(result.chunk.memo_uuid)?.summary || '',
