@@ -185,7 +185,7 @@ const inviteMember = async (req: Request, res: Response) => {
     await DI.em.flush()
 
     const { subject, html_content } = _generateInviteEmailContent(organization.name, email)
-    const { data: _, error } = await sendEmail(email, subject, html_content)
+    const { error } = await sendEmail(email, subject, html_content)
     if (error) {
         return res.status(503).json({ error: 'Failed to send invitation email' })
     }
@@ -382,7 +382,7 @@ const resendInvite = async (req: Request, res: Response) => {
     }
 
     const { subject, html_content } = _generateInviteEmailContent(organization.name, invite.email)
-    const { data: _, error } = await sendEmail(invite.email, subject, html_content)
+    const { error } = await sendEmail(invite.email, subject, html_content)
     if (error) {
         return res.status(503).json({ error: 'Failed to resend invitation' })
     }

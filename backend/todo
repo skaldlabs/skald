@@ -1,5 +1,5 @@
 [ ] create serializer-like abstraction for incoming requests?
-[ ] handle search api changes in docs and sdks
+[ ] handle search api changes and generate deletion in docs and sdks 
 [ ] setup absolute import paths with @
 [ ] rethink content and summary on db
 [ ] make sure we're using tree-shaking for the backend server
