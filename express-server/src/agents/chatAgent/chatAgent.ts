@@ -1,6 +1,6 @@
-import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { LLMService } from '../../services/llmService'
 import { CHAT_AGENT_INSTRUCTIONS } from './prompts'
+import { ChatPromptTemplate } from '@langchain/core/prompts'
 
 interface ChatAgentResult {
     output: string
