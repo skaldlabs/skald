@@ -7,6 +7,7 @@ import { FRONTEND_URL, IS_SELF_HOSTED_DEPLOY } from '../settings'
 import { OrganizationMembershipRole } from '../entities/OrganizationMembership'
 import { sendEmail } from '../lib/emailUtils'
 import { v4 as uuidv4 } from 'uuid'
+import { SubscriptionService } from '../services/subscriptionService'
 
 export const organizationRouter = express.Router({ mergeParams: true })
 
@@ -94,6 +95,9 @@ const create = async (req: Request, res: Response) => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     })
+
+    const subscriptionService = new SubscriptionService()
+    await subscriptionService.createDefaultSubscription(organization, DI.em)
 
     await DI.em.flush()
 

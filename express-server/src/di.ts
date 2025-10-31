@@ -14,6 +14,9 @@ import { Organization } from './entities/Organization'
 import { OrganizationMembershipInvite } from './entities/OrganizationMembershipInvite'
 import { EmailVerificationCode } from './entities/EmailVerificationCode'
 import { Plan } from './entities/Plan'
+import { OrganizationSubscription } from './entities/OrganizationSubscription'
+import { UsageRecord } from './entities/UsageRecord'
+import { StripeEvent } from './entities/StripeEvent'
 
 export const DI = {} as {
     server: http.Server
@@ -32,6 +35,9 @@ export const DI = {} as {
     memoContents: EntityRepository<MemoContent>
     emailVerificationCodes: EntityRepository<EmailVerificationCode>
     plans: EntityRepository<Plan>
+    organizationSubscriptions: EntityRepository<OrganizationSubscription>
+    usageRecords: EntityRepository<UsageRecord>
+    stripeEvents: EntityRepository<StripeEvent>
 }
 
 export const initDI = async (): Promise<typeof DI> => {
@@ -50,6 +56,9 @@ export const initDI = async (): Promise<typeof DI> => {
     DI.memoContents = DI.orm.em.getRepository(MemoContent)
     DI.emailVerificationCodes = DI.orm.em.getRepository(EmailVerificationCode)
     DI.plans = DI.orm.em.getRepository(Plan)
+    DI.organizationSubscriptions = DI.orm.em.getRepository(OrganizationSubscription)
+    DI.usageRecords = DI.orm.em.getRepository(UsageRecord)
+    DI.stripeEvents = DI.orm.em.getRepository(StripeEvent)
 
     return DI
 }

@@ -21,6 +21,7 @@ import { emailVerificationRouter } from './api/emailVerification'
 import { memoRouter } from './api/memo'
 import { subscriptionRouter } from './api/subscription'
 import { planRouter } from './api/plan'
+import { stripeWebhook } from './api/stripe_webhook'
 
 const app = express()
 
@@ -44,6 +45,10 @@ export const init = (async () => {
         })
     )
 
+    // Stripe webhook needs raw body for signature verification
+    // Must come before express.json() middleware
+    app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook)
+
     app.use(express.json())
     app.use(cookieParser())
     app.use((req, res, next) => RequestContext.create(DI.orm.em, next))
@@ -62,7 +67,7 @@ export const init = (async () => {
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
     privateRoutesRouter.use('/organizations', organizationRouter)
     organizationRouter.use('/:organization_uuid/projects', projectRouter)
-    organizationRouter.use('/:organization_uuid/subscriptions', subscriptionRouter)
+    organizationRouter.use('/:organization_uuid/subscription', subscriptionRouter)
     privateRoutesRouter.use('/plans', planRouter)
 
     app.use('/api', privateRoutesRouter)

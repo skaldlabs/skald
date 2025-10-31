@@ -104,7 +104,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
 
         try {
             const orgPath = getOrgPath()
-            const response = await api.get<Subscription>(`${orgPath}/subscription/subscription/`)
+            const response = await api.get<Subscription>(`${orgPath}/subscription/`)
 
             if (response.error || !response.data) {
                 set({
