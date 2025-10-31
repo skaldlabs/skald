@@ -27,7 +27,9 @@ function strToBool(input: string | boolean | undefined, defaultValue: boolean = 
 
 export const SECRET_KEY = process.env.SECRET_KEY || 'UNSAFE_DEFAULT_SECRET_KEY'
 
-export const DEBUG = strToBool(process.env.DEBUG)
+export const TEST = strToBool(process.env.TEST)
+
+export const DEBUG = strToBool(process.env.DEBUG, TEST)
 
 export const NODE_ENV = process.env.NODE_ENV
 

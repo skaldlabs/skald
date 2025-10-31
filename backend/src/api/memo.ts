@@ -52,24 +52,18 @@ const validateMemoOperationRequestMiddleware = () => {
 }
 
 const createMemo = async (req: Request, res: Response) => {
-    try {
-        const project = req.context?.requestUser?.project
-        if (!project) {
-            return res.status(404).json({ error: 'Project not found' })
-        }
-        const validatedData = CreateMemoRequest.safeParse(req.body)
-        if (!validatedData.success) {
-            return res.status(400).json({ error: 'Invalid request data', details: validatedData.error.issues })
-        }
-
-        const memo = await createNewMemo(validatedData.data, project)
-
-        return res.status(201).json({ memo_uuid: memo.uuid })
-    } catch (error) {
-        // for testing
-        console.error(error)
-        return res.status(503).json({ error: 'Service unavailable' })
+    const project = req.context?.requestUser?.project
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
     }
+    const validatedData = CreateMemoRequest.safeParse(req.body)
+    if (!validatedData.success) {
+        return res.status(400).json({ error: 'Invalid request data', details: validatedData.error.issues })
+    }
+
+    const memo = await createNewMemo(validatedData.data, project)
+
+    return res.status(201).json({ memo_uuid: memo.uuid })
 }
 
 export const getMemo = async (req: Request, res: Response) => {

@@ -21,6 +21,7 @@ import {
     RABBITMQ_PASSWORD,
     RABBITMQ_VHOST,
     RABBITMQ_QUEUE_NAME,
+    TEST,
 } from '../settings'
 
 let sqsClient: SQSClient | null = null
@@ -143,6 +144,9 @@ async function _publishToRabbitmq(memoUuid: string): Promise<void> {
 }
 
 export async function sendMemoForAsyncProcessing(memo: Memo): Promise<void> {
+    if (TEST) {
+        return
+    }
     if (INTER_PROCESS_QUEUE === 'sqs') {
         await _publishToSqs(memo.uuid)
     } else if (INTER_PROCESS_QUEUE === 'redis') {
