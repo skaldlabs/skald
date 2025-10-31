@@ -320,6 +320,6 @@ const generateApiKeyEndpoint = async (req: Request, res: Response) => {
 projectRouter.get('/', list)
 projectRouter.post('/', create)
 projectRouter.get('/:uuid', retrieve)
-projectRouter.patch('/:uuid', update)
+projectRouter.put('/:uuid', update)
 projectRouter.delete('/:uuid', destroy)
 projectRouter.post('/:uuid/generate_api_key', generateApiKeyEndpoint)
