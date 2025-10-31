@@ -187,6 +187,69 @@ describe('Memo API Tests', () => {
             expect(response.status).toBe(400)
             expect(response.body.error).toBe('Project ID is required')
         })
+
+        it('should reject memo with expiration_date in the past', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    title: 'Test Memo',
+                    content: 'This is test content',
+                    expiration_date: new Date(Date.now() - 1000 * 60 * 60 * 24),
+                })
+
+            expect(response.status).toBe(400)
+            expect(response.body.error).toBe('Invalid request data')
+        })
+
+        it('should accept expiration_date as string', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    title: 'Test Memo',
+                    content: 'This is test content',
+                    expiration_date: new Date(Date.now() + 1000).toISOString(),
+                })
+
+            expect(response.status).toBe(201)
+            expect(response.body.memo_uuid).toBeDefined()
+        })
+
+        it('should accept expiration_date as Date', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    title: 'Test Memo',
+                    content: 'This is test content',
+                    expiration_date: new Date(Date.now() + 1000),
+                })
+
+            expect(response.status).toBe(201)
+            expect(response.body.memo_uuid).toBeDefined()
+        })
     })
 
     describe('GET /api/memos/:id - Get Memo', () => {
