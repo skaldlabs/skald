@@ -7,7 +7,6 @@ import { EMAIL_VERIFICATION_ENABLED, ENABLE_SECURITY_SETTINGS } from '@/settings
 
 interface UserResponse {
     email: string
-    password: string
     default_organization?: string | null
     current_project?: string | null
     email_verified: boolean
@@ -35,7 +34,6 @@ export const login = async (req: Request, res: Response) => {
 
     const userResponse: UserResponse = {
         email: user.email,
-        password: user.password,
         default_organization: user.defaultOrganization?.uuid,
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
@@ -96,7 +94,6 @@ const createUser = async (req: Request, res: Response) => {
 
     const userResponse: UserResponse = {
         email: user.email,
-        password: user.password,
         default_organization: user.defaultOrganization?.uuid,
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
@@ -147,7 +144,6 @@ const getUserDetails = async (req: Request, res: Response) => {
 
     const userResponse: UserResponse = {
         email: user.email,
-        password: user.password,
         default_organization: user.defaultOrganization?.uuid,
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
@@ -195,7 +191,6 @@ const setCurrentProject = async (req: Request, res: Response) => {
 
     const userResponse: UserResponse = {
         email: user.email,
-        password: user.password,
         default_organization: user.defaultOrganization?.uuid,
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
