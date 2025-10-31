@@ -16,7 +16,10 @@ export const userMiddleware = () => {
         if (accessToken) {
             const decodedUser = verifyAccessToken(accessToken)
             if (decodedUser) {
-                const user = await DI.users.findOne({ email: decodedUser.email })
+                const user = await DI.users.findOne(
+                    { email: decodedUser.email },
+                    { populate: ['defaultOrganization', 'current_project'] }
+                )
                 if (user) {
                     req.context.requestUser = new RequestUser(user, 'authenticatedUser', null)
                 }

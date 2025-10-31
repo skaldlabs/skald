@@ -1,6 +1,10 @@
-[ ] create serializer-like abstraction for incoming requests?
 [ ] handle search api changes and generate deletion in docs and sdks 
-[ ] setup absolute import paths with @
 [ ] rethink content and summary on db
-[ ] make sure we're using tree-shaking for the backend server
+[ ] make sure we're using tree-shaking for the backend server?
 [ ] make sure exceptions dont crash server
+[ ] spin up and migrate new db
+[ ] deploy and test whole new stack
+    - backend + different domain
+    - frontend + different domain
+    - sqs queue
+    - db

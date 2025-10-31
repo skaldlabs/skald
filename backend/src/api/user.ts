@@ -4,6 +4,7 @@ import { checkPassword, makePassword } from '@/lib/passwordUtils'
 import { generateAccessToken } from '@/lib/tokenUtils'
 import { requireAuth } from '@/middleware/authMiddleware'
 import { EMAIL_VERIFICATION_ENABLED, ENABLE_SECURITY_SETTINGS } from '@/settings'
+import { isValidEmail } from '@/lib/emailUtils'
 
 interface UserResponse {
     email: string
@@ -18,6 +19,12 @@ export const login = async (req: Request, res: Response) => {
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' })
     }
+
+    // Validate email format to prevent XSS and invalid inputs
+    if (!isValidEmail(email)) {
+        return res.status(401).json({ error: 'Invalid credentials' })
+    }
+
     const user = await DI.users.findOne({ email })
     if (!user || !checkPassword(password, user.password)) {
         return res.status(401).json({ error: 'Invalid credentials' })
@@ -59,6 +66,13 @@ const createUser = async (req: Request, res: Response) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim()
+
+    // Validate email format to prevent XSS and invalid emails
+    if (!isValidEmail(normalizedEmail)) {
+        return res.status(400).json({
+            email: ['Please enter a valid email address.'],
+        })
+    }
 
     const existingUser = await DI.users.findOne({ email: normalizedEmail })
     if (existingUser) {

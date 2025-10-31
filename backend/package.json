@@ -8,7 +8,7 @@
         "dev:memo-processing-server": "NODE_ENV=development DEBUG=true nodemon --exec ts-node src/index.ts --mode=memo-processing-server",
         "build": "tsc && tsc-alias",
         "start": "node dist/index.js",
-        "test": "jest",
+        "test": "DEBUG=true jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage",
         "test:setup": "bash scripts/setup-test-db.sh",
@@ -47,7 +47,8 @@
         "stripe": "^19.2.0",
         "tsx": "^4.20.6",
         "uuid": "^13.0.0",
-        "voyageai": "^0.0.8"
+        "voyageai": "^0.0.8",
+        "zod": "^3.24.1"
     },
     "devDependencies": {
         "@mikro-orm/cli": "^6.5.9",
@@ -62,6 +63,7 @@
         "@types/pg": "^8.15.6",
         "@types/supertest": "^6.0.3",
         "core": "link:@types/@langchain/core",
+        "esbuild": "^0.25.11",
         "jest": "^30.2.0",
         "nodemon": "^3.1.10",
         "supertest": "^7.1.4",

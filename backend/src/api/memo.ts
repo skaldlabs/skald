@@ -5,6 +5,11 @@ import { NextFunction } from 'express'
 import { createNewMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
 import { Project } from '@/entities/Project'
+import { MemoContent } from '@/entities/MemoContent'
+import { MemoSummary } from '@/entities/MemoSummary'
+import { MemoTag } from '@/entities/MemoTag'
+import { MemoChunk } from '@/entities/MemoChunk'
+import { Memo } from '@/entities/Memo'
 
 const CreateMemoRequest = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
@@ -245,7 +250,14 @@ export const deleteMemo = async (req: Request, res: Response) => {
         return res.status(404).json({ error: 'Memo not found' })
     }
 
-    await DI.em.removeAndFlush(memo)
+    // delete memo and all related data -- content, summary, tags, chunks
+    await DI.em.transactional(async (em) => {
+        await em.nativeDelete(MemoContent, { memo: { $in: [memo.uuid] } })
+        await em.nativeDelete(MemoSummary, { memo: { $in: [memo.uuid] } })
+        await em.nativeDelete(MemoTag, { memo: { $in: [memo.uuid] } })
+        await em.nativeDelete(MemoChunk, { memo: { $in: [memo.uuid] } })
+        await em.nativeDelete(Memo, { uuid: memo.uuid })
+    })
 
     return res.status(204).send()
 }

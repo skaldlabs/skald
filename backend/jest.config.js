@@ -8,4 +8,6 @@ module.exports = {
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
     },
+    // Run tests serially to avoid database conflicts
+    maxWorkers: 1,
 }
