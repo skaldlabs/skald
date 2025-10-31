@@ -30,6 +30,9 @@ export const startExpressServer = async () => {
 
     const app = express()
 
+    // Trust Fly.io proxy for accurate client IP detection in rate limiting
+    app.set('trust proxy', true)
+
     const route404 = (req: Request, res: Response) => {
         res.status(404).json({ error: 'Not found' })
     }
@@ -75,6 +78,6 @@ export const startExpressServer = async () => {
     app.use(route404)
 
     DI.server = app.listen(EXPRESS_SERVER_PORT, () => {
-        console.log(`MikroORM express TS example started at http://localhost:${EXPRESS_SERVER_PORT}`)
+        console.log(`Express server started at http://localhost:${EXPRESS_SERVER_PORT}`)
     })
 }
