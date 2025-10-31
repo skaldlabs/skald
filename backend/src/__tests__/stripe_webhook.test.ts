@@ -12,11 +12,15 @@ import Stripe from 'stripe'
 jest.mock('../services/subscriptionService')
 jest.mock('stripe')
 
-// Mock settings
-jest.mock('../settings', () => ({
-    STRIPE_SECRET_KEY: 'sk_test_123',
-    STRIPE_WEBHOOK_SECRET: 'whsec_test_123',
-}))
+// Mock settings - preserve original settings and only override Stripe keys
+jest.mock('../settings', () => {
+    const originalModule = jest.requireActual('../settings')
+    return {
+        ...originalModule,
+        STRIPE_SECRET_KEY: 'sk_test_123',
+        STRIPE_WEBHOOK_SECRET: 'whsec_test_123',
+    }
+})
 
 describe('Stripe Webhook API', () => {
     let app: Express
@@ -122,7 +126,6 @@ describe('Stripe Webhook API', () => {
                 },
             }
             ;(Stripe as any).mockImplementation(() => mockStripe)
-
             ;(subscriptionService.SubscriptionService as jest.Mock).mockImplementation(() => ({
                 handleSubscriptionCreated: jest.fn().mockResolvedValue({}),
             }))
@@ -155,7 +158,6 @@ describe('Stripe Webhook API', () => {
                 },
             }
             ;(Stripe as any).mockImplementation(() => mockStripe)
-
             ;(subscriptionService.SubscriptionService as jest.Mock).mockImplementation(() => ({
                 handleSubscriptionUpdated: jest.fn().mockResolvedValue({}),
             }))
@@ -181,7 +183,6 @@ describe('Stripe Webhook API', () => {
                 },
             }
             ;(Stripe as any).mockImplementation(() => mockStripe)
-
             ;(subscriptionService.SubscriptionService as jest.Mock).mockImplementation(() => ({
                 handleSubscriptionDeleted: jest.fn().mockResolvedValue({}),
             }))
@@ -207,7 +208,6 @@ describe('Stripe Webhook API', () => {
                 },
             }
             ;(Stripe as any).mockImplementation(() => mockStripe)
-
             ;(subscriptionService.SubscriptionService as jest.Mock).mockImplementation(() => ({
                 handleInvoicePaid: jest.fn().mockResolvedValue({}),
             }))
@@ -233,7 +233,6 @@ describe('Stripe Webhook API', () => {
                 },
             }
             ;(Stripe as any).mockImplementation(() => mockStripe)
-
             ;(subscriptionService.SubscriptionService as jest.Mock).mockImplementation(() => ({
                 handleCheckoutCompleted: jest.fn().mockResolvedValue({}),
             }))
@@ -287,7 +286,6 @@ describe('Stripe Webhook API', () => {
                 },
             }
             ;(Stripe as any).mockImplementation(() => mockStripe)
-
             ;(subscriptionService.SubscriptionService as jest.Mock).mockImplementation(() => ({
                 handleSubscriptionCreated: jest.fn().mockRejectedValue(new Error('Processing failed')),
             }))
@@ -320,7 +318,6 @@ describe('Stripe Webhook API', () => {
                 },
             }
             ;(Stripe as any).mockImplementation(() => mockStripe)
-
             ;(subscriptionService.SubscriptionService as jest.Mock).mockImplementation(() => ({
                 handleSubscriptionCreated: jest.fn().mockResolvedValue({}),
             }))
