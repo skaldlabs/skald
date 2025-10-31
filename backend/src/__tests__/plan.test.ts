@@ -42,7 +42,7 @@ describe('Plan API', () => {
             const em = orm.em.fork()
 
             // Create active plan
-            const activePlan = em.create(Plan, {
+            em.create(Plan, {
                 slug: 'starter',
                 name: 'Starter Plan',
                 monthly_price: '9.99',

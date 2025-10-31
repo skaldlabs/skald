@@ -3,7 +3,12 @@ import request from 'supertest'
 import { MikroORM, RequestContext } from '@mikro-orm/postgresql'
 import { DI } from '../di'
 import { createTestDatabase, clearDatabase, closeDatabase } from './testDb'
-import { createTestUser, createTestOrganization, createTestProject, createTestOrganizationMembership } from './testHelpers'
+import {
+    createTestUser,
+    createTestOrganization,
+    createTestProject,
+    createTestOrganizationMembership,
+} from './testHelpers'
 import { generateAccessToken } from '../lib/tokenUtils'
 import { userMiddleware } from '../middleware/userMiddleware'
 import { requireProjectAccess } from '../middleware/authMiddleware'
@@ -124,7 +129,7 @@ describe('Search API', () => {
         })
 
         it('should return 400 when project_id is missing', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -234,11 +239,8 @@ describe('Search API', () => {
                     filters: [{ invalid: 'filter' }],
                 })
 
-            // FIXME: This test passes under current conditions because the parseFilter function
-            // likely doesn't properly validate the filter structure and returns an error.
-            // The API should properly validate filter structure and return 400 for invalid filters.
-            // Current behavior: returns some response (possibly 400 or possibly passes through)
-            expect([200, 400]).toContain(response.status)
+            expect(response.status).toBe(400)
+            expect(response.body.error).toBe('Invalid filter: Filter must have field, operator, value, and filter_type')
         })
 
         it('should handle empty results', async () => {

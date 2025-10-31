@@ -16,7 +16,6 @@ import cookieParser from 'cookie-parser'
 import * as emailUtils from '../lib/emailUtils'
 import * as subscriptionService from '../services/subscriptionService'
 import { randomUUID } from 'crypto'
-import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
 
 // Mock external dependencies
 jest.mock('../lib/emailUtils', () => ({
@@ -83,7 +82,7 @@ describe('Organization API', () => {
         })
 
         it('should return 404 when user has no organization', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -103,7 +102,7 @@ describe('Organization API', () => {
 
     describe('POST /api/organization', () => {
         it('should create organization with valid data', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -120,7 +119,7 @@ describe('Organization API', () => {
         })
 
         it('should create default project for new organization', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             await request(app)
@@ -137,7 +136,7 @@ describe('Organization API', () => {
         })
 
         it('should set user default organization', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             await request(app)
@@ -174,7 +173,7 @@ describe('Organization API', () => {
         })
 
         it('should return 400 when name is missing', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -357,7 +356,7 @@ describe('Organization API', () => {
     })
 
     describe('GET /api/organization/:id/pending_invites', () => {
-        it('should return pending invites for current user', async () => {
+        it('should return pending invites for the requesting user', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             const inviteUuid = randomUUID()
@@ -370,6 +369,15 @@ describe('Organization API', () => {
                 email: 'test@example.com',
                 createdAt: new Date(),
             })
+
+            // should not return this invite because it is not for the requesting user
+            em.create(OrganizationMembershipInvite, {
+                id: randomUUID(),
+                organization: org,
+                invitedBy: user,
+                email: 'otheruser@example.com',
+                createdAt: new Date(),
+            })
             await em.flush()
 
             const token = generateAccessToken('test@example.com')
@@ -378,17 +386,16 @@ describe('Organization API', () => {
                 .get(`/api/organization/${org.uuid}/pending_invites`)
                 .set('Cookie', [`accessToken=${token}`])
 
-            // FIXME: This test passes under current conditions, but the endpoint implementation
-            // may not be correctly filtering invites. It should return invites where the user's
-            // email matches the invited email, not invites they sent.
-            expect([200]).toContain(response.status)
+            expect(response.status).toBe(200)
+            expect(response.body).toHaveLength(1)
+            expect(response.body[0].id).toBe(inviteUuid)
         })
     })
 
     describe('POST /api/organization/:id/accept_invite', () => {
         it('should accept valid invite', async () => {
             const inviter = await createTestUser(orm, 'inviter@example.com', 'password123')
-            const invitee = await createTestUser(orm, 'invitee@example.com', 'password123')
+            await createTestUser(orm, 'invitee@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', inviter)
             await createTestOrganizationMembership(orm, inviter, org)
 
@@ -442,7 +449,7 @@ describe('Organization API', () => {
         })
 
         it('should return 404 when invite_id is missing', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -453,7 +460,7 @@ describe('Organization API', () => {
         })
 
         it('should return 400 when invite id is not a valid UUID', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -465,7 +472,7 @@ describe('Organization API', () => {
         })
 
         it('should return 404 when invite does not exist', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)

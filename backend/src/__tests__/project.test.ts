@@ -54,8 +54,8 @@ describe('Project API', () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
-            const project1 = await createTestProject(orm, 'Project 1', org, user)
-            const project2 = await createTestProject(orm, 'Project 2', org, user)
+            await createTestProject(orm, 'Project 1', org, user)
+            await createTestProject(orm, 'Project 2', org, user)
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -77,20 +77,19 @@ describe('Project API', () => {
         })
 
         it('should return 400 when organization_uuid is missing', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
                 .get('/api/organization/undefined/projects')
                 .set('Cookie', [`accessToken=${token}`])
 
-            // FIXME: The endpoint should validate UUID format and return 400 for invalid UUIDs.
-            // Currently it may return 404 instead of 400 for malformed UUIDs.
-            expect([400, 404]).toContain(response.status)
+            expect(response.status).toBe(400)
+            expect(response.body.error).toBe('Invalid UUID format')
         })
 
         it('should return 404 when organization does not exist', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -102,7 +101,7 @@ describe('Project API', () => {
         })
 
         it('should return 404 when user is not a member of organization', async () => {
-            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            await createTestUser(orm, 'user1@example.com', 'password123')
             const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user2)
             await createTestOrganizationMembership(orm, user2, org)
@@ -180,7 +179,7 @@ describe('Project API', () => {
         })
 
         it('should return 403 when user is not a member of organization', async () => {
-            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            await createTestUser(orm, 'user1@example.com', 'password123')
             const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user2)
 
@@ -229,7 +228,7 @@ describe('Project API', () => {
         })
 
         it('should return 403 when user is not a member of organization', async () => {
-            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            await createTestUser(orm, 'user1@example.com', 'password123')
             const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user2)
             await createTestOrganizationMembership(orm, user2, org)
@@ -397,7 +396,7 @@ describe('Project API', () => {
         })
 
         it('should return 403 when user is not a member of organization', async () => {
-            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            await createTestUser(orm, 'user1@example.com', 'password123')
             const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user2)
             await createTestOrganizationMembership(orm, user2, org)

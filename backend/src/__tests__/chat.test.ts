@@ -3,7 +3,12 @@ import request from 'supertest'
 import { MikroORM, RequestContext } from '@mikro-orm/postgresql'
 import { DI } from '../di'
 import { createTestDatabase, clearDatabase, closeDatabase } from './testDb'
-import { createTestUser, createTestOrganization, createTestProject, createTestOrganizationMembership } from './testHelpers'
+import {
+    createTestUser,
+    createTestOrganization,
+    createTestProject,
+    createTestOrganizationMembership,
+} from './testHelpers'
 import { generateAccessToken } from '../lib/tokenUtils'
 import { userMiddleware } from '../middleware/userMiddleware'
 import { requireProjectAccess } from '../middleware/authMiddleware'
@@ -140,7 +145,11 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalledWith('test query', expect.anything(), [])
+            expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalledWith(
+                'test query',
+                expect.anything(),
+                []
+            )
         })
 
         it('should return 400 for invalid filter', async () => {
@@ -150,9 +159,6 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            // FIXME: This test passes under current conditions but may not properly validate filters.
-            // The parseFilter function should validate filter structure and return appropriate errors.
-            // The API should return 400 with clear error message for invalid filter formats.
             const response = await request(app)
                 .post('/api/chat')
                 .set('Cookie', [`accessToken=${token}`])
@@ -162,9 +168,11 @@ describe('Chat API', () => {
                     filters: [{ invalid: 'filter' }],
                 })
 
-            expect([200, 400]).toContain(response.status)
+            expect(response.status).toBe(400)
+            expect(response.body.error).toBe('Invalid filter: Filter must have field, operator, value, and filter_type')
         })
 
+        // FIXME: it should *not* return a 500
         it('should return 500 when chat agent fails', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
@@ -196,7 +204,7 @@ describe('Chat API', () => {
         })
 
         it('should return 400 when project_id is missing', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
