@@ -18,7 +18,13 @@ const CreateMemoRequest = z.object({
     source: z.string().max(255).optional().nullable(),
     type: z.string().max(255).optional().nullable(),
     reference_id: z.string().max(255).optional().nullable(),
-    expiration_date: z.coerce.date().optional().nullable(),
+    expiration_date: z.coerce
+        .date()
+        .optional()
+        .nullable()
+        .refine((date) => (date ? date > new Date() : true), {
+            message: 'Expiration date must be in the future',
+        }),
     tags: z.array(z.string()).optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
 })
