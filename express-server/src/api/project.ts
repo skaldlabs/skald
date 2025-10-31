@@ -11,6 +11,7 @@ import { MemoContent } from '../entities/MemoContent'
 import { ProjectAPIKey } from '../entities/ProjectAPIKey'
 import { v4 as uuidv4 } from 'uuid'
 import crypto from 'crypto'
+import { apiKeyGenerationRateLimiter } from '../middleware/rateLimitMiddleware'
 
 export const projectRouter = express.Router({ mergeParams: true })
 
@@ -322,4 +323,5 @@ projectRouter.post('/', create)
 projectRouter.get('/:uuid', retrieve)
 projectRouter.patch('/:uuid', update)
 projectRouter.delete('/:uuid', destroy)
-projectRouter.post('/:uuid/generate_api_key', generateApiKeyEndpoint)
+// SECURITY: Add stricter rate limiting to API key generation
+projectRouter.post('/:uuid/generate_api_key', apiKeyGenerationRateLimiter, generateApiKeyEndpoint)

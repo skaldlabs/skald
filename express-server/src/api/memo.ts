@@ -154,6 +154,7 @@ export const updateMemo = async (req: Request, res: Response) => {
                 em.remove(memoTags)
                 em.remove(memoChunks)
             } else {
+                // @ts-ignore - Dynamic field assignment from validated data
                 memo[field] = validatedData.data[field]
             }
         }

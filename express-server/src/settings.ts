@@ -25,7 +25,11 @@ function strToBool(input: string | boolean | undefined, defaultValue: boolean = 
     }
 }
 
-export const SECRET_KEY = process.env.SECRET_KEY || 'UNSAFE_DEFAULT_SECRET_KEY'
+// SECURITY: SECRET_KEY is required for JWT signing - never use default in production
+if (!process.env.SECRET_KEY && process.env.NODE_ENV === 'production') {
+    throw new Error('SECRET_KEY environment variable is required in production')
+}
+export const SECRET_KEY = process.env.SECRET_KEY || 'UNSAFE_DEFAULT_SECRET_KEY_FOR_DEV_ONLY'
 
 export const DEBUG = strToBool(process.env.DEBUG)
 

@@ -37,6 +37,8 @@
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",
         "express": "^5.1.0",
+        "express-rate-limit": "^8.2.0",
+        "helmet": "^8.1.0",
         "jsonwebtoken": "^9.0.2",
         "openai": "^6.7.0",
         "pg": "^8.16.3",
@@ -45,7 +47,8 @@
         "stripe": "^19.2.0",
         "tsx": "^4.20.6",
         "uuid": "^13.0.0",
-        "voyageai": "^0.0.8"
+        "voyageai": "^0.0.8",
+        "zod": "^4.1.12"
     },
     "devDependencies": {
         "@mikro-orm/cli": "^6.5.9",
