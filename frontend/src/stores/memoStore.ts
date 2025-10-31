@@ -38,7 +38,6 @@ interface MemoState {
     deleteMemo: (memoUuid: string) => Promise<boolean>
     getMemoDetails: (memoUuid: string) => Promise<DetailedMemo | null>
     setSearchQuery: (query: string) => void
-    setSearchMethod: (method: SearchMethod) => void
     clearSearch: () => void
 }
 
@@ -240,10 +239,6 @@ export const useMemoStore = create<MemoState>((set, get) => ({
 
     setSearchQuery: (query: string) => {
         set({ searchQuery: query })
-    },
-
-    setSearchMethod: (method: SearchMethod) => {
-        set({ searchMethod: method })
     },
 
     clearSearch: () => {
