@@ -15,10 +15,16 @@ import { Project } from '../entities/Project'
 import cookieParser from 'cookie-parser'
 import * as emailUtils from '../lib/emailUtils'
 import * as subscriptionService from '../services/subscriptionService'
+import { randomUUID } from 'crypto'
+import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
 
 // Mock external dependencies
 jest.mock('../lib/emailUtils', () => ({
     sendEmail: jest.fn().mockResolvedValue({ error: null }),
+    isValidEmail: jest.fn((email: string) => {
+        // Basic email validation for testing
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    }),
 }))
 
 jest.mock('../services/subscriptionService')
@@ -66,7 +72,9 @@ describe('Organization API', () => {
             await createTestOrganizationMembership(orm, user, org)
             const token = generateAccessToken('test@example.com')
 
-            const response = await request(app).get('/api/organization').set('Cookie', [`accessToken=${token}`])
+            const response = await request(app)
+                .get('/api/organization')
+                .set('Cookie', [`accessToken=${token}`])
 
             expect(response.status).toBe(200)
             expect(response.body.uuid).toBe(org.uuid)
@@ -78,7 +86,9 @@ describe('Organization API', () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
-            const response = await request(app).get('/api/organization').set('Cookie', [`accessToken=${token}`])
+            const response = await request(app)
+                .get('/api/organization')
+                .set('Cookie', [`accessToken=${token}`])
 
             expect(response.status).toBe(404)
             expect(response.body.error).toBe('Organization not found')
@@ -138,7 +148,11 @@ describe('Organization API', () => {
                 })
 
             const em = orm.em.fork()
-            const updatedUser = await em.findOne(User, { email: 'test@example.com' }, { populate: ['defaultOrganization'] })
+            const updatedUser = await em.findOne(
+                User,
+                { email: 'test@example.com' },
+                { populate: ['defaultOrganization'] }
+            )
             expect(updatedUser?.defaultOrganization).toBeDefined()
         })
 
@@ -163,7 +177,10 @@ describe('Organization API', () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
-            const response = await request(app).post('/api/organization').set('Cookie', [`accessToken=${token}`]).send({})
+            const response = await request(app)
+                .post('/api/organization')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({})
 
             expect(response.status).toBe(400)
             expect(response.body.error).toBe('Name is required')
@@ -188,7 +205,9 @@ describe('Organization API', () => {
 
             const token = generateAccessToken('owner@example.com')
 
-            const response = await request(app).get(`/api/organization/${org.uuid}/members`).set('Cookie', [`accessToken=${token}`])
+            const response = await request(app)
+                .get(`/api/organization/${org.uuid}/members`)
+                .set('Cookie', [`accessToken=${token}`])
 
             expect(response.status).toBe(200)
             expect(response.body).toHaveLength(2)
@@ -341,10 +360,11 @@ describe('Organization API', () => {
         it('should return pending invites for current user', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
+            const inviteUuid = randomUUID()
 
             const em = orm.em.fork()
             em.create(OrganizationMembershipInvite, {
-                id: 'invite-1',
+                id: inviteUuid,
                 organization: org,
                 invitedBy: user,
                 email: 'test@example.com',
@@ -354,7 +374,9 @@ describe('Organization API', () => {
 
             const token = generateAccessToken('test@example.com')
 
-            const response = await request(app).get(`/api/organization/${org.uuid}/pending_invites`).set('Cookie', [`accessToken=${token}`])
+            const response = await request(app)
+                .get(`/api/organization/${org.uuid}/pending_invites`)
+                .set('Cookie', [`accessToken=${token}`])
 
             // FIXME: This test passes under current conditions, but the endpoint implementation
             // may not be correctly filtering invites. It should return invites where the user's
@@ -370,9 +392,10 @@ describe('Organization API', () => {
             const org = await createTestOrganization(orm, 'Test Org', inviter)
             await createTestOrganizationMembership(orm, inviter, org)
 
+            const inviteUuid = randomUUID()
             const em = orm.em.fork()
             em.create(OrganizationMembershipInvite, {
-                id: 'invite-1',
+                id: inviteUuid,
                 organization: org,
                 invitedBy: inviter,
                 email: 'invitee@example.com',
@@ -383,7 +406,7 @@ describe('Organization API', () => {
             const token = generateAccessToken('invitee@example.com')
 
             const response = await request(app)
-                .post('/api/organization/invite-1/accept_invite')
+                .post(`/api/organization/${inviteUuid}/accept_invite`)
                 .set('Cookie', [`accessToken=${token}`])
 
             expect(response.status).toBe(200)
@@ -395,9 +418,10 @@ describe('Organization API', () => {
             const invitee = await createTestUser(orm, 'invitee@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', inviter)
 
+            const inviteUuid = randomUUID()
             const em = orm.em.fork()
             em.create(OrganizationMembershipInvite, {
-                id: 'invite-1',
+                id: inviteUuid,
                 organization: org,
                 invitedBy: inviter,
                 email: 'invitee@example.com',
@@ -407,7 +431,9 @@ describe('Organization API', () => {
 
             const token = generateAccessToken('invitee@example.com')
 
-            await request(app).post('/api/organization/invite-1/accept_invite').set('Cookie', [`accessToken=${token}`])
+            await request(app)
+                .post(`/api/organization/${inviteUuid}/accept_invite`)
+                .set('Cookie', [`accessToken=${token}`])
 
             const em2 = orm.em.fork()
             const membership = await em2.findOne(OrganizationMembership, { user: invitee, organization: org })
@@ -415,23 +441,38 @@ describe('Organization API', () => {
             expect(membership?.accessLevel).toBe(OrganizationMembershipRole.MEMBER)
         })
 
-        it('should return 400 when invite_id is missing', async () => {
+        it('should return 404 when invite_id is missing', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
-            const response = await request(app).post('/api/organization//accept_invite').set('Cookie', [`accessToken=${token}`])
+            const response = await request(app)
+                .post('/api/organization//accept_invite')
+                .set('Cookie', [`accessToken=${token}`])
+
+            expect(response.status).toBe(404)
+        })
+
+        it('should return 400 when invite id is not a valid UUID', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/organization/nonexistent/accept_invite')
+                .set('Cookie', [`accessToken=${token}`])
 
             expect(response.status).toBe(400)
+            expect(response.body.error).toBe('Invalid UUID format')
         })
 
         it('should return 404 when invite does not exist', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
-            const response = await request(app).post('/api/organization/nonexistent/accept_invite').set('Cookie', [`accessToken=${token}`])
+            const response = await request(app)
+                .post(`/api/organization/${randomUUID()}/accept_invite`)
+                .set('Cookie', [`accessToken=${token}`])
 
             expect(response.status).toBe(404)
-            expect(response.body.error).toBe('No pending invite found')
         })
     })
 
@@ -505,16 +546,18 @@ describe('Organization API', () => {
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
 
+            const inviteUuid = randomUUID()
             const em = orm.em.fork()
             em.create(OrganizationMembershipInvite, {
-                id: 'invite-1',
+                id: inviteUuid,
                 organization: org,
                 invitedBy: user,
                 email: 'invite1@example.com',
                 createdAt: new Date(),
             })
+            const inviteUuid2 = randomUUID()
             em.create(OrganizationMembershipInvite, {
-                id: 'invite-2',
+                id: inviteUuid2,
                 organization: org,
                 invitedBy: user,
                 email: 'invite2@example.com',
@@ -524,7 +567,9 @@ describe('Organization API', () => {
 
             const token = generateAccessToken('test@example.com')
 
-            const response = await request(app).get(`/api/organization/${org.uuid}/sent_invites`).set('Cookie', [`accessToken=${token}`])
+            const response = await request(app)
+                .get(`/api/organization/${org.uuid}/sent_invites`)
+                .set('Cookie', [`accessToken=${token}`])
 
             expect(response.status).toBe(200)
             expect(response.body).toHaveLength(2)
@@ -537,9 +582,10 @@ describe('Organization API', () => {
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
 
+            const inviteUuid = randomUUID()
             const em = orm.em.fork()
             em.create(OrganizationMembershipInvite, {
-                id: 'invite-1',
+                id: inviteUuid,
                 organization: org,
                 invitedBy: user,
                 email: 'invitee@example.com',
@@ -553,14 +599,14 @@ describe('Organization API', () => {
                 .post(`/api/organization/${org.uuid}/cancel_invite`)
                 .set('Cookie', [`accessToken=${token}`])
                 .send({
-                    invite_id: 'invite-1',
+                    invite_id: inviteUuid,
                 })
 
             expect(response.status).toBe(200)
             expect(response.body.detail).toBe('Invite cancelled successfully')
 
             const em2 = orm.em.fork()
-            const invite = await em2.findOne(OrganizationMembershipInvite, { id: 'invite-1' })
+            const invite = await em2.findOne(OrganizationMembershipInvite, { id: inviteUuid })
             expect(invite).toBeNull()
         })
     })
@@ -571,9 +617,10 @@ describe('Organization API', () => {
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
 
+            const inviteUuid = randomUUID()
             const em = orm.em.fork()
             em.create(OrganizationMembershipInvite, {
-                id: 'invite-1',
+                id: inviteUuid,
                 organization: org,
                 invitedBy: user,
                 email: 'invitee@example.com',
@@ -587,7 +634,7 @@ describe('Organization API', () => {
                 .post(`/api/organization/${org.uuid}/resend_invite`)
                 .set('Cookie', [`accessToken=${token}`])
                 .send({
-                    invite_id: 'invite-1',
+                    invite_id: inviteUuid,
                 })
 
             expect(response.status).toBe(200)

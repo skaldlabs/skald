@@ -9,10 +9,13 @@ import { MemoTag } from '@/entities/MemoTag'
 import { MemoSummary } from '@/entities/MemoSummary'
 import { MemoContent } from '@/entities/MemoContent'
 import { ProjectAPIKey } from '@/entities/ProjectAPIKey'
-import { v4 as uuidv4 } from 'uuid'
-import crypto from 'crypto'
+import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
+import crypto, { randomUUID } from 'crypto'
 
 export const projectRouter = express.Router({ mergeParams: true })
+
+// Validate organization_uuid for all routes
+projectRouter.use(validateUuidParams('organization_uuid'))
 
 interface ProjectResponse {
     uuid: string
@@ -73,7 +76,7 @@ const list = async (req: Request, res: Response) => {
         organization: organization,
     })
     if (!membership) {
-        return res.status(403).json({ error: 'You are not a member of this organization' })
+        return res.status(404).json({ error: 'Organization not found' })
     }
 
     const projects = await DI.projects.find({ organization: organization }, { populate: ['organization', 'owner'] })
@@ -150,7 +153,7 @@ const create = async (req: Request, res: Response) => {
     }
 
     const project = DI.projects.create({
-        uuid: uuidv4(),
+        uuid: randomUUID(),
         name,
         organization,
         owner: user,
@@ -319,7 +322,7 @@ const generateApiKeyEndpoint = async (req: Request, res: Response) => {
 
 projectRouter.get('/', list)
 projectRouter.post('/', create)
-projectRouter.get('/:uuid', retrieve)
-projectRouter.put('/:uuid', update)
-projectRouter.delete('/:uuid', destroy)
-projectRouter.post('/:uuid/generate_api_key', generateApiKeyEndpoint)
+projectRouter.get('/:uuid', validateUuidParams('uuid'), retrieve)
+projectRouter.put('/:uuid', validateUuidParams('uuid'), update)
+projectRouter.delete('/:uuid', validateUuidParams('uuid'), destroy)
+projectRouter.post('/:uuid/generate_api_key', validateUuidParams('uuid'), generateApiKeyEndpoint)

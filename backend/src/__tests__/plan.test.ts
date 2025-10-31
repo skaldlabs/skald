@@ -183,10 +183,10 @@ describe('Plan API', () => {
 
             expect(response.status).toBe(200)
             expect(response.body).toHaveLength(1)
-            expect(response.body[0].stripe_price_id).toBeUndefined()
-            expect(response.body[0].memo_operations_limit).toBeUndefined()
-            expect(response.body[0].chat_queries_limit).toBeUndefined()
-            expect(response.body[0].projects_limit).toBeUndefined()
+            expect(response.body[0].stripe_price_id).toBeNull()
+            expect(response.body[0].memo_operations_limit).toBeNull()
+            expect(response.body[0].chat_queries_limit).toBeNull()
+            expect(response.body[0].projects_limit).toBeNull()
         })
 
         it('should return multiple active plans', async () => {

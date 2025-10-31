@@ -4,7 +4,12 @@ import { MikroORM, RequestContext } from '@mikro-orm/postgresql'
 import { projectRouter } from '../api/project'
 import { DI } from '../di'
 import { createTestDatabase, clearDatabase, closeDatabase } from './testDb'
-import { createTestUser, createTestOrganization, createTestProject, createTestOrganizationMembership } from './testHelpers'
+import {
+    createTestUser,
+    createTestOrganization,
+    createTestProject,
+    createTestOrganizationMembership,
+} from './testHelpers'
 import { generateAccessToken } from '../lib/tokenUtils'
 import { userMiddleware } from '../middleware/userMiddleware'
 import { User } from '../entities/User'
@@ -75,7 +80,9 @@ describe('Project API', () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
-            const response = await request(app).get('/api/organization/undefined/projects').set('Cookie', [`accessToken=${token}`])
+            const response = await request(app)
+                .get('/api/organization/undefined/projects')
+                .set('Cookie', [`accessToken=${token}`])
 
             // FIXME: The endpoint should validate UUID format and return 400 for invalid UUIDs.
             // Currently it may return 404 instead of 400 for malformed UUIDs.
@@ -94,7 +101,7 @@ describe('Project API', () => {
             expect(response.body.error).toBe('Organization not found')
         })
 
-        it('should return 403 when user is not a member of organization', async () => {
+        it('should return 404 when user is not a member of organization', async () => {
             const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
             const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user2)
@@ -106,8 +113,8 @@ describe('Project API', () => {
                 .get(`/api/organization/${org.uuid}/projects`)
                 .set('Cookie', [`accessToken=${token}`])
 
-            expect(response.status).toBe(403)
-            expect(response.body.error).toBe('You are not a member of this organization')
+            expect(response.status).toBe(404)
+            expect(response.body.error).toBe('Organization not found')
         })
 
         it('should include api_key information in response', async () => {

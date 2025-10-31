@@ -19,7 +19,7 @@ interface PlanResponse {
 
 const list = async (req: Request, res: Response) => {
     const plans = await DI.plans.findAll({
-        filters: {
+        where: {
             isActive: true,
         },
         orderBy: {

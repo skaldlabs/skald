@@ -8,6 +8,14 @@ module.exports = {
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
     },
+    // Ignore dist folder to prevent old compiled files from interfering
+    modulePathIgnorePatterns: ['<rootDir>/dist/'],
+    // Transform uuid to CommonJS for Jest
+    transformIgnorePatterns: ['node_modules/(?!uuid/)'],
+    transform: {
+        '^.+\\.ts$': 'ts-jest',
+        '^.+\\.m?js$': 'babel-jest',
+    },
     // Run tests serially to avoid database conflicts
     maxWorkers: 1,
 }
