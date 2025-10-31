@@ -4,7 +4,7 @@ import { EmbeddingService } from '@/services/embeddingService'
 import { RerankService } from '@/services/rerankService'
 import { memoChunkVectorSearch } from '@/embeddings/vectorSearch'
 import { VECTOR_SEARCH_TOP_K, POST_RERANK_TOP_K } from '@/settings'
-import { getTitleAndSummaryForMemoList } from '@/queries/memo'
+import { getTitleAndSummaryAndContentForMemoList } from '@/queries/memo'
 
 interface RerankResult {
     index: number
@@ -17,7 +17,7 @@ async function chunkVectorSearch(query: string, project: Project, filters?: Memo
     const chunkResults = await memoChunkVectorSearch(project, embeddingVector, VECTOR_SEARCH_TOP_K, 0.95, filters)
     const relevantMemoUuids = Array.from(new Set(chunkResults.map((c) => c.chunk.memo_uuid)))
 
-    const memoPropertiesMap = await getTitleAndSummaryForMemoList(project.uuid, relevantMemoUuids)
+    const memoPropertiesMap = await getTitleAndSummaryAndContentForMemoList(project.uuid, relevantMemoUuids)
 
     const rerankData: string[] = []
     for (const chunkResult of chunkResults) {

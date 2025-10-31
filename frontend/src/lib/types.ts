@@ -67,10 +67,11 @@ export interface MemoChunk {
 }
 
 export interface SearchResult {
-    title: string
-    uuid: string
+    memo_title: string
+    chunk_uuid: string
     content_snippet: string
-    summary: string
+    memo_summary: string
+    chunk_content: string
     distance: number | null
 }
 

@@ -4,12 +4,13 @@ import { Project } from '@/entities/Project'
 import { MemoFilter } from '@/lib/filterUtils'
 import { EmbeddingService } from '@/services/embeddingService'
 import { memoChunkVectorSearch } from '@/embeddings/vectorSearch'
-import { getTitleAndSummaryForMemoList } from '@/queries/memo'
+import { getTitleAndSummaryAndContentForMemoList } from '@/queries/memo'
 
 interface SearchResult {
     chunk_uuid: string
     memo_title: string
     memo_summary: string
+    content_snippet: string
     chunk_content: string
     distance: number
 }
@@ -57,15 +58,16 @@ const _chunkVectorSearch = async (
     const embeddingVector = await EmbeddingService.generateEmbedding(query, 'search')
     const chunkResults = await memoChunkVectorSearch(project, embeddingVector, limit, 0.75, filters)
 
-    const memoPropertiesMap = await getTitleAndSummaryForMemoList(
+    const memoPropertiesMap = await getTitleAndSummaryAndContentForMemoList(
         project.uuid,
         Array.from(new Set(chunkResults.map((c) => c.chunk.memo_uuid)))
     )
 
     const results = chunkResults.map((result) => ({
-        chunk_uuid: result.chunk.memo_uuid,
+        chunk_uuid: result.chunk.uuid,
         memo_title: memoPropertiesMap.get(result.chunk.memo_uuid)?.title || '',
         memo_summary: memoPropertiesMap.get(result.chunk.memo_uuid)?.summary || '',
+        content_snippet: memoPropertiesMap.get(result.chunk.memo_uuid)?.content.slice(0, 100) || '',
         chunk_content: result.chunk.chunk_content || '',
         distance: result.distance,
     }))

@@ -107,6 +107,9 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             })
 
             if (response.error || !response.data) {
+                console.log('response error', response.error)
+                console.log('response data', response.data)
+                console.log('response data results', response.data?.results)
                 const errorMsg = response.error || 'Search failed'
                 set({ loading: false, error: errorMsg })
                 toast.error(`Search failed: ${errorMsg}`)
@@ -115,9 +118,9 @@ export const useMemoStore = create<MemoState>((set, get) => ({
 
             // Convert search results to memo format
             const searchResultMemos: Memo[] = response.data.results.map((result) => ({
-                uuid: result.uuid,
-                title: result.title,
-                summary: result.summary,
+                uuid: result.chunk_uuid,
+                title: result.memo_title,
+                summary: result.memo_summary,
                 content_length: result.content_snippet.length,
                 metadata: {},
                 client_reference_id: null,

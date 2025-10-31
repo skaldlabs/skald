@@ -40,7 +40,7 @@ export const MemosTable = ({
         // Convert cosine distance to similarity percentage
         // Distance ranges from 0 (identical) to 2 (opposite)
         // We want to show similarity as a percentage
-        const similarity = Math.max(0, Math.min(100, (1 - distance) * 100))
+        const similarity = Math.max(0, Math.min(100, (1 - distance / 2) * 100))
         return `${similarity.toFixed(1)}%`
     }
 
