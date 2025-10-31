@@ -107,9 +107,6 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             })
 
             if (response.error || !response.data) {
-                console.log('response error', response.error)
-                console.log('response data', response.data)
-                console.log('response data results', response.data?.results)
                 const errorMsg = response.error || 'Search failed'
                 set({ loading: false, error: errorMsg })
                 toast.error(`Search failed: ${errorMsg}`)
