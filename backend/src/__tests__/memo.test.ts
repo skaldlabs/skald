@@ -24,6 +24,15 @@ import { MemoChunk } from '../entities/MemoChunk'
 import { Organization } from '../entities/Organization'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
 
+// Mock the async processing function
+jest.mock('../lib/createMemoUtils', () => {
+    const actual = jest.requireActual('../lib/createMemoUtils')
+    return {
+        ...actual,
+        sendMemoForAsyncProcessing: jest.fn().mockResolvedValue(undefined),
+    }
+})
+
 describe('Memo API Tests', () => {
     let app: Express
     let orm: MikroORM
