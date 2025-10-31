@@ -1,0 +1,21 @@
+module.exports = {
+    preset: 'ts-jest',
+    testEnvironment: 'node',
+    roots: ['<rootDir>/src'],
+    testMatch: ['**/__tests__/**/*.test.ts'],
+    moduleFileExtensions: ['ts', 'js', 'json'],
+    collectCoverageFrom: ['src/**/*.ts', '!src/**/*.test.ts', '!src/**/__tests__/**'],
+    moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+    },
+    // Ignore dist folder to prevent old compiled files from interfering
+    modulePathIgnorePatterns: ['<rootDir>/dist/'],
+    // Transform uuid to CommonJS for Jest
+    transformIgnorePatterns: ['node_modules/(?!uuid/)'],
+    transform: {
+        '^.+\\.ts$': 'ts-jest',
+        '^.+\\.m?js$': 'babel-jest',
+    },
+    // Run tests serially to avoid database conflicts
+    maxWorkers: 1,
+}

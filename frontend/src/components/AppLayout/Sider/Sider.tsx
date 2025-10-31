@@ -1,6 +1,6 @@
 import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings, CreditCard, BookOpen } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { OrganizationAccessLevel, useAuthStore, UserDetails } from '@/stores/authStore'
+import { useAuthStore, UserDetails } from '@/stores/authStore'
 import {
     Sidebar,
     SidebarContent,
@@ -16,7 +16,7 @@ import { useTheme } from '@/components/ThemeProvider'
 import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
 import { useProjectStore } from '@/stores/projectStore'
 import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
-import { isSelfHostedDeploy } from '@/settings'
+import { isSelfHostedDeploy } from '@/config'
 
 interface MenuItem {
     key: string
@@ -68,10 +68,7 @@ export const Sider = () => {
             key: '/organization',
             icon: <Hotel className="h-4 w-4" />,
             label: 'Organization',
-            hasAccess: () =>
-                !!user &&
-                user?.access_levels.organization_access_levels[user?.current_organization_uuid] >=
-                    OrganizationAccessLevel.SUPER_ADMIN,
+            hasAccess: () => true,
         },
         {
             key: 'https://docs.useskald.com',

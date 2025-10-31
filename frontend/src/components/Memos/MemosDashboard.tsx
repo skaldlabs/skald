@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useProjectStore } from '@/stores/projectStore'
 import { useMemoStore } from '@/stores/memoStore'
-import type { Memo, DetailedMemo, SearchMethod } from '@/lib/types'
+import type { Memo, DetailedMemo } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, Plus } from 'lucide-react'
 import { MemosSearchBar } from './MemosSearchBar'
@@ -28,7 +28,6 @@ export const MemosDashboard = () => {
     const deleteMemo = useMemoStore((state) => state.deleteMemo)
     const getMemoDetails = useMemoStore((state) => state.getMemoDetails)
     const setSearchQuery = useMemoStore((state) => state.setSearchQuery)
-    const setSearchMethod = useMemoStore((state) => state.setSearchMethod)
     const clearSearch = useMemoStore((state) => state.clearSearch)
     const isSearchMode = useMemoStore((state) => state.isSearchMode)
 
@@ -108,7 +107,6 @@ export const MemosDashboard = () => {
                 searchMethod={searchMethod}
                 loading={loading}
                 onSearchQueryChange={setSearchQuery}
-                onSearchMethodChange={(method: SearchMethod) => setSearchMethod(method)}
                 onSearch={handleSearch}
                 onClear={handleClearSearch}
             />

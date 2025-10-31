@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - node-ftw
 jobs:
   changes:
     name: Detect changes
@@ -20,12 +21,12 @@ jobs:
         with:
           filters: |
             api:
-              - 'skald/**'
-              - 'Dockerfile'
-              - 'pyproject.toml'
-              - 'manage.py'
-              - 'fly.toml'
-              - 'bin/start-prod.sh'
+              - 'backend/src/**'
+              - 'backend/Dockerfile'
+              - 'backend/package.json'
+              - 'backend/pnpm-lock.yaml'
+              - 'backend/tsconfig.json'
+              - 'backend/express.fly.toml'
             frontend:
               - 'package.json'
               - 'frontend/**'
@@ -35,7 +36,12 @@ jobs:
               - 'vite.config.ts'
               - 'tsconfig*.json'
             memo-processing:
-              - 'memo-processing-server/**'
+              - 'backend/src/**'
+              - 'backend/Dockerfile'
+              - 'backend/package.json'
+              - 'backend/pnpm-lock.yaml'
+              - 'backend/tsconfig.json'
+              - 'backend/memo-processing-server.fly.toml'
 
   deploy-api:
     name: Deploy API
@@ -46,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      - run: cd backend && flyctl deploy -c express.fly.toml -a skald-api-server --remote-only 
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
@@ -72,6 +78,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd memo-processing-server && flyctl deploy --remote-only
+      - run: cd backend && flyctl deploy -c memo-processing-server.toml -a skald-memo-processing-worker --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

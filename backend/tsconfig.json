@@ -1,0 +1,27 @@
+{
+    "ts-node": {
+        "files": true,
+        "require": ["tsconfig-paths/register"]
+    },
+    "files": ["src/expressServer.ts", "src/global.d.ts"],
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "commonjs",
+        "lib": ["ES2022"],
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "resolveJsonModule": true,
+        "baseUrl": "./src",
+        "paths": {
+            "@/*": ["./*"]
+        }
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules"]
+}

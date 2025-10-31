@@ -21,7 +21,7 @@ interface ApiResponse<T = unknown> {
     error?: string
 }
 
-const LOCAL_URL = 'http://localhost:8000'
+const LOCAL_URL = 'http://localhost:3000'
 
 export const domain = import.meta.env.VITE_API_HOST || LOCAL_URL
 
@@ -282,7 +282,7 @@ export const getOrgPath = () => {
         // this should not happen but we handle it nevertheless
         throw new Error('No organization ID found')
     }
-    return `/organization/${user.current_organization_uuid}`
+    return `/organizations/${user.current_organization_uuid}`
 }
 
 export const getProjectPath = () => {

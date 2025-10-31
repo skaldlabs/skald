@@ -5,7 +5,7 @@ import { GettingStartedPage } from '@/pages/GettingStartedPage'
 import { MemosPage } from '@/pages/MemosPage'
 import { PlaygroundPage } from '@/pages/PlaygroundPage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
-import { isSelfHostedDeploy } from '@/settings'
+import { isSelfHostedDeploy } from '@/config'
 
 const RootRedirect = () => {
     return <Navigate to="/projects/get-started" />

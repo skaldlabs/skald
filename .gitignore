@@ -149,3 +149,9 @@ fetch_wikipedia_articles.py
 
 # we use pnpm
 package-lock.json 
+
+ignore/
+snapshot-foobar.json
+.snapshot-foobar.json
+skald_prod.dump
+skald_prod2.dump

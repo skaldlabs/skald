@@ -38,7 +38,6 @@ interface MemoState {
     deleteMemo: (memoUuid: string) => Promise<boolean>
     getMemoDetails: (memoUuid: string) => Promise<DetailedMemo | null>
     setSearchQuery: (query: string) => void
-    setSearchMethod: (method: SearchMethod) => void
     clearSearch: () => void
 }
 
@@ -115,9 +114,9 @@ export const useMemoStore = create<MemoState>((set, get) => ({
 
             // Convert search results to memo format
             const searchResultMemos: Memo[] = response.data.results.map((result) => ({
-                uuid: result.uuid,
-                title: result.title,
-                summary: result.summary,
+                uuid: result.memo_uuid,
+                title: result.memo_title,
+                summary: result.memo_summary,
                 content_length: result.content_snippet.length,
                 metadata: {},
                 client_reference_id: null,
@@ -240,10 +239,6 @@ export const useMemoStore = create<MemoState>((set, get) => ({
 
     setSearchQuery: (query: string) => {
         set({ searchQuery: query })
-    },
-
-    setSearchMethod: (method: SearchMethod) => {
-        set({ searchMethod: method })
     },
 
     clearSearch: () => {

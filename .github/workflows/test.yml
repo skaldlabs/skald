@@ -1,62 +1,76 @@
 name: Tests
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '**.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
-  pull_request:
-    paths:
-      - '**.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
+    push:
+        branches:
+            - main
+        paths:
+            - 'backend/**'
+            - '!backend/**.md'
+    pull_request:
+        paths:
+            - 'backend/**'
+            - '!backend/**.md'
 
 jobs:
-  test:
-    name: Run Python Tests
-    runs-on: ubuntu-latest
+    test:
+        name: Run Backend Tests
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: backend
 
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
+        services:
+            postgres:
+                image: pgvector/pgvector:pg16
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: 12345678
+                    POSTGRES_DB: skald2_test
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: 12345678
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+            DATABASE_URL: postgres://postgres:12345678@localhost:5432/skald2_test
+            NODE_ENV: test
+            DEBUG: true
+            DB_NAME: skald2_test
+            DB_USER: postgres
+            DB_PASSWORD: '12345678'
+            DB_HOST: localhost
+            DB_PORT: '5432'
+            POSTGRES_PASSWORD: 12345678
 
-    env:
-      DB_USER: postgres
-      DB_PASSWORD: 12345678
-      DB_HOST: localhost
-      DB_PORT: 5432
-      TEST_DB_NAME: skald2_test
-      INTER_PROCESS_QUEUE: 'redis'
+        steps:
+            - uses: actions/checkout@v4
 
-    steps:
-      - uses: actions/checkout@v4
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
+            - name: Install PostgreSQL client
+              run: sudo apt-get update && sudo apt-get install --yes postgresql-client
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+            - name: Enable pgvector extension
+              env:
+                  PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
+              run: psql -h localhost -U postgres -d skald2_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
-      - name: Install dependencies
-        run: uv sync --all-extras
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'pnpm'
+                  cache-dependency-path: backend/pnpm-lock.yaml
 
-      - name: Run tests
-        run: ./bin/test.sh
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Run tests
+              run: pnpm test

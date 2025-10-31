@@ -56,7 +56,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
 
         set({ loading: true, error: null })
 
-        const response = await api.get<OrganizationMember[]>(`/organization/${organizationId}/members/`)
+        const response = await api.get<OrganizationMember[]>(`/organizations/${organizationId}/members/`)
 
         if (response.error || !response.data) {
             set({
@@ -80,7 +80,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
 
         set({ loading: true, error: null })
 
-        const response = await api.post(`/organization/${organizationId}/invite_member/`, {
+        const response = await api.post(`/organizations/${organizationId}/invite_member/`, {
             email,
         })
 
@@ -104,7 +104,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
 
         set({ loading: true, error: null })
 
-        const response = await api.post(`/organization/${organizationId}/remove_member/`, {
+        const response = await api.post(`/organizations/${organizationId}/remove_member/`, {
             email,
         })
 
@@ -123,7 +123,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     fetchPendingInvites: async () => {
         set({ loading: true, error: null })
 
-        const response = await api.get<OrganizationInvite[]>('/organization/pending_invites/')
+        const response = await api.get<OrganizationInvite[]>('/organizations/pending_invites/')
 
         if (response.error || !response.data) {
             set({
@@ -142,7 +142,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     acceptInvite: async (organizationId: string) => {
         set({ loading: true, error: null })
 
-        const response = await api.post(`/organization/${organizationId}/accept_invite/`)
+        const response = await api.post(`/organizations/${organizationId}/accept_invite/`)
 
         if (response.error) {
             set({
@@ -167,7 +167,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
 
         set({ loading: true, error: null })
 
-        const response = await api.get<SentInvite[]>(`/organization/${organizationId}/sent_invites/`)
+        const response = await api.get<SentInvite[]>(`/organizations/${organizationId}/sent_invites/`)
 
         if (response.error || !response.data) {
             set({
@@ -191,7 +191,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
 
         set({ loading: true, error: null })
 
-        const response = await api.post(`/organization/${organizationId}/cancel_invite/`, {
+        const response = await api.post(`/organizations/${organizationId}/cancel_invite/`, {
             invite_id: inviteId,
         })
 
@@ -215,7 +215,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
 
         set({ loading: true, error: null })
 
-        const response = await api.post(`/organization/${organizationId}/resend_invite/`, {
+        const response = await api.post(`/organizations/${organizationId}/resend_invite/`, {
             invite_id: inviteId,
         })
 

@@ -1,0 +1,131 @@
+import { filterByOperator } from '@/embeddings/vectorSearch'
+
+export type Operator = 'eq' | 'neq' | 'contains' | 'startswith' | 'endswith' | 'in' | 'not_in'
+type FilterType = 'native_field' | 'custom_metadata'
+type NativeField = 'title' | 'source' | 'client_reference_id' | 'tags'
+
+const SUPPORTED_OPERATORS: Operator[] = ['eq', 'neq', 'contains', 'startswith', 'endswith', 'in', 'not_in']
+
+export interface MemoFilter {
+    field: string
+    operator: Operator
+    value: any
+    filter_type: FilterType
+}
+
+interface ParseFilterResult {
+    filter: MemoFilter | null
+    error: string | null
+}
+
+export function parseFilter(filterDict: Record<string, any>): ParseFilterResult {
+    /**
+     * Parse and validate a filter dictionary, returning an object with:
+     * - filter: MemoFilter object if parsing was successful or null if it was not
+     * - error: The first error encountered if parsing was not successful or null if it was successful
+     */
+
+    const { field, operator, value, filter_type } = filterDict
+
+    if (!field || !operator || value === undefined || !filter_type) {
+        return {
+            filter: null,
+            error: 'Filter must have field, operator, value, and filter_type',
+        }
+    }
+
+    const memoFilter: MemoFilter = {
+        field,
+        operator: operator as Operator,
+        value,
+        filter_type: filter_type as FilterType,
+    }
+
+    if (memoFilter.operator === 'in' || memoFilter.operator === 'not_in') {
+        if (!Array.isArray(memoFilter.value)) {
+            return {
+                filter: null,
+                error: 'Value must be a list for in or not_in operators',
+            }
+        }
+    }
+
+    if (!SUPPORTED_OPERATORS.includes(memoFilter.operator)) {
+        return {
+            filter: null,
+            error: `Invalid operator. Must be one of: ${SUPPORTED_OPERATORS.join(', ')}`,
+        }
+    }
+
+    if (memoFilter.filter_type !== 'native_field' && memoFilter.filter_type !== 'custom_metadata') {
+        return {
+            filter: null,
+            error: 'Invalid filter type. Must be one of: native_field, custom_metadata',
+        }
+    }
+
+    if (memoFilter.filter_type === 'native_field') {
+        const validFields: NativeField[] = ['title', 'source', 'client_reference_id', 'tags']
+        if (!validFields.includes(memoFilter.field as NativeField)) {
+            return {
+                filter: null,
+                error: 'Invalid field for native_field filter. Must be one of: title, source, client_reference_id, tags',
+            }
+        }
+        if (memoFilter.field === 'tags') {
+            if (!Array.isArray(memoFilter.value)) {
+                return { filter: null, error: 'Value must be a list for tags filter' }
+            }
+            if (!memoFilter.value.every((tag: any) => typeof tag === 'string')) {
+                return { filter: null, error: 'Value must be a list of strings for tags filter' }
+            }
+            if (memoFilter.operator !== 'in' && memoFilter.operator !== 'not_in') {
+                return { filter: null, error: 'Operator must be in or not_in for tags filter' }
+            }
+        }
+    }
+
+    return { filter: memoFilter, error: null }
+} /**
+ * Build WHERE clause conditions for filters
+ */
+export function buildFilterConditions(filters?: MemoFilter[]): { whereConditions: string[]; params: any[] } {
+    const whereConditions: string[] = []
+    const params: any[] = []
+
+    if (!filters || filters.length === 0) {
+        return { whereConditions, params }
+    }
+
+    for (const filter of filters) {
+        if (filter.filter_type === 'native_field' && filter.field === 'tags') {
+            // tags are in a separate MemoTag table
+            // Format array as PostgreSQL array literal: ARRAY['tag1', 'tag2']::text[]
+            const escapedTags = filter.value.map((tag: string) => `'${String(tag).replace(/'/g, "''")}'`).join(', ')
+            const arrayLiteral = `ARRAY[${escapedTags}]::text[]`
+            const tagSubquery =
+                filter.operator === 'not_in'
+                    ? `EXISTS (
+                    SELECT 1 FROM skald_memotag
+                    WHERE skald_memotag.memo_id = skald_memo.uuid
+                    AND skald_memotag.tag != ALL(${arrayLiteral})
+                )`
+                    : `EXISTS (
+                    SELECT 1 FROM skald_memotag
+                    WHERE skald_memotag.memo_id = skald_memo.uuid
+                    AND skald_memotag.tag = ANY(${arrayLiteral})
+                )`
+            whereConditions.push(tagSubquery)
+            continue
+        }
+        let fieldPath = `skald_memo.${filter.field}`
+        if (filter.filter_type === 'custom_metadata') {
+            fieldPath = `skald_memo.metadata->>?`
+            params.push(filter.field)
+        }
+        whereConditions.push(filterByOperator[filter.operator].getWhereClause(fieldPath))
+        params.push(filterByOperator[filter.operator].getFormattedValue(filter.value))
+    }
+
+    return { whereConditions, params }
+}

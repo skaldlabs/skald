@@ -1,5 +1,5 @@
 import { domain } from '@/lib/api'
-import { isSelfHostedDeploy } from '@/settings'
+import { isSelfHostedDeploy } from '@/config'
 
 const baseUrlSnippetSingleQuotes = isSelfHostedDeploy ? `, '${domain}'` : ``
 const baseUrlSnippetDoubleQuotes = isSelfHostedDeploy ? `, "${domain}"` : ``
