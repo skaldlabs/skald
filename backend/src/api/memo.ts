@@ -18,7 +18,7 @@ const CreateMemoRequest = z.object({
     source: z.string().max(255).optional().nullable(),
     type: z.string().max(255).optional().nullable(),
     reference_id: z.string().max(255).optional().nullable(),
-    expiration_date: z.date().optional().nullable(),
+    expiration_date: z.coerce.date().optional().nullable(),
     tags: z.array(z.string()).optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
 })
@@ -28,7 +28,7 @@ const UpdateMemoRequest = z.object({
     metadata: z.record(z.string(), z.unknown()).optional().nullable(),
     client_reference_id: z.string().max(255).optional().nullable(),
     source: z.string().max(255).optional().nullable(),
-    expiration_date: z.date().optional().nullable(),
+    expiration_date: z.coerce.date().optional().nullable(),
     content: z.string().optional().nullable(),
 })
 
