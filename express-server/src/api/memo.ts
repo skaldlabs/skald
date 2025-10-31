@@ -173,6 +173,63 @@ export const updateMemo = async (req: Request, res: Response) => {
     }
 }
 
+export const listMemos = async (req: Request, res: Response) => {
+    const project = req.context?.requestUser?.project as Project
+
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    const page = parseInt(req.query.page as string) || 1
+    const pageSize = parseInt(req.query.page_size as string) || 20
+    const maxPageSize = 100
+
+    if (pageSize > maxPageSize) {
+        return res.status(400).json({ error: `page_size must be less than or equal to ${maxPageSize}` })
+    }
+
+    if (page < 1) {
+        return res.status(400).json({ error: 'page must be greater than or equal to 1' })
+    }
+
+    const offset = (page - 1) * pageSize
+
+    const [memos, totalCount] = await DI.memos.findAndCount(
+        { project },
+        {
+            orderBy: { created_at: 'DESC' },
+            limit: pageSize,
+            offset: offset,
+        }
+    )
+
+    // Load summaries for all memos
+    const memoSummaries = await DI.memoSummaries.find({
+        memo: { $in: memos.map((m) => m.uuid) },
+    })
+
+    const summaryMap = new Map(memoSummaries.map((s) => [s.memo.uuid, s.summary]))
+
+    const results = memos.map((memo) => ({
+        uuid: memo.uuid,
+        created_at: memo.created_at,
+        updated_at: memo.updated_at,
+        title: memo.title,
+        summary: summaryMap.get(memo.uuid) || null,
+        content_length: memo.content_length,
+        metadata: memo.metadata,
+        client_reference_id: memo.client_reference_id,
+    }))
+
+    return res.status(200).json({
+        results,
+        count: totalCount,
+        page,
+        page_size: pageSize,
+        total_pages: Math.ceil(totalCount / pageSize),
+    })
+}
+
 export const deleteMemo = async (req: Request, res: Response) => {
     const project = req.context?.requestUser?.project as Project
     const { id } = req.params
@@ -195,6 +252,7 @@ export const deleteMemo = async (req: Request, res: Response) => {
 
 export const memoRouter = express.Router({ mergeParams: true })
 memoRouter.use(requireProjectAccess())
+memoRouter.get('/', listMemos)
 memoRouter.post('/', createMemo)
 memoRouter.get('/:id', [validateMemoOperationRequestMiddleware()], getMemo)
 memoRouter.patch('/:id', [validateMemoOperationRequestMiddleware()], updateMemo)
