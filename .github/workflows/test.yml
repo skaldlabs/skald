@@ -5,27 +5,28 @@ on:
     branches:
       - main
     paths:
-      - '**.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
+      - 'backend/**'
+      - '!backend/**.md'
   pull_request:
     paths:
-      - '**.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
+      - 'backend/**'
+      - '!backend/**.md'
 
 jobs:
   test:
-    name: Run Python Tests
+    name: Run Backend Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
 
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: 12345678
-          POSTGRES_DB: postgres
+          POSTGRES_DB: skald2_test
         ports:
           - 5432:5432
         options: >-
@@ -35,28 +36,30 @@ jobs:
           --health-retries 5
 
     env:
-      DB_USER: postgres
-      DB_PASSWORD: 12345678
-      DB_HOST: localhost
-      DB_PORT: 5432
-      TEST_DB_NAME: skald2_test
-      INTER_PROCESS_QUEUE: 'redis'
+      DATABASE_URL: postgres://postgres:12345678@localhost:5432/skald2_test
+      NODE_ENV: test
+      DEBUG: true
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
         with:
-          enable-cache: true
+          version: 9
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: backend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: uv sync --all-extras
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        run: pnpm migrate
 
       - name: Run tests
-        run: ./bin/test.sh
+        run: pnpm test
