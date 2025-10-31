@@ -2,10 +2,16 @@ import { MikroORM } from '@mikro-orm/postgresql'
 import config from '../mikro-orm.config'
 
 export const createTestDatabase = async () => {
-    const orm = await MikroORM.init({
+    const testConfig = {
         ...config,
         dbName: 'skald2_test',
-    })
+        user: String(config.user || 'postgres'),
+        password: String(config.password || '12345678'),
+        host: String(config.host || 'localhost'),
+        port: Number(config.port || 5432),
+    }
+
+    const orm = await MikroORM.init(testConfig)
 
     const generator = orm.getSchemaGenerator()
     await generator.dropSchema()
