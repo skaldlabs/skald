@@ -8,7 +8,7 @@ interface ChatAgentResult {
 }
 
 interface StreamChunk {
-    type: 'content' | 'output' | 'error' | 'done'
+    type: 'token' | 'error' | 'done'
     content?: string
 }
 
@@ -54,7 +54,7 @@ export async function* streamChatAgent(query: string, context: string = ''): Asy
         for await (const chunk of stream) {
             if (chunk.content) {
                 yield {
-                    type: 'content',
+                    type: 'token',
                     content: String(chunk.content),
                 }
             }
