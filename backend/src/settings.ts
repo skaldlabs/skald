@@ -34,7 +34,13 @@ export const DEBUG = strToBool(process.env.DEBUG, TEST)
 export const NODE_ENV = process.env.NODE_ENV
 
 // postgres
-export const DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:12345678@localhost/skald2'
+export const DB_NAME = process.env.DB_NAME || 'skald2'
+export const DB_USER = process.env.DB_USER || 'postgres'
+export const DB_PASSWORD = process.env.DB_PASSWORD || '12345678'
+export const DB_HOST = process.env.DB_HOST || 'localhost'
+export const DB_PORT = parseInt(process.env.DB_PORT || '5432')
+export const DATABASE_URL =
+    process.env.DATABASE_URL || `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`
 
 // queue configuration
 export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'redis'

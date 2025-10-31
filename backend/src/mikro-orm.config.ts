@@ -1,14 +1,15 @@
 import { defineConfig } from '@mikro-orm/postgresql'
 import { Migrator } from '@mikro-orm/migrations'
+import { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT } from './settings'
 
 export default defineConfig({
     entities: ['./dist/entities'], // compiled entities
     entitiesTs: ['./src/entities'], // source entity location
-    dbName: 'foobar',
-    user: 'postgres',
-    password: '12345678',
-    host: 'localhost',
-    port: 5432,
+    dbName: DB_NAME,
+    user: DB_USER,
+    password: DB_PASSWORD,
+    host: DB_HOST,
+    port: DB_PORT,
     extensions: [Migrator],
     // debug: ['query', 'query-params'],
     migrations: {

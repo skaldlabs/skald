@@ -9,6 +9,9 @@ primary_region = 'dfw'
 [build]
   dockerfile = 'Dockerfile'
 
+[deploy]
+  release_command = 'pnpm run migration:up'
+
 [env]
   LANGSMITH_ENDPOINT = 'https://api.smith.langchain.com'
   LANGSMITH_TRACING = 'true'
