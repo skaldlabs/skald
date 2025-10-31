@@ -3,7 +3,7 @@ import { DI } from '@/di'
 import { checkPassword, makePassword } from '@/lib/passwordUtils'
 import { generateAccessToken } from '@/lib/tokenUtils'
 import { requireAuth } from '@/middleware/authMiddleware'
-import { EMAIL_VERIFICATION_ENABLED } from '@/settings'
+import { EMAIL_VERIFICATION_ENABLED, ENABLE_SECURITY_SETTINGS } from '@/settings'
 
 interface UserResponse {
     email: string
@@ -20,19 +20,15 @@ export const login = async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Email and password are required' })
     }
     const user = await DI.users.findOne({ email })
-    if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' })
-    }
-
-    if (!checkPassword(password, user.password)) {
+    if (!user || !checkPassword(password, user.password)) {
         return res.status(401).json({ error: 'Invalid credentials' })
     }
 
     const accessToken = generateAccessToken(user.email)
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
+        secure: ENABLE_SECURITY_SETTINGS,
+        sameSite: 'lax',
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in ms
         path: '/',
     })
@@ -92,7 +88,7 @@ const createUser = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(user.email)
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: ENABLE_SECURITY_SETTINGS,
         sameSite: 'lax',
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in ms
         path: '/',

@@ -12,12 +12,14 @@ import { organizationRouter } from '@/api/organization'
 import { projectRouter } from '@/api/project'
 import { userRouter } from '@/api/user'
 import cookieParser from 'cookie-parser'
-import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS, EXPRESS_SERVER_PORT } from '@/settings'
+import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS, ENABLE_SECURITY_SETTINGS, EXPRESS_SERVER_PORT } from '@/settings'
 import { emailVerificationRouter } from '@/api/emailVerification'
 import { memoRouter } from '@/api/memo'
 import { subscriptionRouter } from '@/api/subscription'
 import { planRouter } from '@/api/plan'
 import { stripeWebhook } from '@/api/stripe_webhook'
+import { securityHeadersMiddleware } from './middleware/securityMiddleware'
+import { authRateLimiter, chatRateLimiter, generalRateLimiter } from './middleware/rateLimitMiddleware'
 
 export const startExpressServer = async () => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
@@ -31,7 +33,11 @@ export const startExpressServer = async () => {
         res.status(404).json({ error: 'Not found' })
     }
 
-    // CORS middleware - must come first
+    if (ENABLE_SECURITY_SETTINGS) {
+        app.use(securityHeadersMiddleware)
+        app.use(generalRateLimiter)
+    }
+
     app.use(
         cors({
             origin: CORS_ALLOWED_ORIGINS,
@@ -54,10 +60,10 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use(requireAuth())
 
     app.get('/api/health', health)
-    app.use('/api/user', userRouter)
+    app.use('/api/user', authRateLimiter, userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)
     privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
-    privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
+    privateRoutesRouter.post('/v1/chat', [chatRateLimiter, requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
     privateRoutesRouter.use('/organizations', organizationRouter)
     organizationRouter.use('/:organization_uuid/projects', projectRouter)

@@ -14,7 +14,7 @@ interface RerankResult {
 
 async function chunkVectorSearch(query: string, project: Project, filters?: MemoFilter[]): Promise<string[]> {
     const embeddingVector = await EmbeddingService.generateEmbedding(query, 'search')
-    const chunkResults = await memoChunkVectorSearch(project, embeddingVector, VECTOR_SEARCH_TOP_K, 0.55, filters)
+    const chunkResults = await memoChunkVectorSearch(project, embeddingVector, VECTOR_SEARCH_TOP_K, 0.95, filters)
     const relevantMemoUuids = Array.from(new Set(chunkResults.map((c) => c.chunk.memo_uuid)))
 
     const memoPropertiesMap = await getTitleAndSummaryForMemoList(project.uuid, relevantMemoUuids)

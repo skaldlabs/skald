@@ -59,7 +59,7 @@ export const memoChunkVectorSearch = async (
     project: Project,
     embeddingVector: number[],
     topK: number = VECTOR_SEARCH_TOP_K,
-    similarityThreshold: number = 0.55,
+    similarityThreshold: number = 0.95,
     filters?: MemoFilter[]
 ): Promise<MemoChunkWithDistance[]> => {
     const { whereConditions, params } = buildFilterConditions(filters)

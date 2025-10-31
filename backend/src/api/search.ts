@@ -55,7 +55,7 @@ const _chunkVectorSearch = async (
     filters: MemoFilter[]
 ): Promise<SearchResult[]> => {
     const embeddingVector = await EmbeddingService.generateEmbedding(query, 'search')
-    const chunkResults = await memoChunkVectorSearch(project, embeddingVector, limit, 0.55, filters)
+    const chunkResults = await memoChunkVectorSearch(project, embeddingVector, limit, 0.75, filters)
 
     const memoPropertiesMap = await getTitleAndSummaryForMemoList(
         project.uuid,
