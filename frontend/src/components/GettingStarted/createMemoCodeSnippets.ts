@@ -21,11 +21,11 @@ await skald.createMemo({
   content: '{content}'
 });`
 
-export const pythonCreateMemoSnippet = `from skald import Skald
+export const pythonCreateMemoSnippet = `from skald_sdk import Skald
 
 skald = Skald('{apiKey}'${baseUrlSnippetSingleQuotes});
 
-skald.create_memo({
+await skald.create_memo({
     'title': '{title}',
     'content': '{content}'
 })`

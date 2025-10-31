@@ -34,7 +34,7 @@ stream = skald.streamed_chat({
     'query': '{query}'
 })
 
-for event in stream:
+async for event in stream:
     if event['type'] == 'token':
         print(event['content'], end='')`
 
