@@ -100,14 +100,23 @@ export function buildFilterConditions(filters?: MemoFilter[]): { whereConditions
     for (const filter of filters) {
         if (filter.filter_type === 'native_field' && filter.field === 'tags') {
             // tags are in a separate MemoTag table
-            // TODO: determine if we should do a join here instead.
-            const tagSubquery = `EXISTS (
-                SELECT 1 FROM skald_memotag
-                WHERE skald_memotag.memo_id = skald_memo.uuid
-                AND skald_memotag.tag = ANY(?)
-            )`
+            // Format array as PostgreSQL array literal: ARRAY['tag1', 'tag2']::text[]
+            const escapedTags = filter.value.map((tag: string) => `'${String(tag).replace(/'/g, "''")}'`).join(', ')
+            const arrayLiteral = `ARRAY[${escapedTags}]::text[]`
+            const tagSubquery =
+                filter.operator === 'not_in'
+                    ? `EXISTS (
+                    SELECT 1 FROM skald_memotag
+                    WHERE skald_memotag.memo_id = skald_memo.uuid
+                    AND skald_memotag.tag != ALL(${arrayLiteral})
+                )`
+                    : `EXISTS (
+                    SELECT 1 FROM skald_memotag
+                    WHERE skald_memotag.memo_id = skald_memo.uuid
+                    AND skald_memotag.tag = ANY(${arrayLiteral})
+                )`
             whereConditions.push(tagSubquery)
-            params.push(filter.value)
+            continue
         }
         let fieldPath = `skald_memo.${filter.field}`
         if (filter.filter_type === 'custom_metadata') {
