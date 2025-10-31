@@ -1,0 +1,4 @@
+{
+    "jest.jestCommandLine": "pnpm run test",
+    "jest.rootPath": "backend"
+}

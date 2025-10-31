@@ -45,9 +45,6 @@ const getOrganizationWithAccess = async (req: Request, requiredRole?: Organizati
  * Helper to serialize subscription details
  */
 const serializeSubscriptionDetail = async (subscription: any) => {
-    // Populate relations
-    await DI.em.populate(subscription, ['plan', 'scheduled_plan', 'organization'])
-
     return {
         uuid: subscription.id.toString(),
         organization: subscription.organization.uuid,

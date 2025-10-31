@@ -27,7 +27,9 @@ function strToBool(input: string | boolean | undefined, defaultValue: boolean = 
 
 export const SECRET_KEY = process.env.SECRET_KEY || 'UNSAFE_DEFAULT_SECRET_KEY'
 
-export const DEBUG = strToBool(process.env.DEBUG)
+export const TEST = strToBool(process.env.TEST)
+
+export const DEBUG = strToBool(process.env.DEBUG, TEST)
 
 export const NODE_ENV = process.env.NODE_ENV
 
@@ -104,20 +106,20 @@ if (!SUPPORTED_EMBEDDING_PROVIDERS.includes(EMBEDDING_PROVIDER)) {
 }
 
 // Warn if LLM provider API keys are missing
-if (LLM_PROVIDER === 'openai' && !OPENAI_API_KEY) {
+if (!DEBUG && LLM_PROVIDER === 'openai' && !OPENAI_API_KEY) {
     console.warn('OPENAI_API_KEY not set in production')
-} else if (LLM_PROVIDER === 'anthropic' && !ANTHROPIC_API_KEY) {
+} else if (!DEBUG && LLM_PROVIDER === 'anthropic' && !ANTHROPIC_API_KEY) {
     console.warn('ANTHROPIC_API_KEY not set in production')
-} else if (LLM_PROVIDER === 'local' && !LOCAL_LLM_BASE_URL) {
+} else if (!DEBUG && LLM_PROVIDER === 'local' && !LOCAL_LLM_BASE_URL) {
     console.warn('LOCAL_LLM_BASE_URL not set for local provider')
 }
 
 // Warn if embedding provider API keys are missing
-if (EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
+if (!DEBUG && EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
     console.warn('VOYAGE_API_KEY not set in production')
-} else if (EMBEDDING_PROVIDER === 'openai' && !OPENAI_API_KEY) {
+} else if (!DEBUG && EMBEDDING_PROVIDER === 'openai' && !OPENAI_API_KEY) {
     console.warn('OPENAI_API_KEY not set for embedding provider in production')
-} else if (EMBEDDING_PROVIDER === 'local' && !EMBEDDING_SERVICE_URL) {
+} else if (!DEBUG && EMBEDDING_PROVIDER === 'local' && !EMBEDDING_SERVICE_URL) {
     console.warn('EMBEDDING_SERVICE_URL not set for local provider')
 }
 

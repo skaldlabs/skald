@@ -5,9 +5,10 @@ import { User } from '@/entities/User'
 import { Organization } from '@/entities/Organization'
 import { FRONTEND_URL, IS_SELF_HOSTED_DEPLOY } from '@/settings'
 import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
-import { sendEmail } from '@/lib/emailUtils'
-import { v4 as uuidv4 } from 'uuid'
+import { sendEmail, isValidEmail } from '@/lib/emailUtils'
 import { SubscriptionService } from '@/services/subscriptionService'
+import { randomUUID } from 'crypto'
+import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
 
 export const organizationRouter = express.Router({ mergeParams: true })
 
@@ -71,7 +72,7 @@ const create = async (req: Request, res: Response) => {
     }
 
     const organization = DI.organizations.create({
-        uuid: uuidv4(),
+        uuid: randomUUID(),
         name,
         owner: user,
         created_at: new Date().toISOString(),
@@ -88,7 +89,7 @@ const create = async (req: Request, res: Response) => {
     user.defaultOrganization = organization
 
     DI.projects.create({
-        uuid: uuidv4(),
+        uuid: randomUUID(),
         name: `${organization.name.split(' ')[0]} Default Project`,
         organization,
         owner: user,
@@ -158,7 +159,7 @@ const inviteMember = async (req: Request, res: Response) => {
     if (!email) {
         return res.status(400).json({ error: 'Email is required' })
     }
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    if (!isValidEmail(email)) {
         return res.status(400).json({ error: 'Invalid email address' })
     }
     email = email.toLowerCase().trim()
@@ -175,7 +176,7 @@ const inviteMember = async (req: Request, res: Response) => {
     }
 
     DI.organizationMembershipInvites.create({
-        id: uuidv4(),
+        id: randomUUID(),
         organization: organization,
         invitedBy: user,
         email: email,
@@ -198,12 +199,13 @@ const pendingInvites = async (req: Request, res: Response) => {
     if (!user) {
         return res.status(401).json({ error: 'Unauthorized' })
     }
-    const organization = await getUserOrganization(user)
-    if (!organization) {
-        return res.status(404).json({ error: 'Organization not found' })
-    }
 
-    const invites = await DI.organizationMembershipInvites.find({ organization: organization })
+    // Find invites where the current user's email matches the invited email
+    const invites = await DI.organizationMembershipInvites.find({
+        email: user.email,
+        acceptedAt: null,
+    })
+
     if (invites.length === 0) {
         return res.status(200).json([])
     }
@@ -217,34 +219,43 @@ const pendingInvites = async (req: Request, res: Response) => {
 }
 
 const acceptInvite = async (req: Request, res: Response) => {
-    const user = req.context?.requestUser?.userInstance
-    if (!user) {
-        return res.status(401).json({ error: 'Unauthorized' })
+    try {
+        const user = req.context?.requestUser?.userInstance
+        if (!user) {
+            return res.status(401).json({ error: 'Unauthorized' })
+        }
+
+        const inviteId = req.params.id
+        if (!inviteId) {
+            return res.status(400).json({ error: 'Invite ID is required' })
+        }
+
+        const invite = await DI.organizationMembershipInvites.findOne({
+            id: inviteId,
+            email: user.email,
+            acceptedAt: null,
+        })
+        if (!invite) {
+            return res.status(404).json({ error: 'No pending invite found' })
+        }
+
+        const organization = invite.organization
+        DI.organizationMemberships.create({
+            user,
+            organization,
+            accessLevel: OrganizationMembershipRole.MEMBER,
+            joinedAt: new Date().toISOString(),
+        })
+        invite.acceptedAt = new Date()
+        user.defaultOrganization = organization
+
+        await DI.em.flush()
+
+        res.status(200).json({ detail: 'Invite accepted successfully' })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ error: 'Internal server error' })
     }
-
-    const inviteId = req.params.id
-    if (!inviteId) {
-        return res.status(400).json({ error: 'Invite ID is required' })
-    }
-
-    const invite = await DI.organizationMembershipInvites.findOne({ id: inviteId, email: user.email, acceptedAt: null })
-    if (!invite) {
-        return res.status(404).json({ error: 'No pending invite found' })
-    }
-
-    const organization = invite.organization
-    DI.organizationMemberships.create({
-        user,
-        organization,
-        accessLevel: OrganizationMembershipRole.MEMBER,
-        joinedAt: new Date().toISOString(),
-    })
-    invite.acceptedAt = new Date()
-    user.defaultOrganization = organization
-
-    await DI.em.flush()
-
-    res.status(200).json({ detail: 'Invite accepted successfully' })
 }
 
 const removeMember = async (req: Request, res: Response) => {
@@ -392,11 +403,11 @@ const resendInvite = async (req: Request, res: Response) => {
 
 organizationRouter.get('/', organization)
 organizationRouter.post('/', create)
-organizationRouter.get('/:id/members', members)
-organizationRouter.post('/:id/invite_member', inviteMember)
-organizationRouter.get('/:id/pending_invites', pendingInvites)
-organizationRouter.post('/:id/accept_invite', acceptInvite)
-organizationRouter.get('/:id/sent_invites', sentInvites)
-organizationRouter.post('/:id/cancel_invite', cancelInvite)
-organizationRouter.post('/:id/resend_invite', resendInvite)
-organizationRouter.post('/:id/remove_member', removeMember)
+organizationRouter.get('/:id/members', validateUuidParams('id'), members)
+organizationRouter.post('/:id/invite_member', validateUuidParams('id'), inviteMember)
+organizationRouter.get('/:id/pending_invites', validateUuidParams('id'), pendingInvites)
+organizationRouter.post('/:id/accept_invite', validateUuidParams('id'), acceptInvite)
+organizationRouter.get('/:id/sent_invites', validateUuidParams('id'), sentInvites)
+organizationRouter.post('/:id/cancel_invite', validateUuidParams('id'), cancelInvite)
+organizationRouter.post('/:id/resend_invite', validateUuidParams('id'), resendInvite)
+organizationRouter.post('/:id/remove_member', validateUuidParams('id'), removeMember)
