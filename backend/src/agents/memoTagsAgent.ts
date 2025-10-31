@@ -42,12 +42,17 @@ export function createMemoTagsAgent() {
 
             prompt += `Memo content:\n${memoContent}`
 
-            const result = await structuredLlm.invoke([
+            const result = await structuredLlm.invoke(
+                [
+                    {
+                        role: 'user',
+                        content: prompt,
+                    },
+                ],
                 {
-                    role: 'user',
-                    content: prompt,
-                },
-            ])
+                    callbacks: [], // Disable LangSmith tracing
+                }
+            )
 
             return result as MemoTagsOutput
         },

@@ -35,12 +35,17 @@ export function createMemoSummaryAgent() {
         async summarize(memoContent: string): Promise<MemoSummaryOutput> {
             const prompt = MEMO_SUMMARY_AGENT_INSTRUCTIONS + '\n\n' + `Text to summarize:\n${memoContent}`
 
-            const result = await structuredLlm.invoke([
+            const result = await structuredLlm.invoke(
+                [
+                    {
+                        role: 'user',
+                        content: prompt,
+                    },
+                ],
                 {
-                    role: 'user',
-                    content: prompt,
-                },
-            ])
+                    callbacks: [], // Disable LangSmith tracing
+                }
+            )
 
             return result as MemoSummaryOutput
         },
