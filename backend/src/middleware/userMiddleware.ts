@@ -31,8 +31,12 @@ export const userMiddleware = () => {
             return next()
         }
 
+        if (authHeader.length > 200) {
+            return res.status(400).json({ error: 'Invalid request' })
+        }
+
         // Support both "Token <key>" and "Bearer <key>" formats
-        const match = authHeader.match(/^(?:Token|Bearer)\s+(.+)$/i)
+        const match = authHeader.match(/^(?:Token|Bearer)\s+(\S+)$/i)
         if (!match) {
             return next()
         }
