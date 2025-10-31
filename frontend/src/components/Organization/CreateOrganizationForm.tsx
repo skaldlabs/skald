@@ -29,7 +29,7 @@ export const CreateOrganizationForm = ({ hasPendingInvites }: CreateOrganization
 
     const onSubmit = async (values: CreateOrganizationFormData) => {
         setLoading(true)
-        const response = await api.post('/organization', {
+        const response = await api.post('/organizations', {
             name: values.name,
         })
         if (!response.error) {

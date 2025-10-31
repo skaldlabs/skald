@@ -168,3 +168,11 @@ export const EMAIL_DOMAIN = process.env.EMAIL_DOMAIN || 'useskald.com'
 export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 export const EXPRESS_SERVER_PORT = parseInt(process.env.EXPRESS_SERVER_PORT || '3000')
+// ---- Stripe Configuration ----
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
+
+// Warn if Stripe keys are missing in production
+if (!DEBUG && !STRIPE_SECRET_KEY) {
+    console.warn('STRIPE_SECRET_KEY not set in production')
+}

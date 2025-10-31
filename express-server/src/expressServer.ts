@@ -15,6 +15,9 @@ import cookieParser from 'cookie-parser'
 import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS, EXPRESS_SERVER_PORT } from './settings'
 import { emailVerificationRouter } from './api/emailVerification'
 import { memoRouter } from './api/memo'
+import { subscriptionRouter } from './api/subscription'
+import { planRouter } from './api/plan'
+import { stripeWebhook } from './api/stripe_webhook'
 
 export const startExpressServer = async () => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
@@ -36,6 +39,10 @@ export const startExpressServer = async () => {
         })
     )
 
+    // Stripe webhook needs raw body for signature verification
+    // Must come before express.json() middleware
+    app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook)
+
     app.use(express.json())
     app.use(cookieParser())
     app.use((req, res, next) => RequestContext.create(DI.orm.em, next))
@@ -52,8 +59,10 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
     privateRoutesRouter.post('/v1/chat', [requireProjectAccess()], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
-    privateRoutesRouter.use('/organization', organizationRouter)
-    organizationRouter.use('/:organization_uuid/project', projectRouter)
+    privateRoutesRouter.use('/organizations', organizationRouter)
+    organizationRouter.use('/:organization_uuid/projects', projectRouter)
+    organizationRouter.use('/:organization_uuid/subscription', subscriptionRouter)
+    privateRoutesRouter.use('/plans', planRouter)
 
     app.use('/api', privateRoutesRouter)
     app.use(route404)

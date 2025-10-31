@@ -1,8 +1,6 @@
 import express from 'express'
 import { Request, Response } from 'express'
 import { DI } from '../di'
-import { User } from '../entities/User'
-import { Organization } from '../entities/Organization'
 import { Project } from '../entities/Project'
 import { OrganizationMembershipRole } from '../entities/OrganizationMembership'
 import { Memo } from '../entities/Memo'
