@@ -1,4 +1,4 @@
-import type { RequestUser } from './middleware/requestUser'
+import type { RequestUser } from '@/middleware/requestUser'
 
 declare global {
     namespace Express {

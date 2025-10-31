@@ -1,5 +1,5 @@
 import { DeferMode, Entity, Index, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core'
-import { Project } from './Project'
+import { Project } from '@/entities/Project'
 
 @Entity({ tableName: 'skald_memo' })
 @Index({ name: 'skald_memo_project_8101aa_idx', properties: ['project', 'client_reference_id'] })

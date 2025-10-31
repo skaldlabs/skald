@@ -1,4 +1,4 @@
-import { EMBEDDING_PROVIDER, VOYAGE_API_KEY, OPENAI_API_KEY, OPENAI_MODEL, EMBEDDING_SERVICE_URL } from '../settings'
+import { EMBEDDING_PROVIDER, VOYAGE_API_KEY, OPENAI_API_KEY, OPENAI_MODEL, EMBEDDING_SERVICE_URL } from '@/settings'
 import { VoyageAIClient } from 'voyageai'
 import OpenAI from 'openai'
 

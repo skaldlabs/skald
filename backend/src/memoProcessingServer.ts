@@ -9,11 +9,11 @@ import {
 } from './settings'
 import './sentry'
 import { createClient } from 'redis'
-import { processMemo } from './memoProcessingServer/processMemo'
-import { runSQSConsumer } from './memoProcessingServer/sqsConsumer'
-import { runRabbitMQConsumer, closeRabbitMQ } from './memoProcessingServer/rabbitMqConsumer'
+import { processMemo } from '@/memoProcessingServer/processMemo'
+import { runSQSConsumer } from '@/memoProcessingServer/sqsConsumer'
+import { runRabbitMQConsumer, closeRabbitMQ } from '@/memoProcessingServer/rabbitMqConsumer'
 import { MikroORM } from '@mikro-orm/core'
-import config from './mikro-orm.config'
+import config from '@/mikro-orm.config'
 
 const runRedisPubSub = async (orm: MikroORM) => {
     const subscriber = createClient({

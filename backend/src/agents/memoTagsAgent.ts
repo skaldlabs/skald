@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { LLMService } from '../services/llmService'
+import { LLMService } from '@/services/llmService'
 
 // Output schema for the memo tags agent
 const MemoTagsOutputSchema = z.object({

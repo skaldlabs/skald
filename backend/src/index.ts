@@ -7,8 +7,8 @@ if (process.env.NODE_ENV === 'development') {
     config({ path: resolve(__dirname, '.env') })
 }
 
-import { startExpressServer } from './expressServer'
-import { startMemoProcessingServer } from './memoProcessingServer'
+import { startExpressServer } from '@/expressServer'
+import { startMemoProcessingServer } from '@/memoProcessingServer'
 
 const getModeFromArgs = (): string | null => {
     const args = process.argv.slice(2)

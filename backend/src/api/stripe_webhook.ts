@@ -1,9 +1,9 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
-import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '../settings'
-import { DI } from '../di'
-import { StripeEvent } from '../entities/StripeEvent'
-import { SubscriptionService } from '../services/subscriptionService'
+import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '@/settings'
+import { DI } from '@/di'
+import { StripeEvent } from '@/entities/StripeEvent'
+import { SubscriptionService } from '@/services/subscriptionService'
 
 /**
  * Stripe webhook endpoint.

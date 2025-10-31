@@ -1,6 +1,6 @@
 import { DeferMode, Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core'
-import { Memo } from './Memo'
-import { Project } from './Project'
+import { Memo } from '@/entities/Memo'
+import { Project } from '@/entities/Project'
 
 @Entity({ tableName: 'skald_memosummary' })
 export class MemoSummary {

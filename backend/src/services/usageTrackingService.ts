@@ -3,10 +3,10 @@
  * Handles increment and retrieval of usage metrics.
  */
 
-import { DI } from '../di'
-import { Organization } from '../entities/Organization'
-import { UsageRecord } from '../entities/UsageRecord'
-import { OrganizationSubscription } from '../entities/OrganizationSubscription'
+import { DI } from '@/di'
+import { Organization } from '@/entities/Organization'
+import { UsageRecord } from '@/entities/UsageRecord'
+import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { EntityManager } from '@mikro-orm/core'
 
 interface UsageData {

@@ -1,6 +1,6 @@
 import { DeferMode, Entity, ManyToOne, PrimaryKey, Property, Unique } from '@mikro-orm/core'
-import { Organization } from './Organization'
-import { User } from './User'
+import { Organization } from '@/entities/Organization'
+import { User } from '@/entities/User'
 
 @Entity({ tableName: 'skald_organizationmembershipinvite' })
 @Unique({ name: 'skald_organizationmember_organization_id_email_a6273e0c_uniq', properties: ['organization', 'email'] })

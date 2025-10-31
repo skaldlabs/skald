@@ -1,5 +1,5 @@
 import { DeferMode, Entity, OneToOne, type Opt, PrimaryKey, Property } from '@mikro-orm/core'
-import { User } from './User'
+import { User } from '@/entities/User'
 
 @Entity({ tableName: 'skald_emailverificationcode' })
 export class EmailVerificationCode {

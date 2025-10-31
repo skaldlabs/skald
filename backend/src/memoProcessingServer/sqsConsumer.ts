@@ -1,6 +1,6 @@
 import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand, Message } from '@aws-sdk/client-sqs'
-import { processMemo } from './processMemo'
-import { AWS_REGION, SQS_QUEUE_URL } from '../settings'
+import { processMemo } from '@/memoProcessingServer/processMemo'
+import { AWS_REGION, SQS_QUEUE_URL } from '@/settings'
 import { MikroORM } from '@mikro-orm/core'
 
 const MAX_MESSAGES = 10

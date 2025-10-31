@@ -1,10 +1,10 @@
 import express, { Request, Response } from 'express'
 import { z } from 'zod'
-import { DI } from '../di'
+import { DI } from '@/di'
 import { NextFunction } from 'express'
-import { createNewMemo, sendMemoForAsyncProcessing } from '../lib/createMemoUtils'
-import { requireProjectAccess } from '../middleware/authMiddleware'
-import { Project } from '../entities/Project'
+import { createNewMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
+import { requireProjectAccess } from '@/middleware/authMiddleware'
+import { Project } from '@/entities/Project'
 
 const CreateMemoRequest = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),

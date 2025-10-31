@@ -1,5 +1,5 @@
 import { DeferMode, Entity, Index, ManyToOne, PrimaryKey, PrimaryKeyProp, Property } from '@mikro-orm/core'
-import { Project } from './Project'
+import { Project } from '@/entities/Project'
 
 @Entity({ tableName: 'skald_projectapikey' })
 @Index({

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { DI } from '../di'
+import { DI } from '@/di'
 
 export const health = async (req: Request, res: Response) => {
     const checks = { database: false }

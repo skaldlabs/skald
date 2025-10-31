@@ -1,4 +1,4 @@
-import { DI } from '../di'
+import { DI } from '@/di'
 
 export const getTitleAndSummaryForMemoList = async (
     projectUuid: string,

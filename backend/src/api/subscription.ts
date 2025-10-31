@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express'
-import { DI } from '../di'
-import { SubscriptionService } from '../services/subscriptionService'
-import { UsageTrackingService } from '../services/usageTrackingService'
-import { OrganizationMembershipRole } from '../entities/OrganizationMembership'
+import { DI } from '@/di'
+import { SubscriptionService } from '@/services/subscriptionService'
+import { UsageTrackingService } from '@/services/usageTrackingService'
+import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
 
 export const subscriptionRouter = express.Router({ mergeParams: true })
 

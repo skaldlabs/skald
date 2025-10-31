@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express'
-import { DI } from '../di'
-import { checkPassword, makePassword } from '../lib/passwordUtils'
-import { generateAccessToken } from '../lib/tokenUtils'
-import { requireAuth } from '../middleware/authMiddleware'
-import { EMAIL_VERIFICATION_ENABLED } from '../settings'
+import { DI } from '@/di'
+import { checkPassword, makePassword } from '@/lib/passwordUtils'
+import { generateAccessToken } from '@/lib/tokenUtils'
+import { requireAuth } from '@/middleware/authMiddleware'
+import { EMAIL_VERIFICATION_ENABLED } from '@/settings'
 
 interface UserResponse {
     email: string

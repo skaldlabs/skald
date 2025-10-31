@@ -1,5 +1,5 @@
 import { DeferMode, Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core'
-import { User } from './User'
+import { User } from '@/entities/User'
 
 @Entity({ tableName: 'skald_organization' })
 export class Organization {

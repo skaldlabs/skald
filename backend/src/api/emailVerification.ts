@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express'
-import { DI } from '../di'
-import { User } from '../entities/User'
-import { EmailVerificationCode } from '../entities/EmailVerificationCode'
-import { sendEmail } from '../lib/emailUtils'
+import { DI } from '@/di'
+import { User } from '@/entities/User'
+import { EmailVerificationCode } from '@/entities/EmailVerificationCode'
+import { sendEmail } from '@/lib/emailUtils'
 
 function generateCode(length: number = 6): string {
     let code = ''

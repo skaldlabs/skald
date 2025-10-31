@@ -1,12 +1,12 @@
-import { memoSummaryAgent } from '../agents/memoSummaryAgent'
-import { memoTagsAgent } from '../agents/memoTagsAgent'
+import { memoSummaryAgent } from '@/agents/memoSummaryAgent'
+import { memoTagsAgent } from '@/agents/memoTagsAgent'
 import { RecursiveChunker } from '@chonkiejs/core'
-import { EmbeddingService } from '../services/embeddingService'
+import { EmbeddingService } from '@/services/embeddingService'
 import { EntityManager } from '@mikro-orm/core'
 import { randomUUID } from 'crypto'
-import { MemoChunk } from '../entities/MemoChunk'
-import { MemoTag } from '../entities/MemoTag'
-import { MemoSummary } from '../entities/MemoSummary'
+import { MemoChunk } from '@/entities/MemoChunk'
+import { MemoTag } from '@/entities/MemoTag'
+import { MemoSummary } from '@/entities/MemoSummary'
 
 // Initialize chunker with the same configuration as Python version
 // RecursiveChunker in TypeScript doesn't have recipes yet, so we'll use the default markdown-friendly configuration

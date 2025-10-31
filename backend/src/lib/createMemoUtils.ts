@@ -2,12 +2,12 @@ import { randomUUID } from 'crypto'
 import { createClient } from 'redis'
 import * as amqplib from 'amqplib'
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
-import { sha256 } from './hashUtils'
-import { DI } from '../di'
-import { Memo } from '../entities/Memo'
-import { MemoContent } from '../entities/MemoContent'
-import { MemoTag } from '../entities/MemoTag'
-import { Project } from '../entities/Project'
+import { sha256 } from '@/lib/hashUtils'
+import { DI } from '@/di'
+import { Memo } from '@/entities/Memo'
+import { MemoContent } from '@/entities/MemoContent'
+import { MemoTag } from '@/entities/MemoTag'
+import { Project } from '@/entities/Project'
 import {
     AWS_REGION,
     INTER_PROCESS_QUEUE,

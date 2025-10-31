@@ -1,5 +1,5 @@
 import { CreateEmailResponseSuccess, ErrorResponse, Resend } from 'resend'
-import { EMAIL_DOMAIN, RESEND_API_KEY } from '../settings'
+import { EMAIL_DOMAIN, RESEND_API_KEY } from '@/settings'
 
 const resend = new Resend(RESEND_API_KEY)
 

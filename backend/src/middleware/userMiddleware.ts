@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
-import { DI } from '../di'
-import { sha3_256 } from '../lib/hashUtils'
-import { RequestUser } from './requestUser'
-import { verifyAccessToken } from '../lib/tokenUtils'
+import { DI } from '@/di'
+import { sha3_256 } from '@/lib/hashUtils'
+import { RequestUser } from '@/middleware/requestUser'
+import { verifyAccessToken } from '@/lib/tokenUtils'
 
 export const userMiddleware = () => {
     return async (req: Request, res: Response, next: NextFunction) => {

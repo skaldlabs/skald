@@ -1,10 +1,10 @@
 import { Request, Response } from 'express'
-import { parseFilter } from '../lib/filterUtils'
-import { Project } from '../entities/Project'
-import { MemoFilter } from '../lib/filterUtils'
-import { EmbeddingService } from '../services/embeddingService'
-import { memoChunkVectorSearch } from '../embeddings/vectorSearch'
-import { getTitleAndSummaryForMemoList } from '../queries/memo'
+import { parseFilter } from '@/lib/filterUtils'
+import { Project } from '@/entities/Project'
+import { MemoFilter } from '@/lib/filterUtils'
+import { EmbeddingService } from '@/services/embeddingService'
+import { memoChunkVectorSearch } from '@/embeddings/vectorSearch'
+import { getTitleAndSummaryForMemoList } from '@/queries/memo'
 
 interface SearchResult {
     chunk_uuid: string

@@ -4,12 +4,12 @@
  */
 
 import Stripe from 'stripe'
-import { STRIPE_SECRET_KEY } from '../settings'
-import { Organization } from '../entities/Organization'
-import { OrganizationSubscription } from '../entities/OrganizationSubscription'
-import { Plan } from '../entities/Plan'
-import { UsageRecord } from '../entities/UsageRecord'
-import { DI } from '../di'
+import { STRIPE_SECRET_KEY } from '@/settings'
+import { Organization } from '@/entities/Organization'
+import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
+import { Plan } from '@/entities/Plan'
+import { UsageRecord } from '@/entities/UsageRecord'
+import { DI } from '@/di'
 import { EntityManager } from '@mikro-orm/core'
 
 /**

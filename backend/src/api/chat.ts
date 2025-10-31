@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
-import { parseFilter } from '../lib/filterUtils'
-import { prepareContextForChatAgent } from '../agents/chatAgent/preprocessing'
-import { runChatAgent, streamChatAgent } from '../agents/chatAgent/chatAgent'
+import { parseFilter } from '@/lib/filterUtils'
+import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
+import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query

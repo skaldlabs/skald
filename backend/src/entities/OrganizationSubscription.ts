@@ -1,6 +1,6 @@
 import { DeferMode, Entity, Index, ManyToOne, OneToOne, type Opt, PrimaryKey, Property } from '@mikro-orm/core'
-import { Organization } from './Organization'
-import { Plan } from './Plan'
+import { Organization } from '@/entities/Organization'
+import { Plan } from '@/entities/Plan'
 
 @Entity({ tableName: 'skald_organizationsubscription' })
 @Index({

@@ -6,7 +6,7 @@
     "scripts": {
         "dev:express-server": "NODE_ENV=development DEBUG=true nodemon --exec ts-node src/index.ts --mode=express-server",
         "dev:memo-processing-server": "NODE_ENV=development DEBUG=true nodemon --exec ts-node src/index.ts --mode=memo-processing-server",
-        "build": "tsc",
+        "build": "tsc && tsc-alias",
         "start": "node dist/index.js",
         "test": "jest",
         "test:watch": "jest --watch",
@@ -65,6 +65,8 @@
         "supertest": "^7.1.4",
         "ts-jest": "^29.4.5",
         "ts-node": "^10.9.2",
+        "tsc-alias": "^1.8.16",
+        "tsconfig-paths": "^4.2.0",
         "typescript": "^5.9.3"
     }
 }

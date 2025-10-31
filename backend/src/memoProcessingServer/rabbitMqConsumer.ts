@@ -1,5 +1,5 @@
 import * as amqplib from 'amqplib'
-import { processMemo } from './processMemo'
+import { processMemo } from '@/memoProcessingServer/processMemo'
 import {
     RABBITMQ_HOST,
     RABBITMQ_PORT,

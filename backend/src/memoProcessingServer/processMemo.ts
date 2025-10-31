@@ -1,5 +1,5 @@
-import { MemoContent } from '../entities/MemoContent'
-import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from './memoOperations'
+import { MemoContent } from '@/entities/MemoContent'
+import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from '@/memoProcessingServer/memoOperations'
 import { EntityManager } from '@mikro-orm/core'
 
 export const processMemo = async (em: EntityManager, memoUuid: string) => {

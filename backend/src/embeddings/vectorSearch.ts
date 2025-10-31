@@ -1,8 +1,8 @@
-import { Project } from '../entities/Project'
-import { buildFilterConditions, MemoFilter } from '../lib/filterUtils'
-import { DI } from '../di'
-import { VECTOR_SEARCH_TOP_K } from '../settings'
-import { Operator } from '../lib/filterUtils'
+import { Project } from '@/entities/Project'
+import { buildFilterConditions, MemoFilter } from '@/lib/filterUtils'
+import { DI } from '@/di'
+import { VECTOR_SEARCH_TOP_K } from '@/settings'
+import { Operator } from '@/lib/filterUtils'
 
 export interface MemoChunkWithDistance {
     chunk: {

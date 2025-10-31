@@ -1,13 +1,13 @@
 import express from 'express'
 import { Request, Response } from 'express'
-import { DI } from '../di'
-import { User } from '../entities/User'
-import { Organization } from '../entities/Organization'
-import { FRONTEND_URL, IS_SELF_HOSTED_DEPLOY } from '../settings'
-import { OrganizationMembershipRole } from '../entities/OrganizationMembership'
-import { sendEmail } from '../lib/emailUtils'
+import { DI } from '@/di'
+import { User } from '@/entities/User'
+import { Organization } from '@/entities/Organization'
+import { FRONTEND_URL, IS_SELF_HOSTED_DEPLOY } from '@/settings'
+import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
+import { sendEmail } from '@/lib/emailUtils'
 import { v4 as uuidv4 } from 'uuid'
-import { SubscriptionService } from '../services/subscriptionService'
+import { SubscriptionService } from '@/services/subscriptionService'
 
 export const organizationRouter = express.Router({ mergeParams: true })
 

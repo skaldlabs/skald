@@ -1,4 +1,4 @@
-import { filterByOperator } from '../embeddings/vectorSearch'
+import { filterByOperator } from '@/embeddings/vectorSearch'
 
 export type Operator = 'eq' | 'neq' | 'contains' | 'startswith' | 'endswith' | 'in' | 'not_in'
 type FilterType = 'native_field' | 'custom_metadata'

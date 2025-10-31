@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { SECRET_KEY } from '../settings'
+import { SECRET_KEY } from '@/settings'
 
 export const generateAccessToken = (email: string) => {
     return jwt.sign({ email }, SECRET_KEY, { expiresIn: '30d' })

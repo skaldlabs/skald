@@ -1,10 +1,10 @@
-import { Project } from '../../entities/Project'
-import { MemoFilter } from '../../lib/filterUtils'
-import { EmbeddingService } from '../../services/embeddingService'
-import { RerankService } from '../../services/rerankService'
-import { memoChunkVectorSearch } from '../../embeddings/vectorSearch'
-import { VECTOR_SEARCH_TOP_K, POST_RERANK_TOP_K } from '../../settings'
-import { getTitleAndSummaryForMemoList } from '../../queries/memo'
+import { Project } from '@/entities/Project'
+import { MemoFilter } from '@/lib/filterUtils'
+import { EmbeddingService } from '@/services/embeddingService'
+import { RerankService } from '@/services/rerankService'
+import { memoChunkVectorSearch } from '@/embeddings/vectorSearch'
+import { VECTOR_SEARCH_TOP_K, POST_RERANK_TOP_K } from '@/settings'
+import { getTitleAndSummaryForMemoList } from '@/queries/memo'
 
 interface RerankResult {
     index: number

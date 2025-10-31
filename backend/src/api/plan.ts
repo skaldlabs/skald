@@ -1,6 +1,6 @@
 import express from 'express'
 import { Request, Response } from 'express'
-import { DI } from '../di'
+import { DI } from '@/di'
 
 export const planRouter = express.Router({ mergeParams: true })
 

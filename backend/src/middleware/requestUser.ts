@@ -1,5 +1,5 @@
-import { User } from '../entities/User'
-import { Project } from '../entities/Project'
+import { User } from '@/entities/User'
+import { Project } from '@/entities/Project'
 
 export class RequestUser {
     userInstance: User | null
