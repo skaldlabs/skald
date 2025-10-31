@@ -39,6 +39,7 @@ jobs:
       DATABASE_URL: postgres://postgres:12345678@localhost:5432/skald2_test
       NODE_ENV: test
       DEBUG: true
+      POSTGRES_PASSWORD: 12345678
 
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +48,14 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 9
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install --yes postgresql-client
+
+      - name: Enable pgvector extension
+        env:
+          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        run: psql -h localhost -U postgres -d skald2_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
