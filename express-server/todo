@@ -3,3 +3,4 @@
 [ ] setup absolute import paths with @
 [ ] rethink content and summary on db
 [ ] make sure we're using tree-shaking for the backend server
+[ ] make sure exceptions dont crash server

@@ -3,7 +3,7 @@ import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from './me
 import { EntityManager } from '@mikro-orm/core'
 
 export const processMemo = async (em: EntityManager, memoUuid: string) => {
-    const memoContent = await em.findOne(MemoContent, { uuid: memoUuid }, { populate: ['project', 'memo'] })
+    const memoContent = await em.findOne(MemoContent, { memo: { uuid: memoUuid } }, { populate: ['project', 'memo'] })
     if (!memoContent) {
         throw new Error(`Memo not found: ${memoUuid}`)
     }

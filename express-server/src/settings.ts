@@ -1,13 +1,3 @@
-import { config } from 'dotenv'
-import { resolve } from 'path'
-
-// Load environment variables from the main repo's .env file
-if (process.env.NODE_ENV === 'development') {
-    config({ path: resolve(__dirname, '../../.env') })
-} else {
-    config({ path: resolve(__dirname, '.env') })
-}
-
 function strToBool(input: string | boolean | undefined, defaultValue: boolean = false): boolean {
     if (!input) {
         return defaultValue

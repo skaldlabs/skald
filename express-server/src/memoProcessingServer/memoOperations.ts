@@ -41,7 +41,7 @@ const _createMemoChunk = async (
         project: projectId,
         chunk_content: chunkContent,
         chunk_index: chunkIndex,
-        embedding: vectorEmbedding,
+        embedding: JSON.stringify(vectorEmbedding) as any,
     })
 }
 
@@ -58,8 +58,8 @@ export const createMemoChunks = async (
         const chunk = chunks[index]
         promises.push(_createMemoChunk(em, memoUuid, projectId, chunk.text, index))
     }
-    await Promise.all(promises)
-    await em.persistAndFlush(promises)
+    const memoChunks = await Promise.all(promises)
+    await em.persistAndFlush(memoChunks)
 }
 
 export const extractTagsFromMemo = async (em: EntityManager, memoUuid: string, content: string, projectId: string) => {
@@ -78,7 +78,7 @@ export const generateMemoSummary = async (em: EntityManager, memoUuid: string, c
         memo: memoUuid,
         project: projectId,
         summary: summary.summary,
-        embedding,
+        embedding: JSON.stringify(embedding) as any,
     })
     await em.persistAndFlush(memoSummary)
 }

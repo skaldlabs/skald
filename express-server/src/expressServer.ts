@@ -1,7 +1,3 @@
-// this needs to come first
-import './settings'
-
-import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import { RequestContext } from '@mikro-orm/postgresql'

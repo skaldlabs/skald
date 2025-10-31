@@ -1,4 +1,3 @@
-// this needs to come first
 import {
     INTER_PROCESS_QUEUE,
     REDIS_HOST,
@@ -8,7 +7,6 @@ import {
     EMBEDDING_PROVIDER,
     SQS_QUEUE_URL,
 } from './settings'
-
 import './sentry'
 import { createClient } from 'redis'
 import { processMemo } from './memoProcessingServer/processMemo'
