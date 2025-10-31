@@ -140,7 +140,7 @@ const members = async (req: Request, res: Response) => {
 }
 
 const _generateInviteEmailContent = (organizationName: string, inviteeEmail: string) => {
-    const signupUrl = `${FRONTEND_URL}/signup?email=${inviteeEmail}`
+    const signupUrl = `${FRONTEND_URL}/signup?email=${encodeURIComponent(inviteeEmail)}`
     const subject = `Invitation to join ${organizationName} on Skald`
     const html_content = `
     <h2>You've been invited to join ${organizationName} on Skald!</h2>
