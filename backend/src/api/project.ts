@@ -9,6 +9,7 @@ import { MemoTag } from '@/entities/MemoTag'
 import { MemoSummary } from '@/entities/MemoSummary'
 import { MemoContent } from '@/entities/MemoContent'
 import { ProjectAPIKey } from '@/entities/ProjectAPIKey'
+import { trackUsage } from '@/middleware/usageTracking'
 import { v4 as uuidv4 } from 'uuid'
 import crypto from 'crypto'
 
@@ -318,7 +319,7 @@ const generateApiKeyEndpoint = async (req: Request, res: Response) => {
 }
 
 projectRouter.get('/', list)
-projectRouter.post('/', create)
+projectRouter.post('/', trackUsage('projects'), create)
 projectRouter.get('/:uuid', retrieve)
 projectRouter.put('/:uuid', update)
 projectRouter.delete('/:uuid', destroy)

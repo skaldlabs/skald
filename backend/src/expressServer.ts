@@ -20,6 +20,7 @@ import { planRouter } from '@/api/plan'
 import { stripeWebhook } from '@/api/stripe_webhook'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
+import { trackUsage } from '@/middleware/usageTracking'
 
 export const startExpressServer = async () => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
@@ -63,7 +64,7 @@ export const startExpressServer = async () => {
     app.use('/api/user', authRateLimiter, userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)
     privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
-    privateRoutesRouter.post('/v1/chat', [chatRateLimiter, requireProjectAccess()], chat)
+    privateRoutesRouter.post('/v1/chat', [chatRateLimiter, requireProjectAccess(), trackUsage('chat_queries')], chat)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
     privateRoutesRouter.use('/organizations', organizationRouter)
     organizationRouter.use('/:organization_uuid/projects', projectRouter)

@@ -4,6 +4,7 @@ import { DI } from '@/di'
 import { NextFunction } from 'express'
 import { createNewMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
+import { trackUsage } from '@/middleware/usageTracking'
 import { Project } from '@/entities/Project'
 import { MemoContent } from '@/entities/MemoContent'
 import { MemoSummary } from '@/entities/MemoSummary'
@@ -265,7 +266,11 @@ export const deleteMemo = async (req: Request, res: Response) => {
 export const memoRouter = express.Router({ mergeParams: true })
 memoRouter.use(requireProjectAccess())
 memoRouter.get('/', listMemos)
-memoRouter.post('/', createMemo)
+memoRouter.post('/', trackUsage('memo_operations'), createMemo)
 memoRouter.get('/:id', [validateMemoOperationRequestMiddleware()], getMemo)
-memoRouter.patch('/:id', [validateMemoOperationRequestMiddleware()], updateMemo)
-memoRouter.delete('/:id', [validateMemoOperationRequestMiddleware()], deleteMemo)
+memoRouter.patch('/:id', [validateMemoOperationRequestMiddleware(), trackUsage('memo_operations')], updateMemo)
+memoRouter.delete(
+    '/:id',
+    [validateMemoOperationRequestMiddleware(), trackUsage('memo_operations', { increment: false })],
+    deleteMemo
+)

@@ -274,12 +274,23 @@ class UsageTrackingService {
         limit: number
     ): Promise<void> {
         try {
-            // TODO: Implement email sending functionality
-            console.warn(
-                `Usage alert for ${organization.name}: ${limitType} at ${percentage}% (${currentUsage}/${limit})`
+            const { sendUsageAlertEmail } = await import('@/lib/usageAlertEmail')
+
+            // Get subscription for billing period info
+            const subscription = await DI.em.findOne(
+                OrganizationSubscription,
+                { organization: organization.uuid },
+                { populate: ['plan'] }
             )
+
+            const billingPeriodEnd = subscription
+                ? subscription.current_period_end.toISOString().split('T')[0]
+                : undefined
+
+            await sendUsageAlertEmail(organization, limitType, percentage, currentUsage, limit, billingPeriodEnd)
         } catch (error) {
             console.error('Failed to send usage alert email:', error)
+            // Don't throw - we don't want email failures to break the usage tracking
         }
     }
 }
