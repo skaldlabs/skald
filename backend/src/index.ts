@@ -1,11 +1,5 @@
-import { config } from 'dotenv'
-import { resolve } from 'path'
-
-if (process.env.NODE_ENV === 'development') {
-    config({ path: resolve(__dirname, '../../.env') })
-} else {
-    config({ path: resolve(__dirname, '.env') })
-}
+// this MUST come first to set the environment variables from .env
+import '@/settings'
 
 import { startExpressServer } from '@/expressServer'
 import { startMemoProcessingServer } from '@/memoProcessingServer'

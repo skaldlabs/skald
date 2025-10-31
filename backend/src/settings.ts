@@ -1,3 +1,12 @@
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+if (process.env.NODE_ENV === 'development') {
+    config({ path: resolve(__dirname, '../../.env') })
+} else {
+    config({ path: resolve(__dirname, '.env') })
+}
+
 function strToBool(input: string | boolean | undefined, defaultValue: boolean = false): boolean {
     if (!input) {
         return defaultValue
@@ -143,7 +152,13 @@ if (CORS_ORIGINS_ENV) {
 } else if (DEBUG) {
     CORS_ALLOWED_ORIGINS = ['http://localhost:8000', 'http://localhost:3000', 'http://localhost:5173']
 } else {
-    CORS_ALLOWED_ORIGINS = ['https://app.useskald.com', 'https://api.useskald.com', 'https://platform.useskald.com']
+    CORS_ALLOWED_ORIGINS = [
+        'https://app.useskald.com',
+        'https://api.useskald.com',
+        'https://platform.useskald.com',
+        'https://api2.useskald.com',
+        'https://platform2.useskald.com',
+    ]
 }
 
 // Add self-hosted deployment URLs

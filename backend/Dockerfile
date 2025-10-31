@@ -38,6 +38,8 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
 
+EXPOSE 8080
+
 # Run the server
 CMD ["pnpm", "start"]
 
