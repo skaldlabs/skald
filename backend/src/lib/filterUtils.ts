@@ -109,10 +109,11 @@ export function buildFilterConditions(filters?: MemoFilter[]): { whereConditions
             whereConditions.push(tagSubquery)
             params.push(filter.value)
         }
-        const fieldPath =
-            filter.filter_type === 'native_field'
-                ? `skald_memo.${filter.field}`
-                : `skald_memo.metadata->>'${filter.field}'`
+        let fieldPath = `skald_memo.${filter.field}`
+        if (filter.filter_type === 'custom_metadata') {
+            fieldPath = `skald_memo.metadata->>?`
+            params.push(filter.field)
+        }
         whereConditions.push(filterByOperator[filter.operator].getWhereClause(fieldPath))
         params.push(filterByOperator[filter.operator].getFormattedValue(filter.value))
     }
