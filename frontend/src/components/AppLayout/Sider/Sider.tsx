@@ -16,7 +16,7 @@ import { useTheme } from '@/components/ThemeProvider'
 import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
 import { useProjectStore } from '@/stores/projectStore'
 import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
-import { isSelfHostedDeploy } from '@/settings'
+import { isSelfHostedDeploy } from '@/config'
 
 interface MenuItem {
     key: string

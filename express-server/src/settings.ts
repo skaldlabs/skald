@@ -1,13 +1,3 @@
-import { config } from 'dotenv'
-import { resolve } from 'path'
-
-// Load environment variables from the main repo's .env file
-if (process.env.NODE_ENV === 'development') {
-    config({ path: resolve(__dirname, '../../.env') })
-} else {
-    config({ path: resolve(__dirname, '.env') })
-}
-
 function strToBool(input: string | boolean | undefined, defaultValue: boolean = false): boolean {
     if (!input) {
         return defaultValue
@@ -177,6 +167,7 @@ export const EMAIL_DOMAIN = process.env.EMAIL_DOMAIN || 'useskald.com'
 // Frontend URL
 export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
+export const EXPRESS_SERVER_PORT = parseInt(process.env.EXPRESS_SERVER_PORT || '3000')
 // ---- Stripe Configuration ----
 export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET

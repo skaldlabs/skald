@@ -19,7 +19,7 @@ export const requireAuth = () => {
 
 export const requireProjectAccess = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
-        if (!req.context || !req.context.requestUser || !req.context.requestUser.project) {
+        if (!req.context || !req.context.requestUser) {
             return res.status(401).json({ error: 'Unauthorized' })
         }
 

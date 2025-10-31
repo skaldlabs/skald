@@ -2,10 +2,11 @@
     "ts-node": {
         "files": true
     },
-    "files": ["src/server.ts", "src/global.d.ts"],
+    "files": ["src/expressServer.ts", "src/global.d.ts"],
     "compilerOptions": {
-        "target": "ES2020",
+        "target": "ES2022",
         "module": "commonjs",
+        "lib": ["ES2022"],
         "outDir": "./dist",
         "rootDir": "./src",
         "strict": true,
@@ -14,8 +15,7 @@
         "forceConsistentCasingInFileNames": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
-        "resolveJsonModule": true,
-        "moduleResolution": "node"
+        "resolveJsonModule": true
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules"]
