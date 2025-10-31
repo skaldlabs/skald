@@ -94,9 +94,12 @@ const getSubscription = async (req: Request, res: Response) => {
     try {
         const organization = await getOrganizationWithAccess(req)
 
-        const subscription = await DI.organizationSubscriptions.findOne({
-            organization: organization.uuid,
-        })
+        const subscription = await DI.organizationSubscriptions.findOne(
+            {
+                organization: organization.uuid,
+            },
+            { populate: ['plan', 'scheduled_plan'] }
+        )
 
         if (!subscription) {
             return res.status(404).json({ error: 'Subscription not found' })
