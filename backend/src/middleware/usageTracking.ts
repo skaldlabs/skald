@@ -11,6 +11,7 @@ import { UsageTrackingService } from '@/services/usageTrackingService'
 import { Organization } from '@/entities/Organization'
 import { IS_SELF_HOSTED_DEPLOY, DEBUG } from '@/settings'
 import { DI } from '@/di'
+import { logger } from '@/lib/logger'
 
 type LimitType = 'memo_operations' | 'chat_queries' | 'projects'
 
@@ -64,7 +65,7 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
                     }
                 }
             } catch (error) {
-                console.error('Error checking usage limit:', error)
+                logger.error({ err: error }, 'Error checking usage limit')
                 // Continue on error - don't block the operation
             }
         }
@@ -117,7 +118,7 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
                 }
             } catch (error) {
                 // Log error but don't break the response
-                console.error('Usage tracking error:', error)
+                logger.error({ err: error }, 'Usage tracking error')
             }
         }
 
@@ -125,7 +126,7 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
         res.json = function (body: any) {
             // Track usage in background (fire and forget)
             trackUsageIfSuccessful().catch((err) => {
-                console.error('Failed to track usage:', err)
+                logger.error({ err }, 'Failed to track usage')
             })
             return originalJson(body)
         }
@@ -134,7 +135,7 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
         res.send = function (body: any) {
             // Track usage in background (fire and forget)
             trackUsageIfSuccessful().catch((err) => {
-                console.error('Failed to track usage:', err)
+                logger.error({ err }, 'Failed to track usage')
             })
             return originalSend(body)
         }
@@ -143,7 +144,7 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
         res.end = function (...args: any[]) {
             // Track usage in background (fire and forget)
             trackUsageIfSuccessful().catch((err) => {
-                console.error('Failed to track usage:', err)
+                logger.error({ err }, 'Failed to track usage')
             })
             return originalEnd(...args)
         }
@@ -201,7 +202,7 @@ async function extractOrganization(req: Request): Promise<Organization | null> {
 
         return null
     } catch (error) {
-        console.error('Error extracting organization:', error)
+        logger.error({ err: error }, 'Error extracting organization')
         return null
     }
 }

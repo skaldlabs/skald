@@ -14,6 +14,7 @@ import { runSQSConsumer } from '@/memoProcessingServer/sqsConsumer'
 import { runRabbitMQConsumer, closeRabbitMQ } from '@/memoProcessingServer/rabbitMqConsumer'
 import { MikroORM } from '@mikro-orm/core'
 import config from '@/mikro-orm.config'
+import { logger } from '@/lib/logger'
 
 const runRedisPubSub = async (orm: MikroORM) => {
     const subscriber = createClient({
@@ -24,28 +25,28 @@ const runRedisPubSub = async (orm: MikroORM) => {
     })
 
     await subscriber.connect()
-    console.log(`Connected to Redis at ${REDIS_HOST}:${REDIS_PORT}`)
+    logger.info({ redisHost: REDIS_HOST, redisPort: REDIS_PORT }, 'Connected to Redis')
 
     await subscriber.subscribe(CHANNEL_NAME, async (message) => {
         const em = orm.em.fork()
         await processMemo(em, JSON.parse(message).memo_uuid)
-        console.log('Received message:', message)
+        logger.debug({ message }, 'Received message')
     })
 
-    console.log(`Subscribed to channel: ${CHANNEL_NAME}`)
-    console.log('Waiting for messages...')
+    logger.info({ channelName: CHANNEL_NAME }, 'Subscribed to channel')
+    logger.info('Waiting for messages...')
 }
 
 export const startMemoProcessingServer = async () => {
     const orm = await MikroORM.init(config)
 
-    console.log(`Starting memo processing server with ${INTER_PROCESS_QUEUE} queue`)
-    console.log(`LLM provider: ${LLM_PROVIDER}`)
-    console.log(`Embedding provider: ${EMBEDDING_PROVIDER}`)
+    logger.info({ queue: INTER_PROCESS_QUEUE }, 'Starting memo processing server')
+    logger.info({ llmProvider: LLM_PROVIDER }, 'LLM provider configured')
+    logger.info({ embeddingProvider: EMBEDDING_PROVIDER }, 'Embedding provider configured')
 
     switch (INTER_PROCESS_QUEUE) {
         case 'redis':
-            console.log('Running with Redis pub/sub')
+            logger.info('Running with Redis pub/sub')
             await runRedisPubSub(orm)
             break
 
@@ -53,13 +54,13 @@ export const startMemoProcessingServer = async () => {
             if (!SQS_QUEUE_URL) {
                 throw new Error('SQS_QUEUE_URL environment variable is required for SQS mode')
             }
-            console.log('Running with SQS')
+            logger.info('Running with SQS')
             await runSQSConsumer(orm)
             break
         }
 
         case 'rabbitmq':
-            console.log('Running with RabbitMQ')
+            logger.info('Running with RabbitMQ')
             await runRabbitMQConsumer(orm)
             break
 
@@ -69,7 +70,7 @@ export const startMemoProcessingServer = async () => {
 
     // Handle graceful shutdown
     process.on('SIGINT', async () => {
-        console.log('\nShutting down gracefully...')
+        logger.info('Shutting down gracefully...')
         if (INTER_PROCESS_QUEUE === 'rabbitmq') {
             await closeRabbitMQ()
         }
@@ -77,7 +78,7 @@ export const startMemoProcessingServer = async () => {
     })
 
     process.on('SIGTERM', async () => {
-        console.log('\nReceived SIGTERM, shutting down gracefully...')
+        logger.info('Received SIGTERM, shutting down gracefully...')
         if (INTER_PROCESS_QUEUE === 'rabbitmq') {
             await closeRabbitMQ()
         }
