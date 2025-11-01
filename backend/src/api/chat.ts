@@ -2,9 +2,9 @@ import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
 import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
 import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
-import { sendErrorResponse } from '@/lib/errorHandler'
 import { DEBUG } from '@/settings'
 import { logger } from '@/lib/logger'
+import * as Sentry from '@sentry/node'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -56,7 +56,8 @@ export const chat = async (req: Request, res: Response) => {
             })
         }
     } catch (error) {
-        return sendErrorResponse(res, error, 500)
+        Sentry.captureException(error)
+        return res.status(503).json({ error: 'Chat agent unavailable' })
     }
 }
 

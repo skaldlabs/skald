@@ -12,7 +12,13 @@ import { organizationRouter } from '@/api/organization'
 import { projectRouter } from '@/api/project'
 import { userRouter } from '@/api/user'
 import cookieParser from 'cookie-parser'
-import { CORS_ALLOWED_ORIGINS, CORS_ALLOW_CREDENTIALS, ENABLE_SECURITY_SETTINGS, EXPRESS_SERVER_PORT } from '@/settings'
+import {
+    CORS_ALLOWED_ORIGINS,
+    CORS_ALLOW_CREDENTIALS,
+    DEBUG,
+    ENABLE_SECURITY_SETTINGS,
+    EXPRESS_SERVER_PORT,
+} from '@/settings'
 import { emailVerificationRouter } from '@/api/emailVerification'
 import { memoRouter } from '@/api/memo'
 import { subscriptionRouter } from '@/api/subscription'
@@ -21,8 +27,8 @@ import { stripeWebhook } from '@/api/stripe_webhook'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
-import { sendErrorResponse } from '@/lib/errorHandler'
-import { logger as baseLogger, httpLogger } from '@/lib/logger'
+import { httpLogger } from '@/lib/logger'
+import * as Sentry from '@sentry/node'
 
 export const startExpressServer = async () => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
@@ -80,12 +86,20 @@ export const startExpressServer = async () => {
 
     app.use('/api', privateRoutesRouter)
 
-    // Global error handling middleware (must be after all routes)
-    app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-        sendErrorResponse(res, err)
-    })
-
     app.use(route404)
+
+    // the error handler must be registered before any other error middleware and after all controllers
+    Sentry.setupExpressErrorHandler(app)
+
+    app.use(function onError(err: any, req: Request, res: Response, next: NextFunction) {
+        if (DEBUG) {
+            return res.status(500).json({ error: String(err) })
+        }
+
+        res.statusCode = 503
+        // res.sentry is the sentry error id and the client can use this when reporting the error to support.
+        res.json({ error: 'Service unavailable', sentry_error_id: res.sentry })
+    })
 
     DI.server = app.listen(EXPRESS_SERVER_PORT, '0.0.0.0', () => {
         console.log(`Express server started at http://0.0.0.0:${EXPRESS_SERVER_PORT}`)

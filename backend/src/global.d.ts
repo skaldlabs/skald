@@ -7,6 +7,9 @@ declare global {
                 requestUser?: RequestUser
             }
         }
+        interface Response {
+            sentry?: string
+        }
     }
 }
 

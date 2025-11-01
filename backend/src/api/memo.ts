@@ -2,7 +2,6 @@ import express, { Request, Response } from 'express'
 import { z } from 'zod'
 import { DI } from '@/di'
 import { NextFunction } from 'express'
-import { sendErrorResponse } from '@/lib/errorHandler'
 import { createNewMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
@@ -66,7 +65,7 @@ const createMemo = async (req: Request, res: Response) => {
     }
     const validatedData = CreateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        return sendErrorResponse(res, validatedData.error, 400)
+        return res.status(400).json({ error: validatedData.error.flatten() })
     }
 
     const memo = await createNewMemo(validatedData.data, project)
@@ -139,7 +138,7 @@ export const updateMemo = async (req: Request, res: Response) => {
 
     const validatedData = UpdateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        return sendErrorResponse(res, validatedData.error, 400)
+        return res.status(400).json({ error: validatedData.error.flatten() })
     }
 
     const em = DI.em.fork()
