@@ -222,43 +222,38 @@ const pendingInvites = async (req: Request, res: Response) => {
 }
 
 const acceptInvite = async (req: Request, res: Response) => {
-    try {
-        const user = req.context?.requestUser?.userInstance
-        if (!user) {
-            return res.status(401).json({ error: 'Unauthorized' })
-        }
-
-        const inviteId = req.params.id
-        if (!inviteId) {
-            return res.status(400).json({ error: 'Invite ID is required' })
-        }
-
-        const invite = await DI.organizationMembershipInvites.findOne({
-            id: inviteId,
-            email: user.email,
-            acceptedAt: null,
-        })
-        if (!invite) {
-            return res.status(404).json({ error: 'No pending invite found' })
-        }
-
-        const organization = invite.organization
-        DI.organizationMemberships.create({
-            user,
-            organization,
-            accessLevel: OrganizationMembershipRole.MEMBER,
-            joinedAt: new Date().toISOString(),
-        })
-        invite.acceptedAt = new Date()
-        user.defaultOrganization = organization
-
-        await DI.em.flush()
-
-        res.status(200).json({ detail: 'Invite accepted successfully' })
-    } catch (error) {
-        logger.error({ err: error }, 'Error in organization endpoint')
-        return res.status(500).json({ error: 'Internal server error' })
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
     }
+
+    const inviteId = req.params.id
+    if (!inviteId) {
+        return res.status(400).json({ error: 'Invite ID is required' })
+    }
+
+    const invite = await DI.organizationMembershipInvites.findOne({
+        id: inviteId,
+        email: user.email,
+        acceptedAt: null,
+    })
+    if (!invite) {
+        return res.status(404).json({ error: 'No pending invite found' })
+    }
+
+    const organization = invite.organization
+    DI.organizationMemberships.create({
+        user,
+        organization,
+        accessLevel: OrganizationMembershipRole.MEMBER,
+        joinedAt: new Date().toISOString(),
+    })
+    invite.acceptedAt = new Date()
+    user.defaultOrganization = organization
+
+    await DI.em.flush()
+
+    res.status(200).json({ detail: 'Invite accepted successfully' })
 }
 
 const removeMember = async (req: Request, res: Response) => {
