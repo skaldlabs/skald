@@ -16,8 +16,7 @@
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": ["prettier --write --ignore-unknown"],
-        "*.json": ["prettier --write --parser json"],
-        "*.py": ["black", "isort"]
+        "*.json": ["prettier --write --parser json"]
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.2",
