@@ -4,7 +4,7 @@ import config from '../mikro-orm.config'
 export const createTestDatabase = async () => {
     const testConfig = {
         ...config,
-        dbName: 'skald_test',
+        dbName: 'skald2_test',
         user: String(config.user || 'postgres'),
         password: String(config.password || '12345678'),
         host: String(config.host || 'localhost'),
