@@ -103,4 +103,5 @@ We'd be glad to have your contributions! See [CONTRIBUTING.md](/CONTRIBUTING.md)
   <a href="https://github.com/yakkomajuri"><img src="https://github.com/yakkomajuri.png" width="60px" alt="pedrique"/></a>
   <a href="https://github.com/pedrique"><img src="https://github.com/pedrique.png" width="60px" alt="pedrique"/></a>
   <a href="https://github.com/gustavocidornelas"><img src="https://github.com/gustavocidornelas.png" width="60px" alt="gustavocidornelas"/></a>
+  <a href="https://github.com/viniciusgabrielfo"><img src="https://github.com/viniciusgabrielfo.png" width="60px" alt="gustavocidornelas"/></a> 
 </p>
