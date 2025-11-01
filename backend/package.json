@@ -17,7 +17,8 @@
         "migration:create": "mikro-orm migration:create",
         "migration:up": "mikro-orm migration:up",
         "migration:down": "mikro-orm migration:down",
-        "migration:pending": "mikro-orm migration:pending"
+        "migration:pending": "mikro-orm migration:pending",
+        "fixtures:load": "tsx fixtures/load-fixtures.ts"
     },
     "keywords": [],
     "author": "",
