@@ -16,6 +16,7 @@ module.exports = {
         '^.+\\.ts$': 'ts-jest',
         '^.+\\.m?js$': 'babel-jest',
     },
-    // Run tests serially to avoid database conflicts
+    // Run tests serially to avoid database conflicts within each shard
+    // When running with --shard, each shard gets its own database in CI
     maxWorkers: 1,
 }
