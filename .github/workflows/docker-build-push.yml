@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - update-self-hosted-deploy
     tags:
       - 'v*'
   workflow_dispatch:
@@ -34,22 +35,20 @@ jobs:
           fi
           echo "DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}" >> $GITHUB_ENV
 
-      - name: Build images with Docker Compose
+      - name: Build image with Docker Compose
         env:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
-        run: docker compose -f docker-compose.selfhosted.yml build api memo-processing-server
+        run: docker compose -f docker-compose.selfhosted.yml build api
 
-      - name: Push versioned images to DockerHub
+      - name: Push versioned image to DockerHub
         env:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
-        run: docker compose -f docker-compose.selfhosted.yml push api memo-processing-server
+        run: docker compose -f docker-compose.selfhosted.yml push api
 
       - name: Tag and push latest
         run: |
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/skald-api:${{ env.IMAGE_TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/skald-api:latest
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/skald-memo-processing:${{ env.IMAGE_TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/skald-memo-processing:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/skald-api:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/skald-memo-processing:latest
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:${{ env.IMAGE_TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:latest
 
