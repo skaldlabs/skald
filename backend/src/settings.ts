@@ -60,7 +60,7 @@ export const DEBUG = strToBool(process.env.DEBUG, TEST)
 export const NODE_ENV = process.env.NODE_ENV
 
 // postgres
-export const DB_NAME = process.env.DB_NAME || 'skald2'
+export const DB_NAME = process.env.DB_NAME || 'skald'
 export const DB_USER = process.env.DB_USER || 'postgres'
 export const DB_PASSWORD = process.env.DB_PASSWORD || '12345678'
 export const DB_HOST = process.env.DB_HOST || 'localhost'

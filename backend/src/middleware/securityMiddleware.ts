@@ -1,15 +1,19 @@
 import helmet from 'helmet'
+import { IS_SELF_HOSTED_DEPLOY } from '@/settings'
 
 // SECURITY: Security headers middleware using Helmet
 // Protects against common web vulnerabilities
 
 export const securityHeadersMiddleware = helmet({
     // HSTS: Force HTTPS connections
-    hsts: {
-        maxAge: 31536000, // 1 year
-        includeSubDomains: true,
-        preload: true,
-    },
+    // Disabled for self-hosted deployments where Traefik handles SSL termination
+    hsts: IS_SELF_HOSTED_DEPLOY
+        ? false
+        : {
+              maxAge: 31536000, // 1 year
+              includeSubDomains: true,
+              preload: true,
+          },
 
     // Prevent clickjacking
     frameguard: {

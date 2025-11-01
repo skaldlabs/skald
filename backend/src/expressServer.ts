@@ -87,7 +87,7 @@ export const startExpressServer = async () => {
 
     app.use(route404)
 
-    DI.server = app.listen(EXPRESS_SERVER_PORT, () => {
-        baseLogger.info(`Express server started at http://localhost:${EXPRESS_SERVER_PORT}`)
+    DI.server = app.listen(EXPRESS_SERVER_PORT, '0.0.0.0', () => {
+        console.log(`Express server started at http://0.0.0.0:${EXPRESS_SERVER_PORT}`)
     })
 }
