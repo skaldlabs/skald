@@ -58,7 +58,7 @@ describe('Subscription API', () => {
         })
 
         it('should return 403 when user is not organization member', async () => {
-            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            await createTestUser(orm, 'user1@example.com', 'password123')
             const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user2)
             await createTestOrganizationMembership(orm, user2, org)
@@ -73,7 +73,7 @@ describe('Subscription API', () => {
         })
 
         it('should return 404 when organization does not exist', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -362,7 +362,7 @@ describe('Subscription API', () => {
         })
 
         it('should return 403 when user is not organization member', async () => {
-            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            await createTestUser(orm, 'user1@example.com', 'password123')
             const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user2)
             await createTestOrganizationMembership(orm, user2, org)
@@ -388,7 +388,7 @@ describe('Subscription API', () => {
         })
 
         it('should return 403 when user is not organization member', async () => {
-            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            await createTestUser(orm, 'user1@example.com', 'password123')
             const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user2)
             await createTestOrganizationMembership(orm, user2, org)

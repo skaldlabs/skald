@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint'
 export default tseslint.config(
     {
         ignores: [
-            'dist',
+            '**/dist',
             'node_modules',
             '.pnp',
             '.pnp.js',
@@ -24,6 +24,7 @@ export default tseslint.config(
             '.env',
             '*.tsbuildinfo',
             'next-env.d.ts',
+            '**/ignore',
         ],
     },
     {

@@ -269,7 +269,7 @@ describe('User API', () => {
 
     describe('POST /api/users/change_password', () => {
         let authToken: string
-        let user: any
+        let user: any // eslint-disable-line
 
         beforeEach(async () => {
             user = await createTestUser(orm, 'test@example.com', 'oldpassword123')

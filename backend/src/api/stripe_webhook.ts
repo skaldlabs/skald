@@ -91,7 +91,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
                 handled = true
                 break
             case 'invoice.paid':
-                await service.handleInvoicePaid(event, em)
+                await service.handleInvoicePaid(event)
                 handled = true
                 break
             case 'invoice.payment_failed':

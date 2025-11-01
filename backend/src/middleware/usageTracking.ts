@@ -9,7 +9,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { Organization } from '@/entities/Organization'
-import { IS_SELF_HOSTED_DEPLOY, DEBUG } from '@/settings'
+import { IS_SELF_HOSTED_DEPLOY } from '@/settings'
 import { DI } from '@/di'
 import { logger } from '@/lib/logger'
 

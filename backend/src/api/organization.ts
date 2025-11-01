@@ -9,7 +9,6 @@ import { sendEmail, isValidEmail } from '@/lib/emailUtils'
 import { SubscriptionService } from '@/services/subscriptionService'
 import { randomUUID } from 'crypto'
 import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
-import { logger } from '@/lib/logger'
 
 export const organizationRouter = express.Router({ mergeParams: true })
 

@@ -91,6 +91,7 @@ export const startExpressServer = async () => {
     // the error handler must be registered before any other error middleware and after all controllers
     Sentry.setupExpressErrorHandler(app)
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     app.use(function onError(err: any, req: Request, res: Response, next: NextFunction) {
         if (DEBUG) {
             return res.status(500).json({ error: String(err) })

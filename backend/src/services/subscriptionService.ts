@@ -191,8 +191,6 @@ class SubscriptionService {
 
         // Paid plan -> Different paid plan downgrade: Schedule change for end of period
         if (subscription.stripe_subscription_id && newPlanPrice < currentPlanPrice) {
-            const stripeSubscription = await this.stripe.subscriptions.retrieve(subscription.stripe_subscription_id)
-
             const schedule = await this.stripe.subscriptionSchedules.create({
                 from_subscription: subscription.stripe_subscription_id,
             })
@@ -732,7 +730,7 @@ class SubscriptionService {
     /**
      * Handle successful payment
      */
-    async handleInvoicePaid(event: Stripe.Event, em?: EntityManager): Promise<void> {
+    async handleInvoicePaid(event: Stripe.Event): Promise<void> {
         const invoice = event.data.object as Stripe.Invoice
         logger.info({ invoiceId: invoice.id }, 'Invoice paid')
     }

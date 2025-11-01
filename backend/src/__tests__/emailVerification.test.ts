@@ -98,7 +98,7 @@ describe('Email Verification API', () => {
         })
 
         it('should return 400 when email already verified', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
@@ -119,7 +119,9 @@ describe('Email Verification API', () => {
             const token = generateAccessToken('test@example.com')
 
             // Send first code
-            await request(app).post('/api/email-verification/send').set('Cookie', [`accessToken=${token}`])
+            await request(app)
+                .post('/api/email-verification/send')
+                .set('Cookie', [`accessToken=${token}`])
 
             // Try to send second code immediately
             const response = await request(app)
@@ -205,16 +207,14 @@ describe('Email Verification API', () => {
         })
 
         it('should return 401 when not authenticated', async () => {
-            const response = await request(app)
-                .post('/api/email-verification/verify')
-                .send({ code: '123456' })
+            const response = await request(app).post('/api/email-verification/verify').send({ code: '123456' })
 
             expect(response.status).toBe(401)
             expect(response.body.error).toBe('Not authenticated')
         })
 
         it('should return 400 when code is missing', async () => {
-            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            await createTestUser(orm, 'test@example.com', 'password123')
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
