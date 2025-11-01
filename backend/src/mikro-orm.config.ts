@@ -13,8 +13,8 @@ export default defineConfig({
     extensions: [Migrator],
     // debug: ['query', 'query-params'],
     migrations: {
-        path: './src/migrations', // path to migration folder
-        pathTs: './src/migrations', // path to TS migration files
+        path: './dist/migrations', // path to migration folder (compiled)
+        pathTs: './src/migrations', // path to TS migration files (for development)
         glob: '!(*.d).{js,ts}', // how to match migration files
         transactional: true, // wrap each migration in a transaction
         disableForeignKeys: false, // disable foreign key checks during migrations

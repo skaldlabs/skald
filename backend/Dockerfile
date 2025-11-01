@@ -38,6 +38,10 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
 
+# Copy startup script
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
+
 EXPOSE 8080
 
 # Run the server
