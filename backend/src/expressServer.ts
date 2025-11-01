@@ -6,7 +6,7 @@ import { chat } from '@/api/chat'
 import { health } from '@/api/health'
 import { requireAuth, requireProjectAccess } from '@/middleware/authMiddleware'
 import { initDI } from '@/di'
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import { search } from '@/api/search'
 import { organizationRouter } from '@/api/organization'
 import { projectRouter } from '@/api/project'
@@ -21,6 +21,7 @@ import { stripeWebhook } from '@/api/stripe_webhook'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
+import { sendErrorResponse } from '@/utils/errorHandler'
 
 export const startExpressServer = async () => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
@@ -75,6 +76,12 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use('/plans', planRouter)
 
     app.use('/api', privateRoutesRouter)
+
+    // Global error handling middleware (must be after all routes)
+    app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+        sendErrorResponse(res, err)
+    })
+
     app.use(route404)
 
     DI.server = app.listen(EXPRESS_SERVER_PORT, () => {

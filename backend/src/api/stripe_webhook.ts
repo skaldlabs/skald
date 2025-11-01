@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
-import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '@/settings'
+import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DEBUG } from '@/settings'
 import { DI } from '@/di'
 import { StripeEvent } from '@/entities/StripeEvent'
 import { SubscriptionService } from '@/services/subscriptionService'
@@ -38,7 +38,8 @@ export const stripeWebhook = async (req: Request, res: Response) => {
         event = stripe.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET)
     } catch (err: any) {
         console.error('Webhook signature verification failed:', err.message)
-        return res.status(400).send('Webhook Error')
+        const errorMsg = DEBUG ? `Webhook Error: ${err.message}` : 'Invalid webhook signature'
+        return res.status(400).json({ error: errorMsg })
     }
 
     // Idempotency check

@@ -3,6 +3,7 @@ import { DI } from '@/di'
 import { SubscriptionService } from '@/services/subscriptionService'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
+import { sendErrorResponse } from '@/utils/errorHandler'
 
 export const subscriptionRouter = express.Router({ mergeParams: true })
 
@@ -268,8 +269,7 @@ const portal = async (req: Request, res: Response) => {
         if (error.message === 'You do not have permission to perform this action') {
             return res.status(403).json({ error: error.message })
         }
-        console.error('Error creating portal session:', error)
-        res.status(500).json({ error: `Failed to create portal session: ${error.message}` })
+        return sendErrorResponse(res, error, 500)
     }
 }
 

@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express'
 import { z } from 'zod'
 import { DI } from '@/di'
 import { NextFunction } from 'express'
+import { sendErrorResponse } from '@/utils/errorHandler'
 import { createNewMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
@@ -64,7 +65,7 @@ const createMemo = async (req: Request, res: Response) => {
     }
     const validatedData = CreateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        return res.status(400).json({ error: 'Invalid request data', details: validatedData.error.issues })
+        return sendErrorResponse(res, validatedData.error, 400)
     }
 
     const memo = await createNewMemo(validatedData.data, project)
@@ -137,7 +138,7 @@ export const updateMemo = async (req: Request, res: Response) => {
 
     const validatedData = UpdateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        return res.status(400).json({ error: 'Invalid request data', details: validatedData.error.issues })
+        return sendErrorResponse(res, validatedData.error, 400)
     }
 
     const em = DI.em.fork()
