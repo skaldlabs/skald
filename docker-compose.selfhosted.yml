@@ -62,13 +62,17 @@ services:
 
 
   api:
-    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-api:${IMAGE_TAG:-latest}
+    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-backend:${IMAGE_TAG:-latest}
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
-    command: ./bin/start-docker.sh
+    command: sh /app/start.sh
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-skald2}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DB:-skald2}
       - IS_SELF_HOSTED_DEPLOY=true
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -99,12 +103,18 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=8000"
 
   memo-processing-server:
-    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-memo-processing:${IMAGE_TAG:-latest}
+    image: ${DOCKER_REGISTRY:-skaldlabs}/skald-backend:${IMAGE_TAG:-latest}
     build:
-      context: ./memo-processing-server
+      context: ./backend
       dockerfile: Dockerfile
+    command: node dist/index.js --mode=memo-processing-server
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB:-skald2}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DB:-skald2}
+      - IS_SELF_HOSTED_DEPLOY=true
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - INTER_PROCESS_QUEUE=rabbitmq
@@ -113,7 +123,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER:-skald}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-skald}
       - RABBITMQ_VHOST=/
-      - RABBITMQ_QUEUE_NAME=process_memo
+      - SECRET_KEY=${SECRET_KEY}
     depends_on:
       db:
         condition: service_healthy
