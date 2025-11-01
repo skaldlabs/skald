@@ -219,3 +219,5 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 if (!DEBUG && !STRIPE_SECRET_KEY) {
     logger.warn('STRIPE_SECRET_KEY not set in production')
 }
+
+export const LOG_LEVEL = process.env.LOG_LEVEL || 'warn'
