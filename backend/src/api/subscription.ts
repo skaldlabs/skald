@@ -3,8 +3,8 @@ import { DI } from '@/di'
 import { SubscriptionService } from '@/services/subscriptionService'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
-import { sendErrorResponse } from '@/lib/errorHandler'
 import { logger } from '@/lib/logger'
+import * as Sentry from '@sentry/node'
 
 export const subscriptionRouter = express.Router({ mergeParams: true })
 
@@ -264,13 +264,14 @@ const portal = async (req: Request, res: Response) => {
 
         res.status(200).json({ portal_url: portalSession.url })
     } catch (error: any) {
+        Sentry.captureException(error)
         if (error.message === 'Unauthorized') {
             return res.status(401).json({ error: error.message })
         }
         if (error.message === 'You do not have permission to perform this action') {
             return res.status(403).json({ error: error.message })
         }
-        return sendErrorResponse(res, error, 500)
+        return res.status(503).json({ error: 'Failed to create customer portal session' })
     }
 }
 

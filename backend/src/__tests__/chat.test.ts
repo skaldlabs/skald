@@ -173,7 +173,7 @@ describe('Chat API', () => {
         })
 
         // FIXME: it should *not* return a 500
-        it('should return 500 when chat agent fails', async () => {
+        it('should return 503 when chat agent fails', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -191,8 +191,8 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            expect(response.status).toBe(500)
-            expect(response.body.error).toBe('Chat agent error')
+            expect(response.status).toBe(503)
+            expect(response.body.error).toBe('Chat agent unavailable')
         })
 
         it('should return 403 for unauthenticated users', async () => {
