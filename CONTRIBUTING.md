@@ -34,7 +34,7 @@ If you do this, check out `docker-compose.yml` to understand its configuration.
 
 ### Redis setup
 
-We use Redis pub-sub locally for communicating between the Django service and the memo processing server. This is a hack that should not be used in production and we're actually likely going to change it soon.
+We use Redis pub-sub locally for communicating between the express server and the memo processing server. This is a hack that should not be used in production and we're actually likely going to change it soon.
 
 To use Redis, just ensure you have a Redis server running. It should run on `localhost:6379` and in that case you don't even need to configure anything else.
 
@@ -74,13 +74,11 @@ OPENAI_API_KEY=<your_openai_key>
 VOYAGE_API_KEY=<your_voyage_key> # https://www.voyageai.com/
 ```
 
-
 > **Note 1:** You can technically run a fully local stack with `LLM_PROVIDER=local` and `EMBEDDING_PROVIDER=local` but this is not at all recommended for contributors. It requires running an LLM locally and in most cases the small LLMs that one can run in their own environment are slow and prone to hallucinations, making Skald unusable. If you're keen to learn more about this, check out [this doc](https://docs.useskald.com/docs/self-host/full-local).
-
 
 ### API
 
-We use `pnpm` as our package manager. 
+We use `pnpm` as our package manager.
 
 From the `backend` directory, run the following commands to set things up:
 
@@ -119,4 +117,3 @@ pnpm run dev
 ```
 
 The Skald UI will then be available on `http://localhost:5173`.
-
