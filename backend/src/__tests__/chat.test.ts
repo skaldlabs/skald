@@ -8,6 +8,7 @@ import {
     createTestOrganization,
     createTestProject,
     createTestOrganizationMembership,
+    createTestChat,
 } from './testHelpers'
 import { generateAccessToken } from '../lib/tokenUtils'
 import { userMiddleware } from '../middleware/userMiddleware'
@@ -20,6 +21,8 @@ import cookieParser from 'cookie-parser'
 import { chat } from '../api/chat'
 import * as chatAgentPreprocessing from '../agents/chatAgent/preprocessing'
 import * as chatAgent from '../agents/chatAgent/chatAgent'
+import { ChatMessage } from '@/entities/ChatMessage'
+import { Chat } from '@/entities/Chat'
 
 // Mock external dependencies
 jest.mock('../agents/chatAgent/preprocessing')
@@ -88,6 +91,88 @@ describe('Chat API', () => {
             expect(response.body.ok).toBe(true)
             expect(response.body.response).toBe('This is the AI response')
             expect(response.body.intermediate_steps).toEqual([])
+        })
+
+        it('should create a chat message pair when chat_id is not provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [
+                { document: 'Result 1 content', score: 0.9 },
+                { document: 'Result 2 content', score: 0.8 },
+            ]
+
+            const mockChatResult = {
+                output: 'This is the AI response',
+                intermediate_steps: [],
+            }
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue(mockChatResult)
+
+            const response = await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'What is in the documents?',
+                })
+
+            expect(response.status).toBe(200)
+
+            const em = orm.em.fork()
+            const chats = await em.find(Chat, { project: project.uuid })
+            expect(chats).toHaveLength(1)
+            const chat = chats[0]
+            expect(chat.project.uuid).toBe(project.uuid)
+            expect(chat.created_at).toBeDefined()
+
+            const chatMessages = await em.find(ChatMessage, { chat: chat.uuid })
+            expect(chatMessages).toHaveLength(2)
+            expect(chatMessages[0].chat.uuid).toBe(chat.uuid)
+            expect(chatMessages[0].content).toBe('What is in the documents?')
+        })
+
+        it('it should create messages for an existing chat if chat_id is provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const testChat = await createTestChat(orm, project)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [
+                { document: 'Result 1 content', score: 0.9 },
+                { document: 'Result 2 content', score: 0.8 },
+            ]
+
+            const mockChatResult = {
+                output: 'This is the AI response',
+                intermediate_steps: [],
+            }
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue(mockChatResult)
+
+            const response = await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'What is in the documents?',
+                    chat_id: testChat.uuid,
+                })
+
+            expect(response.status).toBe(200)
+
+            const em = orm.em.fork()
+            const chatMessages = await em.find(ChatMessage, { chat: testChat.uuid })
+            expect(chatMessages).toHaveLength(2)
+            expect(chatMessages[0].chat.uuid).toBe(testChat.uuid)
+            expect(chatMessages[0].content).toBe('What is in the documents?')
         })
 
         it('should return 400 when query is missing', async () => {

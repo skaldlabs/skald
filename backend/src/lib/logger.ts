@@ -1,7 +1,7 @@
 import pino from 'pino'
 import { pinoHttp } from 'pino-http'
 import { randomUUID } from 'crypto'
-import { DEBUG, NODE_ENV } from '@/settings'
+import { DEBUG, LOG_LEVEL, NODE_ENV } from '@/settings'
 
 /**
  * Serializers to redact sensitive information from logs
@@ -49,7 +49,7 @@ const redactPaths = [
  * Create the base Pino logger instance
  */
 export const logger = pino({
-    level: DEBUG ? 'debug' : 'info',
+    level: LOG_LEVEL,
     serializers,
     redact: {
         paths: redactPaths,

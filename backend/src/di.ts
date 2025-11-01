@@ -17,6 +17,8 @@ import { Plan } from '@/entities/Plan'
 import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { UsageRecord } from '@/entities/UsageRecord'
 import { StripeEvent } from '@/entities/StripeEvent'
+import { Chat } from '@/entities/Chat'
+import { ChatMessage } from '@/entities/ChatMessage'
 
 export const DI = {} as {
     server: http.Server
@@ -38,6 +40,8 @@ export const DI = {} as {
     organizationSubscriptions: EntityRepository<OrganizationSubscription>
     usageRecords: EntityRepository<UsageRecord>
     stripeEvents: EntityRepository<StripeEvent>
+    chats: EntityRepository<Chat>
+    chatMessages: EntityRepository<ChatMessage>
 }
 
 export const initDI = async (): Promise<typeof DI> => {
@@ -59,6 +63,8 @@ export const initDI = async (): Promise<typeof DI> => {
     DI.organizationSubscriptions = DI.orm.em.getRepository(OrganizationSubscription)
     DI.usageRecords = DI.orm.em.getRepository(UsageRecord)
     DI.stripeEvents = DI.orm.em.getRepository(StripeEvent)
+    DI.chats = DI.orm.em.getRepository(Chat)
+    DI.chatMessages = DI.orm.em.getRepository(ChatMessage)
 
     return DI
 }

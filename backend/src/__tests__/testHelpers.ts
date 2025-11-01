@@ -8,6 +8,7 @@ import { OrganizationMembership } from '../entities/OrganizationMembership'
 import { makePassword } from '../lib/passwordUtils'
 import { randomUUID } from 'crypto'
 import { createHash } from 'crypto'
+import { Chat } from '@/entities/Chat'
 
 export const createTestUser = async (orm: MikroORM, email: string, password: string): Promise<User> => {
     const em = orm.em.fork()
@@ -75,6 +76,17 @@ export const createTestOrganizationMembership = async (
     })
     await em.persistAndFlush(membership)
     return membership
+}
+
+export const createTestChat = async (orm: MikroORM, project: Project): Promise<Chat> => {
+    const em = orm.em.fork()
+    const chat = em.create(Chat, {
+        uuid: randomUUID(),
+        project,
+        created_at: new Date(),
+    })
+    await em.persistAndFlush(chat)
+    return chat
 }
 
 export const createTestMemo = async (
