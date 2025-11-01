@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
 import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
 import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
-import { sendErrorResponse } from '@/utils/errorHandler'
+import { sendErrorResponse } from '@/lib/errorHandler'
 import { DEBUG } from '@/settings'
 
 export const chat = async (req: Request, res: Response) => {

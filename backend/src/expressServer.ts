@@ -21,7 +21,7 @@ import { stripeWebhook } from '@/api/stripe_webhook'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
-import { sendErrorResponse } from '@/utils/errorHandler'
+import { sendErrorResponse } from '@/lib/errorHandler'
 
 export const startExpressServer = async () => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it

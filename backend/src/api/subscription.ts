@@ -3,7 +3,7 @@ import { DI } from '@/di'
 import { SubscriptionService } from '@/services/subscriptionService'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
-import { sendErrorResponse } from '@/utils/errorHandler'
+import { sendErrorResponse } from '@/lib/errorHandler'
 
 export const subscriptionRouter = express.Router({ mergeParams: true })
 

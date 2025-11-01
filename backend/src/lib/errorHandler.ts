@@ -9,7 +9,6 @@ interface ErrorResponse {
     code?: string
 }
 
-// Custom error types for better categorization
 export class ValidationError extends Error {
     constructor(
         message: string,
@@ -41,11 +40,9 @@ export class AuthorizationError extends Error {
  * Always logs full error details server-side regardless of environment.
  */
 export function sanitizeError(error: unknown, isDevelopment: boolean = DEBUG): ErrorResponse {
-    // Always log full error details server-side for debugging
     console.error('Error occurred:', error)
 
     if (isDevelopment) {
-        // Return detailed errors in development
         if (error instanceof ZodError) {
             return {
                 error: 'Invalid request data',
@@ -65,7 +62,6 @@ export function sanitizeError(error: unknown, isDevelopment: boolean = DEBUG): E
         }
     }
 
-    // Return generic errors in production to prevent information disclosure
     if (error instanceof ZodError || error instanceof ValidationError) {
         return { error: 'Invalid request data' }
     }
@@ -78,7 +74,6 @@ export function sanitizeError(error: unknown, isDevelopment: boolean = DEBUG): E
         return { error: 'Access denied' }
     }
 
-    // Generic error for all other cases
     return { error: 'An unexpected error occurred' }
 }
 
