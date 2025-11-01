@@ -27,7 +27,7 @@ export const SubscriptionDashboard = () => {
         fetchPlans()
         fetchSubscription()
         fetchUsage()
-    }, [])
+    }, []) // eslint-disable-line
 
     useEffect(() => {
         const success = searchParams.get('success')
@@ -42,7 +42,7 @@ export const SubscriptionDashboard = () => {
         if (canceled === 'true') {
             toast.info('Checkout canceled')
         }
-    }, [searchParams])
+    }, [searchParams, fetchSubscription, fetchUsage])
 
     const handleSelectPlan = async (planSlug: string) => {
         const hasActivePaidSubscription =
