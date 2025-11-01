@@ -34,7 +34,7 @@ If you do this, check out `docker-compose.yml` to understand its configuration.
 
 ### Redis setup
 
-We use Redis pub-sub locally for communicating between the Django service and the memo processing server. This is a hack that should not be used in production and we'll actually be consolidating to RabbitMQ soon, which is what our self-hosted deploys use.
+We use Redis pub-sub locally for communicating between the Django service and the memo processing server. This is a hack that should not be used in production and we're actually likely going to change it soon.
 
 To use Redis, just ensure you have a Redis server running. It should run on `localhost:6379` and in that case you don't even need to configure anything else.
 
@@ -74,23 +74,40 @@ OPENAI_API_KEY=<your_openai_key>
 VOYAGE_API_KEY=<your_voyage_key> # https://www.voyageai.com/
 ```
 
-> You can technically run a fully local stack with `LLM_PROVIDER=local` and `EMBEDDING_PROVIDER=local` but this is not at all recommended for contributors. It requires running an LLM locally and in most cases the small LLMs that one can run in their own environment are slow and prone to hallucinations, making Skald unusable. If you're keen to learn more about this, check out [this doc](https://docs.useskald.com/docs/self-host/full-local).
+
+> **Note 1:** You can technically run a fully local stack with `LLM_PROVIDER=local` and `EMBEDDING_PROVIDER=local` but this is not at all recommended for contributors. It requires running an LLM locally and in most cases the small LLMs that one can run in their own environment are slow and prone to hallucinations, making Skald unusable. If you're keen to learn more about this, check out [this doc](https://docs.useskald.com/docs/self-host/full-local).
 
 
-### Django server
+### API
 
-We use `uv` as our Python package manager.
+We use `pnpm` as our package manager. 
 
-From the root dir, you can then run:
+From the `backend` directory, run the following commands to set things up:
 
 ```sh
-uv venv
-source .venv/bin/activate
-python manage.py migrate
-python manage.py runserver
+pnpm install
+pnpm migration:up
 ```
 
-This will start a server running on `http://localhost:8000`, hosting the Skald API.
+And then run the API with:
+
+```sh
+pnpm dev:express-server
+```
+
+The API will be available at `http://localhost:3000`.
+
+### Memo processing server
+
+The memo processing server is a separate service that uses the same codebase as our API. If you've already installed deps for the API no need to do it again.
+
+From inside `backend`, just run:
+
+```sh
+pnpm dev:memo-processing-server
+```
+
+The memo processing server does not expose any ports and communicates via Redis.
 
 ### Frontend
 
@@ -102,12 +119,4 @@ pnpm run dev
 ```
 
 The Skald UI will then be available on `http://localhost:5173`.
-
-### Memo processing server
-
-```sh
-cd memo-processing-server
-pnpm install
-pnpm run dev
-```
 
