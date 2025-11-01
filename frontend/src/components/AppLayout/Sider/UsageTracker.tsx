@@ -13,7 +13,7 @@ export const UsageTracker = () => {
         fetchUsage()
     }, [fetchUsage])
 
-    if (loading) {
+    if (loading && !usage) {
         return (
             <div className="p-3 border rounded-lg bg-muted/50">
                 <div className="flex items-center justify-center py-4">
