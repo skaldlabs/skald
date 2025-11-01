@@ -60,7 +60,7 @@ const organization = async (req: Request, res: Response) => {
 
 const create = async (req: Request, res: Response) => {
     if (IS_SELF_HOSTED_DEPLOY && (await DI.organizations.count()) >= 1) {
-        return res.status(400).json({ error: 'Self-hosted deploys are not allowed to create organizations' })
+        return res.status(400).json({ error: 'You can only create one organization in a self-hosted deploy' })
     }
     const name = req.body.name
     const user = req.context?.requestUser?.userInstance
@@ -97,8 +97,10 @@ const create = async (req: Request, res: Response) => {
         updated_at: new Date().toISOString(),
     })
 
-    const subscriptionService = new SubscriptionService()
-    await subscriptionService.createDefaultSubscription(organization, DI.em)
+    if (!IS_SELF_HOSTED_DEPLOY) {
+        const subscriptionService = new SubscriptionService()
+        await subscriptionService.createDefaultSubscription(organization, DI.em)
+    }
 
     await DI.em.flush()
 
