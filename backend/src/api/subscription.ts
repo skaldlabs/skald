@@ -4,6 +4,7 @@ import { SubscriptionService } from '@/services/subscriptionService'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
 import { sendErrorResponse } from '@/lib/errorHandler'
+import { logger } from '@/lib/logger'
 
 export const subscriptionRouter = express.Router({ mergeParams: true })
 
@@ -118,7 +119,7 @@ const getSubscription = async (req: Request, res: Response) => {
         if (error.message === 'You are not a member of this organization') {
             return res.status(403).json({ error: error.message })
         }
-        console.error('Error getting subscription:', error)
+        logger.error({ err: error }, 'Error getting subscription')
         res.status(500).json({ error: 'Internal server error' })
     }
 }
@@ -162,7 +163,7 @@ const checkout = async (req: Request, res: Response) => {
         ) {
             return res.status(400).json({ error: error.message })
         }
-        console.error('Error creating checkout session:', error)
+        logger.error({ err: error }, 'Error creating checkout session')
         res.status(500).json({ error: 'Failed to create checkout session' })
     }
 }
@@ -197,7 +198,7 @@ const upgrade = async (req: Request, res: Response) => {
             })
         } else {
             // Failed to use saved payment method, fallback to checkout
-            console.info(`Falling back to checkout for ${organization.name}: ${result.error}`)
+            logger.info({ organizationName: organization.name, error: result.error }, 'Falling back to checkout')
 
             const checkoutSession = await service.createCheckoutSession({
                 organization,
@@ -226,7 +227,7 @@ const upgrade = async (req: Request, res: Response) => {
         ) {
             return res.status(400).json({ error: error.message })
         }
-        console.error('Error in upgrade:', error)
+        logger.error({ err: error }, 'Error in upgrade')
         res.status(500).json({ error: 'Failed to process upgrade' })
     }
 }
@@ -310,7 +311,7 @@ const changePlan = async (req: Request, res: Response) => {
         ) {
             return res.status(400).json({ error: error.message })
         }
-        console.error('Error changing plan:', error)
+        logger.error({ err: error }, 'Error changing plan')
         res.status(500).json({ error: 'Failed to change plan' })
     }
 }
@@ -342,7 +343,7 @@ const cancelScheduledChange = async (req: Request, res: Response) => {
         ) {
             return res.status(400).json({ error: error.message })
         }
-        console.error('Error canceling scheduled change:', error)
+        logger.error({ err: error }, 'Error canceling scheduled change')
         res.status(500).json({ error: 'Failed to cancel scheduled change' })
     }
 }
@@ -369,7 +370,7 @@ const usage = async (req: Request, res: Response) => {
         if (error.message === 'You are not a member of this organization') {
             return res.status(403).json({ error: error.message })
         }
-        console.error('Error getting usage:', error)
+        logger.error({ err: error }, 'Error getting usage')
         res.status(500).json({ error: 'Internal server error' })
     }
 }
@@ -409,7 +410,7 @@ const usageHistory = async (req: Request, res: Response) => {
         if (error.message === 'You are not a member of this organization') {
             return res.status(403).json({ error: error.message })
         }
-        console.error('Error getting usage history:', error)
+        logger.error({ err: error }, 'Error getting usage history')
         res.status(500).json({ error: 'Internal server error' })
     }
 }

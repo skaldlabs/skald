@@ -4,6 +4,7 @@ import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DEBUG } from '@/settings'
 import { DI } from '@/di'
 import { StripeEvent } from '@/entities/StripeEvent'
 import { SubscriptionService } from '@/services/subscriptionService'
+import { logger } from '@/lib/logger'
 
 /**
  * Stripe webhook endpoint.
@@ -15,12 +16,12 @@ export const stripeWebhook = async (req: Request, res: Response) => {
 
     // Check if Stripe is configured
     if (!STRIPE_WEBHOOK_SECRET) {
-        console.warn('STRIPE_WEBHOOK_SECRET not configured')
+        logger.warn('STRIPE_WEBHOOK_SECRET not configured')
         return res.status(400).send('Webhook secret not configured')
     }
 
     if (!STRIPE_SECRET_KEY) {
-        console.warn('STRIPE_SECRET_KEY not configured')
+        logger.warn('STRIPE_SECRET_KEY not configured')
         return res.status(400).send('Stripe not configured')
     }
 
@@ -31,13 +32,13 @@ export const stripeWebhook = async (req: Request, res: Response) => {
 
     try {
         if (!signature) {
-            console.error('Missing stripe-signature header')
+            logger.error('Missing stripe-signature header')
             return res.status(400).send('Missing signature')
         }
 
         event = stripe.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET)
     } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message)
+        logger.error({ errorMessage: err.message }, 'Webhook signature verification failed')
         const errorMsg = DEBUG ? `Webhook Error: ${err.message}` : 'Invalid webhook signature'
         return res.status(400).json({ error: errorMsg })
     }
@@ -47,7 +48,7 @@ export const stripeWebhook = async (req: Request, res: Response) => {
     const existingEvent = await em.findOne(StripeEvent, { stripe_event_id: event.id })
 
     if (existingEvent) {
-        console.info(`Event ${event.id} already processed`)
+        logger.info({ eventId: event.id }, 'Event already processed')
         return res.status(200).send('Event already processed')
     }
 
@@ -102,19 +103,19 @@ export const stripeWebhook = async (req: Request, res: Response) => {
                 handled = true
                 break
             default:
-                console.info(`Unhandled event type: ${event.type}`)
+                logger.info({ eventType: event.type }, 'Unhandled event type')
         }
 
         if (handled) {
             stripeEvent.processed = true
             stripeEvent.processed_at = new Date()
             await em.persistAndFlush(stripeEvent)
-            console.info(`Successfully processed ${event.type} event: ${event.id}`)
+            logger.info({ eventType: event.type, eventId: event.id }, 'Successfully processed event')
         }
 
         return res.status(200).send('Webhook processed')
     } catch (error: any) {
-        console.error('Error processing webhook:', error)
+        logger.error({ err: error }, 'Error processing webhook')
         stripeEvent.processing_error = error.message || String(error)
         await em.persistAndFlush(stripeEvent)
         return res.status(500).send('Error processing webhook')

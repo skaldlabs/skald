@@ -12,6 +12,7 @@ import { MemoSummary } from '@/entities/MemoSummary'
 import { MemoTag } from '@/entities/MemoTag'
 import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
+import { logger } from '@/lib/logger'
 
 const CreateMemoRequest = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
@@ -180,7 +181,7 @@ export const updateMemo = async (req: Request, res: Response) => {
 
         return res.status(200).json({ ok: true })
     } catch (error) {
-        console.error(error)
+        logger.error({ err: error }, 'Error in memo endpoint')
         await em.rollback()
         return res.status(503).json({ error: 'Service unavailable' })
     }

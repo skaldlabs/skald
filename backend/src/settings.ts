@@ -1,5 +1,22 @@
 import { config } from 'dotenv'
 import { resolve } from 'path'
+import pino from 'pino'
+
+// Logger for settings validation (before main logger is configured)
+const logger = pino({
+    level: 'info',
+    transport:
+        process.env.NODE_ENV === 'development'
+            ? {
+                  target: 'pino-pretty',
+                  options: {
+                      colorize: true,
+                      translateTime: 'HH:MM:ss Z',
+                      ignore: 'pid,hostname',
+                  },
+              }
+            : undefined,
+})
 
 if (process.env.NODE_ENV === 'development') {
     config({ path: resolve(__dirname, '../../.env') })
@@ -122,20 +139,20 @@ if (!SUPPORTED_EMBEDDING_PROVIDERS.includes(EMBEDDING_PROVIDER)) {
 
 // Warn if LLM provider API keys are missing
 if (!DEBUG && LLM_PROVIDER === 'openai' && !OPENAI_API_KEY) {
-    console.warn('OPENAI_API_KEY not set in production')
+    logger.warn('OPENAI_API_KEY not set in production')
 } else if (!DEBUG && LLM_PROVIDER === 'anthropic' && !ANTHROPIC_API_KEY) {
-    console.warn('ANTHROPIC_API_KEY not set in production')
+    logger.warn('ANTHROPIC_API_KEY not set in production')
 } else if (!DEBUG && LLM_PROVIDER === 'local' && !LOCAL_LLM_BASE_URL) {
-    console.warn('LOCAL_LLM_BASE_URL not set for local provider')
+    logger.warn('LOCAL_LLM_BASE_URL not set for local provider')
 }
 
 // Warn if embedding provider API keys are missing
 if (!DEBUG && EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
-    console.warn('VOYAGE_API_KEY not set in production')
+    logger.warn('VOYAGE_API_KEY not set in production')
 } else if (!DEBUG && EMBEDDING_PROVIDER === 'openai' && !OPENAI_API_KEY) {
-    console.warn('OPENAI_API_KEY not set for embedding provider in production')
+    logger.warn('OPENAI_API_KEY not set for embedding provider in production')
 } else if (!DEBUG && EMBEDDING_PROVIDER === 'local' && !EMBEDDING_SERVICE_URL) {
-    console.warn('EMBEDDING_SERVICE_URL not set for local provider')
+    logger.warn('EMBEDDING_SERVICE_URL not set for local provider')
 }
 
 export const SENTRY_DSN = process.env.SENTRY_DSN
@@ -200,5 +217,5 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 
 // Warn if Stripe keys are missing in production
 if (!DEBUG && !STRIPE_SECRET_KEY) {
-    console.warn('STRIPE_SECRET_KEY not set in production')
+    logger.warn('STRIPE_SECRET_KEY not set in production')
 }

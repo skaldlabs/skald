@@ -1,6 +1,7 @@
 import { Response } from 'express'
 import { ZodError } from 'zod'
 import { DEBUG } from '../settings'
+import { logger } from './logger'
 
 interface ErrorResponse {
     error: string
@@ -40,7 +41,11 @@ export class AuthorizationError extends Error {
  * Always logs full error details server-side regardless of environment.
  */
 export function sanitizeError(error: unknown, isDevelopment: boolean = DEBUG): ErrorResponse {
-    console.error('Error occurred:', error)
+    if (error instanceof Error) {
+        logger.error({ err: error }, 'Error occurred')
+    } else {
+        logger.error({ error }, 'Error occurred')
+    }
 
     if (isDevelopment) {
         if (error instanceof ZodError) {

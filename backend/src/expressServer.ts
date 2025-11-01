@@ -22,6 +22,7 @@ import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
 import { sendErrorResponse } from '@/lib/errorHandler'
+import { logger as baseLogger, httpLogger } from '@/lib/logger'
 
 export const startExpressServer = async () => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
@@ -30,6 +31,8 @@ export const startExpressServer = async () => {
     const DI = await initDI()
 
     const app = express()
+
+    app.use(httpLogger)
 
     // Trust Fly.io proxy for accurate client IP detection in rate limiting
     app.set('trust proxy', true)
@@ -85,6 +88,6 @@ export const startExpressServer = async () => {
     app.use(route404)
 
     DI.server = app.listen(EXPRESS_SERVER_PORT, () => {
-        console.log(`Express server started at http://localhost:${EXPRESS_SERVER_PORT}`)
+        baseLogger.info(`Express server started at http://localhost:${EXPRESS_SERVER_PORT}`)
     })
 }

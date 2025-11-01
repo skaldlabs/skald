@@ -3,6 +3,7 @@ import '@/settings'
 
 import { startExpressServer } from '@/expressServer'
 import { startMemoProcessingServer } from '@/memoProcessingServer'
+import { logger } from '@/lib/logger'
 
 const getModeFromArgs = (): string | null => {
     const args = process.argv.slice(2)
@@ -29,6 +30,6 @@ if (mode === 'express-server') {
 } else if (mode === 'memo-processing-server') {
     startMemoProcessingServer()
 } else {
-    console.error('Invalid mode:', mode)
+    logger.error({ mode }, 'Invalid mode')
     process.exit(1)
 }
