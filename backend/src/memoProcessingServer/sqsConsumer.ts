@@ -2,6 +2,7 @@ import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand, Message } from 
 import { processMemo } from '@/memoProcessingServer/processMemo'
 import { AWS_REGION, SQS_QUEUE_URL } from '@/settings'
 import { MikroORM } from '@mikro-orm/core'
+import { logger } from '@/lib/logger'
 
 const MAX_MESSAGES = 10
 const WAIT_TIME_SECONDS = 1
@@ -55,7 +56,7 @@ const deleteMessage = async (message: Message) => {
  */
 async function processMessage(orm: MikroORM, message: Message): Promise<void> {
     if (!message.Body) {
-        console.error('Message has no body:', message.MessageId)
+        logger.error({ messageId: message.MessageId }, 'Message has no body')
         return
     }
 
@@ -70,7 +71,7 @@ async function processMessage(orm: MikroORM, message: Message): Promise<void> {
             await deleteMessage(message)
         }
     } catch (error) {
-        console.error('Error processing message:', error)
+        logger.error({ err: error }, 'Error processing message')
         // Message will become visible again after visibility timeout
         // Consider implementing a dead-letter queue for failed messages
         throw error
@@ -85,16 +86,16 @@ async function pollMessages(orm: MikroORM): Promise<void> {
         const response = await receiveMessages()
 
         if (response.Messages && response.Messages.length > 0) {
-            console.log(`Received ${response.Messages.length} messages from SQS`)
+            logger.info({ messageCount: response.Messages.length }, 'Received messages from SQS')
 
             // Process all messages concurrently
             await Promise.allSettled(response.Messages.map((message: Message) => processMessage(orm, message)))
-            console.log(`Successfully processed and deleted ${response.Messages.length} messages`)
+            logger.info({ messageCount: response.Messages.length }, 'Successfully processed and deleted messages')
         } else {
-            console.log('No messages received, continuing to poll...')
+            logger.debug('No messages received, continuing to poll...')
         }
     } catch (error) {
-        console.error('Error polling SQS:', error)
+        logger.error({ err: error }, 'Error polling SQS')
         // Wait a bit before retrying on error
         await new Promise((resolve) => setTimeout(resolve, 5000))
     }

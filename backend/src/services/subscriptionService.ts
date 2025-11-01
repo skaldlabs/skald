@@ -11,6 +11,7 @@ import { Plan } from '@/entities/Plan'
 import { UsageRecord } from '@/entities/UsageRecord'
 import { DI } from '@/di'
 import { EntityManager } from '@mikro-orm/core'
+import { logger } from '@/lib/logger'
 
 /**
  * Subscription status enum matching Django SubscriptionStatus
@@ -49,7 +50,7 @@ class SubscriptionService {
         if (STRIPE_SECRET_KEY) {
             this.stripe = new Stripe(STRIPE_SECRET_KEY)
         } else {
-            console.warn('STRIPE_SECRET_KEY not configured')
+            logger.warn('STRIPE_SECRET_KEY not configured')
         }
     }
 
@@ -310,7 +311,7 @@ class SubscriptionService {
         })
 
         await entityManager.persistAndFlush(subscription)
-        console.info(`Created default subscription for organization ${organization.name}`)
+        logger.info({ organizationName: organization.name }, 'Created default subscription for organization')
 
         return subscription
     }
@@ -367,7 +368,7 @@ class SubscriptionService {
             const customer = await this.stripe.customers.retrieve(customerId)
 
             if (customer.deleted) {
-                console.warn(`Customer ${customerId} is deleted`)
+                logger.warn({ customerId }, 'Customer is deleted')
                 return null
             }
 
@@ -398,7 +399,7 @@ class SubscriptionService {
 
             return null
         } catch (error) {
-            console.warn(`Error retrieving payment method for customer ${customerId}:`, error)
+            logger.warn({ customerId, err: error }, 'Error retrieving payment method for customer')
             return null
         }
     }
@@ -458,7 +459,7 @@ class SubscriptionService {
             })
 
             if (!stripeSubscription.id) {
-                console.error('Invalid subscription response:', stripeSubscription)
+                logger.error({ stripeSubscription }, 'Invalid subscription response')
                 return { success: false, error: 'Failed to create subscription' }
             }
 
@@ -495,17 +496,29 @@ class SubscriptionService {
                 await entityManager.persistAndFlush(usageRecord)
             }
 
-            console.info(`Successfully created subscription with saved payment method for ${organization.name}`)
+            logger.info(
+                { organizationName: organization.name },
+                'Successfully created subscription with saved payment method'
+            )
             return { success: true, subscription }
         } catch (error: any) {
             if (error.type === 'StripeCardError') {
-                console.warn(`Card error when creating subscription for ${organization.name}:`, error.message)
+                logger.warn(
+                    { organizationName: organization.name, errorMessage: error.message },
+                    'Card error when creating subscription'
+                )
                 return { success: false, error: `Payment failed: ${error.message}` }
             } else if (error.type && error.type.includes('Stripe')) {
-                console.warn(`Stripe error when creating subscription for ${organization.name}:`, error.message)
+                logger.warn(
+                    { organizationName: organization.name, errorMessage: error.message },
+                    'Stripe error when creating subscription'
+                )
                 return { success: false, error: `Payment processing error: ${error.message}` }
             } else {
-                console.error(`Unexpected error creating subscription for ${organization.name}:`, error)
+                logger.error(
+                    { organizationName: organization.name, err: error },
+                    'Unexpected error creating subscription'
+                )
                 return { success: false, error: `Unexpected error: ${error.message || 'Unknown error'}` }
             }
         }
@@ -532,7 +545,7 @@ class SubscriptionService {
         }
 
         // Stripe will send subscription.created event, just log here
-        console.info(`Checkout completed for ${organization.name}`)
+        logger.info({ organizationName: organization.name }, 'Checkout completed')
     }
 
     /**
@@ -541,11 +554,11 @@ class SubscriptionService {
     async handleSubscriptionCreated(event: Stripe.Event, em?: EntityManager): Promise<void> {
         try {
             const stripeSubscription = event.data.object as Stripe.Subscription
-            console.info(`Processing subscription.created event: ${stripeSubscription.id}`)
+            logger.info({ subscriptionId: stripeSubscription.id }, 'Processing subscription.created event')
 
             const customerId = stripeSubscription.customer
             if (!customerId || typeof customerId !== 'string') {
-                console.error('No customer_id in subscription:', stripeSubscription)
+                logger.error({ stripeSubscription }, 'No customer_id in subscription')
                 throw new Error('No customer_id found in subscription event')
             }
 
@@ -601,9 +614,9 @@ class SubscriptionService {
                 await entityManager.persistAndFlush(usageRecord)
             }
 
-            console.info(`Subscription created successfully for ${subscription.organization.name}`)
+            logger.info({ organizationName: subscription.organization.name }, 'Subscription created successfully')
         } catch (error) {
-            console.error('Error in handle_subscription_created:', error)
+            logger.error({ err: error }, 'Error in handle_subscription_created')
             throw error
         }
     }
@@ -614,7 +627,7 @@ class SubscriptionService {
     async handleSubscriptionUpdated(event: Stripe.Event, em?: EntityManager): Promise<void> {
         try {
             const stripeSubscription = event.data.object as Stripe.Subscription
-            console.info(`Processing subscription.updated event: ${stripeSubscription.id}`)
+            logger.info({ subscriptionId: stripeSubscription.id }, 'Processing subscription.updated event')
 
             const entityManager = em || DI.em.fork()
             const subscription = await entityManager.findOne(OrganizationSubscription, {
@@ -645,7 +658,7 @@ class SubscriptionService {
             await entityManager.populate(subscription, ['plan'])
 
             if (subscription.plan.id !== newPlan.id) {
-                console.info(`Plan changed from ${subscription.plan.name} to ${newPlan.name}`)
+                logger.info({ oldPlan: subscription.plan.name, newPlan: newPlan.name }, 'Plan changed')
                 subscription.plan = newPlan
             }
 
@@ -679,9 +692,9 @@ class SubscriptionService {
                 }
             }
 
-            console.info(`Subscription updated successfully for ${subscription.organization.name}`)
+            logger.info({ organizationName: subscription.organization.name }, 'Subscription updated successfully')
         } catch (error) {
-            console.error('Error in handle_subscription_updated:', error)
+            logger.error({ err: error }, 'Error in handle_subscription_updated')
             throw error
         }
     }
@@ -713,7 +726,7 @@ class SubscriptionService {
         await entityManager.persistAndFlush(subscription)
 
         await entityManager.populate(subscription, ['organization'])
-        console.info(`Subscription canceled for ${subscription.organization.name}`)
+        logger.info({ organizationName: subscription.organization.name }, 'Subscription canceled')
     }
 
     /**
@@ -721,7 +734,7 @@ class SubscriptionService {
      */
     async handleInvoicePaid(event: Stripe.Event, em?: EntityManager): Promise<void> {
         const invoice = event.data.object as Stripe.Invoice
-        console.info(`Invoice paid: ${invoice.id}`)
+        logger.info({ invoiceId: invoice.id }, 'Invoice paid')
     }
 
     /**
@@ -748,7 +761,7 @@ class SubscriptionService {
         await entityManager.persistAndFlush(subscription)
 
         await entityManager.populate(subscription, ['organization'])
-        console.warn(`Payment failed for ${subscription.organization.name}`)
+        logger.warn({ organizationName: subscription.organization.name }, 'Payment failed')
     }
 
     /**
@@ -765,7 +778,7 @@ class SubscriptionService {
             })
 
             if (!subscription) {
-                console.warn(`No subscription found for schedule ${scheduleId}`)
+                logger.warn({ scheduleId }, 'No subscription found for schedule')
                 return
             }
 
@@ -777,10 +790,13 @@ class SubscriptionService {
                 await entityManager.persistAndFlush(subscription)
 
                 await entityManager.populate(subscription, ['organization'])
-                console.info(`Schedule ${scheduleId} ${status} for ${subscription.organization.name}`)
+                logger.info(
+                    { scheduleId, status, organizationName: subscription.organization.name },
+                    'Schedule status updated'
+                )
             }
         } catch (error) {
-            console.error('Error in handle_subscription_schedule_updated:', error)
+            logger.error({ err: error }, 'Error in handle_subscription_schedule_updated')
             throw error
         }
     }
@@ -799,7 +815,7 @@ class SubscriptionService {
             })
 
             if (!subscription) {
-                console.warn(`No subscription found for schedule ${scheduleId}`)
+                logger.warn({ scheduleId }, 'No subscription found for schedule')
                 return
             }
 
@@ -809,9 +825,9 @@ class SubscriptionService {
             await entityManager.persistAndFlush(subscription)
 
             await entityManager.populate(subscription, ['organization'])
-            console.info(`Scheduled plan change completed for ${subscription.organization.name}`)
+            logger.info({ organizationName: subscription.organization.name }, 'Scheduled plan change completed')
         } catch (error) {
-            console.error('Error in handle_subscription_schedule_completed:', error)
+            logger.error({ err: error }, 'Error in handle_subscription_schedule_completed')
             throw error
         }
     }

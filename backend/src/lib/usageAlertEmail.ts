@@ -8,6 +8,7 @@ import { sendEmail } from '@/lib/emailUtils'
 import { Organization } from '@/entities/Organization'
 import { DI } from '@/di'
 import { FRONTEND_URL } from '@/settings'
+import { logger } from './logger'
 
 export interface UsageAlertContext {
     organizationName: string
@@ -179,13 +180,16 @@ export async function sendUsageAlertEmail(
         const { error } = await sendEmail(ownerEmail, subject, html, 'alerts')
 
         if (error) {
-            console.error('Failed to send usage alert email:', error)
+            logger.error({ err: error }, 'Failed to send usage alert email')
             throw new Error(`Email send failed: ${error.message}`)
         }
 
-        console.log(`Usage alert email sent to ${ownerEmail} for ${organization.name}: ${limitType} at ${percentage}%`)
+        logger.info(
+            { ownerEmail, organizationName: organization.name, limitType, percentage },
+            'Usage alert email sent'
+        )
     } catch (error) {
-        console.error('Error in sendUsageAlertEmail:', error)
+        logger.error({ err: error }, 'Error in sendUsageAlertEmail')
         throw error
     }
 }

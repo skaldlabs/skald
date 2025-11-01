@@ -23,11 +23,12 @@ import {
     RABBITMQ_QUEUE_NAME,
     TEST,
 } from '../settings'
+import { logger } from './logger'
 
 let sqsClient: SQSClient | null = null
 if (SQS_QUEUE_URL && INTER_PROCESS_QUEUE === 'sqs') {
     sqsClient = new SQSClient({ region: AWS_REGION })
-    console.log(`Initialized SQS client for queue: ${SQS_QUEUE_URL}`)
+    logger.info({ queueUrl: SQS_QUEUE_URL }, 'Initialized SQS client for queue')
 }
 
 export interface MemoData {
@@ -101,7 +102,7 @@ async function _publishToRedis(memoUuid: string): Promise<void> {
     await redisClient.publish(CHANNEL_NAME, message)
     await redisClient.quit()
 
-    console.log(`Published memo ${memoUuid} to Redis process_memo channel`)
+    logger.info({ memoUuid }, 'Published memo to Redis process_memo channel')
 }
 
 async function _publishToSqs(memoUuid: string): Promise<void> {
@@ -116,7 +117,7 @@ async function _publishToSqs(memoUuid: string): Promise<void> {
     })
 
     const response = await sqsClient.send(command)
-    console.log(`Published memo ${memoUuid} to SQS queue: ${response.MessageId}`)
+    logger.info({ memoUuid, messageId: response.MessageId }, 'Published memo to SQS queue')
 }
 
 async function _publishToRabbitmq(memoUuid: string): Promise<void> {
@@ -137,7 +138,7 @@ async function _publishToRabbitmq(memoUuid: string): Promise<void> {
         persistent: true,
     })
 
-    console.log(`Published memo ${memoUuid} to RabbitMQ queue: ${RABBITMQ_QUEUE_NAME}`)
+    logger.info({ memoUuid, queueName: RABBITMQ_QUEUE_NAME }, 'Published memo to RabbitMQ queue')
 
     await channel.close()
     await connection.close()

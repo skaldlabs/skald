@@ -8,6 +8,7 @@ import { Organization } from '@/entities/Organization'
 import { UsageRecord } from '@/entities/UsageRecord'
 import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { EntityManager } from '@mikro-orm/core'
+import { logger } from '@/lib/logger'
 
 interface UsageData {
     billing_period_start: string
@@ -289,7 +290,7 @@ class UsageTrackingService {
 
             await sendUsageAlertEmail(organization, limitType, percentage, currentUsage, limit, billingPeriodEnd)
         } catch (error) {
-            console.error('Failed to send usage alert email:', error)
+            logger.error({ err: error }, 'Failed to send usage alert email')
             // Don't throw - we don't want email failures to break the usage tracking
         }
     }

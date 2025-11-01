@@ -192,7 +192,7 @@ describe('Chat API', () => {
                 })
 
             expect(response.status).toBe(500)
-            expect(response.body.error).toBe('Chat agent temporarily unavailable')
+            expect(response.body.error).toBe('Chat agent error')
         })
 
         it('should return 403 for unauthenticated users', async () => {

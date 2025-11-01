@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express'
 import { z } from 'zod'
 import { DI } from '@/di'
 import { NextFunction } from 'express'
+import { sendErrorResponse } from '@/lib/errorHandler'
 import { createNewMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
@@ -11,6 +12,7 @@ import { MemoSummary } from '@/entities/MemoSummary'
 import { MemoTag } from '@/entities/MemoTag'
 import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
+import { logger } from '@/lib/logger'
 
 const CreateMemoRequest = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
@@ -64,7 +66,7 @@ const createMemo = async (req: Request, res: Response) => {
     }
     const validatedData = CreateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        return res.status(400).json({ error: 'Invalid request data', details: validatedData.error.issues })
+        return sendErrorResponse(res, validatedData.error, 400)
     }
 
     const memo = await createNewMemo(validatedData.data, project)
@@ -137,7 +139,7 @@ export const updateMemo = async (req: Request, res: Response) => {
 
     const validatedData = UpdateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        return res.status(400).json({ error: 'Invalid request data', details: validatedData.error.issues })
+        return sendErrorResponse(res, validatedData.error, 400)
     }
 
     const em = DI.em.fork()
@@ -179,7 +181,7 @@ export const updateMemo = async (req: Request, res: Response) => {
 
         return res.status(200).json({ ok: true })
     } catch (error) {
-        console.error(error)
+        logger.error({ err: error }, 'Error in memo endpoint')
         await em.rollback()
         return res.status(503).json({ error: 'Service unavailable' })
     }

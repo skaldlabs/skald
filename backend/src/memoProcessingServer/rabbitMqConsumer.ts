@@ -9,6 +9,7 @@ import {
     RABBITMQ_QUEUE_NAME,
 } from '../settings'
 import { EntityManager, MikroORM } from '@mikro-orm/core'
+import { logger } from '@/lib/logger'
 
 interface MemoMessage {
     memo_uuid: string
@@ -24,7 +25,7 @@ async function initRabbitMQ(): Promise<void> {
     const url = `amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@${RABBITMQ_HOST}:${RABBITMQ_PORT}${RABBITMQ_VHOST}`
 
     connection = await amqplib.connect(url)
-    console.log(`Connected to RabbitMQ at ${RABBITMQ_HOST}:${RABBITMQ_PORT}`)
+    logger.info({ rabbitMqHost: RABBITMQ_HOST, rabbitMqPort: RABBITMQ_PORT }, 'Connected to RabbitMQ')
 
     if (!connection) {
         throw new Error('Failed to create RabbitMQ connection')
@@ -41,7 +42,7 @@ async function initRabbitMQ(): Promise<void> {
         durable: true,
     })
 
-    console.log(`Queue "${RABBITMQ_QUEUE_NAME}" is ready`)
+    logger.info({ queueName: RABBITMQ_QUEUE_NAME }, 'Queue is ready')
 
     // Set prefetch to process one message at a time
     await channel.prefetch(1)
@@ -55,17 +56,17 @@ async function processMessage(em: EntityManager, msg: amqplib.ConsumeMessage): P
 
     try {
         const data: MemoMessage = JSON.parse(content)
-        console.log(`Processing memo: ${data.memo_uuid}`)
+        logger.info({ memoUuid: data.memo_uuid }, 'Processing memo')
 
         await processMemo(em, data.memo_uuid)
 
         // Acknowledge the message after successful processing
         if (channel) {
             channel.ack(msg)
-            console.log(`Successfully processed and acknowledged memo: ${data.memo_uuid}`)
+            logger.info({ memoUuid: data.memo_uuid }, 'Successfully processed and acknowledged memo')
         }
     } catch (error) {
-        console.error('Error processing message:', error)
+        logger.error({ err: error }, 'Error processing message')
 
         // Reject the message and requeue it
         if (channel) {
@@ -84,7 +85,7 @@ export async function runRabbitMQConsumer(orm: MikroORM): Promise<void> {
         throw new Error('Channel not initialized')
     }
 
-    console.log(`Waiting for messages in queue "${RABBITMQ_QUEUE_NAME}"...`)
+    logger.info({ queueName: RABBITMQ_QUEUE_NAME }, 'Waiting for messages in queue')
 
     // Start consuming messages
     await channel.consume(
@@ -103,12 +104,12 @@ export async function runRabbitMQConsumer(orm: MikroORM): Promise<void> {
     // Handle connection errors
     if (connection) {
         connection.on('error', (err: Error) => {
-            console.error('RabbitMQ connection error:', err)
+            logger.error({ err }, 'RabbitMQ connection error')
             process.exit(1)
         })
 
         connection.on('close', () => {
-            console.log('RabbitMQ connection closed')
+            logger.info('RabbitMQ connection closed')
             process.exit(1)
         })
     }
@@ -125,8 +126,8 @@ export async function closeRabbitMQ(): Promise<void> {
         if (connection) {
             await connection.close()
         }
-        console.log('RabbitMQ connection closed gracefully')
+        logger.info('RabbitMQ connection closed gracefully')
     } catch (error) {
-        console.error('Error closing RabbitMQ connection:', error)
+        logger.error({ err: error }, 'Error closing RabbitMQ connection')
     }
 }

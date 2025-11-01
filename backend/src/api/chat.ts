@@ -2,6 +2,9 @@ import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
 import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
 import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
+import { sendErrorResponse } from '@/lib/errorHandler'
+import { DEBUG } from '@/settings'
+import { logger } from '@/lib/logger'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -53,8 +56,7 @@ export const chat = async (req: Request, res: Response) => {
             })
         }
     } catch (error) {
-        console.error('Chat agent error:', error)
-        return res.status(500).json({ error: `Chat agent temporarily unavailable` })
+        return sendErrorResponse(res, error, 500)
     }
 }
 
@@ -87,7 +89,8 @@ export const _generateStreamingResponse = async (query: string, contextStr: stri
             res.write(`data: ${data}\n\n`)
         }
     } catch (error) {
-        const errorMsg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error)
+        logger.error({ err: error }, 'Streaming chat agent error')
+        const errorMsg = DEBUG && error instanceof Error ? `${error.message}\n${error.stack}` : 'An error occurred'
         const errorData = JSON.stringify({ type: 'error', content: errorMsg })
         res.write(`data: ${errorData}\n\n`)
     } finally {

@@ -9,6 +9,7 @@ import { sendEmail, isValidEmail } from '@/lib/emailUtils'
 import { SubscriptionService } from '@/services/subscriptionService'
 import { randomUUID } from 'crypto'
 import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
+import { logger } from '@/lib/logger'
 
 export const organizationRouter = express.Router({ mergeParams: true })
 
@@ -255,7 +256,7 @@ const acceptInvite = async (req: Request, res: Response) => {
 
         res.status(200).json({ detail: 'Invite accepted successfully' })
     } catch (error) {
-        console.error(error)
+        logger.error({ err: error }, 'Error in organization endpoint')
         return res.status(500).json({ error: 'Internal server error' })
     }
 }
