@@ -27,14 +27,6 @@ jobs:
               - 'backend/pnpm-lock.yaml'
               - 'backend/tsconfig.json'
               - 'backend/express.fly.toml'
-            frontend:
-              - 'package.json'
-              - 'frontend/**'
-              - 'ui.fly.toml'
-              - 'ui.Dockerfile'
-              - 'nginx.conf'
-              - 'vite.config.ts'
-              - 'tsconfig*.json'
             memo-processing:
               - 'backend/src/**'
               - 'backend/Dockerfile'
@@ -56,18 +48,6 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-  deploy-frontend:
-    name: Deploy Frontend
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    concurrency: deploy-frontend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy -c ui.fly.toml -a skald-platform-ui --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
   deploy-memo-processing:
     name: Deploy Memo Processing Server
