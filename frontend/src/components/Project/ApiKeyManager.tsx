@@ -83,14 +83,11 @@ export const ApiKeyManager = ({ project }: ApiKeyManagerProps) => {
                         // Show the newly generated API key
                         <div className="space-y-4">
                             <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                                <div className="flex items-start gap-2">
+                                <div className="flex items-center gap-2">
                                     <span className="text-yellow-600 dark:text-yellow-500 text-xl">⚠️</span>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
-                                            This API key will only be shown once. Make sure to copy and store it
-                                            securely.
-                                        </p>
-                                    </div>
+                                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
+                                        This API key will only be shown once. Make sure to copy and store it securely.
+                                    </p>
                                 </div>
                             </div>
 
