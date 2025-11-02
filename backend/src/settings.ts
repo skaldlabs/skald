@@ -169,13 +169,7 @@ if (CORS_ORIGINS_ENV) {
 } else if (IS_DEVELOPMENT) {
     CORS_ALLOWED_ORIGINS = ['http://localhost:8000', 'http://localhost:3000', 'http://localhost:5173']
 } else {
-    CORS_ALLOWED_ORIGINS = [
-        'https://app.useskald.com',
-        'https://api.useskald.com',
-        'https://platform.useskald.com',
-        'https://api2.useskald.com',
-        'https://platform2.useskald.com',
-    ]
+    CORS_ALLOWED_ORIGINS = ['https://app.useskald.com', 'https://api.useskald.com', 'https://platform.useskald.com']
 }
 
 // Add self-hosted deployment URLs
