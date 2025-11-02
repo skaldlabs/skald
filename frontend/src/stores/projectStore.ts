@@ -30,7 +30,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         set({ loading: true, error: null })
 
         const response = await api.get<Project[]>(`${getOrgPath()}/projects/`)
-        console.log('response', response)
+
         if (response.error || !response.data) {
             set({
                 loading: false,

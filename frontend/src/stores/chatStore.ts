@@ -83,12 +83,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         set({ currentStreamingMessageId: assistantMessageId })
 
-        console.log('Starting chat stream with:', {
-            query: query.trim(),
-            project_id: currentProject.uuid,
-            stream: true,
-        })
-
         api.stream(
             '/v1/chat/',
             {
@@ -97,19 +91,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 stream: true,
             },
             (data: ApiStreamData) => {
-                console.log('Received stream data:', data)
                 if (data.type === 'token' && data.content) {
                     const currentContent = get().messages.find((m) => m.id === assistantMessageId)?.content || ''
                     get().updateStreamingMessage(assistantMessageId, currentContent + data.content)
                 } else if (data.type === 'done') {
-                    console.log('Stream completed')
                     get().finishStreaming(assistantMessageId)
                 } else if (data.type === 'error') {
-                    console.log('Stream error:', data.content)
                     get().finishStreaming(assistantMessageId)
                     get().updateStreamingMessage(assistantMessageId, `Error: ${data.content || 'An error occurred'}`)
-                } else {
-                    console.log('Unknown stream data type:', data.type, data)
                 }
             },
             (error: ApiErrorData | Event) => {

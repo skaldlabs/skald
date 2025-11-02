@@ -25,8 +25,6 @@ const LOCAL_URL = 'http://localhost:3000'
 
 export const domain = import.meta.env.VITE_API_HOST || LOCAL_URL
 
-console.log('API URL:', domain)
-
 const baseUrl = `${domain}/api`
 
 const getCookie = (cookieName: string) => {
