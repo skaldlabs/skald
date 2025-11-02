@@ -11,6 +11,14 @@ export default defineConfig({
     host: DB_HOST,
     port: DB_PORT,
     extensions: [Migrator],
+    pool: {
+        // Guidance from: https://knexjs.org/guide/#pool
+        // "Note that the default value of min is 2 only for historical reasons.
+        // [...] It can result in problems with stale connections [...]
+        // It is recommended to set min: 0 so all idle connections can be terminated."
+        min: 0,
+        max: 20,
+    },
     // debug: ['query', 'query-params'],
     migrations: {
         path: './dist/migrations', // path to migration folder (compiled)
