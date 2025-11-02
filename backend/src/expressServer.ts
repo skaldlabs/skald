@@ -27,7 +27,8 @@ import { stripeWebhook } from '@/api/stripe_webhook'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
-import { httpLogger } from '@/lib/logger'
+import { httpLogger, logger } from '@/lib/logger'
+import { posthog } from '@/lib/posthogUtils'
 import * as Sentry from '@sentry/node'
 
 export const startExpressServer = async () => {
@@ -103,6 +104,41 @@ export const startExpressServer = async () => {
     })
 
     DI.server = app.listen(EXPRESS_SERVER_PORT, '0.0.0.0', () => {
-        console.log(`Express server started at http://0.0.0.0:${EXPRESS_SERVER_PORT}`)
+        logger.info(`Express server started at http://0.0.0.0:${EXPRESS_SERVER_PORT}`)
     })
+
+    const gracefulShutdown = async (signal: string) => {
+        logger.info(`${signal} received, starting graceful shutdown...`)
+
+        DI.server.close(async (err) => {
+            if (err) {
+                logger.error({ error: err }, 'Error closing server')
+                process.exit(1)
+            }
+
+            logger.info('HTTP server closed')
+
+            try {
+                await posthog.shutdown()
+                logger.info('PostHog client shut down')
+
+                await DI.orm.close()
+                logger.info('Database connection closed')
+
+                logger.info('Graceful shutdown complete')
+                process.exit(0)
+            } catch (error) {
+                logger.error({ error }, 'Error during graceful shutdown')
+                process.exit(1)
+            }
+        })
+
+        setTimeout(() => {
+            logger.error('Forced shutdown after timeout')
+            process.exit(1)
+        }, 30000)
+    }
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'))
 }

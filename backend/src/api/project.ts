@@ -12,6 +12,7 @@ import { ProjectAPIKey } from '@/entities/ProjectAPIKey'
 import { trackUsage } from '@/middleware/usageTracking'
 import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
 import crypto, { randomUUID } from 'crypto'
+import { posthogCapture } from '@/lib/posthogUtils'
 
 export const projectRouter = express.Router({ mergeParams: true })
 
@@ -164,6 +165,13 @@ const create = async (req: Request, res: Response) => {
 
     await DI.em.flush()
 
+    posthogCapture('project_created', user.email, {
+        organization_name: organization.name,
+        organization_uuid: organization.uuid,
+        project_name: project.name,
+        project_uuid: project.uuid,
+    })
+
     const projectResponse = await formatProjectResponse(project)
     res.status(201).json(projectResponse)
 }
@@ -207,6 +215,13 @@ const update = async (req: Request, res: Response) => {
     }
 
     await DI.em.flush()
+
+    posthogCapture('project_updated', user.email, {
+        organization_name: organization.name,
+        organization_uuid: organization.uuid,
+        project_name: project.name,
+        project_uuid: project.uuid,
+    })
 
     const projectResponse = await formatProjectResponse(project)
     res.status(200).json(projectResponse)
@@ -264,6 +279,13 @@ const destroy = async (req: Request, res: Response) => {
 
         // Delete the project itself
         await em.nativeDelete(Project, { uuid: project.uuid })
+    })
+
+    posthogCapture('project_deleted', user.email, {
+        organization_name: organization.name,
+        organization_uuid: organization.uuid,
+        project_name: project.name,
+        project_uuid: project.uuid,
     })
 
     res.status(204).send()

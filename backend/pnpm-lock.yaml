@@ -80,6 +80,9 @@ importers:
       pino-pretty:
         specifier: ^13.1.2
         version: 13.1.2
+      posthog-node:
+        specifier: ^5.11.0
+        version: 5.11.0
       redis:
         specifier: ^5.9.0
         version: 5.9.0
@@ -1640,6 +1643,9 @@ packages:
   '@pkgr/core@0.2.9':
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
+
+  '@posthog/core@1.5.0':
+    resolution: {integrity: sha512-oxfV20QMNwH30jKybUyqi3yGuMghULQz1zkJgQG3rjpHDxhD2vDN6E7UpmaqgphMIvGG3Q+DgfU10zfSPA7w7w==}
 
   '@prisma/instrumentation@6.15.0':
     resolution: {integrity: sha512-6TXaH6OmDkMOQvOxwLZ8XS51hU2v4A3vmE2pSijCIiGRJYyNeMcL6nMHQMyYdZRD8wl7LF3Wzc+AMPMV/9Oo7A==}
@@ -3671,6 +3677,10 @@ packages:
   postgres-interval@4.0.2:
     resolution: {integrity: sha512-EMsphSQ1YkQqKZL2cuG0zHkmjCCzQqQ71l2GXITqRwjhRleCdv00bDk/ktaSi0LnlaPzAc3535KTrjXsTdtx7A==}
     engines: {node: '>=12'}
+
+  posthog-node@5.11.0:
+    resolution: {integrity: sha512-9+gmWp/7AEryJMi0+/ywJjKQhpkmcjxf+eT030fTIIPvFTF84zeeagdZBGNC/Nh2Jc0grIAW6O1n5lxXiX3daA==}
+    engines: {node: '>=20'}
 
   pretty-format@30.2.0:
     resolution: {integrity: sha512-9uBdv/B4EefsuAL+pWqueZyZS2Ba+LxfFeQ9DN14HU4bN8bhaxKdkpjpB6fs9+pSjIBu+FXQHImEg8j/Lw0+vA==}
@@ -6360,6 +6370,8 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
+  '@posthog/core@1.5.0': {}
+
   '@prisma/instrumentation@6.15.0(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -8647,6 +8659,10 @@ snapshots:
       xtend: 4.0.2
 
   postgres-interval@4.0.2: {}
+
+  posthog-node@5.11.0:
+    dependencies:
+      '@posthog/core': 1.5.0
 
   pretty-format@30.2.0:
     dependencies:

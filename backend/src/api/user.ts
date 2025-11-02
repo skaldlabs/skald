@@ -5,6 +5,7 @@ import { generateAccessToken } from '@/lib/tokenUtils'
 import { requireAuth } from '@/middleware/authMiddleware'
 import { EMAIL_VERIFICATION_ENABLED, ENABLE_SECURITY_SETTINGS } from '@/settings'
 import { isValidEmail } from '@/lib/emailUtils'
+import { posthogCapture } from '@/lib/posthogUtils'
 
 interface UserResponse {
     email: string
@@ -37,6 +38,10 @@ export const login = async (req: Request, res: Response) => {
         sameSite: 'lax',
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in ms
         path: '/',
+    })
+
+    posthogCapture('user_logged_in', user.email, {
+        user_email: user.email,
     })
 
     const userResponse: UserResponse = {
@@ -104,6 +109,10 @@ const createUser = async (req: Request, res: Response) => {
         sameSite: 'lax',
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in ms
         path: '/',
+    })
+
+    posthogCapture('user_signed_up', user.email, {
+        user_email: user.email,
     })
 
     const userResponse: UserResponse = {

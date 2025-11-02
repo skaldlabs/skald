@@ -221,3 +221,7 @@ if (!DEBUG && !STRIPE_SECRET_KEY) {
 }
 
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'warn'
+
+// PostHog
+export const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY || 'phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2' // it's a public key that can be leaked
+export const POSTHOG_HOST = process.env.POSTHOG_HOST || 'https://us.i.posthog.com'
