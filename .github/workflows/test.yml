@@ -44,7 +44,7 @@ jobs:
         env:
             DATABASE_URL: postgres://postgres:12345678@localhost:5432/skald2_test
             NODE_ENV: test
-            DEBUG: true
+            IS_DEVELOPMENT: true
             DB_NAME: skald2_test
             DB_USER: postgres
             DB_PASSWORD: '12345678'

@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
 import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
 import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
-import { DEBUG } from '@/settings'
+import { IS_DEVELOPMENT } from '@/settings'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
 import { ChatMessage } from '@/entities/ChatMessage'
@@ -103,7 +103,8 @@ export const _generateStreamingResponse = async (query: string, contextStr: stri
         }
     } catch (error) {
         logger.error({ err: error }, 'Streaming chat agent error')
-        const errorMsg = DEBUG && error instanceof Error ? `${error.message}\n${error.stack}` : 'An error occurred'
+        const errorMsg =
+            IS_DEVELOPMENT && error instanceof Error ? `${error.message}\n${error.stack}` : 'An error occurred'
         const errorData = JSON.stringify({ type: 'error', content: errorMsg })
         res.write(`data: ${errorData}\n\n`)
     } finally {

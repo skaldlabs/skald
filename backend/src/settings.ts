@@ -55,9 +55,9 @@ export const SECRET_KEY = process.env.SECRET_KEY || 'UNSAFE_DEFAULT_SECRET_KEY'
 
 export const TEST = strToBool(process.env.TEST)
 
-export const DEBUG = strToBool(process.env.DEBUG, TEST)
-
 export const NODE_ENV = process.env.NODE_ENV
+
+export const IS_DEVELOPMENT = strToBool(process.env.IS_DEVELOPMENT) || NODE_ENV === 'development'
 
 // postgres
 export const DB_NAME = process.env.DB_NAME || 'skald'
@@ -138,20 +138,20 @@ if (!SUPPORTED_EMBEDDING_PROVIDERS.includes(EMBEDDING_PROVIDER)) {
 }
 
 // Warn if LLM provider API keys are missing
-if (!DEBUG && LLM_PROVIDER === 'openai' && !OPENAI_API_KEY) {
+if (!IS_DEVELOPMENT && LLM_PROVIDER === 'openai' && !OPENAI_API_KEY) {
     logger.warn('OPENAI_API_KEY not set in production')
-} else if (!DEBUG && LLM_PROVIDER === 'anthropic' && !ANTHROPIC_API_KEY) {
+} else if (!IS_DEVELOPMENT && LLM_PROVIDER === 'anthropic' && !ANTHROPIC_API_KEY) {
     logger.warn('ANTHROPIC_API_KEY not set in production')
-} else if (!DEBUG && LLM_PROVIDER === 'local' && !LOCAL_LLM_BASE_URL) {
+} else if (!IS_DEVELOPMENT && LLM_PROVIDER === 'local' && !LOCAL_LLM_BASE_URL) {
     logger.warn('LOCAL_LLM_BASE_URL not set for local provider')
 }
 
 // Warn if embedding provider API keys are missing
-if (!DEBUG && EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
+if (!IS_DEVELOPMENT && EMBEDDING_PROVIDER === 'voyage' && !VOYAGE_API_KEY) {
     logger.warn('VOYAGE_API_KEY not set in production')
-} else if (!DEBUG && EMBEDDING_PROVIDER === 'openai' && !OPENAI_API_KEY) {
+} else if (!IS_DEVELOPMENT && EMBEDDING_PROVIDER === 'openai' && !OPENAI_API_KEY) {
     logger.warn('OPENAI_API_KEY not set for embedding provider in production')
-} else if (!DEBUG && EMBEDDING_PROVIDER === 'local' && !EMBEDDING_SERVICE_URL) {
+} else if (!IS_DEVELOPMENT && EMBEDDING_PROVIDER === 'local' && !EMBEDDING_SERVICE_URL) {
     logger.warn('EMBEDDING_SERVICE_URL not set for local provider')
 }
 
@@ -166,7 +166,7 @@ let CORS_ALLOWED_ORIGINS: string[]
 
 if (CORS_ORIGINS_ENV) {
     CORS_ALLOWED_ORIGINS = CORS_ORIGINS_ENV.split(',').map((origin) => origin.trim())
-} else if (DEBUG) {
+} else if (IS_DEVELOPMENT) {
     CORS_ALLOWED_ORIGINS = ['http://localhost:8000', 'http://localhost:3000', 'http://localhost:5173']
 } else {
     CORS_ALLOWED_ORIGINS = [
@@ -193,10 +193,10 @@ if (IS_SELF_HOSTED_DEPLOY) {
 
 export { CORS_ALLOWED_ORIGINS }
 
-export const ENABLE_SECURITY_SETTINGS = strToBool(process.env.ENABLE_SECURITY_SETTINGS, !DEBUG)
+export const ENABLE_SECURITY_SETTINGS = strToBool(process.env.ENABLE_SECURITY_SETTINGS, !IS_DEVELOPMENT)
 
 // ---- Email Configuration ----
-const DEFAULT_EMAIL_VERIFICATION_ENABLED = !(DEBUG || IS_SELF_HOSTED_DEPLOY)
+const DEFAULT_EMAIL_VERIFICATION_ENABLED = !(IS_DEVELOPMENT || IS_SELF_HOSTED_DEPLOY)
 export const EMAIL_VERIFICATION_ENABLED = strToBool(
     process.env.EMAIL_VERIFICATION_ENABLED,
     DEFAULT_EMAIL_VERIFICATION_ENABLED
@@ -216,7 +216,7 @@ export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 
 // Warn if Stripe keys are missing in production
-if (!DEBUG && !STRIPE_SECRET_KEY) {
+if (!IS_DEVELOPMENT && !STRIPE_SECRET_KEY) {
     logger.warn('STRIPE_SECRET_KEY not set in production')
 }
 

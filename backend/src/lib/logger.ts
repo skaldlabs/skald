@@ -1,7 +1,7 @@
 import pino from 'pino'
 import { pinoHttp } from 'pino-http'
 import { randomUUID } from 'crypto'
-import { DEBUG, LOG_LEVEL, NODE_ENV } from '@/settings'
+import { IS_DEVELOPMENT, LOG_LEVEL } from '@/settings'
 
 /**
  * Serializers to redact sensitive information from logs
@@ -62,18 +62,17 @@ export const logger = pino({
     },
     timestamp: pino.stdTimeFunctions.isoTime,
     // Transport configuration for pretty printing in development
-    transport:
-        DEBUG || NODE_ENV === 'development'
-            ? {
-                  target: 'pino-pretty',
-                  options: {
-                      colorize: true,
-                      translateTime: 'HH:MM:ss Z',
-                      ignore: 'pid,hostname',
-                      singleLine: false,
-                  },
-              }
-            : undefined,
+    transport: IS_DEVELOPMENT
+        ? {
+              target: 'pino-pretty',
+              options: {
+                  colorize: true,
+                  translateTime: 'HH:MM:ss Z',
+                  ignore: 'pid,hostname',
+                  singleLine: false,
+              },
+          }
+        : undefined,
 })
 
 /**

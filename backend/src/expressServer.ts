@@ -15,7 +15,7 @@ import cookieParser from 'cookie-parser'
 import {
     CORS_ALLOWED_ORIGINS,
     CORS_ALLOW_CREDENTIALS,
-    DEBUG,
+    IS_DEVELOPMENT,
     ENABLE_SECURITY_SETTINGS,
     EXPRESS_SERVER_PORT,
 } from '@/settings'
@@ -94,7 +94,7 @@ export const startExpressServer = async () => {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     app.use(function onError(err: any, req: Request, res: Response, next: NextFunction) {
-        if (DEBUG) {
+        if (IS_DEVELOPMENT) {
             return res.status(500).json({ error: String(err) })
         }
 

@@ -4,8 +4,8 @@
     "description": "",
     "main": "dist/index.js",
     "scripts": {
-        "dev:express-server": "NODE_ENV=development DEBUG=true nodemon --exec ts-node src/index.ts --mode=express-server",
-        "dev:memo-processing-server": "NODE_ENV=development DEBUG=true nodemon --exec ts-node src/index.ts --mode=memo-processing-server",
+        "dev:express-server": "NODE_ENV=development nodemon --exec ts-node src/index.ts --mode=express-server",
+        "dev:memo-processing-server": "NODE_ENV=development nodemon --exec ts-node src/index.ts --mode=memo-processing-server",
         "build": "tsc && tsc-alias",
         "start": "node dist/index.js",
         "test": "TEST=true jest --detectOpenHandles",

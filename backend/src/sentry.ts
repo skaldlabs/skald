@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
-import { DEBUG, SENTRY_DSN } from '@/settings'
+import { IS_DEVELOPMENT, SENTRY_DSN } from '@/settings'
 
-if (!DEBUG && SENTRY_DSN) {
+if (!IS_DEVELOPMENT && SENTRY_DSN) {
     Sentry.init({
         dsn: SENTRY_DSN,
         sendDefaultPii: true,
