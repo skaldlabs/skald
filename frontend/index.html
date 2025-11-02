@@ -2,16 +2,6 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link
-            id="favicon-96"
-            rel="icon"
-            type="image/png"
-            href="https://www.useskald.com/favicon-96x96.png"
-            sizes="96x96"
-        />
-        <link id="favicon-svg" rel="icon" type="image/svg+xml" href="https://www.useskald.com/favicon.svg" />
-        <link id="favicon-ico" rel="shortcut icon" href="https://www.useskald.com/favicon.ico" />
         <link
             id="apple-touch-icon"
             rel="apple-touch-icon"
@@ -23,30 +13,30 @@
         <title>Skald</title>
 
         <script>
-            window.addEventListener('load', function () {
-                const BASE_URL = 'https://www.useskald.com'
-                const isLocalhost =
-                    window.location.hostname.includes('localhost') ||
-                    window.location.hostname === '127.0.0.1' ||
-                    window.location.hostname.includes('dev')
+            // window.addEventListener('load', function () {
+            //     const BASE_URL = 'https://www.useskald.com'
+            //     const isLocalhost =
+            //         window.location.hostname.includes('localhost') ||
+            //         window.location.hostname === '127.0.0.1' ||
+            //         window.location.hostname.includes('dev')
 
-                const favicon96 = document.getElementById('favicon-96')
-                const faviconSvg = document.getElementById('favicon-svg')
-                const faviconIco = document.getElementById('favicon-ico')
-                const appleTouchIcon = document.getElementById('apple-touch-icon')
+            //     const favicon96 = document.getElementById('favicon-96')
+            //     const faviconSvg = document.getElementById('favicon-svg')
+            //     const faviconIco = document.getElementById('favicon-ico')
+            //     const appleTouchIcon = document.getElementById('apple-touch-icon')
 
-                if (isLocalhost) {
-                    favicon96.href = `${BASE_URL}/favicon-96x96-dev.png`
-                    faviconSvg.href = `${BASE_URL}/favicon-dev.svg`
-                    faviconIco.href = `${BASE_URL}/faviconDev.ico`
-                    appleTouchIcon.href = `${BASE_URL}/apple-touch-icon-dev.png`
-                } else {
-                    favicon96.href = `${BASE_URL}/favicon-96x96.png`
-                    faviconSvg.href = `${BASE_URL}/favicon.svg`
-                    faviconIco.href = `${BASE_URL}/favicon.ico`
-                    appleTouchIcon.href = `${BASE_URL}/apple-touch-icon.png`
-                }
-            })
+            //     if (isLocalhost) {
+            //         favicon96.href = `${BASE_URL}/favicon-96x96-dev.png`
+            //         faviconSvg.href = `${BASE_URL}/favicon-dev.svg`
+            //         faviconIco.href = `${BASE_URL}/faviconDev.ico`
+            //         appleTouchIcon.href = `${BASE_URL}/apple-touch-icon-dev.png`
+            //     } else {
+            //         favicon96.href = `${BASE_URL}/favicon-96x96.png`
+            //         faviconSvg.href = `${BASE_URL}/favicon.svg`
+            //         faviconIco.href = `${BASE_URL}/favicon.ico`
+            //         appleTouchIcon.href = `${BASE_URL}/apple-touch-icon.png`
+            //     }
+            // })
         </script>
     </head>
     <body>
