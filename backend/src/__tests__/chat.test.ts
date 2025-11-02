@@ -384,8 +384,127 @@ describe('Chat API', () => {
 
             expect(chatAgent.runChatAgent).toHaveBeenCalledWith(
                 'test query',
-                'Result 1: First result\n\nResult 2: Second result\n\n'
+                'Result 1: First result\n\nResult 2: Second result\n\n',
+                null
             )
+        })
+
+        it('should pass custom prompt to chat agent when provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            const customPrompt = 'You are a helpful assistant focused on technical documentation.'
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                    prompt: customPrompt,
+                })
+
+            expect(chatAgent.runChatAgent).toHaveBeenCalledWith(
+                'test query',
+                'Result 1: Result content\n\n',
+                customPrompt
+            )
+        })
+
+        it('should pass null prompt to chat agent when not provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                })
+
+            expect(chatAgent.runChatAgent).toHaveBeenCalledWith('test query', 'Result 1: Result content\n\n', null)
+        })
+
+        it('should pass custom prompt to streaming chat agent when provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            async function* mockStreamGenerator() {
+                yield { content: 'chunk1' }
+                yield { content: 'chunk2' }
+            }
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
+
+            const customPrompt = 'Answer in a concise manner.'
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                    stream: true,
+                    prompt: customPrompt,
+                })
+
+            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith(
+                'test query',
+                'Result 1: Result content\n\n',
+                customPrompt
+            )
+        })
+
+        it('should pass null prompt to streaming chat agent when not provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            async function* mockStreamGenerator() {
+                yield { content: 'chunk1' }
+                yield { content: 'chunk2' }
+            }
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                    stream: true,
+                })
+
+            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith('test query', 'Result 1: Result content\n\n', null)
         })
     })
 })

@@ -12,12 +12,17 @@ interface StreamChunk {
     content?: string
 }
 
-export async function runChatAgent(query: string, context: string = ''): Promise<ChatAgentResult> {
+export async function runChatAgent(
+    query: string,
+    context: string = '',
+    customPrompt: string | null = null
+): Promise<ChatAgentResult> {
     // Use the LLM directly for non-streaming
     const llm = LLMService.getLLM(0)
 
     const prompt = ChatPromptTemplate.fromMessages([
         ['system', CHAT_AGENT_INSTRUCTIONS],
+        ['system', customPrompt || ''],
         ['human', '{input}'],
     ])
 
@@ -34,13 +39,18 @@ export async function runChatAgent(query: string, context: string = ''): Promise
     }
 }
 
-export async function* streamChatAgent(query: string, context: string = ''): AsyncGenerator<StreamChunk> {
+export async function* streamChatAgent(
+    query: string,
+    context: string = '',
+    customPrompt: string | null = null
+): AsyncGenerator<StreamChunk> {
     try {
         // For streaming, we'll use the LLM directly instead of the agent
         const llm = LLMService.getLLM(0)
 
         const prompt = ChatPromptTemplate.fromMessages([
             ['system', CHAT_AGENT_INSTRUCTIONS],
+            ['system', customPrompt || ''],
             ['human', '{input}'],
         ])
 

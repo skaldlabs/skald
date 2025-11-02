@@ -16,6 +16,7 @@ export const chat = async (req: Request, res: Response) => {
     const stream = req.body.stream || false
     const filters = req.body.filters || []
     const chatId = req.body.chat_id
+    const customPrompt = req.body.prompt || null
 
     if (!query) {
         return res.status(400).json({ error: 'Query is required' })
@@ -50,12 +51,12 @@ export const chat = async (req: Request, res: Response) => {
 
     try {
         if (stream) {
-            const fullResponse = await _generateStreamingResponse(query, contextStr, res)
+            const fullResponse = await _generateStreamingResponse(query, contextStr, customPrompt, res)
             await _createChatMessagePair(project, query, fullResponse, chatId)
             res.end()
         } else {
             // non-streaming response
-            const result = await runChatAgent(query, contextStr)
+            const result = await runChatAgent(query, contextStr, customPrompt)
             await _createChatMessagePair(project, query, result.output, chatId)
 
             return res.status(200).json({
@@ -78,7 +79,12 @@ export const _setStreamingResponseHeaders = (res: Response) => {
     res.setHeader('X-Accel-Buffering', 'no')
 }
 
-export const _generateStreamingResponse = async (query: string, contextStr: string, res: Response): Promise<string> => {
+export const _generateStreamingResponse = async (
+    query: string,
+    contextStr: string,
+    customPrompt: string | null = null,
+    res: Response
+): Promise<string> => {
     _setStreamingResponseHeaders(res)
 
     // establish connection
@@ -86,7 +92,7 @@ export const _generateStreamingResponse = async (query: string, contextStr: stri
 
     let fullResponse = ''
     try {
-        for await (const chunk of streamChatAgent(query, contextStr)) {
+        for await (const chunk of streamChatAgent(query, contextStr, customPrompt)) {
             // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
             if (chunk.content && typeof chunk.content === 'object') {
                 // extract text from dict (Anthropic format)
