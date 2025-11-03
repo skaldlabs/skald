@@ -417,6 +417,16 @@ describe('Chat API', () => {
                 'Result 1: Result content\n\n',
                 customPrompt
             )
+
+            const em = orm.em.fork()
+            const chatMessages = await em.find(ChatMessage, { project: project.uuid }, { orderBy: { sent_at: 'ASC' } })
+            expect(chatMessages).toHaveLength(2)
+
+            // ensure the client system prompt has been saved to the first message
+            expect(chatMessages[0].client_system_prompt).toBe(customPrompt)
+
+            // ensure the model and user messages are in the same message group
+            expect(chatMessages[0].message_group_id).toEqual(chatMessages[1].message_group_id)
         })
 
         it('should pass null prompt to chat agent when not provided', async () => {
@@ -442,7 +452,7 @@ describe('Chat API', () => {
             expect(chatAgent.runChatAgent).toHaveBeenCalledWith('test query', 'Result 1: Result content\n\n', null)
         })
 
-        it('should pass custom prompt to streaming chat agent when provided', async () => {
+        it('should pass client system prompt to streaming chat agent when provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -459,7 +469,7 @@ describe('Chat API', () => {
             ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
             ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
-            const customPrompt = 'Answer in a concise manner.'
+            const clientSystemPrompt = 'Answer in a concise manner.'
 
             await request(app)
                 .post('/api/chat')
@@ -468,17 +478,27 @@ describe('Chat API', () => {
                 .send({
                     query: 'test query',
                     stream: true,
-                    system_prompt: customPrompt,
+                    system_prompt: clientSystemPrompt,
                 })
 
             expect(chatAgent.streamChatAgent).toHaveBeenCalledWith(
                 'test query',
                 'Result 1: Result content\n\n',
-                customPrompt
+                clientSystemPrompt
             )
+            // check that the created chat messages have the correct client system prompt
+            const em = orm.em.fork()
+            const chatMessages = await em.find(ChatMessage, { project: project.uuid }, { orderBy: { sent_at: 'ASC' } })
+            expect(chatMessages).toHaveLength(2)
+
+            // ensure the client system prompt has been saved to the first message
+            expect(chatMessages[0].client_system_prompt).toBe(clientSystemPrompt)
+
+            // ensure the model and user messages are in the same message group
+            expect(chatMessages[0].message_group_id).toEqual(chatMessages[1].message_group_id)
         })
 
-        it('should pass null prompt to streaming chat agent when not provided', async () => {
+        it('should pass null client system prompt to streaming chat agent when not provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)

@@ -10,6 +10,7 @@ import { DI } from '@/di'
 import { Project } from '@/entities/Project'
 import { Chat } from '@/entities/Chat'
 import { randomUUID } from 'crypto'
+import { CHAT_AGENT_INSTRUCTIONS } from '@/agents/chatAgent/prompts'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -52,12 +53,12 @@ export const chat = async (req: Request, res: Response) => {
     try {
         if (stream) {
             const fullResponse = await _generateStreamingResponse(query, contextStr, clientSystemPrompt, res)
-            await _createChatMessagePair(project, query, fullResponse, chatId)
+            await _createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
             res.end()
         } else {
             // non-streaming response
             const result = await runChatAgent(query, contextStr, clientSystemPrompt)
-            await _createChatMessagePair(project, query, result.output, chatId)
+            await _createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
 
             return res.status(200).json({
                 ok: true,
@@ -124,7 +125,8 @@ export const _createChatMessagePair = async (
     project: Project,
     userMessage: string,
     modelMessage: string,
-    chatId?: string
+    chatId?: string,
+    clientSystemPrompt?: string | null
 ): Promise<void> => {
     const entitiesToPersist = []
     let chat: Chat
@@ -139,12 +141,16 @@ export const _createChatMessagePair = async (
         chat = await DI.em.findOneOrFail(Chat, { uuid: chatId })
     }
 
+    const messageGroupId = randomUUID()
     const timestamp = Date.now()
     const userMessageEntity = DI.em.create(ChatMessage, {
         uuid: randomUUID(),
+        message_group_id: messageGroupId,
         project: project,
         chat: chat,
         content: userMessage,
+        skald_system_prompt: CHAT_AGENT_INSTRUCTIONS,
+        client_system_prompt: clientSystemPrompt || null,
         sent_by: 'user',
         sent_at: new Date(timestamp),
     })
@@ -152,6 +158,7 @@ export const _createChatMessagePair = async (
 
     const modelMessageEntity = DI.em.create(ChatMessage, {
         uuid: randomUUID(),
+        message_group_id: messageGroupId,
         project: project,
         chat: chat,
         content: modelMessage,
