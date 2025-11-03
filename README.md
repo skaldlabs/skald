@@ -109,4 +109,5 @@ List of people who have contributed to any of our repos.
     <a href="https://github.com/gustavocidornelas"><img src="https://github.com/gustavocidornelas.png" width="60px" alt="gustavocidornelas"/></a>
     <a href="https://github.com/viniciusgabrielfo"><img src="https://github.com/viniciusgabrielfo.png" width="60px" alt="viniciusgabrielfo"/></a> 
     <a href="https://github.com/Kastango"><img src="https://github.com/Kastango.png" width="60px" alt="Kastango"/></a> 
+    <a href="https://github.com/jonchurch"><img src="https://github.com/jonchurch.png" width="60px" alt="jonchurch"/></a> 
 </p>
