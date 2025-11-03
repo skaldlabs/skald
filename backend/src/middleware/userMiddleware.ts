@@ -13,6 +13,8 @@ export const userMiddleware = () => {
         const accessToken = req.cookies.accessToken
         const authHeader = req.headers.authorization
 
+        console.log('accessToken', accessToken)
+
         if (accessToken) {
             const decodedUser = verifyAccessToken(accessToken)
             if (decodedUser) {

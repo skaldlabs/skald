@@ -21,32 +21,40 @@ export class Memo {
     @Property()
     title!: string
 
-    @Property()
-    content_length!: number
+    // nullable because we don't always set it when creating a memo
+    @Property({ nullable: true })
+    content_length?: number
+
+    // nullable because we don't always set it when creating a memo
+    @Property({ nullable: true })
+    content_hash?: string
 
     @Property({ type: 'json' })
     metadata!: any
 
     @Property({ nullable: true })
-    expiration_date?: Date
+    expiration_date?: Date | null
 
     @Property()
     archived!: boolean
 
     @Property()
-    content_hash!: string
-
-    @Property()
     pending!: boolean
 
     @Property({ nullable: true })
-    type?: string
+    type?: string // 'plaintext' | 'document'
 
     @Property({ nullable: true })
-    source?: string
+    document_format?: string | null
 
     @Property({ nullable: true })
-    client_reference_id?: string
+    object_storage_url?: string
+
+    @Property({ nullable: true })
+    source?: string | null
+
+    @Property({ nullable: true })
+    client_reference_id?: string | null
 
     @ManyToOne({
         entity: () => Project,

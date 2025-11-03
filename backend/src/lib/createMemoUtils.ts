@@ -24,6 +24,7 @@ import {
     TEST,
 } from '../settings'
 import { logger } from './logger'
+import { EntityData } from '@mikro-orm/core'
 
 let sqsClient: SQSClient | null = null
 if (SQS_QUEUE_URL && INTER_PROCESS_QUEUE === 'sqs') {
@@ -32,14 +33,33 @@ if (SQS_QUEUE_URL && INTER_PROCESS_QUEUE === 'sqs') {
 }
 
 export interface MemoData {
-    content: string
+    content?: string
     title: string
-    metadata?: Record<string, unknown> | null
+    metadata?: Record<string, any> | null
     reference_id?: string | null
     tags?: string[] | null
     source?: string | null
     expiration_date?: Date | null
+    type: string
 }
+
+export type MemoCreationData = Pick<
+    Memo,
+    | 'uuid'
+    | 'title'
+    | 'metadata'
+    | 'client_reference_id'
+    | 'source'
+    | 'expiration_date'
+    | 'project'
+    | 'pending'
+    | 'archived'
+    | 'created_at'
+    | 'updated_at'
+    | 'content_length'
+    | 'content_hash'
+    | 'type'
+>
 
 async function _createMemoObject(memoData: MemoData, project: Project): Promise<Memo> {
     const em = DI.em.fork()
@@ -47,28 +67,40 @@ async function _createMemoObject(memoData: MemoData, project: Project): Promise<
     try {
         await em.begin()
 
-        const memo = em.create(Memo, {
+        const memoCreationData: MemoCreationData = {
             uuid: randomUUID(),
             title: memoData.title,
             metadata: memoData.metadata || {},
             client_reference_id: memoData.reference_id,
             source: memoData.source,
             expiration_date: memoData.expiration_date,
-            content_length: memoData.content.length,
-            content_hash: sha256(memoData.content),
+            type: memoData.type,
             project,
             pending: false,
             archived: false,
             created_at: new Date(),
             updated_at: new Date(),
-        })
+        }
 
-        const memoContent = em.create(MemoContent, {
-            uuid: randomUUID(),
-            memo,
-            content: memoData.content,
-            project,
-        })
+        if (memoData.content) {
+            memoCreationData.content_length = memoData.content.length
+            memoCreationData.content_hash = sha256(memoData.content)
+        }
+
+        const memo = em.create(Memo, memoCreationData)
+
+        const entitiesToFlush: EntityData<Memo | MemoContent | MemoTag>[] = [memo]
+
+        // for document uploads we don't set content yet, it gets set after extraction
+        if (memoData.content) {
+            const memoContent = em.create(MemoContent, {
+                uuid: randomUUID(),
+                memo,
+                content: memoData.content,
+                project,
+            })
+            entitiesToFlush.push(memoContent)
+        }
 
         const memoTags = (memoData.tags || []).map((tag) =>
             em.create(MemoTag, {
@@ -78,8 +110,9 @@ async function _createMemoObject(memoData: MemoData, project: Project): Promise<
                 project,
             })
         )
+        entitiesToFlush.push(...memoTags)
 
-        await em.persistAndFlush([memo, memoContent, ...memoTags])
+        await em.persistAndFlush(entitiesToFlush)
         await em.commit()
 
         return memo

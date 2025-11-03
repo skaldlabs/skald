@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express'
 import { z } from 'zod'
+import multer from 'multer'
 import { DI } from '@/di'
 import { NextFunction } from 'express'
 import { createNewMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
@@ -13,11 +14,18 @@ import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
 
-const CreateMemoRequest = z.object({
+// Configure multer for file uploads (store in memory)
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+})
+
+const CreatePlaintextMemoRequest = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
     content: z.string().min(1, 'Content is required'),
     source: z.string().max(255).optional().nullable(),
-    type: z.string().max(255).optional().nullable(),
     reference_id: z.string().max(255).optional().nullable(),
     expiration_date: z.coerce
         .date()
@@ -63,12 +71,77 @@ const createMemo = async (req: Request, res: Response) => {
     if (!project) {
         return res.status(404).json({ error: 'Project not found' })
     }
-    const validatedData = CreateMemoRequest.safeParse(req.body)
+
+    const contentType = req.headers['content-type']
+    if (!contentType) {
+        return res.status(400).json({ error: 'Content-Type header is required' })
+    }
+
+    const isMultipart = contentType.startsWith('multipart/form-data')
+    const isJson = contentType.startsWith('application/json')
+
+    if (!isMultipart && !isJson) {
+        return res.status(400).json({
+            error: 'Content-Type must be multipart/form-data or application/json',
+        })
+    }
+
+    if (isMultipart) {
+        upload.single('file')(req, res, async (err) => {
+            if (err) {
+                if (err instanceof multer.MulterError) {
+                    if (err.code === 'LIMIT_FILE_SIZE') {
+                        return res.status(400).json({ error: 'File size exceeds 10MB limit' })
+                    }
+                    return res.status(400).json({ error: `File upload error: ${err.message}` })
+                }
+                return res.status(500).json({ error: 'Internal server error during file upload' })
+            }
+
+            const file = req.file
+            if (!file) {
+                return res.status(400).json({ error: 'No file provided' })
+            }
+
+            try {
+                const title = req.body.title || file.originalname
+                const source = req.body.source || null
+                const reference_id = req.body.reference_id || null
+                const expiration_date = req.body.expiration_date ? new Date(req.body.expiration_date) : null
+                const tags = req.body.tags ? JSON.parse(req.body.tags) : []
+                const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {}
+
+                const memoData = {
+                    title: title.substring(0, 255),
+                    source,
+                    reference_id,
+                    expiration_date,
+                    tags,
+                    metadata: {
+                        ...metadata,
+                        original_filename: file.originalname,
+                        mimetype: file.mimetype,
+                        size: file.size,
+                    },
+                }
+
+                const memo = await createNewMemo({ ...memoData, type: 'document' }, project)
+                return res.status(201).json({ memo_uuid: memo.uuid })
+            } catch (error) {
+                logger.error({ err: error }, 'Error processing file upload')
+                return res.status(500).json({ error: 'Failed to process uploaded file' })
+            }
+        })
+        return
+    }
+
+    // Handle JSON request
+    const validatedData = CreatePlaintextMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
         return res.status(400).json({ error: validatedData.error.flatten() })
     }
 
-    const memo = await createNewMemo(validatedData.data, project)
+    const memo = await createNewMemo({ ...validatedData.data, type: 'plaintext' }, project)
 
     return res.status(201).json({ memo_uuid: memo.uuid })
 }
@@ -167,6 +240,10 @@ export const updateMemo = async (req: Request, res: Response) => {
                 em.remove(memoTags)
                 em.remove(memoChunks)
             } else {
+                if (validatedData.data[field] === null || validatedData.data[field] === undefined) {
+                    continue
+                }
+
                 memo[field] = validatedData.data[field]
             }
         }
