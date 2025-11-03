@@ -1,5 +1,6 @@
 import { ChatMessage as ChatMessageType } from '@/stores/chatStore'
 import { User, Bot } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 
 interface ChatMessageProps {
     message: ChatMessageType
@@ -17,11 +18,10 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
                 {isAssistant && <Bot size={16} />}
                 {isSystem && <div className="system-icon">!</div>}
             </div>
-            <div className="message-content">
-                <div className="message-text">
-                    {message.content}
-                    {message.isStreaming && <span className="streaming-cursor"></span>}
-                </div>
+            <div className="message-content react-markdown">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+                {message.isStreaming && !message.content && <span className="streaming-cursor"></span>}
+
                 <div className="message-timestamp">{message.timestamp.toLocaleTimeString()}</div>
             </div>
         </div>

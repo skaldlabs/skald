@@ -17,6 +17,8 @@ interface ChatState {
     isLoading: boolean
     isStreaming: boolean
     currentStreamingMessageId: string | null
+    systemPrompt: string
+    setSystemPrompt: (prompt: string) => void
     sendMessage: (query: string) => Promise<void>
     clearMessages: () => void
     addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }) => void
@@ -29,6 +31,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     isLoading: false,
     isStreaming: false,
     currentStreamingMessageId: null,
+    systemPrompt: '',
+
+    setSystemPrompt: (prompt: string) => {
+        set({ systemPrompt: prompt })
+    },
 
     addMessage: (message) => {
         const newMessage: ChatMessage = {
@@ -83,13 +90,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         set({ currentStreamingMessageId: assistantMessageId })
 
+        const payload: Record<string, unknown> = {
+            query: query.trim(),
+            project_id: currentProject.uuid,
+            stream: true,
+        }
+
+        const systemPrompt = get().systemPrompt.trim()
+        if (systemPrompt) {
+            payload.system_prompt = systemPrompt
+        }
+
         api.stream(
             '/v1/chat/',
-            {
-                query: query.trim(),
-                project_id: currentProject.uuid,
-                stream: true,
-            },
+            payload,
             (data: ApiStreamData) => {
                 if (data.type === 'token' && data.content) {
                     const currentContent = get().messages.find((m) => m.id === assistantMessageId)?.content || ''

@@ -149,11 +149,6 @@
     border: 1px solid var(--border);
     position: relative;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.message-text {
-    line-height: 1.5;
-    word-wrap: break-word;
 
     .streaming-cursor {
         display: inline-block;
@@ -164,6 +159,11 @@
         animation: blink 1s infinite;
         vertical-align: text-bottom;
     }
+}
+
+.message-text {
+    line-height: 1.5;
+    word-wrap: break-word;
 }
 
 @keyframes blink {
