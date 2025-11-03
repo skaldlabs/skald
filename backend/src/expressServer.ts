@@ -103,42 +103,63 @@ export const startExpressServer = async () => {
         res.json({ error: 'Service unavailable', sentry_error_id: res.sentry })
     })
 
-    DI.server = app.listen(EXPRESS_SERVER_PORT, '0.0.0.0', () => {
-        logger.info(`Express server started at http://0.0.0.0:${EXPRESS_SERVER_PORT}`)
+    const HOST = '0.0.0.0'
+    DI.server = app.listen(EXPRESS_SERVER_PORT, HOST, async (err) => {
+        if (err) {
+            logger.error({ error: err }, `Could not start Express server on http://${HOST}:${EXPRESS_SERVER_PORT}`)
+            await gracefulShutdown('listen-error', 1)
+            return
+        }
+        logger.info(`Express server started at http://${HOST}:${EXPRESS_SERVER_PORT}`)
     })
 
-    const gracefulShutdown = async (signal: string) => {
+    const closeServer = (): Promise<void> =>
+        new Promise((resolve, reject) => {
+            DI.server.close((err) => (err ? reject(err) : resolve()))
+        })
+
+    const gracefulShutdown = async (signal: string, exitCode = 0) => {
         logger.info(`${signal} received, starting graceful shutdown...`)
 
-        DI.server.close(async (err) => {
-            if (err) {
-                logger.error({ error: err }, 'Error closing server')
-                process.exit(1)
-            }
+        const timer = setTimeout(() => {
+            logger.error('Forced shutdown after timeout')
+            process.exit(1)
+        }, 30000).unref()
 
-            logger.info('HTTP server closed')
+        try {
+            if (DI.server.listening) {
+                await closeServer()
+                // drop any idle keep alive connections immediately on Node >=18 <19
+                DI.server.closeIdleConnections()
+                logger.info('HTTP server closed')
+            } else {
+                logger.info('HTTP server was not listening; skipping server.close()')
+            }
 
             try {
                 await posthog.shutdown()
                 logger.info('PostHog client shut down')
+            } catch (error) {
+                logger.error({ error }, 'Error shutting down PostHog')
+            }
 
+            try {
                 await DI.orm.close()
                 logger.info('Database connection closed')
-
-                logger.info('Graceful shutdown complete')
-                process.exit(0)
             } catch (error) {
-                logger.error({ error }, 'Error during graceful shutdown')
-                process.exit(1)
+                logger.error({ error }, 'Error closing database connection')
             }
-        })
 
-        setTimeout(() => {
-            logger.error('Forced shutdown after timeout')
+            clearTimeout(timer)
+            logger.info('Graceful shutdown complete')
+            process.exit(exitCode)
+        } catch (error) {
+            logger.error({ error }, 'Error during graceful shutdown')
+            clearTimeout(timer)
             process.exit(1)
-        }, 30000)
+        }
     }
 
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+    process.once('SIGTERM', () => gracefulShutdown('SIGTERM'))
+    process.once('SIGINT', () => gracefulShutdown('SIGINT'))
 }
