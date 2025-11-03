@@ -409,7 +409,7 @@ describe('Chat API', () => {
                 .query({ project_id: project.uuid })
                 .send({
                     query: 'test query',
-                    prompt: customPrompt,
+                    system_prompt: customPrompt,
                 })
 
             expect(chatAgent.runChatAgent).toHaveBeenCalledWith(
@@ -468,7 +468,7 @@ describe('Chat API', () => {
                 .send({
                     query: 'test query',
                     stream: true,
-                    prompt: customPrompt,
+                    system_prompt: customPrompt,
                 })
 
             expect(chatAgent.streamChatAgent).toHaveBeenCalledWith(
