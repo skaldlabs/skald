@@ -25,6 +25,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.922.0",
         "@aws-sdk/client-sqs": "^3.921.0",
         "@chonkiejs/core": "^0.0.5",
         "@langchain/anthropic": "^0.3.0",

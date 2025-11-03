@@ -13,6 +13,7 @@ import { MemoTag } from '@/entities/MemoTag'
 import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
+import { uploadFileToS3, generateS3Key, deleteFileFromS3 } from '@/lib/s3Utils'
 
 // Configure multer for file uploads (store in memory)
 const upload = multer({
@@ -111,6 +112,7 @@ const createMemo = async (req: Request, res: Response) => {
                 const tags = req.body.tags ? JSON.parse(req.body.tags) : []
                 const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {}
 
+                // Create memo first to get UUID
                 const memoData = {
                     title: title.substring(0, 255),
                     source,
@@ -126,6 +128,22 @@ const createMemo = async (req: Request, res: Response) => {
                 }
 
                 const memo = await createNewMemo({ ...memoData, type: 'document' }, project)
+
+                // Upload file to S3
+                const s3Key = generateS3Key(project.uuid, memo.uuid, file.originalname)
+                await uploadFileToS3(file.buffer, s3Key, file.mimetype, {
+                    'memo-uuid': memo.uuid,
+                    'project-uuid': project.uuid,
+                    'original-filename': file.originalname,
+                })
+
+                // Update memo metadata with S3 key
+                memo.metadata = {
+                    ...memo.metadata,
+                    s3_key: s3Key,
+                }
+                await DI.em.persistAndFlush(memo)
+
                 return res.status(201).json({ memo_uuid: memo.uuid })
             } catch (error) {
                 logger.error({ err: error }, 'Error processing file upload')
@@ -333,6 +351,16 @@ export const deleteMemo = async (req: Request, res: Response) => {
 
     if (!memo) {
         return res.status(404).json({ error: 'Memo not found' })
+    }
+
+    // Delete file from S3 if it exists
+    if (memo.metadata && memo.metadata.s3_key) {
+        try {
+            await deleteFileFromS3(memo.metadata.s3_key as string)
+        } catch (error) {
+            logger.error({ err: error, memoUuid: memo.uuid }, 'Failed to delete file from S3')
+            // Continue with memo deletion even if S3 deletion fails
+        }
     }
 
     // delete memo and all related data -- content, summary, tags, chunks
