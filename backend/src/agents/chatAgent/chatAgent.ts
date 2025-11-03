@@ -15,16 +15,17 @@ interface StreamChunk {
 export async function runChatAgent(
     query: string,
     context: string = '',
-    customPrompt: string | null = null
+    clientSystemPrompt: string | null = null
 ): Promise<ChatAgentResult> {
     // Use the LLM directly for non-streaming
     const llm = LLMService.getLLM(0)
+    const prompts: [string, string][] = [['system', CHAT_AGENT_INSTRUCTIONS]]
+    if (clientSystemPrompt) {
+        prompts.push(['system', clientSystemPrompt || ''])
+    }
+    prompts.push(['human', '{input}'])
 
-    const prompt = ChatPromptTemplate.fromMessages([
-        ['system', CHAT_AGENT_INSTRUCTIONS],
-        ['system', customPrompt || ''],
-        ['human', '{input}'],
-    ])
+    const prompt = ChatPromptTemplate.fromMessages(prompts)
 
     const chain = prompt.pipe(llm)
 
@@ -42,17 +43,20 @@ export async function runChatAgent(
 export async function* streamChatAgent(
     query: string,
     context: string = '',
-    customPrompt: string | null = null
+    clientSystemPrompt: string | null = null
 ): AsyncGenerator<StreamChunk> {
     try {
         // For streaming, we'll use the LLM directly instead of the agent
         const llm = LLMService.getLLM(0)
 
-        const prompt = ChatPromptTemplate.fromMessages([
-            ['system', CHAT_AGENT_INSTRUCTIONS],
-            ['system', customPrompt || ''],
-            ['human', '{input}'],
-        ])
+        const prompts: [string, string][] = [['system', CHAT_AGENT_INSTRUCTIONS]]
+        if (clientSystemPrompt) {
+            prompts.push(['system', clientSystemPrompt || ''])
+        }
+
+        prompts.push(['human', '{input}'])
+
+        const prompt = ChatPromptTemplate.fromMessages(prompts)
 
         const chain = prompt.pipe(llm)
 

@@ -10,13 +10,14 @@ import { DI } from '@/di'
 import { Project } from '@/entities/Project'
 import { Chat } from '@/entities/Chat'
 import { randomUUID } from 'crypto'
+import { CHAT_AGENT_INSTRUCTIONS } from '@/agents/chatAgent/prompts'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
     const stream = req.body.stream || false
     const filters = req.body.filters || []
     const chatId = req.body.chat_id
-    const customPrompt = req.body.prompt || null
+    const clientSystemPrompt = req.body.system_prompt || null
 
     if (!query) {
         return res.status(400).json({ error: 'Query is required' })
@@ -51,13 +52,13 @@ export const chat = async (req: Request, res: Response) => {
 
     try {
         if (stream) {
-            const fullResponse = await _generateStreamingResponse(query, contextStr, customPrompt, res)
-            await _createChatMessagePair(project, query, fullResponse, chatId)
+            const fullResponse = await _generateStreamingResponse(query, contextStr, clientSystemPrompt, res)
+            await _createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
             res.end()
         } else {
             // non-streaming response
-            const result = await runChatAgent(query, contextStr, customPrompt)
-            await _createChatMessagePair(project, query, result.output, chatId)
+            const result = await runChatAgent(query, contextStr, clientSystemPrompt)
+            await _createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
 
             return res.status(200).json({
                 ok: true,
@@ -82,7 +83,7 @@ export const _setStreamingResponseHeaders = (res: Response) => {
 export const _generateStreamingResponse = async (
     query: string,
     contextStr: string,
-    customPrompt: string | null = null,
+    clientSystemPrompt: string | null = null,
     res: Response
 ): Promise<string> => {
     _setStreamingResponseHeaders(res)
@@ -92,7 +93,7 @@ export const _generateStreamingResponse = async (
 
     let fullResponse = ''
     try {
-        for await (const chunk of streamChatAgent(query, contextStr, customPrompt)) {
+        for await (const chunk of streamChatAgent(query, contextStr, clientSystemPrompt)) {
             // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
             if (chunk.content && typeof chunk.content === 'object') {
                 // extract text from dict (Anthropic format)
@@ -124,7 +125,8 @@ export const _createChatMessagePair = async (
     project: Project,
     userMessage: string,
     modelMessage: string,
-    chatId?: string
+    chatId?: string,
+    clientSystemPrompt?: string | null
 ): Promise<void> => {
     const entitiesToPersist = []
     let chat: Chat
@@ -139,12 +141,16 @@ export const _createChatMessagePair = async (
         chat = await DI.em.findOneOrFail(Chat, { uuid: chatId })
     }
 
+    const messageGroupId = randomUUID()
     const timestamp = Date.now()
     const userMessageEntity = DI.em.create(ChatMessage, {
         uuid: randomUUID(),
+        message_group_id: messageGroupId,
         project: project,
         chat: chat,
         content: userMessage,
+        skald_system_prompt: CHAT_AGENT_INSTRUCTIONS,
+        client_system_prompt: clientSystemPrompt || null,
         sent_by: 'user',
         sent_at: new Date(timestamp),
     })
@@ -152,6 +158,7 @@ export const _createChatMessagePair = async (
 
     const modelMessageEntity = DI.em.create(ChatMessage, {
         uuid: randomUUID(),
+        message_group_id: messageGroupId,
         project: project,
         chat: chat,
         content: modelMessage,
