@@ -1,5 +1,6 @@
 import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings, CreditCard, BookOpen } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
 import {
     Sidebar,
@@ -16,6 +17,7 @@ import { useTheme } from '@/components/ThemeProvider'
 import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
 import { useProjectStore } from '@/stores/projectStore'
 import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
+import { TalkToFounderModal } from '@/components/AppLayout/Sider/TalkToFounderModal'
 import { isSelfHostedDeploy } from '@/config'
 
 interface MenuItem {
@@ -33,6 +35,7 @@ export const Sider = () => {
     const logout = useAuthStore((state) => state.logout)
     const { theme, toggleTheme } = useTheme()
     const currentProject = useProjectStore((state) => state.currentProject)
+    const [talkToFounderModalOpen, setTalkToFounderModalOpen] = useState(false)
 
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
@@ -134,6 +137,14 @@ export const Sider = () => {
                     )
                 })}
             </SidebarContent>
+
+            <div className="px-4 py-2 text-xs text-muted-foreground text-center">
+                <button onClick={() => setTalkToFounderModalOpen(true)} className="hover:underline cursor-pointer">
+                    Talk to a founder
+                </button>
+            </div>
+
+            <TalkToFounderModal open={talkToFounderModalOpen} onOpenChange={setTalkToFounderModalOpen} />
 
             <SidebarFooter className="border-t px-3 py-2">
                 <SidebarGroup>
