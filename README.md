@@ -97,7 +97,7 @@ MIT 🤸
 
 We'd be glad to have your contributions! See [CONTRIBUTING.md](/CONTRIBUTING.md) for instructions on how to run Skald locally and how to contribute.
 
-Feel free to join our [Slack Community](https://skaldcommunity.slack.com)
+Feel free to join our [Slack Community](https://join.slack.com/t/skaldcommunity/shared_invite/zt-3he986lub-UWKTZneOAUeTFa4LDXpFEg)
 
 ## ❤️ Contributors
 
