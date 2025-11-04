@@ -15,6 +15,7 @@ import {
     ExternalLink,
     Code,
     Database,
+    RulerDimensionLine,
 } from 'lucide-react'
 import { formatDate } from '@/components/utils/dateUtils'
 
@@ -23,6 +24,21 @@ interface DetailedMemoViewProps {
 }
 
 export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
+    const getExpirationStyling = (dateString: string) => {
+        const expirationDate = new Date(dateString)
+        const now = new Date()
+        const oneMonthFromNow = new Date()
+        oneMonthFromNow.setMonth(now.getMonth() + 1)
+
+        if (expirationDate < now) {
+            return { colorClass: 'text-destructive', label: 'Expired:' }
+        }
+        if (expirationDate < oneMonthFromNow) {
+            return { colorClass: 'text-amber-600', label: 'Expires:' }
+        }
+        return { colorClass: 'text-muted-foreground', labelColorClass: 'text-white', label: 'Expires:' }
+    }
+
     const getStatusBadge = () => {
         if (memo.archived) {
             return (
@@ -51,44 +67,46 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
     const getTypeIcon = () => {
         switch (memo.type?.toLowerCase()) {
             case 'code':
-                return <Code className="h-4 w-4" />
+                return <Code className="h-6 w-6" />
             case 'document':
-                return <FileText className="h-4 w-4" />
+                return <FileText className="h-6 w-6" />
             default:
-                return <Database className="h-4 w-4" />
+                return <Database className="h-6 w-6" />
         }
     }
+
+    const expirationStyling = memo.expiration_date ? getExpirationStyling(memo.expiration_date) : null
 
     return (
         <div className="space-y-6">
             {/* Header Section */}
             <div className="space-y-4">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             {getTypeIcon()}
                             <h1 className="text-2xl font-bold">{memo.title}</h1>
                         </div>
-                        {memo.source && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <ExternalLink className="h-4 w-4" />
-                                <span>Source: {memo.source}</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {getStatusBadge()}
-                        {memo.type && (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                                {getTypeIcon()}
-                                {memo.type}
-                            </Badge>
-                        )}
+                        <div className="flex items-center gap-4">
+                            {getStatusBadge()}
+                            {memo.type && (
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                    {getTypeIcon()}
+                                    {memo.type}
+                                </Badge>
+                            )}
+                            {memo.source && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <ExternalLink className="h-4 w-4" />
+                                    <span>Source: {memo.source}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Metadata Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pt-2">
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div>
@@ -104,7 +122,7 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Hash className="h-4 w-4 text-muted-foreground" />
+                        <RulerDimensionLine className="h-4 w-4 text-muted-foreground" />
                         <div>
                             <div className="font-medium">Content Length</div>
                             <div className="text-muted-foreground">
@@ -114,18 +132,33 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                     </div>
                 </div>
 
-                {memo.client_reference_id && (
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="font-medium">Reference ID:</span>
-                        <code className="bg-muted px-2 py-1 rounded text-xs">{memo.client_reference_id}</code>
-                    </div>
-                )}
+                {(memo.client_reference_id || memo.expiration_date) && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pt-2">
+                        {memo.client_reference_id && (
+                            <div className="flex items-center gap-2 text-sm">
+                                <Hash className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                    <div className="font-medium">Reference ID:</div>
+                                    <span className="text-muted-foreground font-mono">{memo.client_reference_id}</span>
+                                </div>
+                            </div>
+                        )}
 
-                {memo.expiration_date && (
-                    <div className="flex items-center gap-2 text-sm">
-                        <AlertCircle className="h-4 w-4 text-amber-500" />
-                        <span className="font-medium">Expires:</span>
-                        <span className="text-amber-600">{formatDate(memo.expiration_date)}</span>
+                        {memo.expiration_date && expirationStyling && (
+                            <div className="flex items-center gap-2 text-sm">
+                                <AlertCircle className={`h-4 w-4 ${expirationStyling.colorClass}`} />
+                                <div>
+                                    <div
+                                        className={`font-medium ${expirationStyling.labelColorClass || expirationStyling.colorClass}`}
+                                    >
+                                        {expirationStyling.label}
+                                    </div>
+                                    <span className={expirationStyling.colorClass}>
+                                        {formatDate(memo.expiration_date)}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

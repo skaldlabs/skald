@@ -18,6 +18,7 @@ const defaultRoutes = [
     { path: '/organization', component: () => <OrganizationPage /> },
     { path: '/projects/:uuid/settings', component: () => <ProjectSettingsPage /> },
     { path: '/projects/:uuid/memos', component: () => <MemosPage /> },
+    { path: '/projects/:uuid/memos/:memoUuid', component: () => <MemosPage /> },
     { path: '/projects/:uuid/playground', component: () => <PlaygroundPage /> },
 ]
 
