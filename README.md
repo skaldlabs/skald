@@ -91,7 +91,7 @@ You can deploy Skald without **any** third-party dependencies (including OpenAI)
 
 ## 🗒️ License
 
-MIT 🤸
+[MIT](https://github.com/skaldlabs/skald/blob/main/LICENSE) 🤸
 
 ## 🤝 Contributing
 
@@ -110,4 +110,5 @@ List of people who have contributed to any of our repos.
     <a href="https://github.com/viniciusgabrielfo"><img src="https://github.com/viniciusgabrielfo.png" width="60px" alt="viniciusgabrielfo"/></a> 
     <a href="https://github.com/Kastango"><img src="https://github.com/Kastango.png" width="60px" alt="Kastango"/></a> 
     <a href="https://github.com/jonchurch"><img src="https://github.com/jonchurch.png" width="60px" alt="jonchurch"/></a> 
+    <a href="https://github.com/estebandalelr"><img src="https://github.com/estebandalelr.png" width="60px" alt="estebandalelr"/></a> 
 </p>
