@@ -18,6 +18,7 @@ interface ProjectState {
     setCurrentProject: (project: Project | null) => Promise<void>
     initializeCurrentProject: () => Promise<void>
     generateApiKey: (projectUuid: string) => Promise<string | null>
+    resetCurrentProject: () => void
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
@@ -222,5 +223,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
         toast.success('API key generated successfully')
         return response.data.api_key
+    },
+
+    resetCurrentProject: () => {
+        set({ currentProject: null })
+        localStorage.removeItem(CURRENT_PROJECT_KEY)
     },
 }))
