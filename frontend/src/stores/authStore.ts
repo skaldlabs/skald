@@ -128,7 +128,7 @@ export const useAuthStore = create<AuthState>((set) => {
         },
         logout: () => {
             set({ isAuthenticated: false, user: null })
-            storage.cleanupOnLogout()
+            storage.clear()
             api.post('/user/logout/').catch(console.error)
             posthog.reset()
         },

@@ -56,7 +56,6 @@ export const login = async (req: Request, res: Response) => {
 }
 
 const logout = async (req: Request, res: Response) => {
-    localStorage.clear()
     res.clearCookie('accessToken')
     res.json({ message: 'Logged out' })
 }
