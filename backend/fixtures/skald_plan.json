@@ -61,29 +61,5 @@
             "created_at": "2025-01-01T00:00:00Z",
             "updated_at": "2025-01-01T00:00:00Z"
         }
-    },
-    {
-        "model": "skald.plan",
-        "pk": 4,
-        "fields": {
-            "slug": "enterprise",
-            "name": "Enterprise",
-            "stripe_price_id": null,
-            "monthly_price": "0.00",
-            "memo_operations_limit": null,
-            "chat_queries_limit": null,
-            "projects_limit": null,
-            "features": {
-                "search_type": "advanced",
-                "support_level": "dedicated",
-                "custom_embeddings": true,
-                "self_hosted": true,
-                "sla_guarantee": true
-            },
-            "is_active": true,
-            "is_default": false,
-            "created_at": "2025-01-01T00:00:00Z",
-            "updated_at": "2025-01-01T00:00:00Z"
-        }
     }
 ]
