@@ -32,20 +32,30 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                 </Badge>
             )
         }
-        if (memo.pending) {
+        if (memo.processing_status === 'processing') {
             return (
                 <Badge variant="outline" className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    Pending
+                    Processing
                 </Badge>
             )
         }
-        return (
-            <Badge variant="default" className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3" />
-                Processed
-            </Badge>
-        )
+        if (memo.processing_status === 'processed') {
+            return (
+                <Badge variant="default" className="flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Processed
+                </Badge>
+            )
+        }
+        if (memo.processing_status === 'error') {
+            return (
+                <Badge variant="destructive" className="flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Error
+                </Badge>
+            )
+        }
     }
 
     const getTypeIcon = () => {

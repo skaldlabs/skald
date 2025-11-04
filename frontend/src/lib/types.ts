@@ -50,7 +50,7 @@ export interface DetailedMemo {
     type: string | null
     expiration_date: string | null
     archived: boolean
-    pending: boolean
+    processing_status: 'processing' | 'processed' | 'error'
     tags: MemoTag[]
     chunks: MemoChunk[]
 }

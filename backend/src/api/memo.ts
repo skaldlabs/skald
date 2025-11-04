@@ -96,6 +96,8 @@ export const getMemo = async (req: Request, res: Response) => {
         DI.memoChunks.find({ memo }, { orderBy: { chunk_index: 'asc' } }),
     ])
 
+    const processingStatus = memo.processing_status === 'received' ? 'processing' : memo.processing_status
+
     const detailedMemo = {
         uuid: memo.uuid,
         created_at: memo.created_at,
@@ -110,7 +112,7 @@ export const getMemo = async (req: Request, res: Response) => {
         type: memo.type,
         expiration_date: memo.expiration_date,
         archived: memo.archived,
-        processing_status: memo.processing_status,
+        processing_status: processingStatus,
         tags: memoTags.map((tag) => ({ uuid: tag.uuid, tag: tag.tag })),
         chunks: memoChunks.map((chunk) => ({
             uuid: chunk.uuid,
