@@ -31,7 +31,7 @@
     </a>
 </p>
 
-# Skald: The API platform for building AI-native apps
+# Skald: The open-source RAG API
 
 With Skald you don't need to implement RAG ever again. Push context to our API, and get chat, search, document generation and more out of the box.
 
