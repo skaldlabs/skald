@@ -1,6 +1,7 @@
 // Constants for localStorage keys
 export const STORAGE_KEYS = {
     TOKEN: 'token',
+    CURRENT_PROJECT_KEY: 'skald_current_project_uuid',
 }
 
 /**
@@ -79,5 +80,6 @@ export const storage = {
      */
     cleanupOnLogout: (): void => {
         storage.remove(STORAGE_KEYS.TOKEN)
+        storage.remove(STORAGE_KEYS.CURRENT_PROJECT_KEY)
     },
 }

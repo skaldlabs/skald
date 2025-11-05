@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { storage } from '@/lib/localStorage'
 import posthog from 'posthog-js'
 import { posthogIdentify } from '@/lib/posthog'
+import { useProjectStore } from './projectStore'
 
 interface AuthResponse {
     user: UserDetails
@@ -129,6 +130,7 @@ export const useAuthStore = create<AuthState>((set) => {
         logout: () => {
             set({ isAuthenticated: false, user: null })
             storage.cleanupOnLogout()
+            useProjectStore.getState().resetCurrentProject()
             api.post('/user/logout/').catch(console.error)
             posthog.reset()
         },

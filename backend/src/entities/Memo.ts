@@ -1,6 +1,8 @@
 import { DeferMode, Entity, Index, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core'
 import { Project } from '@/entities/Project'
 
+export type MemoProcessingStatus = 'received' | 'processing' | 'processed' | 'error'
+
 @Entity({ tableName: 'skald_memo' })
 @Index({ name: 'skald_memo_project_8101aa_idx', properties: ['project', 'client_reference_id'] })
 @Index({ name: 'skald_memo_project_88bd2e_idx', properties: ['project', 'source'] })
@@ -8,6 +10,7 @@ import { Project } from '@/entities/Project'
     expression: 'CREATE INDEX skald_memo_metadat_9c96be_gin ON public.skald_memo USING gin (metadata);',
     name: 'skald_memo_metadat_9c96be_gin',
 })
+@Index({ name: 'skald_memo_processing_status_idx', properties: ['processing_status'] })
 export class Memo {
     @PrimaryKey({ type: 'uuid' })
     uuid!: string
@@ -38,8 +41,17 @@ export class Memo {
     @Property()
     archived!: boolean
 
-    @Property()
-    pending!: boolean
+    @Property({ default: 'received' })
+    processing_status!: MemoProcessingStatus
+
+    @Property({ nullable: true })
+    processing_error?: string
+
+    @Property({ nullable: true })
+    processing_started_at?: Date
+
+    @Property({ nullable: true })
+    processing_completed_at?: Date
 
     @Property({ nullable: true })
     type?: string // 'plaintext' | 'document'

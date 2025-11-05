@@ -187,6 +187,8 @@ export const getMemo = async (req: Request, res: Response) => {
         DI.memoChunks.find({ memo }, { orderBy: { chunk_index: 'asc' } }),
     ])
 
+    const processingStatus = memo.processing_status === 'received' ? 'processing' : memo.processing_status
+
     const detailedMemo = {
         uuid: memo.uuid,
         created_at: memo.created_at,
@@ -201,7 +203,7 @@ export const getMemo = async (req: Request, res: Response) => {
         type: memo.type,
         expiration_date: memo.expiration_date,
         archived: memo.archived,
-        pending: memo.pending,
+        processing_status: processingStatus,
         tags: memoTags.map((tag) => ({ uuid: tag.uuid, tag: tag.tag })),
         chunks: memoChunks.map((chunk) => ({
             uuid: chunk.uuid,
@@ -375,10 +377,45 @@ export const deleteMemo = async (req: Request, res: Response) => {
     return res.status(204).send()
 }
 
+export const getMemoStatus = async (req: Request, res: Response) => {
+    const project = req.context?.requestUser?.project as Project
+    const { id } = req.params
+    const idType = (req.query.id_type as string) || 'memo_uuid'
+
+    const whereClause = idType === 'memo_uuid' ? { uuid: id, project } : { client_reference_id: id, project }
+
+    const memo = await DI.memos.findOne(whereClause, {
+        fields: ['uuid', 'processing_status', 'processing_started_at', 'processing_completed_at', 'processing_error'],
+    })
+
+    if (!memo) {
+        return res.status(404).json({ error: 'Memo not found' })
+    }
+
+    const status = memo.processing_status === 'received' ? 'processing' : memo.processing_status
+
+    if (status === 'processed') {
+        res.set('Cache-Control', 'public, max-age=31536000, immutable')
+    } else if (status === 'error') {
+        res.set('Cache-Control', 'public, max-age=86400')
+    } else {
+        res.set('Cache-Control', 'no-cache')
+    }
+
+    return res.status(200).json({
+        memo_uuid: memo.uuid,
+        status,
+        processing_started_at: memo.processing_started_at || null,
+        processing_completed_at: memo.processing_completed_at || null,
+        error_reason: memo.processing_error || null,
+    })
+}
+
 export const memoRouter = express.Router({ mergeParams: true })
 memoRouter.use(requireProjectAccess())
 memoRouter.get('/', listMemos)
 memoRouter.post('/', trackUsage('memo_operations'), createMemo)
+memoRouter.get('/:id/status', [validateMemoOperationRequestMiddleware()], getMemoStatus)
 memoRouter.get('/:id', [validateMemoOperationRequestMiddleware()], getMemo)
 memoRouter.patch('/:id', [validateMemoOperationRequestMiddleware(), trackUsage('memo_operations')], updateMemo)
 memoRouter.delete(

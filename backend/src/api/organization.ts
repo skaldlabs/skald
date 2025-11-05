@@ -89,7 +89,7 @@ const create = async (req: Request, res: Response) => {
 
     user.defaultOrganization = organization
 
-    DI.projects.create({
+    const project = DI.projects.create({
         uuid: randomUUID(),
         name: `${organization.name.split(' ')[0]} Default Project`,
         organization,
@@ -97,6 +97,8 @@ const create = async (req: Request, res: Response) => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     })
+
+    user.current_project = project
 
     if (!IS_SELF_HOSTED_DEPLOY) {
         const subscriptionService = new SubscriptionService()
