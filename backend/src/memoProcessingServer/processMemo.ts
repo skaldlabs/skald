@@ -4,7 +4,7 @@ import { EntityManager } from '@mikro-orm/core'
 import { updateMemoStatus } from '@/lib/memoStatusUtils'
 import { logger } from '@/lib/logger'
 
-const processMemoContent = async (em: EntityManager, memoUuid: string) => {
+const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
     const memoContent = await em.findOne(MemoContent, { memo: { uuid: memoUuid } }, { populate: ['project', 'memo'] })
     if (!memoContent) {
         throw new Error(`Memo not found: ${memoUuid}`)
@@ -25,7 +25,7 @@ export const processMemo = async (em: EntityManager, memoUuid: string) => {
             processing_started_at: new Date(),
         })
 
-        await processMemoContent(em, memoUuid)
+        await runMemoProcessingAgents(em, memoUuid)
 
         await updateMemoStatus(em, memoUuid, {
             processing_status: 'processed',
