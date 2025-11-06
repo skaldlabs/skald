@@ -66,11 +66,8 @@ const createMemo = async (req: Request, res: Response) => {
     }
     const validatedData = CreateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        const errorMessages = validatedData.error.errors.map((err) => {
-            const path = err.path.join('.')
-            return path ? `${path}: ${err.message}` : err.message
-        })
-        return res.status(400).json({ error: errorMessages.join('; ') })
+        const errorMessages = validatedData.error.errors.map((err) => err.message)
+        return res.status(400).json({ error: errorMessages.join(',') })
     }
 
     const memo = await createNewMemo(validatedData.data, project)
