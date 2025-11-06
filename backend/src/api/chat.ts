@@ -11,12 +11,13 @@ import { Project } from '@/entities/Project'
 import { Chat } from '@/entities/Chat'
 import { randomUUID } from 'crypto'
 import { CHAT_AGENT_INSTRUCTIONS } from '@/agents/chatAgent/prompts'
+import { LLMService } from '@/services/llmService'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
     const stream = req.body.stream || false
     const filters = req.body.filters || []
-    const chatId = req.body.chat_id
+    const chatSessionId = req.body.chat_session_id
     const clientSystemPrompt = req.body.system_prompt || null
 
     if (!query) {
@@ -43,6 +44,8 @@ export const chat = async (req: Request, res: Response) => {
         }
     }
 
+    const conversationHistory = await _prepareConversationContext(chatSessionId, project)
+
     const rerankedResults = await prepareContextForChatAgent(query, project, memoFilters)
 
     let contextStr = ''
@@ -52,16 +55,36 @@ export const chat = async (req: Request, res: Response) => {
 
     try {
         if (stream) {
-            const fullResponse = await _generateStreamingResponse(query, contextStr, clientSystemPrompt, res)
-            await _createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
+            const fullResponse = await _generateStreamingResponse(
+                query,
+                contextStr,
+                clientSystemPrompt,
+                res,
+                conversationHistory
+            )
+            const finalChatId = await _createChatMessagePair(
+                project,
+                query,
+                fullResponse,
+                chatSessionId,
+                clientSystemPrompt
+            )
+            res.write(`data: ${JSON.stringify({ type: 'done', chat_session_id: finalChatId })}\n\n`)
             res.end()
         } else {
             // non-streaming response
-            const result = await runChatAgent(query, contextStr, clientSystemPrompt)
-            await _createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
+            const result = await runChatAgent(query, contextStr, clientSystemPrompt, conversationHistory)
+            const finalChatId = await _createChatMessagePair(
+                project,
+                query,
+                result.output,
+                chatSessionId,
+                clientSystemPrompt
+            )
 
             return res.status(200).json({
                 ok: true,
+                chat_session_id: finalChatId,
                 response: result.output,
                 intermediate_steps: result.intermediate_steps || [],
             })
@@ -84,7 +107,8 @@ export const _generateStreamingResponse = async (
     query: string,
     contextStr: string,
     clientSystemPrompt: string | null = null,
-    res: Response
+    res: Response,
+    conversationHistory: Array<[string, string]> = []
 ): Promise<string> => {
     _setStreamingResponseHeaders(res)
 
@@ -93,7 +117,7 @@ export const _generateStreamingResponse = async (
 
     let fullResponse = ''
     try {
-        for await (const chunk of streamChatAgent(query, contextStr, clientSystemPrompt)) {
+        for await (const chunk of streamChatAgent(query, contextStr, clientSystemPrompt, conversationHistory)) {
             // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
             if (chunk.content && typeof chunk.content === 'object') {
                 // extract text from dict (Anthropic format)
@@ -114,11 +138,132 @@ export const _generateStreamingResponse = async (
             IS_DEVELOPMENT && error instanceof Error ? `${error.message}\n${error.stack}` : 'An error occurred'
         const errorData = JSON.stringify({ type: 'error', content: errorMsg })
         res.write(`data: ${errorData}\n\n`)
-    } finally {
-        // send a done event
-        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
     }
     return fullResponse
+}
+
+interface ChatHistoryMessage {
+    role: 'user' | 'model'
+    content: string
+}
+
+const TOKEN_THRESHOLD = 2000
+const RECENT_MESSAGES_TO_KEEP = 10
+
+export const _getChatHistory = async (chatId: string, project: Project): Promise<ChatHistoryMessage[]> => {
+    try {
+        const chat = await DI.em.findOne(Chat, { uuid: chatId, project: project.uuid })
+        if (!chat) {
+            return []
+        }
+
+        const messages = await DI.em.find(
+            ChatMessage,
+            { chat: chat, project: project },
+            { orderBy: { sent_at: 'ASC' } }
+        )
+
+        return messages.map((msg) => ({
+            role: msg.sent_by === 'user' ? 'user' : 'model',
+            content: msg.content,
+        }))
+    } catch (error) {
+        logger.error({ err: error, chatId }, 'Error retrieving chat history')
+        return []
+    }
+}
+
+export const _summarizeOldMessages = async (messages: ChatHistoryMessage[]): Promise<string> => {
+    if (messages.length === 0) {
+        return ''
+    }
+
+    try {
+        const llm = LLMService.getLLM(0)
+        const conversationText = messages
+            .map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+            .join('\n\n')
+
+        const summaryPrompt = `You are a memory extraction system. Your job is to distill ONLY the factual information, knowledge, and context that matters for future interactions.
+
+            EXTRACT AND PRESERVE:
+            - Facts shared by the user (preferences, background, goals, constraints)
+            - Specific technical details, decisions made, or problems discussed
+            - Names, dates, numbers, and concrete information
+            - Unresolved questions or pending tasks
+            - Key insights or conclusions reached
+            
+            IGNORE:
+            - Conversational pleasantries and greetings
+            - Meta-commentary about the conversation itself
+            - Vague statements like "user asked about X" - instead capture WHAT was discussed about X
+            - Assistant's limitations or uncertainty
+            
+            FORMAT: Write as a dense, information-rich summary in bullet points. Use present tense. Be specific.
+            
+            CONVERSATION:
+            ${conversationText}
+            
+            EXTRACTED MEMORY:`
+
+        const result = await llm.invoke([
+            {
+                role: 'user',
+                content: summaryPrompt,
+            },
+        ])
+        const summary = typeof result.content === 'string' ? result.content : String(result.content)
+        return summary
+    } catch (error) {
+        logger.error({ err: error }, 'Error summarizing old messages')
+        // Fall back to a simple truncation if summarization fails
+        const truncated = messages
+            .map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+            .join('\n\n')
+        return `Previous conversation (truncated): ${truncated.substring(0, 500)}...`
+    }
+}
+
+export const _estimateTokens = (text: string): number => {
+    // Rough estimate: 1 token ≈ 4 characters (conservative)
+    return Math.ceil(text.length / 4)
+}
+
+export const _prepareConversationContext = async (
+    chatId: string | undefined,
+    project: Project
+): Promise<Array<[string, string]>> => {
+    if (!chatId) {
+        return []
+    }
+
+    const history = await _getChatHistory(chatId, project)
+    if (history.length === 0) {
+        return []
+    }
+
+    const totalText = history.map((msg) => msg.content).join(' ')
+    const totalTokens = _estimateTokens(totalText)
+
+    if (totalTokens <= TOKEN_THRESHOLD) {
+        return history.map((msg) => [msg.role === 'user' ? 'human' : 'ai', msg.content] as [string, string])
+    }
+
+    const recentMessages = history.slice(-RECENT_MESSAGES_TO_KEEP)
+    const oldMessages = history.slice(0, -RECENT_MESSAGES_TO_KEEP)
+
+    const summary = await _summarizeOldMessages(oldMessages)
+    const formattedHistory: Array<[string, string]> = []
+
+    if (summary) {
+        formattedHistory.push(['system', `Previous conversation summary: ${summary}`])
+    }
+
+    for (const msg of recentMessages) {
+        formattedHistory.push([msg.role === 'user' ? 'human' : 'ai', msg.content] as [string, string])
+    }
+
+    return formattedHistory
 }
 
 export const _createChatMessagePair = async (
@@ -127,7 +272,7 @@ export const _createChatMessagePair = async (
     modelMessage: string,
     chatId?: string,
     clientSystemPrompt?: string | null
-): Promise<void> => {
+): Promise<string> => {
     const entitiesToPersist = []
     let chat: Chat
     if (!chatId) {
@@ -138,7 +283,16 @@ export const _createChatMessagePair = async (
         })
         entitiesToPersist.push(chat)
     } else {
-        chat = await DI.em.findOneOrFail(Chat, { uuid: chatId })
+        try {
+            chat = await DI.em.findOneOrFail(Chat, { uuid: chatId, project: project })
+        } catch {
+            chat = DI.em.create(Chat, {
+                uuid: randomUUID(),
+                project: project,
+                created_at: new Date(),
+            })
+            entitiesToPersist.push(chat)
+        }
     }
 
     const messageGroupId = randomUUID()
@@ -168,4 +322,5 @@ export const _createChatMessagePair = async (
     entitiesToPersist.push(modelMessageEntity)
 
     await DI.em.persistAndFlush(entitiesToPersist)
+    return chat.uuid
 }

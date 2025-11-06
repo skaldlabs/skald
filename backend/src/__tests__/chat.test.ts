@@ -23,6 +23,7 @@ import * as chatAgentPreprocessing from '../agents/chatAgent/preprocessing'
 import * as chatAgent from '../agents/chatAgent/chatAgent'
 import { ChatMessage } from '@/entities/ChatMessage'
 import { Chat } from '@/entities/Chat'
+import { randomUUID } from 'crypto'
 
 // Mock external dependencies
 jest.mock('../agents/chatAgent/preprocessing')
@@ -93,7 +94,7 @@ describe('Chat API', () => {
             expect(response.body.intermediate_steps).toEqual([])
         })
 
-        it('should create a chat message pair when chat_id is not provided', async () => {
+        it('should create a chat message pair when chat_session_id is not provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -136,7 +137,7 @@ describe('Chat API', () => {
             expect(chatMessages[0].content).toBe('What is in the documents?')
         })
 
-        it('it should create messages for an existing chat if chat_id is provided', async () => {
+        it('it should create messages for an existing chat if chat_session_id is provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -163,7 +164,7 @@ describe('Chat API', () => {
                 .query({ project_id: project.uuid })
                 .send({
                     query: 'What is in the documents?',
-                    chat_id: testChat.uuid,
+                    chat_session_id: testChat.uuid,
                 })
 
             expect(response.status).toBe(200)
@@ -385,7 +386,8 @@ describe('Chat API', () => {
             expect(chatAgent.runChatAgent).toHaveBeenCalledWith(
                 'test query',
                 'Result 1: First result\n\nResult 2: Second result\n\n',
-                null
+                null,
+                []
             )
         })
 
@@ -415,7 +417,8 @@ describe('Chat API', () => {
             expect(chatAgent.runChatAgent).toHaveBeenCalledWith(
                 'test query',
                 'Result 1: Result content\n\n',
-                customPrompt
+                customPrompt,
+                []
             )
 
             const em = orm.em.fork()
@@ -449,7 +452,7 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            expect(chatAgent.runChatAgent).toHaveBeenCalledWith('test query', 'Result 1: Result content\n\n', null)
+            expect(chatAgent.runChatAgent).toHaveBeenCalledWith('test query', 'Result 1: Result content\n\n', null, [])
         })
 
         it('should pass client system prompt to streaming chat agent when provided', async () => {
@@ -484,7 +487,8 @@ describe('Chat API', () => {
             expect(chatAgent.streamChatAgent).toHaveBeenCalledWith(
                 'test query',
                 'Result 1: Result content\n\n',
-                clientSystemPrompt
+                clientSystemPrompt,
+                []
             )
             // check that the created chat messages have the correct client system prompt
             const em = orm.em.fork()
@@ -524,7 +528,245 @@ describe('Chat API', () => {
                     stream: true,
                 })
 
-            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith('test query', 'Result 1: Result content\n\n', null)
+            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith(
+                'test query',
+                'Result 1: Result content\n\n',
+                null,
+                []
+            )
+        })
+
+        it('should return chat_session_id in non-streaming response', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            const response = await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.body.chat_session_id).toBeDefined()
+            expect(typeof response.body.chat_session_id).toBe('string')
+        })
+
+        it('should return chat_session_id in streaming response done event', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            async function* mockStreamGenerator() {
+                yield { content: 'chunk1' }
+                yield { content: 'chunk2' }
+            }
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
+
+            const response = await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                    stream: true,
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.text).toContain('chat_session_id')
+        })
+
+        it('should accept chat_session_id parameter', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const testChat = await createTestChat(orm, project)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            const response = await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                    chat_session_id: testChat.uuid,
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.body.chat_session_id).toBe(testChat.uuid)
+        })
+
+        it('should pass conversation history to chat agent when chat_session_id provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const testChat = await createTestChat(orm, project)
+            const token = generateAccessToken('test@example.com')
+
+            // Create some existing messages
+            const em = orm.em.fork()
+            const userMessage = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: randomUUID(),
+                project: project,
+                chat: testChat,
+                content: 'Previous user message',
+                sent_by: 'user',
+                sent_at: new Date(Date.now() - 1000),
+            })
+            const modelMessage = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: userMessage.message_group_id,
+                project: project,
+                chat: testChat,
+                content: 'Previous model response',
+                sent_by: 'model',
+                sent_at: new Date(Date.now() - 500),
+            })
+            await em.persistAndFlush([userMessage, modelMessage])
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'new query',
+                    chat_session_id: testChat.uuid,
+                })
+
+            // Verify that runChatAgent was called with conversation history
+            expect(chatAgent.runChatAgent).toHaveBeenCalled()
+            const callArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0]
+            expect(callArgs[0]).toBe('new query')
+            expect(callArgs[3]).toBeDefined() // conversationHistory parameter
+            expect(Array.isArray(callArgs[3])).toBe(true)
+            // Should have previous messages in history
+            expect(callArgs[3].length).toBeGreaterThan(0)
+        })
+
+        it('should not pass conversation history when chat_session_id not provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                })
+
+            // Verify that runChatAgent was called with empty conversation history
+            expect(chatAgent.runChatAgent).toHaveBeenCalled()
+            const callArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0]
+            expect(callArgs[3]).toEqual([]) // conversationHistory should be empty array
+        })
+
+        it('should create new chat when invalid chat_session_id provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            const invalidChatId = randomUUID()
+
+            const response = await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                    chat_session_id: invalidChatId,
+                })
+
+            expect(response.status).toBe(200)
+            // Should return a new chat_session_id, not the invalid one
+            expect(response.body.chat_session_id).toBeDefined()
+            expect(response.body.chat_session_id).not.toBe(invalidChatId)
+        })
+
+        it('should scope chat history to correct project', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project1 = await createTestProject(orm, 'Project 1', org, user)
+            const project2 = await createTestProject(orm, 'Project 2', org, user)
+            const testChat = await createTestChat(orm, project1)
+            const token = generateAccessToken('test@example.com')
+
+            // Create messages in project1's chat
+            const em = orm.em.fork()
+            const userMessage = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: randomUUID(),
+                project: project1,
+                chat: testChat,
+                content: 'Message in project 1',
+                sent_by: 'user',
+                sent_at: new Date(),
+            })
+            await em.persistAndFlush([userMessage])
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            // Try to access chat from project2 (should not see project1's messages)
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project2.uuid })
+                .send({
+                    query: 'test query',
+                    chat_session_id: testChat.uuid,
+                })
+
+            // Should create a new chat since chat doesn't belong to project2
+            const em2 = orm.em.fork()
+            const chats = await em2.find(Chat, { project: project2.uuid })
+            expect(chats.length).toBeGreaterThan(0)
         })
     })
 })

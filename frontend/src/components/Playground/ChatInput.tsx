@@ -36,6 +36,7 @@ export const ChatInput = () => {
                     placeholder="Ask a question about your project data..."
                     disabled={isLoading || isStreaming}
                     className="chat-input"
+                    autoFocus
                 />
                 <Button type="submit" disabled={isDisabled} className="chat-send-button" size="sm">
                     <Send className="h-4 w-4" />
