@@ -25,6 +25,7 @@ import {
 } from '../settings'
 import { logger } from './logger'
 import { EntityData } from '@mikro-orm/core'
+import { generateS3Key, uploadFileToS3 } from './s3Utils'
 
 let sqsClient: SQSClient | null = null
 if (SQS_QUEUE_URL && INTER_PROCESS_QUEUE === 'sqs') {
@@ -58,7 +59,7 @@ export type MemoCreationData = Pick<
     | 'content_length'
     | 'content_hash'
     | 'type'
-    | 'processing_status' 
+    | 'processing_status'
     | 'processing_error'
     | 'processing_started_at'
     | 'processing_completed_at'
@@ -200,6 +201,24 @@ export async function sendMemoForAsyncProcessing(memo: Memo): Promise<void> {
 
 export async function createNewMemo(memoData: MemoData, project: Project): Promise<Memo> {
     const memo = await _createMemoObject(memoData, project)
+    await sendMemoForAsyncProcessing(memo)
+    return memo
+}
+
+export const createNewDocumentMemo = async (
+    memoData: MemoData,
+    project: Project,
+    file: Express.Multer.File
+): Promise<Memo> => {
+    const memo = await _createMemoObject(memoData, project)
+
+    const s3Key = generateS3Key(project.uuid, memo.uuid)
+    await uploadFileToS3(file.buffer, s3Key, file.mimetype, {
+        'memo-uuid': memo.uuid,
+        'project-uuid': project.uuid,
+        'original-filename': file.originalname,
+    })
+
     await sendMemoForAsyncProcessing(memo)
     return memo
 }

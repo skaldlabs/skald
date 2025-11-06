@@ -3,7 +3,7 @@ import { z } from 'zod'
 import multer from 'multer'
 import { DI } from '@/di'
 import { NextFunction } from 'express'
-import { createNewMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
+import { createNewMemo, createNewDocumentMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
 import { Project } from '@/entities/Project'
@@ -13,7 +13,7 @@ import { MemoTag } from '@/entities/MemoTag'
 import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
-import { uploadFileToS3, generateS3Key, deleteFileFromS3 } from '@/lib/s3Utils'
+import { deleteFileFromS3 } from '@/lib/s3Utils'
 
 // Configure multer for file uploads (store in memory)
 const upload = multer({
@@ -67,6 +67,61 @@ const validateMemoOperationRequestMiddleware = () => {
     }
 }
 
+const handleFileUpload = async (req: Request, res: Response) => {
+    const project = req.context?.requestUser?.project
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    const file = req.file
+    if (!file) {
+        return res.status(400).json({ error: 'No file provided' })
+    }
+
+    try {
+        const title = req.body.title || file.originalname
+        const source = req.body.source || null
+        const reference_id = req.body.reference_id || null
+        const expiration_date = req.body.expiration_date ? new Date(req.body.expiration_date) : null
+        const tags = req.body.tags ? JSON.parse(req.body.tags) : []
+        const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {}
+
+        const memoData = {
+            title: title.substring(0, 255),
+            source,
+            reference_id,
+            expiration_date,
+            tags,
+            metadata: {
+                ...metadata,
+                original_filename: file.originalname,
+                mimetype: file.mimetype,
+                size: file.size,
+            },
+            type: 'document',
+        }
+
+        const memo = await createNewDocumentMemo(memoData, project, file)
+        return res.status(201).json({ memo_uuid: memo.uuid })
+    } catch (error) {
+        logger.error({ err: error }, 'Error processing file upload')
+        return res.status(500).json({ error: 'Failed to process uploaded file' })
+    }
+}
+
+const handleMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'File size exceeds 10MB limit' })
+        }
+        return res.status(400).json({ error: `File upload error: ${err.message}` })
+    }
+    if (err) {
+        return res.status(500).json({ error: 'Internal server error during file upload' })
+    }
+    next()
+}
+
 const createMemo = async (req: Request, res: Response) => {
     const project = req.context?.requestUser?.project
     if (!project) {
@@ -87,70 +142,10 @@ const createMemo = async (req: Request, res: Response) => {
         })
     }
 
+    // multipart requests are handled by middleware, this should not be reached
+    // but kept as fallback
     if (isMultipart) {
-        upload.single('file')(req, res, async (err) => {
-            if (err) {
-                if (err instanceof multer.MulterError) {
-                    if (err.code === 'LIMIT_FILE_SIZE') {
-                        return res.status(400).json({ error: 'File size exceeds 10MB limit' })
-                    }
-                    return res.status(400).json({ error: `File upload error: ${err.message}` })
-                }
-                return res.status(500).json({ error: 'Internal server error during file upload' })
-            }
-
-            const file = req.file
-            if (!file) {
-                return res.status(400).json({ error: 'No file provided' })
-            }
-
-            try {
-                const title = req.body.title || file.originalname
-                const source = req.body.source || null
-                const reference_id = req.body.reference_id || null
-                const expiration_date = req.body.expiration_date ? new Date(req.body.expiration_date) : null
-                const tags = req.body.tags ? JSON.parse(req.body.tags) : []
-                const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {}
-
-                // Create memo first to get UUID
-                const memoData = {
-                    title: title.substring(0, 255),
-                    source,
-                    reference_id,
-                    expiration_date,
-                    tags,
-                    metadata: {
-                        ...metadata,
-                        original_filename: file.originalname,
-                        mimetype: file.mimetype,
-                        size: file.size,
-                    },
-                }
-
-                const memo = await createNewMemo({ ...memoData, type: 'document' }, project)
-
-                // Upload file to S3
-                const s3Key = generateS3Key(project.uuid, memo.uuid, file.originalname)
-                await uploadFileToS3(file.buffer, s3Key, file.mimetype, {
-                    'memo-uuid': memo.uuid,
-                    'project-uuid': project.uuid,
-                    'original-filename': file.originalname,
-                })
-
-                // Update memo metadata with S3 key
-                memo.metadata = {
-                    ...memo.metadata,
-                    s3_key: s3Key,
-                }
-                await DI.em.persistAndFlush(memo)
-
-                return res.status(201).json({ memo_uuid: memo.uuid })
-            } catch (error) {
-                logger.error({ err: error }, 'Error processing file upload')
-                return res.status(500).json({ error: 'Failed to process uploaded file' })
-            }
-        })
-        return
+        return res.status(400).json({ error: 'Multipart request not processed by middleware' })
     }
 
     // Handle JSON request
@@ -414,7 +409,19 @@ export const getMemoStatus = async (req: Request, res: Response) => {
 export const memoRouter = express.Router({ mergeParams: true })
 memoRouter.use(requireProjectAccess())
 memoRouter.get('/', listMemos)
-memoRouter.post('/', trackUsage('memo_operations'), createMemo)
+memoRouter.post(
+    '/',
+    trackUsage('memo_operations'),
+    upload.single('file'),
+    handleMulterError,
+    (req: Request, res: Response) => {
+        // Route to appropriate handler based on content type
+        if (req.file) {
+            return handleFileUpload(req, res)
+        }
+        return createMemo(req, res)
+    }
+)
 memoRouter.get('/:id/status', [validateMemoOperationRequestMiddleware()], getMemoStatus)
 memoRouter.get('/:id', [validateMemoOperationRequestMiddleware()], getMemo)
 memoRouter.patch('/:id', [validateMemoOperationRequestMiddleware(), trackUsage('memo_operations')], updateMemo)

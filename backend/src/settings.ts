@@ -219,3 +219,6 @@ export const LOG_LEVEL = process.env.LOG_LEVEL || 'warn'
 // PostHog
 export const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY || 'phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2' // it's a public key that can be leaked
 export const POSTHOG_HOST = process.env.POSTHOG_HOST || 'https://us.i.posthog.com'
+
+// Datalab API (for converting documents to markdown)
+export const DATALAB_API_KEY = process.env.DATALAB_API_KEY

@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { logger } from './logger'
 
 // Initialize S3 client with region-aware configuration
@@ -125,13 +126,37 @@ export async function deleteFileFromS3(key: string): Promise<void> {
  * Generates an S3 key for a memo file
  * @param projectId - The project ID
  * @param memoUuid - The memo UUID
- * @param filename - The original filename
  * @returns A unique S3 key
  */
-export function generateS3Key(projectId: string, memoUuid: string, filename: string): string {
-    const timestamp = Date.now()
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_')
-    return `memos/${projectId}/${memoUuid}/${timestamp}-${sanitizedFilename}`
+export function generateS3Key(projectId: string, memoUuid: string): string {
+    return `memos/${projectId}/${memoUuid}`
+}
+
+/**
+ * Generates a pre-signed URL for accessing an S3 object
+ * @param key - The S3 key (file path) of the file
+ * @param expiresIn - URL expiration time in seconds (default: 3600 = 1 hour)
+ * @returns A pre-signed URL that allows temporary access to the file
+ */
+export async function generatePresignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+    if (!BUCKET_NAME) {
+        throw new Error('S3_BUCKET_NAME environment variable not set')
+    }
+
+    try {
+        const command = new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: key,
+        })
+
+        const url = await getSignedUrl(s3Client, command, { expiresIn })
+        logger.info({ key, bucket: BUCKET_NAME, expiresIn }, 'Generated pre-signed URL')
+
+        return url
+    } catch (error) {
+        logger.error({ err: error, key, bucket: BUCKET_NAME }, 'Failed to generate pre-signed URL')
+        throw new Error('Failed to generate pre-signed URL')
+    }
 }
 
 /**

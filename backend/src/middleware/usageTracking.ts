@@ -178,18 +178,21 @@ function getLimitTypeDisplay(limitType: string): string {
  */
 async function extractOrganization(req: Request): Promise<Organization | null> {
     try {
+        // Create a forked EntityManager for this context
+        const em = DI.em.fork()
+
         // Strategy 1: Get from project in request context
         const project = req.context?.requestUser?.project
         if (project) {
             // Ensure organization is populated
-            await DI.em.populate(project, ['organization'])
+            await em.populate(project, ['organization'])
             return project.organization
         }
 
         // Strategy 2: Get from user's default organization
         const user = req.context?.requestUser?.userInstance
         if (user) {
-            await DI.em.populate(user, ['defaultOrganization'])
+            await em.populate(user, ['defaultOrganization'])
             return user.defaultOrganization || null
         }
 
