@@ -52,13 +52,16 @@ export type MemoCreationData = Pick<
     | 'source'
     | 'expiration_date'
     | 'project'
-    | 'pending'
     | 'archived'
     | 'created_at'
     | 'updated_at'
     | 'content_length'
     | 'content_hash'
     | 'type'
+    | 'processing_status' 
+    | 'processing_error'
+    | 'processing_started_at'
+    | 'processing_completed_at'
 >
 
 async function _createMemoObject(memoData: MemoData, project: Project): Promise<Memo> {

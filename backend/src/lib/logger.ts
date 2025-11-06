@@ -62,17 +62,17 @@ export const logger = pino({
     },
     timestamp: pino.stdTimeFunctions.isoTime,
     // Transport configuration for pretty printing in development
-    transport: IS_DEVELOPMENT
-        ? {
-              target: 'pino-pretty',
-              options: {
-                  colorize: true,
-                  translateTime: 'HH:MM:ss Z',
-                  ignore: 'pid,hostname',
-                  singleLine: false,
-              },
-          }
-        : undefined,
+    // transport: IS_DEVELOPMENT
+    //     ? {
+    //           target: 'pino-pretty',
+    //           options: {
+    //               colorize: true,
+    //               translateTime: 'HH:MM:ss Z',
+    //               ignore: 'pid,hostname',
+    //               singleLine: false,
+    //           },
+    //       }
+    //     : undefined,
 })
 
 /**

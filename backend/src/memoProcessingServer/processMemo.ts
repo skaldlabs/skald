@@ -1,18 +1,39 @@
-import { MemoContent } from '@/entities/MemoContent'
 import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from '@/memoProcessingServer/memoOperations'
 import { EntityManager } from '@mikro-orm/core'
 import { updateMemoStatus } from '@/lib/memoStatusUtils'
 import { logger } from '@/lib/logger'
 
 const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
-    const memoContent = await em.findOne(MemoContent, { memo: { uuid: memoUuid } }, { populate: ['project', 'memo'] })
-    if (!memoContent) {
+    const sql = `
+        SELECT 
+            m.uuid as memo_uuid,
+            m.project_id,
+            mc.content
+        FROM skald_memo m
+        LEFT JOIN skald_memocontent mc ON mc.memo_id = m.uuid
+        WHERE m.uuid = ?
+    `
+
+    const result = await em.getConnection().execute<Array<{
+        memo_uuid: string
+        project_id: string
+        content: string | null
+    }>>(sql, [memoUuid])
+
+    if (!result || result.length === 0) {
         throw new Error(`Memo not found: ${memoUuid}`)
     }
+
+    const row = result[0]
+    if (!row.content) {
+        logger.warn({ memoUuid }, 'No content found for memo, skipping processing')
+        return
+    }
+
     const promises = [
-        createMemoChunks(em, memoContent.memo.uuid, memoContent.project.uuid, memoContent.content),
-        extractTagsFromMemo(em, memoContent.memo.uuid, memoContent.content, memoContent.project.uuid),
-        generateMemoSummary(em, memoContent.memo.uuid, memoContent.content, memoContent.project.uuid),
+        createMemoChunks(em, row.memo_uuid, row.project_id, row.content),
+        extractTagsFromMemo(em, row.memo_uuid, row.content, row.project_id),
+        generateMemoSummary(em, row.memo_uuid, row.content, row.project_id),
     ]
 
     await Promise.all(promises)
