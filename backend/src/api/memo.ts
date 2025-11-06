@@ -25,6 +25,7 @@ const CreateMemoRequest = z.object({
         .nullable()
         .refine((date) => (date ? date > new Date() : true), {
             message: 'Expiration date must be in the future',
+            path: ['expiration_date'],
         }),
     tags: z.array(z.string()).optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
@@ -65,7 +66,11 @@ const createMemo = async (req: Request, res: Response) => {
     }
     const validatedData = CreateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        return res.status(400).json({ error: validatedData.error.flatten() })
+        const errorMessages = validatedData.error.errors.map((err) => {
+            const path = err.path.join('.')
+            return path ? `${path}: ${err.message}` : err.message
+        })
+        return res.status(400).json({ error: errorMessages.join('; ') })
     }
 
     const memo = await createNewMemo(validatedData.data, project)
@@ -140,7 +145,11 @@ export const updateMemo = async (req: Request, res: Response) => {
 
     const validatedData = UpdateMemoRequest.safeParse(req.body)
     if (!validatedData.success) {
-        return res.status(400).json({ error: validatedData.error.flatten() })
+        const errorMessages = validatedData.error.errors.map((err) => {
+            const path = err.path.join('.')
+            return path ? `${path}: ${err.message}` : err.message
+        })
+        return res.status(400).json({ error: errorMessages.join('; ') })
     }
 
     const em = DI.em.fork()
