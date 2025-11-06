@@ -14,8 +14,9 @@ import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
 import { deleteFileFromS3 } from '@/lib/s3Utils'
+import { DATALAB_API_KEY, TEST } from '@/settings'
 
-// Configure multer for file uploads (store in memory)
+// configure multer for file uploads (store in memory)
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -67,7 +68,7 @@ const validateMemoOperationRequestMiddleware = () => {
     }
 }
 
-const handleFileUpload = async (req: Request, res: Response) => {
+const createDocumentMemo = async (req: Request, res: Response) => {
     const project = req.context?.requestUser?.project
     if (!project) {
         return res.status(404).json({ error: 'Project not found' })
@@ -122,7 +123,7 @@ const handleMulterError = (err: any, req: Request, res: Response, next: NextFunc
     next()
 }
 
-const createMemo = async (req: Request, res: Response) => {
+const createPlaintextMemo = async (req: Request, res: Response) => {
     const project = req.context?.requestUser?.project
     if (!project) {
         return res.status(404).json({ error: 'Project not found' })
@@ -415,11 +416,16 @@ memoRouter.post(
     upload.single('file'),
     handleMulterError,
     (req: Request, res: Response) => {
-        // Route to appropriate handler based on content type
+        // route to appropriate handler based on content type
         if (req.file) {
-            return handleFileUpload(req, res)
+            if (!DATALAB_API_KEY && !TEST) {
+                // self-hosted folks will need a DATALAB_API_KEY to upload documents.
+                // we should provide them with a local docling service in the future in order to be able to do this without a third-party service.
+                return res.status(500).json({ error: 'Setting DATALAB_API_KEY is required for uploading documents' })
+            }
+            return createDocumentMemo(req, res)
         }
-        return createMemo(req, res)
+        return createPlaintextMemo(req, res)
     }
 )
 memoRouter.get('/:id/status', [validateMemoOperationRequestMiddleware()], getMemoStatus)

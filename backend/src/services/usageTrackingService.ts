@@ -30,44 +30,51 @@ class UsageTrackingService {
     /**
      * Increment memo operations counter for current billing period
      */
-    async incrementMemoOperations(organization: Organization, em?: EntityManager): Promise<void> {
-        const entityManager = em || DI.em.fork()
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, entityManager)
+    async incrementMemoOperations(organization: Organization): Promise<void> {
+        const em = DI.em.fork()
 
-        await entityManager.nativeUpdate(
+        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
+
+        await em.nativeUpdate(
             UsageRecord,
             { id: usageRecord.id },
             { memo_operations_count: usageRecord.memo_operations_count + 1, updated_at: new Date() }
         )
 
         // Check and send usage alerts if needed
-        await this.checkAndSendUsageAlerts(organization, 'memo_operations', entityManager)
+        await this.checkAndSendUsageAlerts(organization, 'memo_operations', em)
+
+        await em.flush()
     }
 
     /**
      * Increment chat queries counter for current billing period
      */
-    async incrementChatQueries(organization: Organization, em?: EntityManager): Promise<void> {
-        const entityManager = em || DI.em.fork()
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, entityManager)
+    async incrementChatQueries(organization: Organization): Promise<void> {
+        const em = DI.em.fork()
 
-        await entityManager.nativeUpdate(
+        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
+
+        await em.nativeUpdate(
             UsageRecord,
             { id: usageRecord.id },
             { chat_queries_count: usageRecord.chat_queries_count + 1, updated_at: new Date() }
         )
 
         // Check and send usage alerts if needed
-        await this.checkAndSendUsageAlerts(organization, 'chat_queries', entityManager)
+        await this.checkAndSendUsageAlerts(organization, 'chat_queries', em)
+
+        // Only flush if we created our own entity manager
+        await em.flush()
     }
 
     /**
      * Get current billing period usage with limits
      */
-    async getCurrentUsage(organization: Organization, em?: EntityManager): Promise<UsageData> {
-        const entityManager = em || DI.em.fork()
+    async getCurrentUsage(organization: Organization): Promise<UsageData> {
+        const em = DI.em.fork()
 
-        const subscription = await entityManager.findOne(
+        const subscription = await em.findOne(
             OrganizationSubscription,
             { organization: organization.uuid },
             { populate: ['plan'] }
@@ -77,11 +84,11 @@ class UsageTrackingService {
             throw new Error('Organization subscription not found')
         }
 
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, entityManager)
+        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
         const plan = subscription.plan
 
         // Get projects count for the organization
-        const projectsCount = await entityManager.count('Project', { organization: organization.uuid })
+        const projectsCount = await em.count('Project', { organization: organization.uuid })
 
         // Calculate usage metrics
         const calcUsage = (count: number, limit: number | null): UsageMetric => {
@@ -111,12 +118,11 @@ class UsageTrackingService {
      */
     async checkLimit(
         organization: Organization,
-        limitType: 'memo_operations' | 'chat_queries' | 'projects',
-        em?: EntityManager
+        limitType: 'memo_operations' | 'chat_queries' | 'projects'
     ): Promise<{ withinLimit: boolean; currentCount: number; limit: number | null }> {
-        const entityManager = em || DI.em.fork()
+        const em = DI.em.fork()
 
-        const subscription = await entityManager.findOne(
+        const subscription = await em.findOne(
             OrganizationSubscription,
             { organization: organization.uuid },
             { populate: ['plan'] }
@@ -127,7 +133,7 @@ class UsageTrackingService {
         }
 
         const plan = subscription.plan
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, entityManager)
+        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
 
         let currentCount: number
         let limit: number | null
@@ -142,7 +148,7 @@ class UsageTrackingService {
                 limit = plan.chat_queries_limit ?? null
                 break
             case 'projects':
-                currentCount = await entityManager.count('Project', { organization: organization.uuid })
+                currentCount = await em.count('Project', { organization: organization.uuid })
                 limit = plan.projects_limit ?? null
                 break
         }

@@ -32,6 +32,9 @@ const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
     const row = result[0]
 
     if (row.type === 'document') {
+        // KLUDGE: this is problematic because a large document can take a long time to process, and we're holding up the
+        // queue in the meantime. Document memos should either be handled by a separate queue, or we should restructure our queue
+        // setup to read from sqs and add to an in-memory queue that we chug along at our own pace.
         const markdown = await DocumentProcessingService.sendDocumentForProcessing(row.project_id, row.memo_uuid)
         row.content = markdown
     }
