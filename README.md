@@ -39,7 +39,7 @@ With Skald you don't need to implement RAG ever again. Push context to our API, 
     <img height='40' src="/readme-assets/join-slack.svg" alt="skald-cli">
 </a>
 
-**[Node SDK](https://github.com/skaldlabs/skald-node) example**
+## [Node SDK](https://github.com/skaldlabs/skald-node) example
 
 ```js
 import { Skald } from '@skald-labs/skald-node';
