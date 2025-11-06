@@ -24,6 +24,29 @@ import { MemoChunk } from '../entities/MemoChunk'
 import { Organization } from '../entities/Organization'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
 
+// Mock S3 utilities
+jest.mock('../lib/s3Utils', () => ({
+    uploadFileToS3: jest.fn().mockResolvedValue('mocked-s3-key'),
+    deleteFileFromS3: jest.fn().mockResolvedValue(undefined),
+    generateS3Key: jest.fn((projectId: string, memoUuid: string) => `memos/${projectId}/${memoUuid}`),
+    generatePresignedUrl: jest.fn().mockResolvedValue('https://mocked-presigned-url.com'),
+    getFileFromS3: jest.fn().mockResolvedValue({ buffer: Buffer.from('test'), contentType: 'application/pdf' }),
+}))
+
+// Mock external API calls for memo processing (Datalab API)
+jest.mock('../lib/createMemoUtils', () => {
+    const actual = jest.requireActual('../lib/createMemoUtils')
+    return {
+        ...actual,
+        sendMemoForAsyncProcessing: jest.fn().mockResolvedValue(undefined),
+    }
+})
+
+// Set required environment variables for tests
+process.env.S3_BUCKET_NAME = 'test-bucket'
+process.env.AWS_REGION = 'us-east-1'
+process.env.DATALAB_API_KEY = 'test-key'
+
 describe('Memo API Tests', () => {
     let app: Express
     let orm: MikroORM
@@ -795,6 +818,263 @@ describe('Memo API Tests', () => {
                 })
 
             expect(response.status).toBe(400)
+        })
+    })
+
+    describe('POST /api/memos - Create Document Memo', () => {
+        it('should create a document memo with valid PDF file', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const fileBuffer = Buffer.from('fake pdf content')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', fileBuffer, 'test-document.pdf')
+                .field('title', 'Test Document')
+                .field('source', 'upload')
+
+            expect(response.status).toBe(201)
+            expect(response.body.memo_uuid).toBeDefined()
+        })
+
+        it('should create a document memo using original filename when title not provided', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const fileBuffer = Buffer.from('fake pdf content')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', fileBuffer, 'my-important-doc.pdf')
+
+            expect(response.status).toBe(201)
+            expect(response.body.memo_uuid).toBeDefined()
+        })
+
+        it('should create a document memo with optional fields', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const fileBuffer = Buffer.from('fake pdf content')
+            const futureDate = new Date(Date.now() + 86400000).toISOString()
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', fileBuffer, 'test.pdf')
+                .field('title', 'Test Document')
+                .field('reference_id', 'doc-ref-123')
+                .field('source', 'upload')
+                .field('expiration_date', futureDate)
+                .field('tags', JSON.stringify(['important', 'review']))
+                .field('metadata', JSON.stringify({ category: 'research' }))
+
+            expect(response.status).toBe(201)
+            expect(response.body.memo_uuid).toBeDefined()
+        })
+
+        it('should reject document memo without file', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .set('Content-Type', 'multipart/form-data')
+                .query({ project_id: project.uuid })
+                .field('title', 'Test Document')
+
+            expect(response.status).toBe(400)
+            // The error can be either "No file provided" or related to multipart handling
+            expect(response.body.error).toMatch(/No file provided|Multipart/)
+        })
+
+        it('should reject document upload exceeding file size limit', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const largeBuffer = Buffer.alloc(11 * 1024 * 1024) // 11MB, exceeds 10MB limit
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', largeBuffer, 'large-file.pdf')
+
+            expect(response.status).toBe(400)
+            expect(response.body.error).toBe('File size exceeds 10MB limit')
+        })
+
+        it('should truncate long titles to 255 characters', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const fileBuffer = Buffer.from('fake pdf content')
+            const longTitle = 'a'.repeat(300)
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', fileBuffer, 'test.pdf')
+                .field('title', longTitle)
+
+            expect(response.status).toBe(201)
+            expect(response.body.memo_uuid).toBeDefined()
+
+            // Verify title was truncated
+            const em = orm.em.fork()
+            const memo = await em.findOne(Memo, { uuid: response.body.memo_uuid })
+            expect(memo?.title).toHaveLength(255)
+        })
+
+        it('should store file metadata in memo', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const fileBuffer = Buffer.from('fake pdf content')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', fileBuffer, 'test-doc.pdf')
+                .field('metadata', JSON.stringify({ custom: 'value' }))
+
+            expect(response.status).toBe(201)
+
+            // Verify metadata includes file info
+            const em = orm.em.fork()
+            const memo = await em.findOne(Memo, { uuid: response.body.memo_uuid })
+            expect(memo?.metadata).toMatchObject({
+                custom: 'value',
+                original_filename: 'test-doc.pdf',
+                mimetype: 'application/pdf',
+                size: fileBuffer.length,
+            })
+        })
+
+        it('should set memo type to document', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const fileBuffer = Buffer.from('fake pdf content')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', fileBuffer, 'test.pdf')
+
+            expect(response.status).toBe(201)
+
+            // Verify type is document
+            const em = orm.em.fork()
+            const memo = await em.findOne(Memo, { uuid: response.body.memo_uuid })
+            expect(memo?.type).toBe('document')
+        })
+
+        it('should handle malformed tags JSON', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const fileBuffer = Buffer.from('fake pdf content')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', fileBuffer, 'test.pdf')
+                .field('tags', 'not-valid-json')
+
+            expect(response.status).toBe(500)
+            expect(response.body.error).toBe('Failed to process uploaded file')
+        })
+
+        it('should handle malformed metadata JSON', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const fileBuffer = Buffer.from('fake pdf content')
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .attach('file', fileBuffer, 'test.pdf')
+                .field('metadata', 'not-valid-json')
+
+            expect(response.status).toBe(500)
+            expect(response.body.error).toBe('Failed to process uploaded file')
+        })
+
+        it('should require authentication for document upload', async () => {
+            const fileBuffer = Buffer.from('fake pdf content')
+
+            const response = await request(app).post('/api/memos').attach('file', fileBuffer, 'test.pdf')
+
+            expect(response.status).toBe(403)
+        })
+
+        it('should require project access for document upload', async () => {
+            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
+
+            const org1 = await createTestOrganization(orm, 'Org 1', user1)
+            const org2 = await createTestOrganization(orm, 'Org 2', user2)
+
+            await createTestOrganizationMembership(orm, user1, org1)
+            await createTestOrganizationMembership(orm, user2, org2)
+
+            const project2 = await createTestProject(orm, 'Project 2', org2, user2)
+
+            const user1Token = generateAccessToken('user1@example.com')
+            const fileBuffer = Buffer.from('fake pdf content')
+
+            // User1 tries to upload to User2's project
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${user1Token}`])
+                .query({ project_id: project2.uuid })
+                .attach('file', fileBuffer, 'test.pdf')
+
+            expect(response.status).toBe(403)
         })
     })
 
