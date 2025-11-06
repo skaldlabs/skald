@@ -33,7 +33,14 @@
 
 # Skald: The open-source RAG API
 
-With Skald you don't need to implement RAG ever again. Push context to our API, and get chat, search, document generation and more out of the box.
+
+<a href="https://join.slack.com/t/skaldcommunity/shared_invite/zt-3he986lub-UWKTZneOAUeTFa4LDXpFEg">
+    <img height='40' src="/readme-assets/join-slack.svg" alt="skald-cli">
+</a>
+
+<br />
+
+With Skald you don't need to implement RAG ever again. Push context to our API, and get chat, search, and more out of the box.
 
 **[Node SDK](https://github.com/skaldlabs/skald-node) example**
 
