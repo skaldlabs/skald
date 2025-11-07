@@ -8,9 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Badge } from '@/components/ui/badge'
-import { X, Loader2 } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { X, Loader2, Upload, FileText } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { toast } from 'sonner'
+
+const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx']
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 const memoFormSchema = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
@@ -23,7 +27,17 @@ const memoFormSchema = z.object({
     metadata: z.record(z.string(), z.unknown()).optional(),
 })
 
+const fileFormSchema = z.object({
+    title: z.string().max(255).optional().nullable(),
+    source: z.string().max(255).optional().nullable(),
+    client_reference_id: z.string().max(255).optional().nullable(),
+    expiration_date: z.string().optional().nullable(),
+    tags: z.array(z.string()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+})
+
 type MemoFormValues = z.infer<typeof memoFormSchema>
+type FileFormValues = z.infer<typeof fileFormSchema>
 
 interface CreateMemoModalProps {
     open: boolean
@@ -31,18 +45,33 @@ interface CreateMemoModalProps {
 }
 
 export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) => {
+    const [activeTab, setActiveTab] = useState<'text' | 'document'>('text')
     const [tagInput, setTagInput] = useState('')
     const [tags, setTags] = useState<string[]>([])
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const createMemo = useMemoStore((state) => state.createMemo)
+    const createFileMemo = useMemoStore((state) => state.createFileMemo)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const form = useForm<MemoFormValues>({
+    const textForm = useForm<MemoFormValues>({
         resolver: zodResolver(memoFormSchema),
         defaultValues: {
             title: '',
             content: '',
             source: '',
             type: '',
+            client_reference_id: '',
+            expiration_date: '',
+            tags: [],
+            metadata: {},
+        },
+    })
+
+    const fileForm = useForm<FileFormValues>({
+        resolver: zodResolver(fileFormSchema),
+        defaultValues: {
+            title: '',
+            source: '',
             client_reference_id: '',
             expiration_date: '',
             tags: [],
@@ -64,13 +93,32 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
         setTags(tags.filter((tag) => tag !== tagToRemove))
     }
 
-    const onSubmit = async (data: MemoFormValues) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        // Validate file type
+        const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`
+        if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
+            toast.error(`Invalid file type. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}`)
+            return
+        }
+
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+            toast.error('File size exceeds 10MB limit')
+            return
+        }
+
+        setSelectedFile(file)
+    }
+
+    const onTextSubmit = async (data: MemoFormValues) => {
         setIsSubmitting(true)
         try {
             const payload = {
                 ...data,
                 tags: tags.length > 0 ? tags : undefined,
-                // Convert empty strings to null/undefined for optional fields
                 source: data.source?.trim() || undefined,
                 type: data.type?.trim() || undefined,
                 client_reference_id: data.client_reference_id?.trim() || undefined,
@@ -79,7 +127,7 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
 
             const success = await createMemo(payload)
             if (success) {
-                form.reset()
+                textForm.reset()
                 setTags([])
                 onOpenChange(false)
                 toast.success('Memo created successfully')
@@ -92,10 +140,47 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
         }
     }
 
+    const onFileSubmit = async (data: FileFormValues) => {
+        if (!selectedFile) {
+            toast.error('Please select a file')
+            return
+        }
+
+        setIsSubmitting(true)
+        try {
+            const payload = {
+                file: selectedFile,
+                title: data.title?.trim() || undefined,
+                source: data.source?.trim() || undefined,
+                reference_id: data.client_reference_id?.trim() || undefined,
+                expiration_date: data.expiration_date?.trim() || undefined,
+                tags: tags.length > 0 ? tags : undefined,
+                metadata: data.metadata,
+            }
+
+            const success = await createFileMemo(payload)
+            if (success) {
+                fileForm.reset()
+                setTags([])
+                setSelectedFile(null)
+                onOpenChange(false)
+                toast.success('Document uploaded successfully')
+            }
+        } catch (error) {
+            console.error('Error uploading document:', error)
+            toast.error('Failed to upload document')
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     const handleClose = () => {
         if (!isSubmitting) {
-            form.reset()
+            textForm.reset()
+            fileForm.reset()
             setTags([])
+            setSelectedFile(null)
+            setActiveTab('text')
             onOpenChange(false)
         }
     }
@@ -106,172 +191,337 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                 <DialogHeader>
                     <DialogTitle>Create New Memo</DialogTitle>
                     <DialogDescription>
-                        Add a new memo to your project. Only title and content are required.
+                        Add a new memo to your project by entering text or uploading a document.
                     </DialogDescription>
                 </DialogHeader>
 
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        {/* Required Fields */}
-                        <div className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            Title <span className="text-destructive">*</span>
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter memo title" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'text' | 'document')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="text">
+                            <FileText className="h-4 w-4 mr-2" />
+                            Text
+                        </TabsTrigger>
+                        <TabsTrigger value="document">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Document
+                        </TabsTrigger>
+                    </TabsList>
 
-                            <FormField
-                                control={form.control}
-                                name="content"
-                                render={({ field }) => (
+                    <TabsContent value="text" className="mt-6">
+                        <Form {...textForm}>
+                            <form onSubmit={textForm.handleSubmit(onTextSubmit)} className="space-y-6">
+                                {/* Required Fields */}
+                                <div className="space-y-4">
+                                    <FormField
+                                        control={textForm.control}
+                                        name="title"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Title <span className="text-destructive">*</span>
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Enter memo title" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={textForm.control}
+                                        name="content"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Content <span className="text-destructive">*</span>
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Textarea
+                                                        placeholder="Enter memo content"
+                                                        className="min-h-[200px] resize-y"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    The main content of the memo will be processed and indexed for search
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                {/* Optional Fields */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-medium">Optional Fields</h3>
+
+                                    <FormField
+                                        control={textForm.control}
+                                        name="source"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Source</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="e.g., URL, filename, repository name"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Where this content originated from</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={textForm.control}
+                                        name="type"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Type</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="e.g., code, document, note"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Category or type of content</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={textForm.control}
+                                        name="client_reference_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Reference ID</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="External system reference ID"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Your own reference ID for this memo</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={textForm.control}
+                                        name="expiration_date"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Expiration Date</FormLabel>
+                                                <FormControl>
+                                                    <Input type="datetime-local" {...field} value={field.value ?? ''} />
+                                                </FormControl>
+                                                <FormDescription>Optional expiration date for this memo</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormItem>
+                                        <FormLabel>Tags</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Type a tag and press Enter"
+                                                value={tagInput}
+                                                onChange={(e) => setTagInput(e.target.value)}
+                                                onKeyDown={handleAddTag}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>Press Enter to add each tag</FormDescription>
+                                        {tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {tags.map((tag) => (
+                                                    <Badge key={tag} variant="secondary" className="gap-1">
+                                                        {tag}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveTag(tag)}
+                                                            className="ml-1 hover:bg-muted rounded-full"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </FormItem>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" disabled={isSubmitting}>
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Create Memo
+                                    </Button>
+                                </div>
+                            </form>
+                        </Form>
+                    </TabsContent>
+
+                    <TabsContent value="document" className="mt-6">
+                        <Form {...fileForm}>
+                            <form onSubmit={fileForm.handleSubmit(onFileSubmit)} className="space-y-6">
+                                {/* File Upload */}
+                                <div className="space-y-4">
                                     <FormItem>
                                         <FormLabel>
-                                            Content <span className="text-destructive">*</span>
+                                            Document <span className="text-destructive">*</span>
                                         </FormLabel>
                                         <FormControl>
-                                            <Textarea
-                                                placeholder="Enter memo content"
-                                                className="min-h-[200px] resize-y"
-                                                {...field}
-                                            />
+                                            <div className="space-y-2">
+                                                <Input
+                                                    type="file"
+                                                    accept={ALLOWED_FILE_TYPES.join(',')}
+                                                    onChange={handleFileSelect}
+                                                    disabled={isSubmitting}
+                                                />
+                                                {selectedFile && (
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                                                    </p>
+                                                )}
+                                            </div>
                                         </FormControl>
                                         <FormDescription>
-                                            The main content of the memo will be processed and indexed for search
+                                            Upload a PDF, Word, or PowerPoint document (max 10MB). Allowed formats: {ALLOWED_FILE_TYPES.join(', ')}
                                         </FormDescription>
-                                        <FormMessage />
                                     </FormItem>
-                                )}
-                            />
-                        </div>
+                                </div>
 
-                        {/* Optional Fields */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-medium">Optional Fields</h3>
+                                {/* Optional Fields */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-medium">Optional Fields</h3>
 
-                            <FormField
-                                control={form.control}
-                                name="source"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Source</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="e.g., URL, filename, repository name"
-                                                {...field}
-                                                value={field.value ?? ''}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>Where this content originated from</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="type"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Type</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="e.g., code, document, note"
-                                                {...field}
-                                                value={field.value ?? ''}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>Category or type of content</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="client_reference_id"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Reference ID</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="External system reference ID"
-                                                {...field}
-                                                value={field.value ?? ''}
-                                            />
-                                        </FormControl>
-                                        <FormDescription>Your own reference ID for this memo</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="expiration_date"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Expiration Date</FormLabel>
-                                        <FormControl>
-                                            <Input type="datetime-local" {...field} value={field.value ?? ''} />
-                                        </FormControl>
-                                        <FormDescription>Optional expiration date for this memo</FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormItem>
-                                <FormLabel>Tags</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Type a tag and press Enter"
-                                        value={tagInput}
-                                        onChange={(e) => setTagInput(e.target.value)}
-                                        onKeyDown={handleAddTag}
+                                    <FormField
+                                        control={fileForm.control}
+                                        name="title"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Title</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Leave blank to use filename"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Optional custom title (defaults to filename)</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
                                     />
-                                </FormControl>
-                                <FormDescription>Press Enter to add each tag</FormDescription>
-                                {tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        {tags.map((tag) => (
-                                            <Badge key={tag} variant="secondary" className="gap-1">
-                                                {tag}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveTag(tag)}
-                                                    className="ml-1 hover:bg-muted rounded-full"
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </button>
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                )}
-                            </FormItem>
-                        </div>
 
-                        {/* Actions */}
-                        <div className="flex justify-end gap-3 pt-4">
-                            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
-                                Cancel
-                            </Button>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Memo
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
+                                    <FormField
+                                        control={fileForm.control}
+                                        name="source"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Source</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="e.g., URL, repository name"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Where this document originated from</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={fileForm.control}
+                                        name="client_reference_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Reference ID</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="External system reference ID"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>Your own reference ID for this memo</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={fileForm.control}
+                                        name="expiration_date"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Expiration Date</FormLabel>
+                                                <FormControl>
+                                                    <Input type="datetime-local" {...field} value={field.value ?? ''} />
+                                                </FormControl>
+                                                <FormDescription>Optional expiration date for this memo</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormItem>
+                                        <FormLabel>Tags</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Type a tag and press Enter"
+                                                value={tagInput}
+                                                onChange={(e) => setTagInput(e.target.value)}
+                                                onKeyDown={handleAddTag}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>Press Enter to add each tag</FormDescription>
+                                        {tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {tags.map((tag) => (
+                                                    <Badge key={tag} variant="secondary" className="gap-1">
+                                                        {tag}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveTag(tag)}
+                                                            className="ml-1 hover:bg-muted rounded-full"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </FormItem>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" disabled={isSubmitting || !selectedFile}>
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Upload Document
+                                    </Button>
+                                </div>
+                            </form>
+                        </Form>
+                    </TabsContent>
+                </Tabs>
             </DialogContent>
         </Dialog>
     )

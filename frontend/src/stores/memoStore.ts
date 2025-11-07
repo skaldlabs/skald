@@ -22,6 +22,16 @@ interface CreateMemoPayload {
     metadata?: Record<string, unknown>
 }
 
+interface CreateFileMemoPayload {
+    file: File
+    title?: string
+    source?: string
+    reference_id?: string
+    expiration_date?: string
+    tags?: string[]
+    metadata?: Record<string, unknown>
+}
+
 interface MemoState {
     memos: Memo[]
     loading: boolean
@@ -35,6 +45,7 @@ interface MemoState {
     fetchMemos: (page?: number, pageSize?: number) => Promise<void>
     searchMemos: (query: string, method: SearchMethod) => Promise<void>
     createMemo: (payload: CreateMemoPayload) => Promise<boolean>
+    createFileMemo: (payload: CreateFileMemoPayload) => Promise<boolean>
     deleteMemo: (memoUuid: string) => Promise<boolean>
     getMemoDetails: (memoUuid: string) => Promise<DetailedMemo | null>
     setSearchQuery: (query: string) => void
@@ -167,6 +178,54 @@ export const useMemoStore = create<MemoState>((set, get) => ({
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : 'Failed to create memo'
             toast.error(`Failed to create memo: ${errorMsg}`)
+            return false
+        }
+    },
+
+    createFileMemo: async (payload: CreateFileMemoPayload) => {
+        const currentProject = useProjectStore.getState().currentProject
+        if (!currentProject) {
+            throw new Error('No project selected')
+        }
+
+        try {
+            const formData = new FormData()
+            formData.append('file', payload.file)
+
+            if (payload.title) {
+                formData.append('title', payload.title)
+            }
+            if (payload.source) {
+                formData.append('source', payload.source)
+            }
+            if (payload.reference_id) {
+                formData.append('reference_id', payload.reference_id)
+            }
+            if (payload.expiration_date) {
+                formData.append('expiration_date', payload.expiration_date)
+            }
+            if (payload.tags && payload.tags.length > 0) {
+                formData.append('tags', JSON.stringify(payload.tags))
+            }
+            if (payload.metadata) {
+                formData.append('metadata', JSON.stringify(payload.metadata))
+            }
+
+            const response = await api.postFile<{ memo_uuid: string }>(
+                `/v1/memo/?project_id=${currentProject.uuid}`,
+                formData
+            )
+
+            if (response.error) {
+                toast.error(`Failed to upload document: ${response.error}`)
+                return false
+            }
+
+            await get().fetchMemos()
+            return true
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Failed to upload document'
+            toast.error(`Failed to upload document: ${errorMsg}`)
             return false
         }
     },
