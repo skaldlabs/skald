@@ -1,6 +1,7 @@
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { ChatOpenAI } from '@langchain/openai'
 import { ChatAnthropic } from '@langchain/anthropic'
+import { ChatGroq } from '@langchain/groq'
 import {
     LLM_PROVIDER,
     OPENAI_MODEL,
@@ -10,6 +11,8 @@ import {
     LOCAL_LLM_MODEL,
     LOCAL_LLM_BASE_URL,
     LOCAL_LLM_API_KEY,
+    GROQ_API_KEY,
+    GROQ_MODEL,
 } from '../settings'
 /**
  * LLM Service for creating LLM instances based on configuration
@@ -48,8 +51,16 @@ export class LLMService {
                 apiKey: LOCAL_LLM_API_KEY,
                 temperature,
             })
+        } else if (provider === 'groq') {
+            return new ChatGroq({
+                model: GROQ_MODEL,
+                apiKey: GROQ_API_KEY,
+                temperature,
+            })
         } else {
-            throw new Error(`Unsupported LLM provider: ${provider}. Supported providers: openai, anthropic, local`)
+            throw new Error(
+                `Unsupported LLM provider: ${provider}. Supported providers: openai, anthropic, local, groq`
+            )
         }
     }
 }

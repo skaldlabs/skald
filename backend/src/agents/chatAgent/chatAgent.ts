@@ -79,6 +79,7 @@ export async function* streamChatAgent(
             }
         }
     } catch (error) {
+        console.error(error)
         yield {
             type: 'error',
             content: error instanceof Error ? error.message : String(error),
