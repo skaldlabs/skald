@@ -18,6 +18,7 @@ interface ChatState {
     isStreaming: boolean
     currentStreamingMessageId: string | null
     systemPrompt: string
+    chatSessionId: string | null
     setSystemPrompt: (prompt: string) => void
     sendMessage: (query: string) => Promise<void>
     clearMessages: () => void
@@ -32,6 +33,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     isStreaming: false,
     currentStreamingMessageId: null,
     systemPrompt: '',
+    chatSessionId: null,
 
     setSystemPrompt: (prompt: string) => {
         set({ systemPrompt: prompt })
@@ -101,6 +103,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
             payload.system_prompt = systemPrompt
         }
 
+        const chatSessionId = get().chatSessionId
+        if (chatSessionId) {
+            payload.chat_id = chatSessionId
+        }
+
         api.stream(
             '/v1/chat/',
             payload,
@@ -110,6 +117,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     get().updateStreamingMessage(assistantMessageId, currentContent + data.content)
                 } else if (data.type === 'done') {
                     get().finishStreaming(assistantMessageId)
+                    if ('chat_id' in data && typeof data.chat_id === 'string') {
+                        set({ chatSessionId: data.chat_id })
+                    }
                 } else if (data.type === 'error') {
                     get().finishStreaming(assistantMessageId)
                     get().updateStreamingMessage(assistantMessageId, `Error: ${data.content || 'An error occurred'}`)
@@ -127,6 +137,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     clearMessages: () => {
-        set({ messages: [] })
+        set({ messages: [], chatSessionId: null })
     },
 }))
