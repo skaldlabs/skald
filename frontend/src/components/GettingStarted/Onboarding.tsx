@@ -36,18 +36,6 @@ export const Onboarding = () => {
                 </div>
             </div>
 
-            {/* Hero section */}
-            <div className="onboarding-hero">
-                <h2>Create your first memo</h2>
-                <p>Memos are the basic unit of knowledge in Skald — notes, documents, code, FAQs, anything.</p>
-                <p>
-                    When you add a memo, Skald automatically handles chunking, embeddings, indexing, summarization, and
-                    tagging.
-                </p>
-                <p>Then you can chat with your knowledge right away — no custom RAG setup required.</p>
-                <p>In this guide, you'll create your first memo and chat with it. Let's begin.</p>
-            </div>
-
             {/* Main content with progress bar and steps */}
             <div className="onboarding-content">
                 <ProgressBar currentStep={currentStep} stepsCompleted={stepsCompleted} />

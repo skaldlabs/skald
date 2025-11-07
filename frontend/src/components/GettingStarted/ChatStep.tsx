@@ -20,6 +20,7 @@ export const ChatStep = () => {
 
     const [activeTab, setActiveTab] = useState('curl')
     const messagesContainerRef = useRef<HTMLDivElement>(null)
+    const codeBlockRef = useRef<HTMLDivElement | null>(null)
     const isMobile = useIsMobile()
 
     // Auto-scroll to bottom when new messages are added
@@ -29,8 +30,32 @@ export const ChatStep = () => {
         }
     }, [chatMessages])
 
+    // Listen for manual copy events (CTRL+C / CMD+C) on desktop
+    useEffect(() => {
+        if (isMobile) return
+
+        const handleCopy = (e: ClipboardEvent) => {
+            console.log('Code copied manually! event:', e)
+            // Check if the selection is within our code block
+            const selection = window.getSelection()
+            if (!selection || !codeBlockRef.current) return
+
+            // Check if the selection intersects with our code block
+            if (codeBlockRef.current.contains(selection.anchorNode)) {
+                // Manual copy detected - could trigger additional behavior if needed
+                console.log('Code copied manually!')
+            }
+        }
+
+        document.addEventListener('copy', handleCopy)
+
+        return () => {
+            document.removeEventListener('copy', handleCopy)
+        }
+    }, [isMobile, hasChatted])
+
     const getCodeExample = () => {
-        const sampleQuery = chatQuery || 'What are my memos about?'
+        const sampleQuery = chatQuery || ''
         return getChatExample(activeTab, {
             apiKey: apiKey || '',
             query: sampleQuery,
@@ -94,13 +119,13 @@ export const ChatStep = () => {
                         </div>
                         {isMobile && (
                             <div className="mobile-helper-text">
-                                On mobile? Use the send button above. On desktop, we encourage using code!
+                                On mobile? Test the chat right here. On desktop, we encourage using code!
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="code-section">
+                <div className="code-section" ref={codeBlockRef}>
                     <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
                     <CodeBlock code={getCodeExample().code} language={getCodeExample().language} />
                 </div>

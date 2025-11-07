@@ -36,6 +36,7 @@ export const CreateMemoStep = () => {
     const initialMemoCountRef = useRef<number | null>(null)
     const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
     const isPollingRef = useRef(false)
+    const codeBlockRef = useRef<HTMLDivElement | null>(null)
 
     // Get initial memo count when component mounts or API key is generated
     useEffect(() => {
@@ -65,6 +66,30 @@ export const CreateMemoStep = () => {
             }
         }
     }, [])
+
+    // Listen for manual copy events (CTRL+C / CMD+C) on desktop
+    useEffect(() => {
+        if (isMobile) return
+
+        const handleCopy = (e: ClipboardEvent) => {
+            console.log('Code copied manually! event:', e)
+            // Check if the selection is within our code block
+            const selection = window.getSelection()
+            if (!selection || !codeBlockRef.current) return
+
+            // Check if the selection intersects with our code block
+            if (codeBlockRef.current.contains(selection.anchorNode)) {
+                // Manual copy detected, trigger the same behavior as copy button
+                handleCodeCopy()
+            }
+        }
+
+        document.addEventListener('copy', handleCopy)
+
+        return () => {
+            document.removeEventListener('copy', handleCopy)
+        }
+    }, [isMobile, memoCreated])
 
     const stopPolling = () => {
         if (pollingIntervalRef.current) {
@@ -127,11 +152,26 @@ export const CreateMemoStep = () => {
         <div className={`getting-started-step ${isComplete ? 'complete' : ''} ${isDisabled ? 'disabled' : ''}`}>
             <div className="step-content">
                 <h2 className="step-title">Create your first memo {isComplete && <Check className="title-check" />}</h2>
+
                 <p className="step-description">
+                    Memos are the basic unit of knowledge in Skald. You can store anything as a memo: notes, documents,
+                    code snippets, specs, recipes, FAQs, etc.
+                </p>
+
+                <p className="step-description">
+                    When you add a memo, Skald automatically handles chunking, embeddings, indexing, summarization, and
+                    tagging.
+                </p>
+
+                <p className="step-description font-bold">
                     Fill in the title and content below, then copy and paste the code into your terminal to create your
                     first memo
                 </p>
 
+                <div className="code-section" ref={codeBlockRef}>
+                    <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
+                    <CodeBlock code={currentExample.code} language={currentExample.language} onCopy={handleCodeCopy} />
+                </div>
                 <div className="interactive-section">
                     <div className="form-field">
                         <label>Title</label>
@@ -167,11 +207,6 @@ export const CreateMemoStep = () => {
                             </Button>
                         </div>
                     )}
-                </div>
-
-                <div className="code-section">
-                    <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
-                    <CodeBlock code={currentExample.code} language={currentExample.language} onCopy={handleCodeCopy} />
                 </div>
 
                 {isWaitingForMemo && !isMobile && (
