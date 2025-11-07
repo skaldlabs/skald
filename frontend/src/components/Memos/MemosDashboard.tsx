@@ -34,6 +34,8 @@ export const MemosDashboard = () => {
     const setSearchQuery = useMemoStore((state) => state.setSearchQuery)
     const clearSearch = useMemoStore((state) => state.clearSearch)
     const isSearchMode = useMemoStore((state) => state.isSearchMode)
+    const startPollingProcessingMemos = useMemoStore((state) => state.startPollingProcessingMemos)
+    const stopAllPolling = useMemoStore((state) => state.stopAllPolling)
 
     const [selectedMemo, setSelectedMemo] = useState<DetailedMemo | null>(null)
     const [memoToDelete, setMemoToDelete] = useState<Memo | null>(null)
@@ -144,6 +146,18 @@ export const MemosDashboard = () => {
 
         loadMemoFromUrl()
     }, [memoUuid, currentProject, getMemoDetails])
+
+    // Start polling for processing memos
+    useEffect(() => {
+        startPollingProcessingMemos()
+    }, [memos, startPollingProcessingMemos])
+
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            stopAllPolling()
+        }
+    }, [stopAllPolling])
 
     if (!currentProject) {
         return (

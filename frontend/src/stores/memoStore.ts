@@ -32,6 +32,14 @@ interface CreateFileMemoPayload {
     metadata?: Record<string, unknown>
 }
 
+interface MemoStatusResponse {
+    memo_uuid: string
+    status: 'processing' | 'processed' | 'error'
+    processing_started_at: string | null
+    processing_completed_at: string | null
+    error_reason: string | null
+}
+
 interface MemoState {
     memos: Memo[]
     loading: boolean
@@ -42,12 +50,18 @@ interface MemoState {
     totalCount: number
     currentPage: number
     pageSize: number
+    pollingIntervals: Map<string, NodeJS.Timeout>
     fetchMemos: (page?: number, pageSize?: number) => Promise<void>
     searchMemos: (query: string, method: SearchMethod) => Promise<void>
     createMemo: (payload: CreateMemoPayload) => Promise<boolean>
     createFileMemo: (payload: CreateFileMemoPayload) => Promise<boolean>
     deleteMemo: (memoUuid: string) => Promise<boolean>
     getMemoDetails: (memoUuid: string) => Promise<DetailedMemo | null>
+    getMemoStatus: (memoUuid: string) => Promise<MemoStatusResponse | null>
+    updateMemoStatus: (memoUuid: string, status: 'processing' | 'processed' | 'error') => void
+    startPollingProcessingMemos: () => void
+    stopPollingMemo: (memoUuid: string) => void
+    stopAllPolling: () => void
     setSearchQuery: (query: string) => void
     clearSearch: () => void
 }
@@ -62,6 +76,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
     totalCount: 0,
     currentPage: 1,
     pageSize: 20,
+    pollingIntervals: new Map(),
 
     fetchMemos: async (page = 1, pageSize = 50) => {
         set({ loading: true, error: null, isSearchMode: false })
@@ -303,5 +318,80 @@ export const useMemoStore = create<MemoState>((set, get) => ({
     clearSearch: () => {
         set({ searchQuery: '', isSearchMode: false })
         get().fetchMemos()
+    },
+
+    getMemoStatus: async (memoUuid: string) => {
+        const currentProject = useProjectStore.getState().currentProject
+        if (!currentProject) {
+            throw new Error('No project selected')
+        }
+
+        try {
+            const response = await api.get<MemoStatusResponse>(
+                `/v1/memo/${memoUuid}/status/?project_id=${currentProject.uuid}`
+            )
+
+            if (response.error || !response.data) {
+                return null
+            }
+
+            return response.data
+        } catch {
+            return null
+        }
+    },
+
+    updateMemoStatus: (memoUuid: string, status: 'processing' | 'processed' | 'error') => {
+        const currentMemos = get().memos
+        const updatedMemos = currentMemos.map((memo) =>
+            memo.uuid === memoUuid ? { ...memo, processing_status: status } : memo
+        )
+        set({ memos: updatedMemos })
+    },
+
+    startPollingProcessingMemos: () => {
+        const currentMemos = get().memos
+        const processingMemos = currentMemos.filter((memo) => memo.processing_status === 'processing')
+
+        processingMemos.forEach((memo) => {
+            // Don't start polling if already polling this memo
+            if (get().pollingIntervals.has(memo.uuid)) {
+                return
+            }
+
+            const pollMemo = async () => {
+                const statusResponse = await get().getMemoStatus(memo.uuid)
+                if (statusResponse && statusResponse.status !== 'processing') {
+                    // Status changed, update the memo
+                    get().updateMemoStatus(memo.uuid, statusResponse.status)
+                    // Stop polling this memo
+                    get().stopPollingMemo(memo.uuid)
+                }
+            }
+
+            // Poll immediately once
+            pollMemo()
+
+            // Then poll every 3 seconds
+            const intervalId = setInterval(pollMemo, 3000)
+            get().pollingIntervals.set(memo.uuid, intervalId)
+        })
+    },
+
+    stopPollingMemo: (memoUuid: string) => {
+        const intervalId = get().pollingIntervals.get(memoUuid)
+        if (intervalId) {
+            clearInterval(intervalId)
+            const newIntervals = new Map(get().pollingIntervals)
+            newIntervals.delete(memoUuid)
+            set({ pollingIntervals: newIntervals })
+        }
+    },
+
+    stopAllPolling: () => {
+        get().pollingIntervals.forEach((intervalId) => {
+            clearInterval(intervalId)
+        })
+        set({ pollingIntervals: new Map() })
     },
 }))

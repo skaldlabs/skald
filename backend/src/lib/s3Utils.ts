@@ -1,24 +1,22 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { logger } from './logger'
+import { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME } from '@/settings'
 
 // Initialize S3 client with region-aware configuration
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION || 'us-east-1',
+    region: AWS_REGION,
     credentials:
-        process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+        AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY
             ? {
-                  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                  accessKeyId: AWS_ACCESS_KEY_ID,
+                  secretAccessKey: AWS_SECRET_ACCESS_KEY,
               }
-            : undefined, // Will use IAM role if credentials not provided
-    // Follow region redirects automatically
+            : undefined, // will use IAM role configured via AWS CLI if credentials not provided via the env
     followRegionRedirects: true,
 })
 
-const BUCKET_NAME = process.env.S3_BUCKET_NAME
-
-if (!BUCKET_NAME) {
+if (!S3_BUCKET_NAME) {
     logger.warn('S3_BUCKET_NAME environment variable not set. S3 operations will fail.')
 }
 
@@ -36,13 +34,13 @@ export async function uploadFileToS3(
     contentType: string,
     metadata?: Record<string, string>
 ): Promise<string> {
-    if (!BUCKET_NAME) {
+    if (!S3_BUCKET_NAME) {
         throw new Error('S3_BUCKET_NAME environment variable not set')
     }
 
     try {
         const command = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: S3_BUCKET_NAME,
             Key: key,
             Body: fileBuffer,
             ContentType: contentType,
@@ -50,11 +48,11 @@ export async function uploadFileToS3(
         })
 
         await s3Client.send(command)
-        logger.info({ key, bucket: BUCKET_NAME }, 'File uploaded to S3')
+        logger.info({ key, bucket: S3_BUCKET_NAME }, 'File uploaded to S3')
 
         return key
     } catch (error) {
-        logger.error({ err: error, key, bucket: BUCKET_NAME }, 'Failed to upload file to S3')
+        logger.error({ err: error, key, bucket: S3_BUCKET_NAME }, 'Failed to upload file to S3')
         throw new Error('Failed to upload file to S3')
     }
 }
@@ -69,13 +67,13 @@ export async function getFileFromS3(key: string): Promise<{
     contentType?: string
     metadata?: Record<string, string>
 }> {
-    if (!BUCKET_NAME) {
+    if (!S3_BUCKET_NAME) {
         throw new Error('S3_BUCKET_NAME environment variable not set')
     }
 
     try {
         const command = new GetObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: S3_BUCKET_NAME,
             Key: key,
         })
 
@@ -94,7 +92,7 @@ export async function getFileFromS3(key: string): Promise<{
             metadata: response.Metadata,
         }
     } catch (error) {
-        logger.error({ err: error, key, bucket: BUCKET_NAME }, 'Failed to retrieve file from S3')
+        logger.error({ err: error, key, bucket: S3_BUCKET_NAME }, 'Failed to retrieve file from S3')
         throw new Error('Failed to retrieve file from S3')
     }
 }
@@ -104,20 +102,20 @@ export async function getFileFromS3(key: string): Promise<{
  * @param key - The S3 key (file path) of the file to delete
  */
 export async function deleteFileFromS3(key: string): Promise<void> {
-    if (!BUCKET_NAME) {
+    if (!S3_BUCKET_NAME) {
         throw new Error('S3_BUCKET_NAME environment variable not set')
     }
 
     try {
         const command = new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: S3_BUCKET_NAME,
             Key: key,
         })
 
         await s3Client.send(command)
-        logger.info({ key, bucket: BUCKET_NAME }, 'File deleted from S3')
+        logger.info({ key, bucket: S3_BUCKET_NAME }, 'File deleted from S3')
     } catch (error) {
-        logger.error({ err: error, key, bucket: BUCKET_NAME }, 'Failed to delete file from S3')
+        logger.error({ err: error, key, bucket: S3_BUCKET_NAME }, 'Failed to delete file from S3')
         throw new Error('Failed to delete file from S3')
     }
 }
@@ -139,22 +137,22 @@ export function generateS3Key(projectId: string, memoUuid: string): string {
  * @returns A pre-signed URL that allows temporary access to the file
  */
 export async function generatePresignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
-    if (!BUCKET_NAME) {
+    if (!S3_BUCKET_NAME) {
         throw new Error('S3_BUCKET_NAME environment variable not set')
     }
 
     try {
         const command = new GetObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: S3_BUCKET_NAME,
             Key: key,
         })
 
         const url = await getSignedUrl(s3Client, command, { expiresIn })
-        logger.info({ key, bucket: BUCKET_NAME, expiresIn }, 'Generated pre-signed URL')
+        logger.info({ key, bucket: S3_BUCKET_NAME, expiresIn }, 'Generated pre-signed URL')
 
         return url
     } catch (error) {
-        logger.error({ err: error, key, bucket: BUCKET_NAME }, 'Failed to generate pre-signed URL')
+        logger.error({ err: error, key, bucket: S3_BUCKET_NAME }, 'Failed to generate pre-signed URL')
         throw new Error('Failed to generate pre-signed URL')
     }
 }
