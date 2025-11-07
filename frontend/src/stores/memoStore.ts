@@ -133,6 +133,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
                 created_at: '',
                 updated_at: '',
                 distance: result.distance,
+                processing_status: 'processed',
             }))
 
             set({

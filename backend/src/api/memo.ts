@@ -347,16 +347,20 @@ export const listMemos = async (req: Request, res: Response) => {
 
     const summaryMap = new Map(memoSummaries.map((s) => [s.memo.uuid, s.summary]))
 
-    const results = memos.map((memo) => ({
-        uuid: memo.uuid,
-        created_at: memo.created_at,
-        updated_at: memo.updated_at,
-        title: memo.title,
-        summary: summaryMap.get(memo.uuid) || null,
-        content_length: memo.content_length,
-        metadata: memo.metadata,
-        client_reference_id: memo.client_reference_id,
-    }))
+    const results = memos.map((memo) => {
+        const processingStatus = memo.processing_status === 'received' ? 'processing' : memo.processing_status
+        return {
+            uuid: memo.uuid,
+            created_at: memo.created_at,
+            updated_at: memo.updated_at,
+            title: memo.title,
+            summary: summaryMap.get(memo.uuid) || null,
+            content_length: memo.content_length,
+            metadata: memo.metadata,
+            client_reference_id: memo.client_reference_id,
+            processing_status: processingStatus,
+        }
+    })
 
     return res.status(200).json({
         results,

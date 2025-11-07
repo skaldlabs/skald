@@ -2,7 +2,8 @@ import type { Memo, SearchMethod } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Trash2, Share } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Trash2, Share, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -61,6 +62,33 @@ export const MemosTable = ({
         return `${similarity.toFixed(1)}%`
     }
 
+    const getStatusBadge = (status: 'processing' | 'processed' | 'error') => {
+        if (status === 'processing') {
+            return (
+                <Badge variant="outline" className="flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Processing
+                </Badge>
+            )
+        }
+        if (status === 'processed') {
+            return (
+                <Badge variant="default" className="flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Processed
+                </Badge>
+            )
+        }
+        if (status === 'error') {
+            return (
+                <Badge variant="destructive" className="flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Error
+                </Badge>
+            )
+        }
+    }
+
     const showRelevanceColumn = searchQuery && searchMethod === 'chunk_vector_search'
 
     if (loading) {
@@ -93,6 +121,7 @@ export const MemosTable = ({
                         {showRelevanceColumn && <TableHead>Relevance</TableHead>}
                         <TableHead className="w-[20%]">Title</TableHead>
                         <TableHead className="w-[40%]">Summary</TableHead>
+                        <TableHead className="w-[10%]">Status</TableHead>
                         <TableHead className="w-[10%]">Created</TableHead>
                         <TableHead className="w-[10%]"></TableHead>
                     </TableRow>
@@ -134,6 +163,7 @@ export const MemosTable = ({
                                     {truncate(memo.summary, 120)}
                                 </p>
                             </TableCell>
+                            <TableCell>{getStatusBadge(memo.processing_status)}</TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                                 {formatDate(memo.created_at)}
                             </TableCell>

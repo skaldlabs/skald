@@ -34,7 +34,6 @@ export class DocumentProcessingService {
         const formData = new FormData()
         formData.append('file_url', presignedUrl)
         formData.append('output_format', 'markdown')
-        formData.append('page_range', '0-2')
 
         const submitResponse = await fetch(this.MARKER_API_URL, {
             method: 'POST',
