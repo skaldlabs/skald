@@ -35,8 +35,30 @@ export const clearDatabase = async (orm: MikroORM) => {
     const tableNames = tables.map((t: any) => `"${t.tablename}"`).join(', ')
 
     if (tableNames) {
-        // Disable triggers and truncate all tables in one statement to prevent deadlocks
-        await connection.execute(`TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE`)
+        // Use a transaction with retry logic for deadlock scenarios
+        const maxRetries = 3
+        let lastError: Error | null = null
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                await connection.execute(`TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE`)
+                return // Success, exit early
+            } catch (error: any) {
+                lastError = error
+                // Check if it's a deadlock error (code 40P01)
+                if (error.code === '40P01' && attempt < maxRetries - 1) {
+                    // Wait a bit before retrying (exponential backoff)
+                    await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, attempt)))
+                    continue
+                }
+                // If it's not a deadlock or we're out of retries, throw
+                throw error
+            }
+        }
+
+        if (lastError) {
+            throw lastError
+        }
     }
 }
 

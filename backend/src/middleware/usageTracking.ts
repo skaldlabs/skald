@@ -9,7 +9,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { Organization } from '@/entities/Organization'
-import { IS_SELF_HOSTED_DEPLOY } from '@/settings'
+import { IS_SELF_HOSTED_DEPLOY, TEST } from '@/settings'
 import { DI } from '@/di'
 import { logger } from '@/lib/logger'
 
@@ -37,8 +37,8 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
     const { increment = true } = options
 
     return async (req: Request, res: Response, next: NextFunction) => {
-        // Skip tracking if self-hosted or in debug mode
-        if (IS_SELF_HOSTED_DEPLOY) {
+        // Skip tracking if self-hosted, in test mode, or in debug mode
+        if (IS_SELF_HOSTED_DEPLOY || TEST) {
             return next()
         }
 
