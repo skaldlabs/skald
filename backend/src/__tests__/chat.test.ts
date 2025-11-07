@@ -94,7 +94,7 @@ describe('Chat API', () => {
             expect(response.body.intermediate_steps).toEqual([])
         })
 
-        it('should create a chat message pair when chat_session_id is not provided', async () => {
+        it('should create a chat message pair when chat_id is not provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -137,7 +137,7 @@ describe('Chat API', () => {
             expect(chatMessages[0].content).toBe('What is in the documents?')
         })
 
-        it('it should create messages for an existing chat if chat_session_id is provided', async () => {
+        it('it should create messages for an existing chat if chat_id is provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -164,7 +164,7 @@ describe('Chat API', () => {
                 .query({ project_id: project.uuid })
                 .send({
                     query: 'What is in the documents?',
-                    chat_session_id: testChat.uuid,
+                    chat_id: testChat.uuid,
                 })
 
             expect(response.status).toBe(200)
@@ -536,7 +536,7 @@ describe('Chat API', () => {
             )
         })
 
-        it('should return chat_session_id in non-streaming response', async () => {
+        it('should return chat_id in non-streaming response', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -557,11 +557,11 @@ describe('Chat API', () => {
                 })
 
             expect(response.status).toBe(200)
-            expect(response.body.chat_session_id).toBeDefined()
-            expect(typeof response.body.chat_session_id).toBe('string')
+            expect(response.body.chat_id).toBeDefined()
+            expect(typeof response.body.chat_id).toBe('string')
         })
 
-        it('should return chat_session_id in streaming response done event', async () => {
+        it('should return chat_id in streaming response done event', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -588,10 +588,10 @@ describe('Chat API', () => {
                 })
 
             expect(response.status).toBe(200)
-            expect(response.text).toContain('chat_session_id')
+            expect(response.text).toContain('chat_id')
         })
 
-        it('should accept chat_session_id parameter', async () => {
+        it('should accept chat_id parameter', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -610,14 +610,14 @@ describe('Chat API', () => {
                 .query({ project_id: project.uuid })
                 .send({
                     query: 'test query',
-                    chat_session_id: testChat.uuid,
+                    chat_id: testChat.uuid,
                 })
 
             expect(response.status).toBe(200)
-            expect(response.body.chat_session_id).toBe(testChat.uuid)
+            expect(response.body.chat_id).toBe(testChat.uuid)
         })
 
-        it('should pass conversation history to chat agent when chat_session_id provided', async () => {
+        it('should pass conversation history to chat agent when chat_id provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -658,7 +658,7 @@ describe('Chat API', () => {
                 .query({ project_id: project.uuid })
                 .send({
                     query: 'new query',
-                    chat_session_id: testChat.uuid,
+                    chat_id: testChat.uuid,
                 })
 
             // Verify that runChatAgent was called with conversation history
@@ -671,7 +671,7 @@ describe('Chat API', () => {
             expect(callArgs[3].length).toBeGreaterThan(0)
         })
 
-        it('should not pass conversation history when chat_session_id not provided', async () => {
+        it('should not pass conversation history when chat_id not provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -697,7 +697,7 @@ describe('Chat API', () => {
             expect(callArgs[3]).toEqual([]) // conversationHistory should be empty array
         })
 
-        it('should create new chat when invalid chat_session_id provided', async () => {
+        it('should create new chat when invalid chat_id provided', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -717,13 +717,13 @@ describe('Chat API', () => {
                 .query({ project_id: project.uuid })
                 .send({
                     query: 'test query',
-                    chat_session_id: invalidChatId,
+                    chat_id: invalidChatId,
                 })
 
             expect(response.status).toBe(200)
-            // Should return a new chat_session_id, not the invalid one
-            expect(response.body.chat_session_id).toBeDefined()
-            expect(response.body.chat_session_id).not.toBe(invalidChatId)
+            // Should return a new chat_id, not the invalid one
+            expect(response.body.chat_id).toBeDefined()
+            expect(response.body.chat_id).not.toBe(invalidChatId)
         })
 
         it('should scope chat history to correct project', async () => {
@@ -760,7 +760,7 @@ describe('Chat API', () => {
                 .query({ project_id: project2.uuid })
                 .send({
                     query: 'test query',
-                    chat_session_id: testChat.uuid,
+                    chat_id: testChat.uuid,
                 })
 
             // Should create a new chat since chat doesn't belong to project2

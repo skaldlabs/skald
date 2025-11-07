@@ -105,7 +105,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         const chatSessionId = get().chatSessionId
         if (chatSessionId) {
-            payload.chat_session_id = chatSessionId
+            payload.chat_id = chatSessionId
         }
 
         api.stream(
@@ -117,8 +117,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     get().updateStreamingMessage(assistantMessageId, currentContent + data.content)
                 } else if (data.type === 'done') {
                     get().finishStreaming(assistantMessageId)
-                    if ('chat_session_id' in data && typeof data.chat_session_id === 'string') {
-                        set({ chatSessionId: data.chat_session_id })
+                    if ('chat_id' in data && typeof data.chat_id === 'string') {
+                        set({ chatSessionId: data.chat_id })
                     }
                 } else if (data.type === 'error') {
                     get().finishStreaming(assistantMessageId)

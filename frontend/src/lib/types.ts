@@ -2,7 +2,7 @@ export interface ApiStreamData {
     type: 'token' | 'sources' | 'chat_context' | 'done' | 'error'
     content?: string
     data?: unknown
-    chat_session_id?: string
+    chat_id?: string
 }
 
 export interface ApiErrorData {

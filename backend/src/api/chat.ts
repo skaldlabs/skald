@@ -11,7 +11,7 @@ export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
     const stream = req.body.stream || false
     const filters = req.body.filters || []
-    const chatSessionId = req.body.chat_session_id
+    const chatId = req.body.chat_id
     const clientSystemPrompt = req.body.system_prompt || null
 
     if (!query) {
@@ -38,7 +38,7 @@ export const chat = async (req: Request, res: Response) => {
         }
     }
 
-    const conversationHistory = await getOptimizedChatHistory(chatSessionId, project)
+    const conversationHistory = await getOptimizedChatHistory(chatId, project)
 
     const rerankedResults = await prepareContextForChatAgent(query, project, memoFilters)
 
@@ -56,29 +56,17 @@ export const chat = async (req: Request, res: Response) => {
                 res,
                 conversationHistory
             )
-            const finalChatId = await createChatMessagePair(
-                project,
-                query,
-                fullResponse,
-                chatSessionId,
-                clientSystemPrompt
-            )
-            res.write(`data: ${JSON.stringify({ type: 'done', chat_session_id: finalChatId })}\n\n`)
+            const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
+            res.write(`data: ${JSON.stringify({ type: 'done', chat_id: finalChatId })}\n\n`)
             res.end()
         } else {
             // non-streaming response
             const result = await runChatAgent(query, contextStr, clientSystemPrompt, conversationHistory)
-            const finalChatId = await createChatMessagePair(
-                project,
-                query,
-                result.output,
-                chatSessionId,
-                clientSystemPrompt
-            )
+            const finalChatId = await createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
 
             return res.status(200).json({
                 ok: true,
-                chat_session_id: finalChatId,
+                chat_id: finalChatId,
                 response: result.output,
                 intermediate_steps: result.intermediate_steps || [],
             })
