@@ -50,26 +50,28 @@ export const ChatStep = () => {
 
                 <div className="interactive-section">
                     <div className="chat-interface">
-                        <div className="chat-messages" ref={messagesContainerRef}>
-                            {chatMessages.length === 0 ? (
-                                <div className="chat-placeholder">
-                                    <p>Your conversation will appear here...</p>
-                                </div>
-                            ) : (
-                                chatMessages.map((message) => (
-                                    <div key={message.id} className={`chat-message ${message.role}`}>
-                                        <div className="message-content">
-                                            {message.content}
-                                            {message.role === 'assistant' &&
-                                                isChatting &&
-                                                message.id === chatMessages[chatMessages.length - 1]?.id && (
-                                                    <span className="streaming-cursor">|</span>
-                                                )}
-                                        </div>
+                        {isMobile && (
+                            <div className="chat-messages" ref={messagesContainerRef}>
+                                {chatMessages.length === 0 ? (
+                                    <div className="chat-placeholder">
+                                        <p>Your conversation will appear here...</p>
                                     </div>
-                                ))
-                            )}
-                        </div>
+                                ) : (
+                                    chatMessages.map((message) => (
+                                        <div key={message.id} className={`chat-message ${message.role}`}>
+                                            <div className="message-content">
+                                                {message.content}
+                                                {message.role === 'assistant' &&
+                                                    isChatting &&
+                                                    message.id === chatMessages[chatMessages.length - 1]?.id && (
+                                                        <span className="streaming-cursor">|</span>
+                                                    )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
 
                         <div className="chat-input-container">
                             <Input
