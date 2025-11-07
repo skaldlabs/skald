@@ -15,14 +15,43 @@ import {
     ExternalLink,
     Code,
     Database,
+    RulerDimensionLine,
 } from 'lucide-react'
 import { formatDate } from '@/components/utils/dateUtils'
+import { addMonths, isBefore } from 'date-fns'
 
 interface DetailedMemoViewProps {
     memo: DetailedMemo
 }
 
 export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
+    const getExpirationExtraStyles = (dateString: string): string => {
+        const expirationDate = new Date(dateString)
+        const now = new Date()
+        const oneMonthFromNow = addMonths(now, 1)
+
+        if (isBefore(expirationDate, now)) {
+            return 'text-destructive'
+        }
+        if (isBefore(expirationDate, oneMonthFromNow)) {
+            return 'text-amber-600'
+        }
+        return 'text-muted-foreground'
+    }
+
+    const getExpirationLabel = (dateString: string): string => {
+        const expirationDate = new Date(dateString)
+        const now = new Date()
+
+        if (isBefore(expirationDate, now)) {
+            return 'Expired:'
+        }
+        return 'Expires:'
+    }
+
+    const expirationColorClass = memo.expiration_date ? getExpirationExtraStyles(memo.expiration_date) : null
+    const expirationLabelClass = expirationColorClass === 'text-muted-foreground' ? 'text-white' : expirationColorClass
+
     const getStatusBadge = () => {
         if (memo.archived) {
             return (
@@ -61,11 +90,11 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
     const getTypeIcon = () => {
         switch (memo.type?.toLowerCase()) {
             case 'code':
-                return <Code className="h-4 w-4" />
+                return <Code className="h-6 w-6" />
             case 'document':
-                return <FileText className="h-4 w-4" />
+                return <FileText className="h-6 w-6" />
             default:
-                return <Database className="h-4 w-4" />
+                return <Database className="h-6 w-6" />
         }
     }
 
@@ -73,32 +102,32 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
         <div className="space-y-6">
             {/* Header Section */}
             <div className="space-y-4">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             {getTypeIcon()}
                             <h1 className="text-2xl font-bold">{memo.title}</h1>
                         </div>
-                        {memo.source && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <ExternalLink className="h-4 w-4" />
-                                <span>Source: {memo.source}</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {getStatusBadge()}
-                        {memo.type && (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                                {getTypeIcon()}
-                                {memo.type}
-                            </Badge>
-                        )}
+                        <div className="flex items-center gap-4">
+                            {getStatusBadge()}
+                            {memo.type && (
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                    {getTypeIcon()}
+                                    {memo.type}
+                                </Badge>
+                            )}
+                            {memo.source && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <ExternalLink className="h-4 w-4" />
+                                    <span>Source: {memo.source}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Metadata Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pt-2">
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div>
@@ -114,7 +143,7 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Hash className="h-4 w-4 text-muted-foreground" />
+                        <RulerDimensionLine className="h-4 w-4 text-muted-foreground" />
                         <div>
                             <div className="font-medium">Content Length</div>
                             <div className="text-muted-foreground">
@@ -124,18 +153,31 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                     </div>
                 </div>
 
-                {memo.client_reference_id && (
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="font-medium">Reference ID:</span>
-                        <code className="bg-muted px-2 py-1 rounded text-xs">{memo.client_reference_id}</code>
-                    </div>
-                )}
+                {(memo.client_reference_id || memo.expiration_date) && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pt-2">
+                        {memo.client_reference_id && (
+                            <div className="flex items-center gap-2 text-sm">
+                                <Hash className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                    <div className="font-medium">Reference ID:</div>
+                                    <span className="text-muted-foreground font-mono">{memo.client_reference_id}</span>
+                                </div>
+                            </div>
+                        )}
 
-                {memo.expiration_date && (
-                    <div className="flex items-center gap-2 text-sm">
-                        <AlertCircle className="h-4 w-4 text-amber-500" />
-                        <span className="font-medium">Expires:</span>
-                        <span className="text-amber-600">{formatDate(memo.expiration_date)}</span>
+                        {memo.expiration_date && (
+                            <div className="flex items-center gap-2 text-sm">
+                                <AlertCircle className={`h-4 w-4 ${expirationColorClass ?? ''}`} />
+                                <div>
+                                    <div className={`font-medium ${expirationLabelClass ?? ''}`}>
+                                        {getExpirationLabel(memo.expiration_date)}
+                                    </div>
+                                    <span className={expirationColorClass ?? ''}>
+                                        {formatDate(memo.expiration_date)}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

@@ -33,9 +33,13 @@
 
 # Skald: The open-source RAG API
 
-With Skald you don't need to implement RAG ever again. Push context to our API, and get chat, search, document generation and more out of the box.
+With Skald you don't need to implement RAG ever again. Push context to our API, and get chat, search, and more out of the box.
 
-**[Node SDK](https://github.com/skaldlabs/skald-node) example**
+<a href="https://join.slack.com/t/skaldcommunity/shared_invite/zt-3he986lub-UWKTZneOAUeTFa4LDXpFEg">
+    <img height='40' src="/readme-assets/join-slack.svg" alt="skald-cli">
+</a>
+
+## [Node SDK](https://github.com/skaldlabs/skald-node) example
 
 ```js
 import { Skald } from '@skald-labs/skald-node';
@@ -53,6 +57,7 @@ const result = await skald.chat({
 ```
 
 <small>[Python](https://docs.useskald.com/docs/sdks/python#usage) - [Ruby](https://docs.useskald.com/docs/sdks/ruby#usage) - [Go](https://docs.useskald.com/docs/sdks/go#usage) - [PHP](https://docs.useskald.com/docs/sdks/php#quick-start) - [C#](https://github.com/skaldlabs/skald-csharp) - [MCP](https://docs.useskald.com/docs/sdks/mcp) - [CLI](https://docs.useskald.com/docs/sdks/cli)</small>
+
 
 ## ⚡ Try it
 

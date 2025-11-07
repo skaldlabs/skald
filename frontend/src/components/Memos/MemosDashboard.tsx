@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useProjectStore } from '@/stores/projectStore'
 import { useMemoStore } from '@/stores/memoStore'
 import type { Memo, DetailedMemo } from '@/lib/types'
@@ -12,8 +13,11 @@ import { DeleteMemoDialog } from './DeleteMemoDialog'
 import { ViewMemoDialog } from './ViewMemoDialog'
 import { CreateMemoModal } from './CreateMemoModal'
 import { PageHeader } from '@/components/AppLayout/PageHeader'
+import { toast } from 'sonner'
 
 export const MemosDashboard = () => {
+    const { uuid: projectUuid, memoUuid } = useParams<{ uuid: string; memoUuid?: string }>()
+    const navigate = useNavigate()
     const currentProject = useProjectStore((state) => state.currentProject)
 
     const memos = useMemoStore((state) => state.memos)
@@ -35,6 +39,22 @@ export const MemosDashboard = () => {
     const [memoToDelete, setMemoToDelete] = useState<Memo | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [createModalOpen, setCreateModalOpen] = useState(false)
+
+    const copyMemoLinkToClipboard = async (memoUuid: string) => {
+        if (!projectUuid) {
+            toast.error('Project not found for memo share link')
+            return
+        }
+
+        const memoUrl = `${window.location.origin}/projects/${projectUuid}/memos/${memoUuid}`
+
+        try {
+            await navigator.clipboard.writeText(memoUrl)
+            toast.success('Memo link copied to clipboard!')
+        } catch {
+            toast.error('Failed to copy link to clipboard')
+        }
+    }
 
     const handleSearch = async () => {
         if (!currentProject) return
@@ -63,7 +83,35 @@ export const MemosDashboard = () => {
         const memoDetails = await getMemoDetails(memo.uuid)
         if (memoDetails) {
             setSelectedMemo(memoDetails)
+            if (projectUuid) {
+                navigate(`/projects/${projectUuid}/memos/${memo.uuid}`, { replace: true })
+            }
         }
+    }
+
+    const handleCloseMemo = () => {
+        setSelectedMemo(null)
+        if (projectUuid) {
+            navigate(`/projects/${projectUuid}/memos`, { replace: true })
+        }
+    }
+
+    const handleShareDetailedMemo = async (memo: DetailedMemo) => {
+        await copyMemoLinkToClipboard(memo.uuid)
+    }
+
+    const handleDeleteFromDetail = (memo: DetailedMemo) => {
+        setMemoToDelete({
+            uuid: memo.uuid,
+            created_at: memo.created_at,
+            updated_at: memo.updated_at,
+            title: memo.title,
+            summary: memo.summary ?? '',
+            content_length: memo.content_length,
+            metadata: memo.metadata,
+            client_reference_id: memo.client_reference_id,
+        })
+        handleCloseMemo()
     }
 
     const handleClearSearch = () => {
@@ -79,6 +127,23 @@ export const MemosDashboard = () => {
             fetchMemos()
         }
     }, [currentProject, fetchMemos])
+
+    useEffect(() => {
+        const loadMemoFromUrl = async () => {
+            if (memoUuid && currentProject) {
+                const memoDetails = await getMemoDetails(memoUuid)
+                if (memoDetails) {
+                    setSelectedMemo(memoDetails)
+                } else {
+                    toast.error('Memo not found or failed to load')
+                }
+            } else if (!memoUuid) {
+                setSelectedMemo(null)
+            }
+        }
+
+        loadMemoFromUrl()
+    }, [memoUuid, currentProject, getMemoDetails])
 
     if (!currentProject) {
         return (
@@ -137,7 +202,12 @@ export const MemosDashboard = () => {
 
             <CreateMemoModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
 
-            <ViewMemoDialog memo={selectedMemo} onClose={() => setSelectedMemo(null)} />
+            <ViewMemoDialog
+                memo={selectedMemo}
+                onClose={handleCloseMemo}
+                onShareMemo={handleShareDetailedMemo}
+                onDeleteMemo={handleDeleteFromDetail}
+            />
 
             <DeleteMemoDialog
                 memo={memoToDelete}

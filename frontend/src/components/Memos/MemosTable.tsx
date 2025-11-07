@@ -2,7 +2,9 @@ import type { Memo, SearchMethod } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Trash2, Eye } from 'lucide-react'
+import { Trash2, Share } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 
 interface MemosTableProps {
     memos: Memo[]
@@ -21,6 +23,21 @@ export const MemosTable = ({
     onViewMemo,
     onDeleteMemo,
 }: MemosTableProps) => {
+    const { uuid: projectUuid } = useParams<{ uuid: string }>()
+
+    const handleShareMemo = async (memo: Memo) => {
+        if (!projectUuid) return
+
+        const memoUrl = `${window.location.origin}/projects/${projectUuid}/memos/${memo.uuid}`
+
+        try {
+            await navigator.clipboard.writeText(memoUrl)
+            toast.success('Memo link copied to clipboard!')
+        } catch {
+            toast.error('Failed to copy link to clipboard')
+        }
+    }
+
     const formatDate = (dateString: string) => {
         if (!dateString) return 'N/A'
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -83,7 +100,11 @@ export const MemosTable = ({
                 </TableHeader>
                 <TableBody>
                     {memos.map((memo) => (
-                        <TableRow key={memo.uuid}>
+                        <TableRow
+                            key={memo.uuid}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => onViewMemo(memo)}
+                        >
                             {showRelevanceColumn && (
                                 <TableCell className="text-sm font-medium">
                                     <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
@@ -121,19 +142,25 @@ export const MemosTable = ({
                                 {formatDate(memo.created_at)}
                             </TableCell>
                             <TableCell className="text-right">
-                                <div className="flex gap-2 justify-end">
+                                <div className="flex gap-1 justify-end">
                                     <Button
                                         variant="ghost"
-                                        size="sm"
-                                        onClick={() => onViewMemo(memo)}
-                                        title="View details"
+                                        size="icon"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleShareMemo(memo)
+                                        }}
+                                        title="Share memo"
                                     >
-                                        <Eye className="h-4 w-4" />
+                                        <Share className="h-4 w-4" />
                                     </Button>
                                     <Button
                                         variant="ghost"
-                                        size="sm"
-                                        onClick={() => onDeleteMemo(memo)}
+                                        size="icon"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onDeleteMemo(memo)
+                                        }}
                                         title="Delete memo"
                                     >
                                         <Trash2 className="h-4 w-4 text-destructive" />
