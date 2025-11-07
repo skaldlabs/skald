@@ -15,12 +15,37 @@ import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
 import { deleteFileFromS3 } from '@/lib/s3Utils'
 import { DATALAB_API_KEY, TEST } from '@/settings'
+import * as Sentry from '@sentry/node'
+
+// Allowed file types for document uploads
+const ALLOWED_MIMETYPES = [
+    'application/pdf', // pdf
+    'application/msword', // doc
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
+    'image/jpeg', // jpeg
+    'image/png', // png
+    'image/webp', // webp
+]
+
+const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx', '.jpeg', '.jpg', '.png', '.webp']
 
 // configure multer for file uploads (store in memory)
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        const mimetype = file.mimetype.toLowerCase()
+        const originalname = file.originalname.toLowerCase()
+        const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) => originalname.endsWith(ext))
+
+        if (ALLOWED_MIMETYPES.includes(mimetype) && hasValidExtension) {
+            cb(null, true)
+        } else {
+            cb(new Error(`Invalid file type. Allowed types: ${ALLOWED_EXTENSIONS.join(', ')}`) as any, false)
+        }
     },
 })
 
@@ -118,7 +143,11 @@ const handleMulterError = (err: any, req: Request, res: Response, next: NextFunc
         return res.status(400).json({ error: `File upload error: ${err.message}` })
     }
     if (err) {
-        return res.status(500).json({ error: 'Internal server error during file upload' })
+        if (err.message && err.message.includes('Invalid file type')) {
+            return res.status(400).json({ error: err.message })
+        }
+        Sentry.captureException(err)
+        return res.status(503).json({ error: 'Service unavailable' })
     }
     next()
 }
