@@ -33,6 +33,7 @@ export interface Memo {
     metadata: Record<string, unknown>
     client_reference_id: string | null
     distance?: number | null
+    processing_status: 'processing' | 'processed' | 'error'
 }
 
 // Keep this in sync with backend/api/memo.ts

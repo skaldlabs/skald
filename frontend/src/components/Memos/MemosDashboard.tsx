@@ -109,6 +109,7 @@ export const MemosDashboard = () => {
             summary: memo.summary ?? '',
             metadata: memo.metadata,
             client_reference_id: memo.client_reference_id,
+            processing_status: memo.processing_status,
         })
         handleCloseMemo()
     }
