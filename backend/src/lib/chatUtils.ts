@@ -6,6 +6,7 @@ import { Chat } from '@/entities/Chat'
 import { randomUUID } from 'crypto'
 import { CHAT_AGENT_INSTRUCTIONS } from '@/agents/chatAgent/prompts'
 import { LLMService } from '@/services/llmService'
+import { getMemoryExtractionPrompt } from '@/lib/prompts'
 
 export interface ChatHistoryMessage {
     role: 'user' | 'model'
@@ -49,27 +50,7 @@ const _summarizeOldMessages = async (messages: ChatHistoryMessage[]): Promise<st
             .map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
             .join('\n\n')
 
-        const summaryPrompt = `You are a memory extraction system. Your job is to distill ONLY the factual information, knowledge, and context that matters for future interactions.
-
-            EXTRACT AND PRESERVE:
-            - Facts shared by the user (preferences, background, goals, constraints)
-            - Specific technical details, decisions made, or problems discussed
-            - Names, dates, numbers, and concrete information
-            - Unresolved questions or pending tasks
-            - Key insights or conclusions reached
-            
-            IGNORE:
-            - Conversational pleasantries and greetings
-            - Meta-commentary about the conversation itself
-            - Vague statements like "user asked about X" - instead capture WHAT was discussed about X
-            - Assistant's limitations or uncertainty
-            
-            FORMAT: Write as a dense, information-rich summary in bullet points. Use present tense. Be specific.
-            
-            CONVERSATION:
-            ${conversationText}
-            
-            EXTRACTED MEMORY:`
+        const summaryPrompt = getMemoryExtractionPrompt(conversationText)
 
         const result = await llm.invoke([
             {
