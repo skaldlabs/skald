@@ -98,7 +98,12 @@ export const ApiKeyStep = () => {
                             </Button>
                         </div>
                     ) : (
-                        <Button onClick={handleGenerateApiKey} disabled={isGeneratingApiKey}>
+                        <Button
+                            onClick={handleGenerateApiKey}
+                            disabled={isGeneratingApiKey}
+                            className="generate-api-key-button"
+                            size="lg"
+                        >
                             {isGeneratingApiKey ? 'Generating...' : 'Generate API Key'}
                         </Button>
                     )}

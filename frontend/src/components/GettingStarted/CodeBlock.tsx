@@ -9,15 +9,17 @@ import './GettingStarted.scss'
 interface CodeBlockProps {
     code: string
     language?: string
+    onCopy?: () => void
 }
 
-export const CodeBlock = ({ code, language = 'bash' }: CodeBlockProps) => {
+export const CodeBlock = ({ code, language = 'bash', onCopy }: CodeBlockProps) => {
     const [isCopied, setIsCopied] = useState(false)
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(code)
         setIsCopied(true)
         setTimeout(() => setIsCopied(false), 2000)
+        onCopy?.()
     }
 
     return (

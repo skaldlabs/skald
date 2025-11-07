@@ -6,6 +6,7 @@ import { CodeLanguageTabs } from './CodeLanguageTabs'
 import { CodeBlock } from './CodeBlock'
 import { getChatExample } from '@/components/GettingStarted/chatExamples'
 import { useOnboardingStore } from '@/stores/onboardingStore'
+import { useIsMobile } from '@/hooks/use-mobile'
 import '@/components/GettingStarted/GettingStarted.scss'
 
 export const ChatStep = () => {
@@ -19,6 +20,7 @@ export const ChatStep = () => {
 
     const [activeTab, setActiveTab] = useState('curl')
     const messagesContainerRef = useRef<HTMLDivElement>(null)
+    const isMobile = useIsMobile()
 
     // Auto-scroll to bottom when new messages are added
     useEffect(() => {
@@ -42,19 +44,16 @@ export const ChatStep = () => {
         <div className={`getting-started-step ${isComplete ? 'complete' : ''} ${isDisabled ? 'disabled' : ''}`}>
             <div className="step-content">
                 <h2 className="step-title">Chat with your memos {isComplete && <Check className="title-check" />}</h2>
-                <p className="step-description">Ask questions about your memos and get intelligent responses</p>
-
-                <div className="code-section">
-                    <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
-                    <CodeBlock code={getCodeExample().code} language={getCodeExample().language} />
-                </div>
+                <p className="step-description">
+                    Type your question below, then copy and paste the code into your terminal to chat with your memos
+                </p>
 
                 <div className="interactive-section">
                     <div className="chat-interface">
                         <div className="chat-messages" ref={messagesContainerRef}>
                             {chatMessages.length === 0 ? (
                                 <div className="chat-placeholder">
-                                    <p>Start a conversation by asking a question about your memos...</p>
+                                    <p>Your conversation will appear here...</p>
                                 </div>
                             ) : (
                                 chatMessages.map((message) => (
@@ -76,20 +75,32 @@ export const ChatStep = () => {
                             <Input
                                 value={chatQuery}
                                 onChange={(e) => setChatQuery(e.target.value)}
-                                placeholder="Ask a question about your memos..."
+                                placeholder="e.g., What are the benefits of async functions?"
                                 disabled={isDisabled || isChatting}
-                                onKeyDown={(e) => e.key === 'Enter' && !isChatting && sendChatMessage()}
+                                onKeyDown={(e) => e.key === 'Enter' && !isChatting && isMobile && sendChatMessage()}
                                 className="chat-input"
                             />
-                            <Button
-                                onClick={sendChatMessage}
-                                disabled={isDisabled || isChatting || !chatQuery.trim()}
-                                className="chat-send-button"
-                            >
-                                {isChatting ? 'Thinking...' : <Send />}
-                            </Button>
+                            {isMobile && (
+                                <Button
+                                    onClick={sendChatMessage}
+                                    disabled={isDisabled || isChatting || !chatQuery.trim()}
+                                    className="chat-send-button"
+                                >
+                                    {isChatting ? 'Thinking...' : <Send />}
+                                </Button>
+                            )}
                         </div>
+                        {isMobile && (
+                            <div className="mobile-helper-text">
+                                On mobile? Use the send button above. On desktop, we encourage using code!
+                            </div>
+                        )}
                     </div>
+                </div>
+
+                <div className="code-section">
+                    <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
+                    <CodeBlock code={getCodeExample().code} language={getCodeExample().language} />
                 </div>
             </div>
         </div>
