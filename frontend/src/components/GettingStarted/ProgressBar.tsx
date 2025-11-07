@@ -41,7 +41,7 @@ export function ProgressBar({ currentStep, stepsCompleted }: ProgressBarProps) {
                                     }`}
                                 >
                                     {isCompleted ? (
-                                        <Check className="progress-bar__check" size={16} />
+                                        <Check className="progress-bar__check" size={24} />
                                     ) : (
                                         <span className="progress-bar__number">{step.number}</span>
                                     )}
@@ -62,7 +62,7 @@ export function ProgressBar({ currentStep, stepsCompleted }: ProgressBarProps) {
                             {/* Connector line (don't show after last step) */}
                             {index < steps.length - 1 && (
                                 <div
-                                    className={`progress-bar__connector ${
+                                    className={`progress-bar__connector progress-bar__connector--${index + 1} ${
                                         isCompleted ? 'progress-bar__connector--completed' : ''
                                     }`}
                                 />

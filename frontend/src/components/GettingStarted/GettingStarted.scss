@@ -483,14 +483,14 @@
     }
 
     .progress-bar__step {
-        width: 40px;
-        height: 40px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 600;
-        font-size: 1rem;
+        font-size: 1.25rem;
         transition: all 0.3s ease;
         flex-shrink: 0;
         z-index: 2;
@@ -498,36 +498,38 @@
 
         &--completed {
             background: hsl(var(--success));
-            border: 2px solid hsl(var(--success));
+            border: 3px solid hsl(var(--success));
             color: white;
         }
 
         &--current {
             background: var(--primary);
-            border: 2px solid var(--primary);
+            border: 3px solid var(--primary);
             color: var(--primary-foreground);
             box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
         }
 
         &--past {
             background: var(--muted);
-            border: 2px solid var(--border);
+            border: 3px solid var(--border);
             color: var(--muted-foreground);
         }
 
         &--upcoming {
             background: var(--background);
-            border: 2px solid var(--border);
+            border: 3px solid var(--border);
             color: var(--muted-foreground);
         }
     }
 
     .progress-bar__check {
         color: white;
+        width: 24px;
+        height: 24px;
     }
 
     .progress-bar__number {
-        font-size: 1rem;
+        font-size: 1.25rem;
         font-weight: 600;
     }
 
@@ -553,10 +555,9 @@
     }
 
     .progress-bar__connector {
-        width: 2px;
-        height: 40px;
+        width: 3px;
         background: var(--border);
-        margin-left: 19px;
+        margin-left: 28.5px;
         transition: background 0.3s ease;
         z-index: 1;
 
@@ -569,6 +570,14 @@
 
         &--completed {
             background: hsl(var(--success));
+        }
+
+        &--1 {
+            height: 200px;
+        }
+
+        &--2 {
+            height: 760px;
         }
     }
 
