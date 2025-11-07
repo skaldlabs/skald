@@ -914,7 +914,7 @@ describe('Memo API Tests', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const largeBuffer = Buffer.alloc(11 * 1024 * 1024) // 11MB, exceeds 10MB limit
+            const largeBuffer = Buffer.alloc(101 * 1024 * 1024) // 101MB, exceeds 100MB limit
 
             const response = await request(app)
                 .post('/api/memos')
@@ -923,7 +923,7 @@ describe('Memo API Tests', () => {
                 .attach('file', largeBuffer, 'large-file.pdf')
 
             expect(response.status).toBe(400)
-            expect(response.body.error).toBe('File size exceeds 10MB limit')
+            expect(response.body.error).toBe('File size exceeds 100MB limit')
         })
 
         it('should truncate long titles to 255 characters', async () => {

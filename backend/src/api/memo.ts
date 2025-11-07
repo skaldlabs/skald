@@ -31,7 +31,7 @@ const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx']
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
+        fileSize: 100 * 1024 * 1024, // 100MB limit
     },
     fileFilter: (req, file, cb) => {
         const mimetype = file.mimetype.toLowerCase()
@@ -136,7 +136,7 @@ const createFileMemo = async (req: Request, res: Response) => {
 const handleMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ error: 'File size exceeds 10MB limit' })
+            return res.status(400).json({ error: 'File size exceeds 100MB limit' })
         }
         return res.status(400).json({ error: `File upload error: ${err.message}` })
     }

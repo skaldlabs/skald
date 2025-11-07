@@ -14,7 +14,7 @@ import { useMemoStore } from '@/stores/memoStore'
 import { toast } from 'sonner'
 
 const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx']
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 
 const memoFormSchema = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
@@ -106,7 +106,7 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
 
         // Validate file size
         if (file.size > MAX_FILE_SIZE) {
-            toast.error('File size exceeds 10MB limit')
+            toast.error('File size exceeds 100MB limit')
             return
         }
 
@@ -244,7 +244,8 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                                                     />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    The main content of the memo will be processed and indexed for search
+                                                    The main content of the memo will be processed and indexed for
+                                                    search
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -322,7 +323,9 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                                                 <FormControl>
                                                     <Input type="datetime-local" {...field} value={field.value ?? ''} />
                                                 </FormControl>
-                                                <FormDescription>Optional expiration date for this memo</FormDescription>
+                                                <FormDescription>
+                                                    Optional expiration date for this memo
+                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -360,7 +363,12 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
 
                                 {/* Actions */}
                                 <div className="flex justify-end gap-3 pt-4">
-                                    <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleClose}
+                                        disabled={isSubmitting}
+                                    >
                                         Cancel
                                     </Button>
                                     <Button type="submit" disabled={isSubmitting}>
@@ -391,13 +399,15 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                                                 />
                                                 {selectedFile && (
                                                     <p className="text-sm text-muted-foreground">
-                                                        Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                                                        Selected: {selectedFile.name} (
+                                                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                                                     </p>
                                                 )}
                                             </div>
                                         </FormControl>
                                         <FormDescription>
-                                            Upload a PDF, Word, or PowerPoint document (max 10MB). Allowed formats: {ALLOWED_FILE_TYPES.join(', ')}
+                                            Upload a PDF, Word, or PowerPoint document (max 100MB). Allowed formats:{' '}
+                                            {ALLOWED_FILE_TYPES.join(', ')}
                                         </FormDescription>
                                     </FormItem>
                                 </div>
@@ -419,7 +429,9 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                                                         value={field.value ?? ''}
                                                     />
                                                 </FormControl>
-                                                <FormDescription>Optional custom title (defaults to filename)</FormDescription>
+                                                <FormDescription>
+                                                    Optional custom title (defaults to filename)
+                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -472,7 +484,9 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                                                 <FormControl>
                                                     <Input type="datetime-local" {...field} value={field.value ?? ''} />
                                                 </FormControl>
-                                                <FormDescription>Optional expiration date for this memo</FormDescription>
+                                                <FormDescription>
+                                                    Optional expiration date for this memo
+                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -510,7 +524,12 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
 
                                 {/* Actions */}
                                 <div className="flex justify-end gap-3 pt-4">
-                                    <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleClose}
+                                        disabled={isSubmitting}
+                                    >
                                         Cancel
                                     </Button>
                                     <Button type="submit" disabled={isSubmitting || !selectedFile}>
