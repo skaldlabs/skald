@@ -46,17 +46,6 @@ export function ProgressBar({ currentStep, stepsCompleted }: ProgressBarProps) {
                                         <span className="progress-bar__number">{step.number}</span>
                                     )}
                                 </div>
-
-                                {/* Step label */}
-                                <div className="progress-bar__label">
-                                    <span
-                                        className={`progress-bar__label-text ${
-                                            isCompleted || isCurrent ? 'progress-bar__label-text--active' : ''
-                                        }`}
-                                    >
-                                        {step.label}
-                                    </span>
-                                </div>
                             </div>
 
                             {/* Connector line (don't show after last step) */}

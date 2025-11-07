@@ -52,7 +52,7 @@
 
     .onboarding-content {
         display: flex;
-        gap: 2rem;
+        gap: 0;
         position: relative;
 
         @media (max-width: 768px) {
@@ -435,7 +435,7 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    width: 200px;
+    width: 120px;
     flex-shrink: 0;
     align-self: flex-start;
 
@@ -444,8 +444,9 @@
         top: 0;
         width: 100%;
         flex-direction: row;
-        justify-content: center;
+        justify-content: space-around;
         margin-bottom: 2rem;
+        gap: 0.5rem;
     }
 
     .progress-bar__content {
@@ -473,12 +474,13 @@
 
     .progress-bar__step-row {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
         gap: 0.75rem;
 
         @media (max-width: 768px) {
-            gap: 0.5rem;
+            flex-direction: column;
+            gap: 0.25rem;
         }
     }
 
@@ -495,6 +497,12 @@
         flex-shrink: 0;
         z-index: 2;
         background: var(--background);
+
+        @media (max-width: 768px) {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
 
         &--completed {
             background: hsl(var(--success));
@@ -526,27 +534,45 @@
         color: white;
         width: 24px;
         height: 24px;
+
+        @media (max-width: 768px) {
+            width: 18px;
+            height: 18px;
+        }
     }
 
     .progress-bar__number {
         font-size: 1.25rem;
         font-weight: 600;
+
+        @media (max-width: 768px) {
+            font-size: 1rem;
+        }
     }
 
     .progress-bar__label {
         display: flex;
         align-items: center;
+        justify-content: center;
+        text-align: center;
+        max-width: 120px;
 
         @media (max-width: 768px) {
-            display: none; // Hide labels on mobile to save space
+            display: flex;
+            max-width: 80px;
         }
     }
 
     .progress-bar__label-text {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: var(--muted-foreground);
         font-weight: 500;
         transition: color 0.3s ease;
+        line-height: 1.3;
+
+        @media (max-width: 768px) {
+            font-size: 0.65rem;
+        }
 
         &--active {
             color: var(--foreground);
@@ -557,15 +583,12 @@
     .progress-bar__connector {
         width: 3px;
         background: var(--border);
-        margin-left: 28.5px;
+        margin: 0 auto;
         transition: background 0.3s ease;
         z-index: 1;
 
         @media (max-width: 768px) {
-            width: 40px;
-            height: 2px;
-            margin-left: 0;
-            margin-top: 19px;
+            display: none;
         }
 
         &--completed {
