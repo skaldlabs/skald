@@ -23,12 +23,9 @@ const ALLOWED_MIMETYPES = [
     'application/msword', // doc
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
     'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
-    'image/jpeg', // jpeg
-    'image/png', // png
-    'image/webp', // webp
 ]
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx', '.jpeg', '.jpg', '.png', '.webp']
+const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx']
 
 // configure multer for file uploads (store in memory)
 const upload = multer({
@@ -94,7 +91,7 @@ const validateMemoOperationRequestMiddleware = () => {
     }
 }
 
-const createDocumentMemo = async (req: Request, res: Response) => {
+const createFileMemo = async (req: Request, res: Response) => {
     const project = req.context?.requestUser?.project
     if (!project) {
         return res.status(404).json({ error: 'Project not found' })
@@ -223,7 +220,6 @@ export const getMemo = async (req: Request, res: Response) => {
         title: memo.title,
         content: memoContent?.content || null,
         summary: memoSummary?.summary || null,
-        content_length: memo.content_length,
         metadata: memo.metadata,
         client_reference_id: memo.client_reference_id,
         source: memo.source,
@@ -458,7 +454,7 @@ memoRouter.post(
                 // we should provide them with a local docling service in the future in order to be able to do this without a third-party service.
                 return res.status(500).json({ error: 'Setting DATALAB_API_KEY is required for uploading documents' })
             }
-            return createDocumentMemo(req, res)
+            return createFileMemo(req, res)
         }
         return createPlaintextMemo(req, res)
     }

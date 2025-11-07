@@ -54,6 +54,7 @@ export class Memo {
     processing_completed_at?: Date
 
     @Property({ nullable: true })
+    // this could also be code, image, etc, in the future.
     type?: string // 'plaintext' | 'document'
 
     @Property({ nullable: true })

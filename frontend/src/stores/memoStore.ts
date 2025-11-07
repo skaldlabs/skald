@@ -117,7 +117,6 @@ export const useMemoStore = create<MemoState>((set, get) => ({
                 uuid: result.memo_uuid,
                 title: result.memo_title,
                 summary: result.memo_summary,
-                content_length: result.content_snippet.length,
                 metadata: {},
                 client_reference_id: null,
                 created_at: '',

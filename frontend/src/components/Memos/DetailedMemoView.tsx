@@ -15,7 +15,6 @@ import {
     ExternalLink,
     Code,
     Database,
-    RulerDimensionLine,
 } from 'lucide-react'
 import { formatDate } from '@/components/utils/dateUtils'
 import { addMonths, isBefore } from 'date-fns'
@@ -140,15 +139,6 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                         <div>
                             <div className="font-medium">Updated</div>
                             <div className="text-muted-foreground">{formatDate(memo.updated_at)}</div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <RulerDimensionLine className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                            <div className="font-medium">Content Length</div>
-                            <div className="text-muted-foreground">
-                                {memo.content_length.toLocaleString()} characters
-                            </div>
                         </div>
                     </div>
                 </div>
