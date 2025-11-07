@@ -9,7 +9,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { Organization } from '@/entities/Organization'
-import { IS_SELF_HOSTED_DEPLOY } from '@/settings'
+import { IS_SELF_HOSTED_DEPLOY, TEST } from '@/settings'
 import { DI } from '@/di'
 import { logger } from '@/lib/logger'
 
@@ -37,8 +37,8 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
     const { increment = true } = options
 
     return async (req: Request, res: Response, next: NextFunction) => {
-        // Skip tracking if self-hosted or in debug mode
-        if (IS_SELF_HOSTED_DEPLOY) {
+        // Skip tracking if self-hosted, in test mode, or in debug mode
+        if (IS_SELF_HOSTED_DEPLOY || TEST) {
             return next()
         }
 
@@ -178,18 +178,21 @@ function getLimitTypeDisplay(limitType: string): string {
  */
 async function extractOrganization(req: Request): Promise<Organization | null> {
     try {
+        // Create a forked EntityManager for this context
+        const em = DI.em.fork()
+
         // Strategy 1: Get from project in request context
         const project = req.context?.requestUser?.project
         if (project) {
             // Ensure organization is populated
-            await DI.em.populate(project, ['organization'])
+            await em.populate(project, ['organization'])
             return project.organization
         }
 
         // Strategy 2: Get from user's default organization
         const user = req.context?.requestUser?.userInstance
         if (user) {
-            await DI.em.populate(user, ['defaultOrganization'])
+            await em.populate(user, ['defaultOrganization'])
             return user.defaultOrganization || null
         }
 

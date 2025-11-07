@@ -23,20 +23,19 @@ export interface Project {
     api_key_first_12_digits?: string | null
 }
 
-// Keep this in sync with the Memo serializer in skald/api/memo_api.py
+// Keep this in sync with backend/api/memo.ts
 export interface Memo {
     uuid: string
     created_at: string
     updated_at: string
     title: string
     summary: string
-    content_length: number
     metadata: Record<string, unknown>
     client_reference_id: string | null
     distance?: number | null
 }
 
-// Keep this in sync with the DetailedMemoSerializer in skald/api/memo_api.py
+// Keep this in sync with backend/api/memo.ts
 export interface DetailedMemo {
     uuid: string
     created_at: string
@@ -44,7 +43,6 @@ export interface DetailedMemo {
     title: string
     content: string | null
     summary: string | null
-    content_length: number
     metadata: Record<string, unknown>
     client_reference_id: string | null
     source: string | null

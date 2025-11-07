@@ -9,12 +9,12 @@ export const getTitleAndSummaryAndContentForMemoList = async (
     const params = memoUuids.length > 0 ? [projectUuid, ...memoUuids] : [projectUuid]
     const memoProperties = await DI.em
         .getConnection()
-        .execute<{ uuid: string; title: string; summary: string; content: string }[]>(
+        .execute<{ uuid: string; title: string; summary: string | null; content: string | null }[]>(
             `
         SELECT skald_memo.uuid, skald_memo.title, skald_memosummary.summary, skald_memocontent.content
         FROM skald_memo
-        JOIN skald_memosummary ON skald_memo.uuid = skald_memosummary.memo_id
-        JOIN skald_memocontent ON skald_memo.uuid = skald_memocontent.memo_id
+        LEFT JOIN skald_memosummary ON skald_memo.uuid = skald_memosummary.memo_id
+        LEFT JOIN skald_memocontent ON skald_memo.uuid = skald_memocontent.memo_id
         WHERE skald_memo.project_id = ? ${extraWhereCondition}
     `,
             params
@@ -24,8 +24,8 @@ export const getTitleAndSummaryAndContentForMemoList = async (
     for (const memoProperty of memoProperties) {
         memoPropertiesMap.set(memoProperty.uuid, {
             title: memoProperty.title,
-            summary: memoProperty.summary,
-            content: memoProperty.content,
+            summary: memoProperty.summary || '',
+            content: memoProperty.content || '',
         })
     }
 

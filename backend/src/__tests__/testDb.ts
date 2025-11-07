@@ -24,15 +24,41 @@ export const clearDatabase = async (orm: MikroORM) => {
     const em = orm.em.fork()
     const connection = em.getConnection()
 
-    // Get all table names
+    // Get all table names excluding migrations and system tables
     const tables = await connection.execute(`
         SELECT tablename FROM pg_tables
         WHERE schemaname = 'public'
+        AND tablename != 'mikro_orm_migrations'
     `)
 
-    // Truncate all tables
-    for (const { tablename } of tables) {
-        await connection.execute(`TRUNCATE TABLE "${tablename}" CASCADE`)
+    // Build a single TRUNCATE statement for all tables to avoid deadlocks
+    const tableNames = tables.map((t: any) => `"${t.tablename}"`).join(', ')
+
+    if (tableNames) {
+        // Use a transaction with retry logic for deadlock scenarios
+        const maxRetries = 3
+        let lastError: Error | null = null
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                await connection.execute(`TRUNCATE TABLE ${tableNames} RESTART IDENTITY CASCADE`)
+                return // Success, exit early
+            } catch (error: any) {
+                lastError = error
+                // Check if it's a deadlock error (code 40P01)
+                if (error.code === '40P01' && attempt < maxRetries - 1) {
+                    // Wait a bit before retrying (exponential backoff)
+                    await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, attempt)))
+                    continue
+                }
+                // If it's not a deadlock or we're out of retries, throw
+                throw error
+            }
+        }
+
+        if (lastError) {
+            throw lastError
+        }
     }
 }
 

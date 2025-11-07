@@ -107,7 +107,6 @@ export const MemosDashboard = () => {
             updated_at: memo.updated_at,
             title: memo.title,
             summary: memo.summary ?? '',
-            content_length: memo.content_length,
             metadata: memo.metadata,
             client_reference_id: memo.client_reference_id,
         })

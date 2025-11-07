@@ -27,7 +27,7 @@ import { stripeWebhook } from '@/api/stripe_webhook'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackUsage } from '@/middleware/usageTracking'
-import { httpLogger, logger } from '@/lib/logger'
+import { logger } from '@/lib/logger'
 import { posthog } from '@/lib/posthogUtils'
 import * as Sentry from '@sentry/node'
 
@@ -38,8 +38,6 @@ export const startExpressServer = async () => {
     const DI = await initDI()
 
     const app = express()
-
-    app.use(httpLogger)
 
     // Trust Fly.io proxy for accurate client IP detection in rate limiting
     app.set('trust proxy', true)

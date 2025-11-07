@@ -90,12 +90,11 @@ export const MemosTable = ({
             <Table className="w-full table-fixed">
                 <TableHeader>
                     <TableRow>
-                        {showRelevanceColumn && <TableHead className="w-[12%]">Relevance</TableHead>}
-                        <TableHead className={showRelevanceColumn ? 'w-[20%]' : 'w-[25%]'}>Title</TableHead>
-                        <TableHead className={showRelevanceColumn ? 'w-[32%]' : 'w-[38%]'}>Summary</TableHead>
-                        <TableHead className="w-[12%]">Length</TableHead>
-                        <TableHead className="w-[14%]">Created</TableHead>
-                        <TableHead className="w-[10%] text-right">Actions</TableHead>
+                        {showRelevanceColumn && <TableHead>Relevance</TableHead>}
+                        <TableHead className="w-[20%]">Title</TableHead>
+                        <TableHead className="w-[40%]">Summary</TableHead>
+                        <TableHead className="w-[10%]">Created</TableHead>
+                        <TableHead className="w-[10%]"></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -134,9 +133,6 @@ export const MemosTable = ({
                                 >
                                     {truncate(memo.summary, 120)}
                                 </p>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                                {memo.content_length.toLocaleString()} chars
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                                 {formatDate(memo.created_at)}

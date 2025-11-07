@@ -1,18 +1,53 @@
-import { MemoContent } from '@/entities/MemoContent'
 import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from '@/memoProcessingServer/memoOperations'
 import { EntityManager } from '@mikro-orm/core'
 import { updateMemoStatus } from '@/lib/memoStatusUtils'
 import { logger } from '@/lib/logger'
+import { DocumentProcessingService } from '@/services/documentProcessingService'
 
-const processMemoContent = async (em: EntityManager, memoUuid: string) => {
-    const memoContent = await em.findOne(MemoContent, { memo: { uuid: memoUuid } }, { populate: ['project', 'memo'] })
-    if (!memoContent) {
+const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
+    const sql = `
+        SELECT 
+            m.uuid as memo_uuid,
+            m.project_id,
+            m.type,
+            mc.content
+        FROM skald_memo m
+        LEFT JOIN skald_memocontent mc ON mc.memo_id = m.uuid
+        WHERE m.uuid = ?
+    `
+
+    const result = await em.getConnection().execute<
+        Array<{
+            memo_uuid: string
+            project_id: string
+            type: string | null
+            content: string | null
+        }>
+    >(sql, [memoUuid])
+
+    if (!result || result.length === 0) {
         throw new Error(`Memo not found: ${memoUuid}`)
     }
+
+    const row = result[0]
+
+    if (row.type === 'document') {
+        // KLUDGE: this is problematic because a large document can take a long time to process, and we're holding up the
+        // queue in the meantime. Document memos should either be handled by a separate queue, or we should restructure our queue
+        // setup to read from sqs and add to an in-memory queue that we chug along at our own pace.
+        const markdown = await DocumentProcessingService.sendDocumentForProcessing(row.project_id, row.memo_uuid)
+        row.content = markdown
+    }
+
+    if (!row.content) {
+        logger.warn({ memoUuid }, 'No content found for memo, skipping processing')
+        return
+    }
+
     const promises = [
-        createMemoChunks(em, memoContent.memo.uuid, memoContent.project.uuid, memoContent.content),
-        extractTagsFromMemo(em, memoContent.memo.uuid, memoContent.content, memoContent.project.uuid),
-        generateMemoSummary(em, memoContent.memo.uuid, memoContent.content, memoContent.project.uuid),
+        createMemoChunks(em, row.memo_uuid, row.project_id, row.content),
+        extractTagsFromMemo(em, row.memo_uuid, row.content, row.project_id),
+        generateMemoSummary(em, row.memo_uuid, row.content, row.project_id),
     ]
 
     await Promise.all(promises)
@@ -25,7 +60,7 @@ export const processMemo = async (em: EntityManager, memoUuid: string) => {
             processing_started_at: new Date(),
         })
 
-        await processMemoContent(em, memoUuid)
+        await runMemoProcessingAgents(em, memoUuid)
 
         await updateMemoStatus(em, memoUuid, {
             processing_status: 'processed',

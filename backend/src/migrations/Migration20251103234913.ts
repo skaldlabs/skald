@@ -2,8 +2,6 @@ import { Migration } from '@mikro-orm/migrations'
 
 export class Migration20251103234913 extends Migration {
     override async up(): Promise<void> {
-        this.addSql(`alter table "skald_memo" drop column "pending";`)
-
         this.addSql(
             `alter table "skald_memo" add column "processing_status" varchar(255) not null default 'received', add column "processing_error" varchar(255) null, add column "processing_started_at" timestamptz null, add column "processing_completed_at" timestamptz null;`
         )
@@ -15,7 +13,5 @@ export class Migration20251103234913 extends Migration {
         this.addSql(
             `alter table "skald_memo" drop column "processing_status", drop column "processing_error", drop column "processing_started_at", drop column "processing_completed_at";`
         )
-
-        this.addSql(`alter table "skald_memo" add column "pending" bool not null;`)
     }
 }

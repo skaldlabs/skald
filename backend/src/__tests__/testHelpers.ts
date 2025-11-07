@@ -5,6 +5,8 @@ import { Project } from '../entities/Project'
 import { Memo } from '../entities/Memo'
 import { MemoContent } from '../entities/MemoContent'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
+import { Plan } from '../entities/Plan'
+import { OrganizationSubscription } from '../entities/OrganizationSubscription'
 import { makePassword } from '../lib/passwordUtils'
 import { randomUUID } from 'crypto'
 import { createHash } from 'crypto'
@@ -29,7 +31,44 @@ export const createTestUser = async (orm: MikroORM, email: string, password: str
     return user
 }
 
-export const createTestOrganization = async (orm: MikroORM, name: string, owner: User): Promise<Organization> => {
+export const getOrCreateTestPlan = async (orm: MikroORM): Promise<Plan> => {
+    const em = orm.em.fork()
+
+    // Try to find existing plan first
+    let plan = await em.findOne(Plan, { slug: 'free' })
+
+    if (!plan) {
+        plan = em.create(Plan, {
+            slug: 'free',
+            name: 'Free',
+            monthly_price: '0.00',
+            memo_operations_limit: 1000,
+            chat_queries_limit: 100,
+            projects_limit: 1,
+            features: {
+                search_type: 'basic',
+                support_level: 'community',
+            },
+            isActive: true,
+            isDefault: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        })
+        await em.persistAndFlush(plan)
+    }
+
+    return plan
+}
+
+// Legacy alias for backwards compatibility
+export const createTestPlan = getOrCreateTestPlan
+
+export const createTestOrganization = async (
+    orm: MikroORM,
+    name: string,
+    owner: User,
+    options: { skipSubscription?: boolean } = {}
+): Promise<Organization> => {
     const em = orm.em.fork()
     const organization = em.create(Organization, {
         uuid: randomUUID(),
@@ -39,7 +78,38 @@ export const createTestOrganization = async (orm: MikroORM, name: string, owner:
         updated_at: new Date(),
     })
     await em.persistAndFlush(organization)
+
+    // Automatically create a subscription with the free plan unless explicitly skipped
+    if (!options.skipSubscription) {
+        const plan = await createTestPlan(orm)
+        await createTestOrganizationSubscription(orm, organization, plan)
+    }
+
     return organization
+}
+
+export const createTestOrganizationSubscription = async (
+    orm: MikroORM,
+    organization: Organization,
+    plan: Plan
+): Promise<OrganizationSubscription> => {
+    const em = orm.em.fork()
+    const now = new Date()
+    const periodEnd = new Date()
+    periodEnd.setMonth(periodEnd.getMonth() + 1)
+
+    const subscription = em.create(OrganizationSubscription, {
+        organization,
+        plan,
+        status: 'active',
+        current_period_start: now,
+        current_period_end: periodEnd,
+        cancel_at_period_end: false,
+        created_at: now,
+        updated_at: now,
+    })
+    await em.persistAndFlush(subscription)
+    return subscription
 }
 
 export const createTestProject = async (
@@ -130,4 +200,24 @@ export const createTestMemo = async (
 
     await em.persistAndFlush([memo, memoContent])
     return memo
+}
+
+/**
+ * Helper to create a complete test context with user, organization, plan, subscription, and project
+ */
+export const createTestContext = async (
+    orm: MikroORM,
+    email: string = 'test@example.com',
+    password: string = 'password123',
+    orgName: string = 'Test Org',
+    projectName: string = 'Test Project'
+) => {
+    const user = await createTestUser(orm, email, password)
+    const plan = await createTestPlan(orm)
+    const org = await createTestOrganization(orm, orgName, user)
+    await createTestOrganizationSubscription(orm, org, plan)
+    await createTestOrganizationMembership(orm, user, org)
+    const project = await createTestProject(orm, projectName, org, user)
+
+    return { user, org, plan, project }
 }
