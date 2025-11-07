@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: Skald Chat API
+  description: Conversational AI API powered by your memo content
+  version: 1.0.0
+  contact:
+    name: Skald API Support
+    url: https://skald.ai
+
+servers:
+  - url: https://api.skald.ai
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /v1/chat:
+    post:
+      summary: Chat with AI
+      description: Send a query to the AI chat agent, which will respond based on your memo content. Supports both streaming and non-streaming responses.
+      operationId: chat
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: The user's query or message
+                  example: "What are the main benefits of our product?"
+                stream:
+                  type: boolean
+                  description: Whether to stream the response using Server-Sent Events
+                  default: false
+                  example: false
+                filters:
+                  type: array
+                  description: Array of filters to apply when searching for relevant memos
+                  items:
+                    type: object
+                    description: Filter criteria for memos
+                  default: []
+                  example: []
+                chat_id:
+                  type: string
+                  description: Optional chat ID to continue an existing conversation
+                  example: "conversation-123"
+                  nullable: true
+                system_prompt:
+                  type: string
+                  description: Optional custom system prompt to guide the AI's behavior
+                  example: "You are a helpful assistant that provides concise answers."
+                  nullable: true
+      responses:
+        '200':
+          description: Successful chat response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                ok: true
+                chat_id: "conversation-123"
+                response: "Our product offers several key benefits: 1) Advanced semantic search capabilities, 2) Easy integration with existing workflows, 3) Scalable architecture for enterprise use."
+                intermediate_steps: []
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/StreamingChatResponse'
+              description: |
+                Server-Sent Events stream when `stream: true`. Each event contains a JSON object with streaming content.
+
+                Example events:
+                ```
+                : ping
+
+                data: {"content":"Our product"}
+
+                data: {"content":" offers several"}
+
+                data: {"content":" key benefits"}
+
+                data: {"type":"done","chat_id":"conversation-123"}
+                ```
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingQuery:
+                  value:
+                    error: "Query is required"
+                invalidFilters:
+                  value:
+                    error: "Filters must be a list"
+                invalidFilter:
+                  value:
+                    error: "Invalid filter: <error details>"
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service unavailable - chat agent error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Chat agent unavailable"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    ChatResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: Indicates successful response
+          example: true
+        chat_id:
+          type: string
+          description: Unique identifier for this chat conversation
+          example: "conversation-123"
+        response:
+          type: string
+          description: The AI's response to the query
+          example: "Based on your memos, the main benefits include..."
+        intermediate_steps:
+          type: array
+          description: Array of intermediate reasoning steps taken by the agent
+          items:
+            type: object
+          example: []
+
+    StreamingChatResponse:
+      oneOf:
+        - type: object
+          description: Streaming content chunk
+          properties:
+            content:
+              type: string
+              description: A chunk of the response text
+              example: "Based on"
+        - type: object
+          description: Completion event
+          properties:
+            type:
+              type: string
+              enum: [done]
+              description: Indicates the stream has finished
+            chat_id:
+              type: string
+              description: The chat conversation ID
+        - type: object
+          description: Error event
+          properties:
+            type:
+              type: string
+              enum: [error]
+              description: Indicates an error occurred
+            content:
+              type: string
+              description: Error message
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Query is required"

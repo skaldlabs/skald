@@ -1,0 +1,616 @@
+openapi: 3.0.3
+info:
+  title: Skald Memo API
+  description: API for managing memos (knowledge documents) in your Skald project
+  version: 1.0.0
+  contact:
+    name: Skald API Support
+    url: https://skald.ai
+
+servers:
+  - url: https://api.skald.ai
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /v1/memos:
+    get:
+      summary: List memos
+      description: Retrieve a paginated list of memos in your project
+      operationId: listMemos
+      tags:
+        - Memos
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+      responses:
+        '200':
+          description: Successful response with paginated memo list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoListResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create memo
+      description: Create a new memo with either plaintext content or a document file (PDF, DOC, DOCX, PPTX)
+      operationId: createMemo
+      tags:
+        - Memos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlaintextMemoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateFileMemoRequest'
+      responses:
+        '201':
+          description: Memo created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  memo_uuid:
+                    type: string
+                    format: uuid
+                    description: UUID of the created memo
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: Bad request - validation error or invalid file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/memos/{id}:
+    get:
+      summary: Get memo
+      description: Retrieve detailed information about a specific memo
+      operationId: getMemo
+      tags:
+        - Memos
+      parameters:
+        - $ref: '#/components/parameters/MemoId'
+        - $ref: '#/components/parameters/IdType'
+      responses:
+        '200':
+          description: Successful response with memo details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedMemo'
+        '400':
+          description: Bad request - invalid id_type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Memo or project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Update memo
+      description: Update specific fields of an existing memo
+      operationId: updateMemo
+      tags:
+        - Memos
+      parameters:
+        - $ref: '#/components/parameters/MemoId'
+        - $ref: '#/components/parameters/IdType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemoRequest'
+      responses:
+        '200':
+          description: Memo updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Memo or project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete memo
+      description: Permanently delete a memo and all its related data (content, summary, tags, chunks)
+      operationId: deleteMemo
+      tags:
+        - Memos
+      parameters:
+        - $ref: '#/components/parameters/MemoId'
+        - $ref: '#/components/parameters/IdType'
+      responses:
+        '204':
+          description: Memo deleted successfully
+        '400':
+          description: Bad request - invalid id_type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Memo or project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/memos/{id}/status:
+    get:
+      summary: Get memo processing status
+      description: Check the processing status of a memo
+      operationId: getMemoStatus
+      tags:
+        - Memos
+      parameters:
+        - $ref: '#/components/parameters/MemoId'
+        - $ref: '#/components/parameters/IdType'
+      responses:
+        '200':
+          description: Successful response with memo processing status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoStatus'
+        '400':
+          description: Bad request - invalid id_type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Memo or project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  parameters:
+    MemoId:
+      name: id
+      in: path
+      required: true
+      description: Memo identifier (UUID or reference ID depending on id_type parameter)
+      schema:
+        type: string
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    IdType:
+      name: id_type
+      in: query
+      description: Type of identifier being used
+      schema:
+        type: string
+        enum: [memo_uuid, reference_id]
+        default: memo_uuid
+        example: "memo_uuid"
+
+  schemas:
+    CreatePlaintextMemoRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Title of the memo
+          example: "Product Requirements Document"
+        content:
+          type: string
+          minLength: 1
+          description: The full text content of the memo
+          example: "This document outlines the key requirements for our new product..."
+        source:
+          type: string
+          maxLength: 255
+          description: Source or origin of the memo
+          example: "Internal Documentation"
+          nullable: true
+        reference_id:
+          type: string
+          maxLength: 255
+          description: Client-provided reference identifier
+          example: "PRD-2024-001"
+          nullable: true
+        expiration_date:
+          type: string
+          format: date-time
+          description: Optional expiration date (must be in the future)
+          example: "2025-12-31T23:59:59Z"
+          nullable: true
+        tags:
+          type: array
+          description: Array of tags to categorize the memo
+          items:
+            type: string
+          example: ["product", "requirements"]
+        metadata:
+          type: object
+          description: Additional metadata as key-value pairs
+          additionalProperties: true
+          example:
+            department: "Engineering"
+            priority: "high"
+
+    CreateFileMemoRequest:
+      type: object
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Document file to upload (PDF, DOC, DOCX, or PPTX, max 100MB)
+        title:
+          type: string
+          maxLength: 255
+          description: Optional title (defaults to filename if not provided)
+          example: "Q4 Roadmap Presentation"
+        source:
+          type: string
+          maxLength: 255
+          description: Source or origin of the memo
+          example: "Product Team"
+        reference_id:
+          type: string
+          maxLength: 255
+          description: Client-provided reference identifier
+          example: "ROADMAP-Q4-2024"
+        expiration_date:
+          type: string
+          format: date-time
+          description: Optional expiration date
+          example: "2025-01-01T00:00:00Z"
+        tags:
+          type: string
+          description: JSON-encoded array of tags
+          example: '["roadmap", "product"]'
+        metadata:
+          type: string
+          description: JSON-encoded metadata object
+          example: '{"quarter":"Q4","year":"2024"}'
+
+    UpdateMemoRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Updated title
+          example: "Updated Product Requirements"
+          nullable: true
+        content:
+          type: string
+          description: Updated content (will trigger reprocessing)
+          example: "This is the updated content..."
+          nullable: true
+        metadata:
+          type: object
+          description: Updated metadata
+          additionalProperties: true
+          nullable: true
+        client_reference_id:
+          type: string
+          maxLength: 255
+          description: Updated reference ID
+          nullable: true
+        source:
+          type: string
+          maxLength: 255
+          description: Updated source
+          nullable: true
+        expiration_date:
+          type: string
+          format: date-time
+          description: Updated expiration date
+          nullable: true
+
+    MemoListItem:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:35:00Z"
+        title:
+          type: string
+          example: "Product Requirements Document"
+        summary:
+          type: string
+          nullable: true
+          example: "This document outlines key product requirements including user authentication and data storage."
+        content_length:
+          type: integer
+          description: Length of the memo content in characters
+          example: 5420
+        metadata:
+          type: object
+          additionalProperties: true
+          example:
+            department: "Engineering"
+        client_reference_id:
+          type: string
+          nullable: true
+          example: "PRD-2024-001"
+        processing_status:
+          type: string
+          enum: [processing, processed, error]
+          example: "processed"
+
+    MemoListResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoListItem'
+        count:
+          type: integer
+          description: Total number of memos
+          example: 150
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        page_size:
+          type: integer
+          description: Number of items per page
+          example: 20
+        total_pages:
+          type: integer
+          description: Total number of pages
+          example: 8
+
+    DetailedMemo:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:35:00Z"
+        title:
+          type: string
+          example: "Product Requirements Document"
+        content:
+          type: string
+          nullable: true
+          example: "This document outlines the key requirements..."
+        summary:
+          type: string
+          nullable: true
+          example: "Overview of product requirements including authentication and storage."
+        metadata:
+          type: object
+          additionalProperties: true
+          example:
+            department: "Engineering"
+        client_reference_id:
+          type: string
+          nullable: true
+          example: "PRD-2024-001"
+        source:
+          type: string
+          nullable: true
+          example: "Internal Documentation"
+        type:
+          type: string
+          enum: [plaintext, document]
+          example: "plaintext"
+        expiration_date:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-12-31T23:59:59Z"
+        archived:
+          type: boolean
+          example: false
+        processing_status:
+          type: string
+          enum: [processing, processed, error]
+          example: "processed"
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+                format: uuid
+              tag:
+                type: string
+          example:
+            - uuid: "660e8400-e29b-41d4-a716-446655440000"
+              tag: "product"
+            - uuid: "770e8400-e29b-41d4-a716-446655440000"
+              tag: "requirements"
+        chunks:
+          type: array
+          description: Text chunks extracted from the memo for vector search
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+                format: uuid
+              chunk_content:
+                type: string
+              chunk_index:
+                type: integer
+          example:
+            - uuid: "880e8400-e29b-41d4-a716-446655440000"
+              chunk_content: "The authentication system must support OAuth 2.0..."
+              chunk_index: 0
+            - uuid: "990e8400-e29b-41d4-a716-446655440000"
+              chunk_content: "Data storage requirements include PostgreSQL..."
+              chunk_index: 1
+
+    MemoStatus:
+      type: object
+      properties:
+        memo_uuid:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [processing, processed, error]
+          description: Current processing status
+          example: "processed"
+        processing_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T10:30:00Z"
+        processing_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T10:35:00Z"
+        error_reason:
+          type: string
+          nullable: true
+          description: Error message if status is 'error'
+          example: null
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Project not found"

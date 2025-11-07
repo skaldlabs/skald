@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Skald Search API
+  description: Semantic search API for querying memo content using vector embeddings
+  version: 1.0.0
+  contact:
+    name: Skald API Support
+    url: https://skald.ai
+
+servers:
+  - url: https://api.skald.ai
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /v1/search:
+    post:
+      summary: Semantic search
+      description: Perform a semantic search across your memos using vector embeddings
+      operationId: search
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: The search query text
+                  example: "What are the key features of our product?"
+                limit:
+                  type: integer
+                  description: Maximum number of results to return
+                  default: 10
+                  minimum: 1
+                  maximum: 50
+                  example: 10
+                filters:
+                  type: array
+                  description: Array of filters to apply to the search
+                  items:
+                    type: object
+                    description: Filter criteria for memos
+                  example: []
+      responses:
+        '200':
+          description: Successful search
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingQuery:
+                  value:
+                    error: "Query is required"
+                limitExceeded:
+                  value:
+                    error: "Limit must be less than or equal to 50"
+                invalidFilter:
+                  value:
+                    error: "Invalid filter: <error details>"
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    SearchResult:
+      type: object
+      properties:
+        memo_uuid:
+          type: string
+          format: uuid
+          description: UUID of the memo
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        chunk_uuid:
+          type: string
+          format: uuid
+          description: UUID of the matched chunk
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        memo_title:
+          type: string
+          description: Title of the memo
+          example: "Product Features Documentation"
+        memo_summary:
+          type: string
+          description: Summary of the memo
+          example: "Overview of key product features and capabilities"
+        content_snippet:
+          type: string
+          description: First 100 characters of the memo content
+          example: "Our product offers advanced semantic search capabilities that enable users to find relevant..."
+        chunk_content:
+          type: string
+          description: The full content of the matched chunk
+          example: "The semantic search feature uses vector embeddings to find relevant content based on meaning rather than exact keyword matches."
+        distance:
+          type: number
+          format: float
+          description: Distance score indicating similarity (lower is better)
+          example: 0.234
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Query is required"
