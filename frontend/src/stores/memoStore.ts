@@ -336,7 +336,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             }
 
             return response.data
-        } catch (error) {
+        } catch {
             return null
         }
     },
