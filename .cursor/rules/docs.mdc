@@ -1,6 +1,5 @@
 ---
-description: Documentation generation
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Documentation generation
