@@ -1,7 +1,6 @@
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { ChatOpenAI } from '@langchain/openai'
 import { ChatAnthropic } from '@langchain/anthropic'
-import { ChatGroq } from '@langchain/groq'
 import {
     LLM_PROVIDER,
     OPENAI_MODEL,
@@ -52,9 +51,12 @@ export class LLMService {
                 temperature,
             })
         } else if (provider === 'groq') {
-            return new ChatGroq({
+            return new ChatOpenAI({
                 model: GROQ_MODEL,
                 apiKey: GROQ_API_KEY,
+                configuration: {
+                    baseURL: 'https://api.groq.com/openai/v1',
+                },
                 temperature,
             })
         } else {
