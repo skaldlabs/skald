@@ -8,7 +8,6 @@ import {
     FileText,
     Hash,
     Tag,
-    Layers,
     Archive,
     AlertCircle,
     CheckCircle,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react'
 import { formatDate } from '@/components/utils/dateUtils'
 import { addMonths, isBefore } from 'date-fns'
+import ReactMarkdown from 'react-markdown'
 
 interface DetailedMemoViewProps {
     memo: DetailedMemo
@@ -187,7 +187,7 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                         <div className="h-64 w-full overflow-y-auto">
                             <div className="prose prose-sm max-w-none">
                                 <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                                    {memo.content}
+                                    <ReactMarkdown>{memo.content}</ReactMarkdown>
                                 </pre>
                             </div>
                         </div>
@@ -227,39 +227,6 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                                     {tag.tag}
                                 </Badge>
                             ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Chunks Section */}
-            {memo.chunks && memo.chunks.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Layers className="h-5 w-5" />
-                            Chunks ({memo.chunks.length})
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {memo.chunks
-                                .sort((a, b) => a.chunk_index - b.chunk_index)
-                                .map((chunk) => (
-                                    <div key={chunk.uuid} className="border rounded-lg p-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <Badge variant="outline" className="text-xs">
-                                                Chunk {chunk.chunk_index}
-                                            </Badge>
-                                            <span className="text-xs text-muted-foreground">
-                                                {chunk.chunk_content.length} characters
-                                            </span>
-                                        </div>
-                                        <div className="h-32 w-full overflow-y-auto">
-                                            <p className="text-sm leading-relaxed">{chunk.chunk_content}</p>
-                                        </div>
-                                    </div>
-                                ))}
                         </div>
                     </CardContent>
                 </Card>
