@@ -196,6 +196,34 @@
         ol ol ol {
             list-style-type: lower-roman;
         }
+
+        /* Code block styles */
+        pre {
+            overflow-x: auto;
+            padding: 12px;
+            border-radius: 6px;
+            background: hsl(0, 0%, 10%);
+            margin: 12px 0;
+            max-width: 100%;
+        }
+
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 0.875em;
+            background: hsl(0, 0%, 15%);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: hsl(0, 0%, 90%);
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            display: block;
+            white-space: pre;
+            overflow-wrap: normal;
+        }
     }
 
 

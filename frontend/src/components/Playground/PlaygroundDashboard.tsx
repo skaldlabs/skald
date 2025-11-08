@@ -57,6 +57,12 @@ export const PlaygroundDashboard = () => {
                                 <label htmlFor="llm-provider" className="block text-sm font-medium mb-2">
                                     LLM Provider
                                 </label>
+                                <div className="mb-4">
+                                    <small className="text-xs text-gray-500 mb-4">
+                                        Currently we select the model for you based on the LLM provider but soon you'll
+                                        be able to configure your model of choice as well.
+                                    </small>
+                                </div>
                                 <Select value={llmProvider} onValueChange={setLlmProvider}>
                                     <SelectTrigger id="llm-provider" className="w-full">
                                         <div className="flex items-center gap-2">
