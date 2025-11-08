@@ -383,12 +383,13 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            expect(chatAgent.runChatAgent).toHaveBeenCalledWith(
-                'test query',
-                'Result 1: First result\n\nResult 2: Second result\n\n',
-                null,
-                []
-            )
+            expect(chatAgent.runChatAgent).toHaveBeenCalledWith({
+                query: 'test query',
+                context: 'Result 1: First result\n\nResult 2: Second result\n\n',
+                clientSystemPrompt: null,
+                conversationHistory: [],
+                llmProvider: 'openai',
+            })
         })
 
         it('should pass custom prompt to chat agent when provided', async () => {
@@ -414,12 +415,13 @@ describe('Chat API', () => {
                     system_prompt: customPrompt,
                 })
 
-            expect(chatAgent.runChatAgent).toHaveBeenCalledWith(
-                'test query',
-                'Result 1: Result content\n\n',
-                customPrompt,
-                []
-            )
+            expect(chatAgent.runChatAgent).toHaveBeenCalledWith({
+                query: 'test query',
+                context: 'Result 1: Result content\n\n',
+                clientSystemPrompt: customPrompt,
+                conversationHistory: [],
+                llmProvider: 'openai',
+            })
 
             const em = orm.em.fork()
             const chatMessages = await em.find(ChatMessage, { project: project.uuid }, { orderBy: { sent_at: 'ASC' } })
@@ -452,7 +454,13 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            expect(chatAgent.runChatAgent).toHaveBeenCalledWith('test query', 'Result 1: Result content\n\n', null, [])
+            expect(chatAgent.runChatAgent).toHaveBeenCalledWith({
+                query: 'test query',
+                context: 'Result 1: Result content\n\n',
+                clientSystemPrompt: null,
+                conversationHistory: [],
+                llmProvider: 'openai',
+            })
         })
 
         it('should pass client system prompt to streaming chat agent when provided', async () => {
@@ -484,12 +492,13 @@ describe('Chat API', () => {
                     system_prompt: clientSystemPrompt,
                 })
 
-            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith(
-                'test query',
-                'Result 1: Result content\n\n',
-                clientSystemPrompt,
-                []
-            )
+            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith({
+                query: 'test query',
+                context: 'Result 1: Result content\n\n',
+                clientSystemPrompt: clientSystemPrompt,
+                conversationHistory: [],
+                llmProvider: 'openai',
+            })
             // check that the created chat messages have the correct client system prompt
             const em = orm.em.fork()
             const chatMessages = await em.find(ChatMessage, { project: project.uuid }, { orderBy: { sent_at: 'ASC' } })
@@ -528,12 +537,13 @@ describe('Chat API', () => {
                     stream: true,
                 })
 
-            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith(
-                'test query',
-                'Result 1: Result content\n\n',
-                null,
-                []
-            )
+            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith({
+                query: 'test query',
+                context: 'Result 1: Result content\n\n',
+                clientSystemPrompt: null,
+                conversationHistory: [],
+                llmProvider: 'openai',
+            })
         })
 
         it('should return chat_id in non-streaming response', async () => {
@@ -663,12 +673,12 @@ describe('Chat API', () => {
 
             // Verify that runChatAgent was called with conversation history
             expect(chatAgent.runChatAgent).toHaveBeenCalled()
-            const callArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0]
-            expect(callArgs[0]).toBe('new query')
-            expect(callArgs[3]).toBeDefined() // conversationHistory parameter
-            expect(Array.isArray(callArgs[3])).toBe(true)
+            const callArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
+            expect(callArgs.query).toBe('new query')
+            expect(callArgs.conversationHistory).toBeDefined()
+            expect(Array.isArray(callArgs.conversationHistory)).toBe(true)
             // Should have previous messages in history
-            expect(callArgs[3].length).toBeGreaterThan(0)
+            expect(callArgs.conversationHistory.length).toBeGreaterThan(0)
         })
 
         it('should not pass conversation history when chat_id not provided', async () => {
@@ -693,8 +703,8 @@ describe('Chat API', () => {
 
             // Verify that runChatAgent was called with empty conversation history
             expect(chatAgent.runChatAgent).toHaveBeenCalled()
-            const callArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0]
-            expect(callArgs[3]).toEqual([]) // conversationHistory should be empty array
+            const callArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
+            expect(callArgs.conversationHistory).toEqual([]) // conversationHistory should be empty array
         })
 
         it('should create new chat when invalid chat_id provided', async () => {
