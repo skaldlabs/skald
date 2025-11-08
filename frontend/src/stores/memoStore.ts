@@ -335,6 +335,33 @@ export const useMemoStore = create<MemoState>((set, get) => ({
                 return null
             }
 
+            if (response.data.status === 'processed') {
+                const memoDetails = await get().getMemoDetails(memoUuid)
+                if (memoDetails) {
+                    const currentMemos = get().memos
+                    const memoIndex = currentMemos.findIndex((m) => m.uuid === memoUuid)
+
+                    const updatedMemo: Memo = {
+                        uuid: memoDetails.uuid,
+                        created_at: memoDetails.created_at,
+                        updated_at: memoDetails.updated_at,
+                        title: memoDetails.title,
+                        summary: memoDetails.summary || '',
+                        metadata: memoDetails.metadata,
+                        client_reference_id: memoDetails.client_reference_id,
+                        processing_status: memoDetails.processing_status,
+                    }
+
+                    if (memoIndex !== -1) {
+                        const updatedMemos = [...currentMemos]
+                        updatedMemos[memoIndex] = updatedMemo
+                        set({ memos: updatedMemos })
+                    } else {
+                        set({ memos: [...currentMemos, updatedMemo] })
+                    }
+                }
+            }
+
             return response.data
         } catch {
             return null
