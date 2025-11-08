@@ -68,6 +68,7 @@ export const DeleteProjectDialog = ({ project, open, onOpenChange, onConfirmDele
                         <li>All memos</li>
                         <li>All memo chunks and embeddings</li>
                         <li>All tags and summaries</li>
+                        <li>All chat history</li>
                         <li>Project API keys</li>
                     </ul>
 

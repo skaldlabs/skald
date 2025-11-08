@@ -13,6 +13,8 @@ import { trackUsage } from '@/middleware/usageTracking'
 import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
 import crypto, { randomUUID } from 'crypto'
 import { posthogCapture } from '@/lib/posthogUtils'
+import { ChatMessage } from '@/entities/ChatMessage'
+import { Chat } from '@/entities/Chat'
 
 export const projectRouter = express.Router({ mergeParams: true })
 
@@ -276,6 +278,10 @@ const destroy = async (req: Request, res: Response) => {
 
         // Delete project API keys
         await em.nativeDelete(ProjectAPIKey, { project: project })
+
+        // Delete project chat history
+        await em.nativeDelete(ChatMessage, { project: project })
+        await em.nativeDelete(Chat, { project: project })
 
         // Delete the project itself
         await em.nativeDelete(Project, { uuid: project.uuid })
