@@ -107,7 +107,7 @@ export const LOCAL_LLM_API_KEY = process.env.LOCAL_LLM_API_KEY || 'not-needed'
 
 // Groq
 export const GROQ_API_KEY = process.env.GROQ_API_KEY
-export const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
+export const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant' // 'openai/gpt-oss-120b'
 
 // ---- Embedding Provider Configuration ----
 export const EMBEDDING_PROVIDER = process.env.EMBEDDING_PROVIDER || 'voyage'
@@ -128,7 +128,7 @@ export const VECTOR_SEARCH_TOP_K = parseInt(process.env.VECTOR_SEARCH_TOP_K || '
 export const POST_RERANK_TOP_K = parseInt(process.env.POST_RERANK_TOP_K || '50')
 
 // Validation of LLM and embedding provider configuration on startup
-const SUPPORTED_LLM_PROVIDERS = ['openai', 'anthropic', 'local', 'groq']
+export const SUPPORTED_LLM_PROVIDERS = ['openai', 'anthropic', 'local', 'groq']
 if (!SUPPORTED_LLM_PROVIDERS.includes(LLM_PROVIDER)) {
     throw new Error(`Invalid LLM_PROVIDER: ${LLM_PROVIDER}. Supported: ${SUPPORTED_LLM_PROVIDERS.join(', ')}`)
 }
