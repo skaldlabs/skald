@@ -41,7 +41,7 @@ export const ChatInput = () => {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask a question about your project data..."
+                    placeholder="Ask a question about your memos..."
                     disabled={isLoading || isStreaming}
                     className="chat-input"
                     autoFocus
