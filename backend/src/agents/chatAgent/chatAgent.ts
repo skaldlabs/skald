@@ -1,6 +1,7 @@
 import { LLMService } from '@/services/llmService'
 import { CHAT_AGENT_INSTRUCTIONS } from '@/agents/chatAgent/prompts'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
+import * as Sentry from '@sentry/node'
 
 interface ChatAgentResult {
     output: string
@@ -79,7 +80,7 @@ export async function* streamChatAgent(
             }
         }
     } catch (error) {
-        console.error(error)
+        Sentry.captureException(error)
         yield {
             type: 'error',
             content: error instanceof Error ? error.message : String(error),
