@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
 import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
 import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
-import { IS_DEVELOPMENT } from '@/settings'
+import { IS_DEVELOPMENT, LLM_PROVIDER, SUPPORTED_LLM_PROVIDERS } from '@/settings'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
 import { getOptimizedChatHistory, createChatMessagePair } from '@/lib/chatUtils'
@@ -13,6 +13,17 @@ export const chat = async (req: Request, res: Response) => {
     const filters = req.body.filters || []
     const chatId = req.body.chat_id
     const clientSystemPrompt = req.body.system_prompt || null
+
+    // experimental: allow the client to specify the LLM provider (not the model yet)
+    // we will not document this or add this to SDKs until we're certain of the behavior we want
+    // initially this is meant to support testing in the playground
+    // using this feature requires that the instance have API keys for all supported providers
+    const llmProvider = req.body.llm_provider || LLM_PROVIDER
+    if (!['openai', 'anthropic', 'groq'].includes(llmProvider)) {
+        return res.status(400).json({
+            error: `Invalid LLM provider: ${llmProvider}. Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(', ')}`,
+        })
+    }
 
     if (!query) {
         return res.status(400).json({ error: 'Query is required' })
@@ -49,19 +60,26 @@ export const chat = async (req: Request, res: Response) => {
 
     try {
         if (stream) {
-            const fullResponse = await _generateStreamingResponse(
+            const fullResponse = await _generateStreamingResponse({
                 query,
                 contextStr,
                 clientSystemPrompt,
                 res,
-                conversationHistory
-            )
+                conversationHistory,
+                llmProvider,
+            })
             const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
             res.write(`data: ${JSON.stringify({ type: 'done', chat_id: finalChatId })}\n\n`)
             res.end()
         } else {
             // non-streaming response
-            const result = await runChatAgent(query, contextStr, clientSystemPrompt, conversationHistory)
+            const result = await runChatAgent({
+                query,
+                context: contextStr,
+                clientSystemPrompt,
+                conversationHistory,
+                llmProvider,
+            })
             const finalChatId = await createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
 
             return res.status(200).json({
@@ -85,13 +103,21 @@ export const _setStreamingResponseHeaders = (res: Response) => {
     res.setHeader('X-Accel-Buffering', 'no')
 }
 
-export const _generateStreamingResponse = async (
-    query: string,
-    contextStr: string,
-    clientSystemPrompt: string | null = null,
-    res: Response,
-    conversationHistory: Array<[string, string]> = []
-): Promise<string> => {
+export const _generateStreamingResponse = async ({
+    query,
+    contextStr,
+    clientSystemPrompt = null,
+    res,
+    conversationHistory = [],
+    llmProvider,
+}: {
+    query: string
+    contextStr: string
+    clientSystemPrompt?: string | null
+    res: Response
+    conversationHistory?: Array<[string, string]>
+    llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+}): Promise<string> => {
     _setStreamingResponseHeaders(res)
 
     // establish connection
@@ -99,7 +125,13 @@ export const _generateStreamingResponse = async (
 
     let fullResponse = ''
     try {
-        for await (const chunk of streamChatAgent(query, contextStr, clientSystemPrompt, conversationHistory)) {
+        for await (const chunk of streamChatAgent({
+            query,
+            context: contextStr,
+            clientSystemPrompt,
+            conversationHistory,
+            llmProvider,
+        })) {
             // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
             if (chunk.content && typeof chunk.content === 'object') {
                 // extract text from dict (Anthropic format)

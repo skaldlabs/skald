@@ -24,8 +24,14 @@ export class LLMService {
      * @param temperature - Temperature for the LLM (default: 0 for deterministic output)
      * @returns Configured LLM instance
      */
-    static getLLM(temperature: number = 0): BaseChatModel {
-        const provider = this.provider
+    static getLLM(
+        temperature: number = 0,
+        providerOverride?: 'openai' | 'anthropic' | 'local' | 'groq'
+    ): BaseChatModel {
+        let provider = this.provider
+        if (providerOverride) {
+            provider = providerOverride
+        }
 
         if (provider === 'openai') {
             return new ChatOpenAI({

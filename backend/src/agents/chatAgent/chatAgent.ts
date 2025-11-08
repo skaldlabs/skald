@@ -13,14 +13,21 @@ interface StreamChunk {
     content?: string
 }
 
-export async function runChatAgent(
-    query: string,
-    context: string = '',
-    clientSystemPrompt: string | null = null,
-    conversationHistory: Array<[string, string]> = []
-): Promise<ChatAgentResult> {
+export async function runChatAgent({
+    query,
+    context = '',
+    clientSystemPrompt = null,
+    conversationHistory = [],
+    llmProvider,
+}: {
+    query: string
+    context?: string
+    clientSystemPrompt?: string | null
+    conversationHistory?: Array<[string, string]>
+    llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+}): Promise<ChatAgentResult> {
     // Use the LLM directly for non-streaming
-    const llm = LLMService.getLLM(0)
+    const llm = LLMService.getLLM(0, llmProvider)
     const prompts: [string, string][] = [['system', CHAT_AGENT_INSTRUCTIONS]]
     if (clientSystemPrompt) {
         prompts.push(['system', clientSystemPrompt || ''])
@@ -44,15 +51,22 @@ export async function runChatAgent(
     }
 }
 
-export async function* streamChatAgent(
-    query: string,
-    context: string = '',
-    clientSystemPrompt: string | null = null,
-    conversationHistory: Array<[string, string]> = []
-): AsyncGenerator<StreamChunk> {
+export async function* streamChatAgent({
+    query,
+    context = '',
+    clientSystemPrompt = null,
+    conversationHistory = [],
+    llmProvider,
+}: {
+    query: string
+    context?: string
+    clientSystemPrompt?: string | null
+    conversationHistory?: Array<[string, string]>
+    llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+}): AsyncGenerator<StreamChunk> {
     try {
         // For streaming, we'll use the LLM directly instead of the agent
-        const llm = LLMService.getLLM(0)
+        const llm = LLMService.getLLM(0, llmProvider)
 
         const prompts: [string, string][] = [['system', CHAT_AGENT_INSTRUCTIONS]]
         if (clientSystemPrompt) {
