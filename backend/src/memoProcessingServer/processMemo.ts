@@ -3,6 +3,8 @@ import { EntityManager } from '@mikro-orm/core'
 import { updateMemoStatus } from '@/lib/memoStatusUtils'
 import { logger } from '@/lib/logger'
 import { DocumentProcessingService } from '@/services/documentProcessingService'
+import { MemoContent } from '@/entities/MemoContent'
+import { randomUUID } from 'node:crypto'
 
 const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
     const sql = `
@@ -16,14 +18,12 @@ const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
         WHERE m.uuid = ?
     `
 
-    const result = await em.getConnection().execute<
-        Array<{
-            memo_uuid: string
-            project_id: string
-            type: string | null
-            content: string | null
-        }>
-    >(sql, [memoUuid])
+    const result: Array<{
+        memo_uuid: string
+        project_id: string
+        type: string | null
+        content: string | null
+    }> = await em.getConnection().execute(sql, [memoUuid])
 
     if (!result || result.length === 0) {
         throw new Error(`Memo not found: ${memoUuid}`)
@@ -36,6 +36,17 @@ const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
         // queue in the meantime. Document memos should either be handled by a separate queue, or we should restructure our queue
         // setup to read from sqs and add to an in-memory queue that we chug along at our own pace.
         const markdown = await DocumentProcessingService.sendDocumentForProcessing(row.project_id, row.memo_uuid)
+
+        // documents only have content set after being processed by the document processing service
+        // whereas plaintext memos have content set immediately by the api service
+        const memoContent = em.create(MemoContent, {
+            uuid: randomUUID(),
+            memo: row.memo_uuid,
+            content: markdown,
+            project: row.project_id,
+        })
+        await em.persistAndFlush(memoContent)
+
         row.content = markdown
     }
 
