@@ -10,6 +10,8 @@ import {
     LOCAL_LLM_MODEL,
     LOCAL_LLM_BASE_URL,
     LOCAL_LLM_API_KEY,
+    GROQ_API_KEY,
+    GROQ_MODEL,
 } from '../settings'
 /**
  * LLM Service for creating LLM instances based on configuration
@@ -48,8 +50,19 @@ export class LLMService {
                 apiKey: LOCAL_LLM_API_KEY,
                 temperature,
             })
+        } else if (provider === 'groq') {
+            return new ChatOpenAI({
+                model: GROQ_MODEL,
+                apiKey: GROQ_API_KEY,
+                configuration: {
+                    baseURL: 'https://api.groq.com/openai/v1',
+                },
+                temperature,
+            })
         } else {
-            throw new Error(`Unsupported LLM provider: ${provider}. Supported providers: openai, anthropic, local`)
+            throw new Error(
+                `Unsupported LLM provider: ${provider}. Supported providers: openai, anthropic, local, groq`
+            )
         }
     }
 }

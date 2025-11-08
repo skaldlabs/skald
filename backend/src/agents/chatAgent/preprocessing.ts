@@ -36,12 +36,8 @@ async function chunkVectorSearch(query: string, project: Project, filters?: Memo
         rerankDataBatches.push(rerankData.slice(i, i + 25))
     }
 
-    // rerank all batches
-    const results: RerankResult[] = []
-    for (const batch of rerankDataBatches) {
-        const rerankResult = await RerankService.rerank(query, batch)
-        results.push(...rerankResult)
-    }
+    // rerank all batches concurrently
+    const results = (await Promise.all(rerankDataBatches.map((batch) => RerankService.rerank(query, batch)))).flat()
 
     return results.map((r) => r.document)
 }
