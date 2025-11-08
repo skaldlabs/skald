@@ -18,8 +18,10 @@ interface ChatState {
     isStreaming: boolean
     currentStreamingMessageId: string | null
     systemPrompt: string
+    llmProvider: string
     chatSessionId: string | null
     setSystemPrompt: (prompt: string) => void
+    setLlmProvider: (provider: string) => void
     sendMessage: (query: string) => Promise<void>
     clearMessages: () => void
     addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }) => void
@@ -33,10 +35,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     isStreaming: false,
     currentStreamingMessageId: null,
     systemPrompt: '',
+    llmProvider: 'openai',
     chatSessionId: null,
 
     setSystemPrompt: (prompt: string) => {
         set({ systemPrompt: prompt })
+    },
+
+    setLlmProvider: (provider: string) => {
+        set({ llmProvider: provider })
     },
 
     addMessage: (message) => {
@@ -101,6 +108,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const systemPrompt = get().systemPrompt.trim()
         if (systemPrompt) {
             payload.system_prompt = systemPrompt
+        }
+
+        const llmProvider = get().llmProvider
+        if (llmProvider) {
+            payload.llm_provider = llmProvider
         }
 
         const chatSessionId = get().chatSessionId

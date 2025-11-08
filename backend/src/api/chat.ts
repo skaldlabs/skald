@@ -19,12 +19,10 @@ export const chat = async (req: Request, res: Response) => {
     // initially this is meant to support testing in the playground
     // using this feature requires that the instance have API keys for all supported providers
     const llmProvider = req.body.llm_provider || LLM_PROVIDER
-    if (!SUPPORTED_LLM_PROVIDERS.includes(llmProvider)) {
-        return res
-            .status(400)
-            .json({
-                error: `Invalid LLM provider: ${llmProvider}. Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(', ')}`,
-            })
+    if (!['openai', 'anthropic', 'groq'].includes(llmProvider)) {
+        return res.status(400).json({
+            error: `Invalid LLM provider: ${llmProvider}. Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(', ')}`,
+        })
     }
 
     if (!query) {
