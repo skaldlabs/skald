@@ -24,7 +24,7 @@ import {
 import { logger } from './logger'
 import { EntityData } from '@mikro-orm/core'
 import { generateS3Key, uploadFileToS3 } from './s3Utils'
-import { publishMessage } from '@/memoProcessingServer/sqsConsumer'
+import { publishMessage } from '@/lib/sqsClient'
 
 export interface MemoData {
     content?: string
