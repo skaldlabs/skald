@@ -1,54 +1,13 @@
-import { SQSClient, ReceiveMessageCommand, DeleteMessageCommand, Message } from '@aws-sdk/client-sqs'
+import { Message } from '@aws-sdk/client-sqs'
 import { processMemo } from '@/memoProcessingServer/processMemo'
-import { AWS_REGION, SQS_QUEUE_URL } from '@/settings'
+import { SQS_DLQ_QUEUE_URL } from '@/settings'
 import { MikroORM } from '@mikro-orm/core'
 import { logger } from '@/lib/logger'
-
-const MAX_MESSAGES = 10
-const WAIT_TIME_SECONDS = 1
-const VISIBILITY_TIMEOUT = 60
+import * as Sentry from '@sentry/node'
+import { deleteMessage, receiveMessages, publishMessage } from '@/lib/sqsClient'
 
 interface MemoMessage {
     memo_uuid: string
-}
-
-let sqsClient: SQSClient | null = null
-
-const initSQSClient = () => {
-    if (sqsClient) {
-        return sqsClient
-    }
-
-    return new SQSClient({
-        region: AWS_REGION,
-    })
-}
-
-const receiveMessages = async () => {
-    if (!sqsClient) {
-        throw new Error('SQS client not initialized')
-    }
-
-    const command = new ReceiveMessageCommand({
-        QueueUrl: SQS_QUEUE_URL,
-        MaxNumberOfMessages: MAX_MESSAGES,
-        WaitTimeSeconds: WAIT_TIME_SECONDS,
-        VisibilityTimeout: VISIBILITY_TIMEOUT,
-    })
-    return await sqsClient.send(command)
-}
-
-const deleteMessage = async (message: Message) => {
-    if (!sqsClient) {
-        throw new Error('SQS client not initialized')
-    }
-
-    await sqsClient.send(
-        new DeleteMessageCommand({
-            QueueUrl: SQS_QUEUE_URL,
-            ReceiptHandle: message.ReceiptHandle,
-        })
-    )
 }
 
 /**
@@ -72,9 +31,14 @@ async function processMessage(orm: MikroORM, message: Message): Promise<void> {
         }
     } catch (error) {
         logger.error({ err: error }, 'Error processing message')
-        // Message will become visible again after visibility timeout
-        // Consider implementing a dead-letter queue for failed messages
-        throw error
+
+        await deleteMessage(message)
+        if (!SQS_DLQ_QUEUE_URL) {
+            logger.error('SQS_DLQ_QUEUE_URL is not set, message will be lost')
+            Sentry.captureException(new Error('SQS_DLQ_QUEUE_URL is not set, message will be lost'))
+        } else {
+            await publishMessage(message.Body, SQS_DLQ_QUEUE_URL)
+        }
     }
 }
 
@@ -105,8 +69,6 @@ async function pollMessages(orm: MikroORM): Promise<void> {
  * Start the SQS consumer loop
  */
 export async function runSQSConsumer(orm: MikroORM): Promise<void> {
-    sqsClient = initSQSClient()
-
     // Continuous polling loop
     while (true) {
         await pollMessages(orm)

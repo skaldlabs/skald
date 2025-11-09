@@ -72,6 +72,7 @@ export const DATABASE_URL =
 export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'redis'
 
 export const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
+export const SQS_DLQ_QUEUE_URL = process.env.SQS_DLQ_QUEUE_URL
 
 export const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
 export const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')
