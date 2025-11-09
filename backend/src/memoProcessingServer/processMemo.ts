@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 import { DocumentProcessingService } from '@/services/documentProcessingService'
 import { MemoContent } from '@/entities/MemoContent'
 import { randomUUID } from 'node:crypto'
+import { Memo } from '@/entities/Memo'
 
 const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
     const sql = `
@@ -65,6 +66,19 @@ const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
 }
 
 export const processMemo = async (em: EntityManager, memoUuid: string) => {
+    // Temporary check to ensure the memo is in the received state to prevent processing the same memo multiple times
+    // This is a temporary solution to prevent the memo from being processed multiple times
+    // We should remove this once we have a more robust queue system in place
+    const memo = await em.findOne(Memo, { uuid: memoUuid }, { fields: ['processing_status'] })
+    if (!memo) {
+        logger.error({ memoUuid }, 'Memo not found, skipping processing')
+        return
+    }
+    if (memo.processing_status !== 'received') {
+        logger.info({ memoUuid }, 'Memo not in received state, skipping processing')
+        return
+    }
+
     try {
         await updateMemoStatus(em, memoUuid, {
             processing_status: 'processing',
