@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react'
+import { useState, useEffect, useRef, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -78,6 +78,7 @@ const parseCodeWithInputs = (code: string, inputs: InputField[]): CodeSegment[] 
 
 export const InteractiveCodeBlock = ({ code, language = 'bash', onCopy, inputs }: InteractiveCodeBlockProps) => {
     const [isCopied, setIsCopied] = useState(false)
+    const codeContentRef = useRef<HTMLDivElement>(null)
 
     // Create a map for quick input lookup
     const inputMap = inputs.reduce(
@@ -103,6 +104,28 @@ export const InteractiveCodeBlock = ({ code, language = 'bash', onCopy, inputs }
         setTimeout(() => setIsCopied(false), 2000)
         onCopy?.()
     }
+
+    useEffect(() => {
+        const handleManualCopy = (e: ClipboardEvent) => {
+            const selection = window.getSelection()
+            if (!selection || !codeContentRef.current) return
+
+            if (codeContentRef.current.contains(selection.anchorNode)) {
+                e.preventDefault()
+
+                const codeText = getCodeWithValues()
+                e.clipboardData?.setData('text/plain', codeText)
+
+                onCopy?.()
+            }
+        }
+
+        document.addEventListener('copy', handleManualCopy)
+
+        return () => {
+            document.removeEventListener('copy', handleManualCopy)
+        }
+    }, [code, inputs, onCopy])
 
     const segments = parseCodeWithInputs(code, inputs)
 
@@ -201,7 +224,9 @@ export const InteractiveCodeBlock = ({ code, language = 'bash', onCopy, inputs }
                     {isCopied ? <Check size={18} /> : <Copy size={18} />}
                 </Button>
             </div>
-            <div className="interactive-code-content">{renderSegments()}</div>
+            <div className="interactive-code-content" ref={codeContentRef}>
+                {renderSegments()}
+            </div>
         </div>
     )
 }
