@@ -738,11 +738,22 @@
                 border: 1px solid hsl(0, 0%, 30%);
                 color: hsl(150, 70%, 65%);
                 border-radius: 4px;
-                min-width: 150px;
-                max-width: 400px;
+                min-width: clamp(200px, 40vw, 400px);
+                max-width: min(800px, 95vw);
+                width: auto;
                 height: auto;
                 line-height: 1.4;
                 transition: all 0.2s ease;
+
+                @media (max-width: 768px) {
+                    min-width: clamp(150px, 80vw, 100%);
+                    max-width: 100%;
+                }
+
+                @media (max-width: 480px) {
+                    min-width: 100%;
+                    max-width: 100%;
+                }
 
                 &:focus {
                     outline: none;

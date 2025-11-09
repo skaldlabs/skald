@@ -130,7 +130,7 @@ export const ChatStep = () => {
                                 key: 'query',
                                 value: chatQuery,
                                 onChange: setChatQuery,
-                                placeholder: 'e.g., What are the benefits of async functions?',
+                                placeholder: 'Your question here...',
                                 type: 'input',
                                 disabled: isDisabled,
                             },
@@ -166,7 +166,7 @@ export const ChatStep = () => {
                                 <Input
                                     value={chatQuery}
                                     onChange={(e) => setChatQuery(e.target.value)}
-                                    placeholder="e.g., What are the benefits of async functions?"
+                                    placeholder="Your question here..."
                                     disabled={isDisabled || isChatting}
                                     onKeyDown={(e) => e.key === 'Enter' && !isChatting && sendChatMessage()}
                                     className="chat-input"
