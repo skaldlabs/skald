@@ -7,6 +7,29 @@ import { randomUUID } from 'crypto'
 import { MemoChunk } from '@/entities/MemoChunk'
 import { MemoTag } from '@/entities/MemoTag'
 import { MemoSummary } from '@/entities/MemoSummary'
+import { logger } from '@/lib/logger'
+
+const MAX_TOKENS_FOR_LLM = 100000
+// Rough estimate: 1 token is approximately 4 characters (conservative)
+const CHARS_PER_TOKEN = 4
+const MAX_CHARS_FOR_LLM = MAX_TOKENS_FOR_LLM * CHARS_PER_TOKEN
+
+const truncateContentForLLM = (content: string): string => {
+    if (content.length <= MAX_CHARS_FOR_LLM) {
+        return content
+    }
+
+    const truncated = content.substring(0, MAX_CHARS_FOR_LLM)
+    logger.warn(
+        {
+            originalLength: content.length,
+            truncatedLength: truncated.length,
+            estimatedTokens: Math.ceil(content.length / CHARS_PER_TOKEN),
+        },
+        'Truncating memo content to fit within LLM token limits'
+    )
+    return truncated
+}
 
 // Initialize chunker with the same configuration as Python version
 // RecursiveChunker in TypeScript doesn't have recipes yet, so we'll use the default markdown-friendly configuration
@@ -63,7 +86,8 @@ export const createMemoChunks = async (
 }
 
 export const extractTagsFromMemo = async (em: EntityManager, memoUuid: string, content: string, projectId: string) => {
-    const tags = await memoTagsAgent.extractTags(content)
+    const truncatedContent = truncateContentForLLM(content)
+    const tags = await memoTagsAgent.extractTags(truncatedContent)
     const memoTags = tags.tags.map((tag) =>
         em.create(MemoTag, { uuid: randomUUID(), memo: memoUuid, project: projectId, tag })
     )
@@ -71,7 +95,8 @@ export const extractTagsFromMemo = async (em: EntityManager, memoUuid: string, c
 }
 
 export const generateMemoSummary = async (em: EntityManager, memoUuid: string, content: string, projectId: string) => {
-    const summary = await memoSummaryAgent.summarize(content)
+    const truncatedContent = truncateContentForLLM(content)
+    const summary = await memoSummaryAgent.summarize(truncatedContent)
     const embedding = await EmbeddingService.generateEmbedding(summary.summary, 'storage')
     const memoSummary = em.create(MemoSummary, {
         uuid: randomUUID(),
