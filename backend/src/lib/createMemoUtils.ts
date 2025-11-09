@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto'
 import { createClient } from 'redis'
 import * as amqplib from 'amqplib'
-import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 import { sha256 } from '@/lib/hashUtils'
 import { DI } from '@/di'
 import { Memo } from '@/entities/Memo'
@@ -9,7 +8,6 @@ import { MemoContent } from '@/entities/MemoContent'
 import { MemoTag } from '@/entities/MemoTag'
 import { Project } from '@/entities/Project'
 import {
-    AWS_REGION,
     INTER_PROCESS_QUEUE,
     REDIS_HOST,
     REDIS_PORT,
@@ -26,12 +24,7 @@ import {
 import { logger } from './logger'
 import { EntityData } from '@mikro-orm/core'
 import { generateS3Key, uploadFileToS3 } from './s3Utils'
-
-let sqsClient: SQSClient | null = null
-if (SQS_QUEUE_URL && INTER_PROCESS_QUEUE === 'sqs') {
-    sqsClient = new SQSClient({ region: AWS_REGION })
-    logger.info({ queueUrl: SQS_QUEUE_URL }, 'Initialized SQS client for queue')
-}
+import { publishMessage } from '@/memoProcessingServer/sqsConsumer'
 
 export interface MemoData {
     content?: string
@@ -146,17 +139,12 @@ async function _publishToRedis(memoUuid: string): Promise<void> {
 }
 
 async function _publishToSqs(memoUuid: string): Promise<void> {
-    if (!sqsClient) {
-        throw new Error('SQS client not available')
+    if (!SQS_QUEUE_URL) {
+        throw new Error('SQS queue URL not available')
     }
 
     const message = JSON.stringify({ memo_uuid: memoUuid })
-    const command = new SendMessageCommand({
-        QueueUrl: SQS_QUEUE_URL,
-        MessageBody: message,
-    })
-
-    const response = await sqsClient.send(command)
+    const response = await publishMessage(message, SQS_QUEUE_URL)
     logger.info({ memoUuid, messageId: response.MessageId }, 'Published memo to SQS queue')
 }
 

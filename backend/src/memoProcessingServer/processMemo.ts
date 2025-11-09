@@ -91,7 +91,7 @@ export const processMemo = async (em: EntityManager, memoUuid: string) => {
 
         logger.error({ err: error, memoUuid }, 'Memo processing failed')
 
-        // Re-throw to allow queue retry logic
+        // re-throw to let the queue retry logic handle it
         throw error
     }
 }
