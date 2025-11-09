@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Check, Send, Loader2 } from 'lucide-react'
 import { CodeLanguageTabs } from './CodeLanguageTabs'
-import { CodeBlock } from './CodeBlock'
+import { InteractiveCodeBlock } from './InteractiveCodeBlock'
 import { getChatExample } from '@/components/GettingStarted/chatExamples'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -101,10 +101,9 @@ export const ChatStep = () => {
     }, [isMobile, hasChatted, isWaitingForChat])
 
     const getCodeExample = () => {
-        const sampleQuery = chatQuery || ''
         return getChatExample(activeTab, {
             apiKey: apiKey || '',
-            query: sampleQuery,
+            query: '{query}',
         })
     }
 
@@ -116,12 +115,32 @@ export const ChatStep = () => {
             <div className="step-content">
                 <h2 className="step-title">Chat with your memos {isComplete && <Check className="title-check" />}</h2>
                 <p className="step-description">
-                    Type your question below, then copy and paste the code into your terminal to chat with your memos
+                    Type your question in the code below, then copy and paste it into your terminal to chat with your
+                    memos
                 </p>
 
-                <div className="interactive-section">
-                    <div className="chat-interface">
-                        {isMobile && (
+                <div className="code-section" ref={codeBlockRef}>
+                    <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
+                    <InteractiveCodeBlock
+                        code={getCodeExample().code}
+                        language={getCodeExample().language}
+                        onCopy={handleCodeCopy}
+                        inputs={[
+                            {
+                                key: 'query',
+                                value: chatQuery,
+                                onChange: setChatQuery,
+                                placeholder: 'e.g., What are the benefits of async functions?',
+                                type: 'input',
+                                disabled: isDisabled,
+                            },
+                        ]}
+                    />
+                </div>
+
+                {isMobile && (
+                    <div className="interactive-section">
+                        <div className="chat-interface">
                             <div className="chat-messages" ref={messagesContainerRef}>
                                 {chatMessages.length === 0 ? (
                                     <div className="chat-placeholder">
@@ -142,18 +161,16 @@ export const ChatStep = () => {
                                     ))
                                 )}
                             </div>
-                        )}
 
-                        <div className="chat-input-container">
-                            <Input
-                                value={chatQuery}
-                                onChange={(e) => setChatQuery(e.target.value)}
-                                placeholder="e.g., What are the benefits of async functions?"
-                                disabled={isDisabled || isChatting}
-                                onKeyDown={(e) => e.key === 'Enter' && !isChatting && isMobile && sendChatMessage()}
-                                className="chat-input"
-                            />
-                            {isMobile && (
+                            <div className="chat-input-container">
+                                <Input
+                                    value={chatQuery}
+                                    onChange={(e) => setChatQuery(e.target.value)}
+                                    placeholder="e.g., What are the benefits of async functions?"
+                                    disabled={isDisabled || isChatting}
+                                    onKeyDown={(e) => e.key === 'Enter' && !isChatting && sendChatMessage()}
+                                    className="chat-input"
+                                />
                                 <Button
                                     onClick={sendChatMessage}
                                     disabled={isDisabled || isChatting || !chatQuery.trim()}
@@ -161,24 +178,14 @@ export const ChatStep = () => {
                                 >
                                     {isChatting ? 'Thinking...' : <Send />}
                                 </Button>
-                            )}
-                        </div>
-                        {isMobile && (
+                            </div>
+
                             <div className="mobile-helper-text">
                                 On mobile? Test the chat right here. On desktop, we encourage using code!
                             </div>
-                        )}
+                        </div>
                     </div>
-                </div>
-
-                <div className="code-section" ref={codeBlockRef}>
-                    <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
-                    <CodeBlock
-                        code={getCodeExample().code}
-                        language={getCodeExample().language}
-                        onCopy={handleCodeCopy}
-                    />
-                </div>
+                )}
 
                 {isWaitingForChat && !isMobile && (
                     <div className="waiting-indicator">

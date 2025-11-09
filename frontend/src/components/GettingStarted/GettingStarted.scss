@@ -697,6 +697,87 @@
             word-break: keep-all;
         }
     }
+
+    // Interactive code block styles
+    &.interactive {
+        .interactive-code-content {
+            padding: 1.5rem;
+            padding-top: 3rem;
+            overflow-x: auto;
+            background: hsl(0, 0%, 10%);
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+
+            .code-line {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                min-height: 1.6em;
+                gap: 0;
+
+                > * {
+                    display: inline-flex;
+                    align-items: center;
+                }
+            }
+
+            .inline-input-wrapper {
+                display: inline-flex;
+                align-items: center;
+                vertical-align: middle;
+                margin: 0 2px;
+            }
+
+            .inline-code-input {
+                display: inline-flex;
+                padding: 2px 8px;
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+                font-size: 0.875rem;
+                background: hsl(0, 0%, 15%);
+                border: 1px solid hsl(0, 0%, 30%);
+                color: hsl(150, 70%, 65%);
+                border-radius: 4px;
+                min-width: 150px;
+                max-width: 400px;
+                height: auto;
+                line-height: 1.4;
+                transition: all 0.2s ease;
+
+                &:focus {
+                    outline: none;
+                    border-color: var(--primary);
+                    background: hsl(0, 0%, 18%);
+                    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+                }
+
+                &:hover:not(:disabled) {
+                    border-color: hsl(0, 0%, 40%);
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+                &::placeholder {
+                    color: hsl(0, 0%, 50%);
+                    font-style: italic;
+                }
+            }
+
+            // Textarea specific styles
+            textarea.inline-code-input {
+                resize: vertical;
+                min-height: 60px;
+                max-height: 200px;
+                width: 100%;
+                max-width: 500px;
+                display: block;
+                margin: 4px 0;
+            }
+        }
+    }
 }
 
 // Success color variable (add to your theme if not present)

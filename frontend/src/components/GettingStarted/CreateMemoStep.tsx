@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
 import { Check, Loader2 } from 'lucide-react'
 import { CodeLanguageTabs } from '@/components/GettingStarted/CodeLanguageTabs'
-import { CodeBlock } from '@/components/GettingStarted/CodeBlock'
+import { InteractiveCodeBlock } from '@/components/GettingStarted/InteractiveCodeBlock'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import { getCreateMemoExample } from '@/components/GettingStarted/createMemoExamples'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -141,8 +139,8 @@ export const CreateMemoStep = () => {
 
     const currentExample = getCreateMemoExample(activeTab, {
         apiKey: apiKey || '',
-        title: memoTitle || '',
-        content: memoContent || '',
+        title: '{title}',
+        content: '{content}',
     })
 
     const isDisabled = !apiKey
@@ -164,40 +162,42 @@ export const CreateMemoStep = () => {
                 </p>
 
                 <p className="step-description font-bold">
-                    Fill in the title and content below, then copy and paste the code into your terminal to create your
-                    first memo
+                    Fill in the title and content in the code below, then copy and paste it into your terminal to create
+                    your first memo
                 </p>
 
                 <div className="code-section" ref={codeBlockRef}>
                     <CodeLanguageTabs activeTab={activeTab} onTabChange={setActiveTab} />
-                    <CodeBlock code={currentExample.code} language={currentExample.language} onCopy={handleCodeCopy} />
+                    <InteractiveCodeBlock
+                        code={currentExample.code}
+                        language={currentExample.language}
+                        onCopy={handleCodeCopy}
+                        inputs={[
+                            {
+                                key: 'title',
+                                value: memoTitle,
+                                onChange: setMemoTitle,
+                                placeholder: 'e.g., JavaScript Async Functions Guide',
+                                type: 'input',
+                                disabled: isDisabled,
+                            },
+                            {
+                                key: 'content',
+                                value: memoContent,
+                                onChange: setMemoContent,
+                                placeholder: 'e.g., A comprehensive guide about async/await patterns...',
+                                type: 'textarea',
+                                disabled: isDisabled,
+                            },
+                        ]}
+                    />
                 </div>
-                <div className="interactive-section">
-                    <div className="form-field">
-                        <label>Title</label>
-                        <Input
-                            value={memoTitle}
-                            onChange={(e) => setMemoTitle(e.target.value)}
-                            placeholder="e.g., JavaScript Async Functions Guide"
-                            disabled={isDisabled}
-                        />
-                    </div>
-                    <div className="form-field">
-                        <label>Content</label>
-                        <Textarea
-                            value={memoContent}
-                            onChange={(e) => setMemoContent(e.target.value)}
-                            placeholder="e.g., A comprehensive guide about async/await patterns in JavaScript..."
-                            rows={5}
-                            disabled={isDisabled}
-                        />
-                    </div>
-                    {isMobile && (
+
+                {isMobile && (
+                    <div className="interactive-section">
                         <div className="mobile-helper-text">
                             On mobile? Use the button below. On desktop, we encourage using code!
                         </div>
-                    )}
-                    {isMobile && (
                         <div className="button-group">
                             <Button
                                 onClick={createMemo}
@@ -206,8 +206,8 @@ export const CreateMemoStep = () => {
                                 {isCreatingMemo ? 'Creating...' : 'Create memo'}
                             </Button>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 {isWaitingForMemo && !isMobile && (
                     <div className="waiting-indicator">
