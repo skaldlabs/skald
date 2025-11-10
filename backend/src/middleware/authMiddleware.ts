@@ -1,11 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
-import { User } from '@/entities/User'
-import { Organization } from '@/entities/Organization'
-import { DI } from '@/di'
 
-export const isUserOrgMember = async (user: User, organization: Organization): Promise<boolean> => {
-    return (await DI.organizationMemberships.findOne({ user, organization })) !== null
-}
+import { DI } from '@/di'
+import { isUserOrgMemberCached } from '@/queries/cachedQueries'
 
 export const requireAuth = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -40,9 +36,10 @@ export const requireProjectAccess = () => {
             }
             req.context.requestUser.project = project
 
-            const isMember = await isUserOrgMember(
-                req.context.requestUser.userInstance,
-                req.context.requestUser.project.organization
+            const isMember = await isUserOrgMemberCached(
+                DI.em,
+                req.context.requestUser.userInstance.id,
+                req.context.requestUser.project.organization.uuid
             )
             if (!isMember) {
                 return res.status(403).json({ error: 'Forbidden' })
