@@ -473,7 +473,7 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
                     return res.status(404).json({ error: 'Organization subscription not found' })
                 }
                 if (organizationSubscription.plan.slug === 'free' && req.file.size > 5 * 1024 * 1024) {
-                    return res.status(403).json({ error: 'Maximum document size for free plan is 5MB' })
+                    return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
                 }
             }
 
