@@ -779,7 +779,7 @@ describe('Chat API', () => {
             expect(chats.length).toBeGreaterThan(0)
         })
 
-        it('should pass conversation history and llmProvider to prepareContextForChatAgent', async () => {
+        it('should pass conversation history and llmProvider to runChatAgent', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -824,20 +824,25 @@ describe('Chat API', () => {
                     llm_provider: 'anthropic',
                 })
 
-            // Verify that prepareContextForChatAgent was called with conversation history and llmProvider
+            // Verify that prepareContextForChatAgent was called with only query, project, and filters
             expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalled()
-            const callArgs = (chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mock.calls[0]
+            const prepareContextArgs = (chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mock.calls[0]
+            expect(prepareContextArgs[0]).toBe('tell me more') // query
+            expect(prepareContextArgs[1]).toBeDefined() // project
+            expect(prepareContextArgs[2]).toEqual([]) // filters (empty array)
+            expect(prepareContextArgs.length).toBe(3) // Only 3 arguments
 
-            expect(callArgs[0]).toBe('tell me more') // query
-            expect(callArgs[1]).toBeDefined() // project
-            expect(callArgs[2]).toEqual([]) // filters (empty array)
-            expect(callArgs[3]).toBeDefined() // conversationHistory
-            expect(Array.isArray(callArgs[3])).toBe(true)
-            expect(callArgs[3].length).toBeGreaterThan(0) // Should have conversation history
-            expect(callArgs[4]).toBe('anthropic') // llmProvider
+            // Verify that runChatAgent was called with conversation history and llmProvider
+            expect(chatAgent.runChatAgent).toHaveBeenCalled()
+            const runChatArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
+            expect(runChatArgs.query).toBe('tell me more')
+            expect(runChatArgs.conversationHistory).toBeDefined()
+            expect(Array.isArray(runChatArgs.conversationHistory)).toBe(true)
+            expect(runChatArgs.conversationHistory.length).toBeGreaterThan(0) // Should have conversation history
+            expect(runChatArgs.llmProvider).toBe('anthropic') // llmProvider
         })
 
-        it('should pass default llm provider when not specified', async () => {
+        it('should pass default llm provider to runChatAgent when not specified', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -857,10 +862,10 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            // Verify that prepareContextForChatAgent was called with default LLM_PROVIDER
-            expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalled()
-            const callArgs = (chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mock.calls[0]
-            expect(callArgs[4]).toBe('openai') // Default LLM_PROVIDER from mocked settings
+            // Verify that runChatAgent was called with default LLM_PROVIDER
+            expect(chatAgent.runChatAgent).toHaveBeenCalled()
+            const runChatArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
+            expect(runChatArgs.llmProvider).toBe('openai') // Default LLM_PROVIDER from mocked settings
         })
     })
 })
