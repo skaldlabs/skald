@@ -33,11 +33,10 @@ async function chunkVectorSearch(
             const rewrittenQuery = await QueryRewriteService.rewrite(query, conversationMessages)
 
             if (rewrittenQuery !== query) {
-                logger.info({ originalQuery: query, rewrittenQuery, projectId: project.uuid }, 'Query rewritten')
                 processedQuery = rewrittenQuery
             }
         } catch (error) {
-            logger.warn({ err: error, query, projectId: project.uuid }, 'Query rewriting failed, using original query')
+            logger.warn({ err: error, query }, 'Query rewriting failed, using original query')
         }
     }
 
