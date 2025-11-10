@@ -1,5 +1,5 @@
 import { CreateEmailResponseSuccess, ErrorResponse, Resend } from 'resend'
-import { EMAIL_DOMAIN, RESEND_API_KEY } from '@/settings'
+import { EMAIL_DOMAIN, RESEND_API_KEY, RESEND_DEFAULT_AUDIENCE_ID } from '@/settings'
 
 // Initialize Resend only if API key is available
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
@@ -53,4 +53,21 @@ export async function sendEmail(
         html,
     })
     return { data, error }
+}
+
+export async function addContactToResend(email: string, firstName?: string, lastName?: string): Promise<void> {
+    if (!resend) {
+        return
+    }
+
+    try {
+        await resend.contacts.create({
+            email,
+            firstName,
+            lastName,
+            audienceId: RESEND_DEFAULT_AUDIENCE_ID,
+        })
+    } catch (error) {
+        console.error('Failed to add contact to Resend:', error)
+    }
 }

@@ -42,8 +42,14 @@ export class User {
     @Property()
     emailVerified!: boolean
 
-    @Property()
-    name!: string
+    @Property({ nullable: true })
+    role?: string
+
+    @Property({ nullable: true })
+    referral_source?: string
+
+    @Property({ nullable: true })
+    referral_details?: string
 
     @ManyToOne({
         entity: () => Organization,

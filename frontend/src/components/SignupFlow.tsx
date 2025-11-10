@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { SignupPage } from '@/pages/SignupPage'
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
+import { CompleteProfilePage } from '@/pages/CompleteProfilePage'
 import { CreateOrganizationPage } from '@/pages/CreateOrganizationPage'
 import { UserDetails } from '@/stores/authStore'
 
@@ -13,6 +14,7 @@ interface SignupFlowProps {
 export enum SignupFlowStep {
     Signup = 'signup',
     VerifyEmail = 'verify-email',
+    CompleteProfile = 'complete-profile',
     CreateOrganization = 'create-organization',
     Complete = 'complete',
 }
@@ -32,11 +34,18 @@ const signupSteps = [
             isAuthenticated && !user?.email_verified,
     },
     {
+        step: SignupFlowStep.CompleteProfile,
+        path: '/complete-profile',
+        component: <CompleteProfilePage />,
+        userShouldCompleteStep: (isAuthenticated: boolean, user: UserDetails) =>
+            isAuthenticated && user?.email_verified && !user?.name,
+    },
+    {
         step: SignupFlowStep.CreateOrganization,
         path: '/create-organization',
         component: <CreateOrganizationPage />,
         userShouldCompleteStep: (isAuthenticated: boolean, user: UserDetails) =>
-            isAuthenticated && user?.email_verified && !user?.default_organization,
+            isAuthenticated && user?.email_verified && user?.name && !user?.default_organization,
     },
     {
         step: SignupFlowStep.Complete,

@@ -24,6 +24,11 @@ interface UserDetailsResponse {
     organization_name: string
     is_superuser: boolean
     name: string
+    first_name?: string
+    last_name?: string
+    role?: string
+    referral_source?: string
+    referral_details?: string
 }
 
 export interface UserDetails extends UserDetailsResponse {
@@ -98,6 +103,10 @@ export const useAuthStore = create<AuthState>((set) => {
             posthogIdentify(user.email, {
                 email: user.email,
                 name: user.name,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                role: user.role,
+                referral_source: user.referral_source,
                 default_organization: user.default_organization,
                 email_verified: user.email_verified,
                 organization_name: user.organization_name,
