@@ -30,6 +30,7 @@ interface ProjectResponse {
     updated_at: Date
     has_api_key: boolean
     api_key_first_12_digits: string | null
+    query_rewrite_enabled: boolean
 }
 
 interface GenerateApiKeyResponse {
@@ -56,6 +57,7 @@ const formatProjectResponse = async (project: any): Promise<ProjectResponse> => 
         updated_at: project.updated_at,
         has_api_key: !!apiKey,
         api_key_first_12_digits: apiKey?.first_12_digits || null,
+        query_rewrite_enabled: project.query_rewrite_enabled,
     }
 }
 
@@ -163,6 +165,7 @@ const create = async (req: Request, res: Response) => {
         owner: user,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        query_rewrite_enabled: false,
     })
 
     await DI.em.flush()
@@ -213,6 +216,11 @@ const update = async (req: Request, res: Response) => {
 
     if (req.body.name) {
         project.name = req.body.name
+        project.updated_at = new Date()
+    }
+
+    if (req.body.query_rewrite_enabled !== undefined) {
+        project.query_rewrite_enabled = req.body.query_rewrite_enabled
         project.updated_at = new Date()
     }
 

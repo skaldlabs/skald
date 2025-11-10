@@ -778,5 +778,89 @@ describe('Chat API', () => {
             const chats = await em2.find(Chat, { project: project2.uuid })
             expect(chats.length).toBeGreaterThan(0)
         })
+
+        it('should pass conversation history and llmProvider to prepareContextForChatAgent', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const testChat = await createTestChat(orm, project)
+            const token = generateAccessToken('test@example.com')
+
+            // Create some existing messages
+            const em = orm.em.fork()
+            const userMessage = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: randomUUID(),
+                project: project,
+                chat: testChat,
+                content: 'What is authentication?',
+                sent_by: 'user',
+                sent_at: new Date(Date.now() - 1000),
+            })
+            const modelMessage = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: userMessage.message_group_id,
+                project: project,
+                chat: testChat,
+                content: 'Authentication is the process of verifying identity...',
+                sent_by: 'model',
+                sent_at: new Date(Date.now() - 500),
+            })
+            await em.persistAndFlush([userMessage, modelMessage])
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'tell me more',
+                    chat_id: testChat.uuid,
+                    llm_provider: 'anthropic',
+                })
+
+            // Verify that prepareContextForChatAgent was called with conversation history and llmProvider
+            expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalled()
+            const callArgs = (chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mock.calls[0]
+
+            expect(callArgs[0]).toBe('tell me more') // query
+            expect(callArgs[1]).toBeDefined() // project
+            expect(callArgs[2]).toEqual([]) // filters (empty array)
+            expect(callArgs[3]).toBeDefined() // conversationHistory
+            expect(Array.isArray(callArgs[3])).toBe(true)
+            expect(callArgs[3].length).toBeGreaterThan(0) // Should have conversation history
+            expect(callArgs[4]).toBe('anthropic') // llmProvider
+        })
+
+        it('should pass default llm provider when not specified', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                })
+
+            // Verify that prepareContextForChatAgent was called with default LLM_PROVIDER
+            expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalled()
+            const callArgs = (chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mock.calls[0]
+            expect(callArgs[4]).toBe('openai') // Default LLM_PROVIDER from mocked settings
+        })
     })
 })
