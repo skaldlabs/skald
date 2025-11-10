@@ -14,7 +14,6 @@ export class QueryRewriteService {
      *
      * @param query - Original user query
      * @param conversationHistory - Recent conversation for context (optional)
-     * @param provider - LLM provider to use ('openai', 'anthropic', 'groq', 'local')
      * @returns Enhanced query, or original query if rewriting fails
      */
     static async rewrite(query: string, conversationHistory: ConversationMessage[] = []): Promise<string> {
