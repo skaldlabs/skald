@@ -23,6 +23,7 @@ import { MemoTag } from '../entities/MemoTag'
 import { MemoChunk } from '../entities/MemoChunk'
 import { Organization } from '../entities/Organization'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
+import { UsageRecord } from '../entities/UsageRecord'
 
 // Mock S3 utilities
 jest.mock('../lib/s3Utils', () => ({
@@ -64,6 +65,7 @@ describe('Memo API Tests', () => {
         DI.memoChunks = orm.em.getRepository(MemoChunk)
         DI.organizations = orm.em.getRepository(Organization)
         DI.organizationMemberships = orm.em.getRepository(OrganizationMembership)
+        DI.usageRecords = orm.em.getRepository(UsageRecord)
 
         app = express()
         app.use(express.json())
@@ -1322,6 +1324,70 @@ describe('Memo API Tests', () => {
                 .query({ project_id: project1.uuid })
 
             expect(response.status).toBe(404)
+        })
+    })
+
+    describe('Usage Tracking for Memo Creation', () => {
+        it('should count memo with < 3000 chars as 1 write towards usage record', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            // Create content with less than 3000 characters
+            const content = 'a'.repeat(2999)
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    title: 'Test Memo',
+                    content: content,
+                    source: 'test',
+                    type: 'note',
+                })
+
+            expect(response.status).toBe(201)
+            expect(response.body.memo_uuid).toBeDefined()
+
+            // Verify usage record shows 1 write
+            const em = orm.em.fork()
+            const usageRecord = await em.findOne(UsageRecord, { organization: org.uuid })
+            expect(usageRecord).not.toBeNull()
+            expect(usageRecord?.memo_operations_count).toBe(1)
+        })
+
+        it('should count memo with 3001 chars as 2 writes towards usage record', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            // Create content with 3001 characters
+            const content = 'a'.repeat(3001)
+
+            const response = await request(app)
+                .post('/api/memos')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    title: 'Test Memo',
+                    content: content,
+                    source: 'test',
+                    type: 'note',
+                })
+
+            expect(response.status).toBe(201)
+            expect(response.body.memo_uuid).toBeDefined()
+
+            // Verify usage record shows 2 writes
+            const em = orm.em.fork()
+            const usageRecord = await em.findOne(UsageRecord, { organization: org.uuid })
+            expect(usageRecord).not.toBeNull()
+            expect(usageRecord?.memo_operations_count).toBe(2)
         })
     })
 })
