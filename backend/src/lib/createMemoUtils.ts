@@ -1,6 +1,4 @@
 import { randomUUID } from 'crypto'
-import { createClient } from 'redis'
-import * as amqplib from 'amqplib'
 import { sha256 } from '@/lib/hashUtils'
 import { DI } from '@/di'
 import { Memo } from '@/entities/Memo'
@@ -9,16 +7,7 @@ import { MemoTag } from '@/entities/MemoTag'
 import { Project } from '@/entities/Project'
 import {
     INTER_PROCESS_QUEUE,
-    REDIS_HOST,
-    REDIS_PORT,
-    CHANNEL_NAME,
     SQS_QUEUE_URL,
-    RABBITMQ_HOST,
-    RABBITMQ_PORT,
-    RABBITMQ_USER,
-    RABBITMQ_PASSWORD,
-    RABBITMQ_VHOST,
-    RABBITMQ_QUEUE_NAME,
     PGMQ_QUEUE_NAME,
     TEST,
 } from '../settings'
@@ -124,22 +113,6 @@ async function _createMemoObject(memoData: MemoData, project: Project): Promise<
     }
 }
 
-async function _publishToRedis(memoUuid: string): Promise<void> {
-    const message = JSON.stringify({ memo_uuid: memoUuid })
-    const redisClient = createClient({
-        socket: {
-            host: REDIS_HOST,
-            port: REDIS_PORT,
-        },
-    })
-
-    await redisClient.connect()
-    await redisClient.publish(CHANNEL_NAME, message)
-    await redisClient.quit()
-
-    logger.info({ memoUuid }, 'Published memo to Redis process_memo channel')
-}
-
 async function _publishToSqs(memoUuid: string): Promise<void> {
     if (!SQS_QUEUE_URL) {
         throw new Error('SQS queue URL not available')
@@ -148,30 +121,6 @@ async function _publishToSqs(memoUuid: string): Promise<void> {
     const message = JSON.stringify({ memo_uuid: memoUuid })
     const response = await publishMessage(message, SQS_QUEUE_URL)
     logger.info({ memoUuid, messageId: response.MessageId }, 'Published memo to SQS queue')
-}
-
-async function _publishToRabbitmq(memoUuid: string): Promise<void> {
-    const credentials = amqplib.credentials.plain(RABBITMQ_USER, RABBITMQ_PASSWORD)
-    const url = `amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@${RABBITMQ_HOST}:${RABBITMQ_PORT}${RABBITMQ_VHOST}`
-
-    const connection = await amqplib.connect(url, {
-        credentials,
-    })
-    const channel = await connection.createChannel()
-
-    await channel.assertQueue(RABBITMQ_QUEUE_NAME, {
-        durable: true,
-    })
-
-    const message = JSON.stringify({ memo_uuid: memoUuid })
-    channel.sendToQueue(RABBITMQ_QUEUE_NAME, Buffer.from(message), {
-        persistent: true,
-    })
-
-    logger.info({ memoUuid, queueName: RABBITMQ_QUEUE_NAME }, 'Published memo to RabbitMQ queue')
-
-    await channel.close()
-    await connection.close()
 }
 
 async function _publishToPgmq(memoUuid: string): Promise<void> {
@@ -186,10 +135,6 @@ export async function sendMemoForAsyncProcessing(memo: Memo): Promise<void> {
     }
     if (INTER_PROCESS_QUEUE === 'sqs') {
         await _publishToSqs(memo.uuid)
-    } else if (INTER_PROCESS_QUEUE === 'redis') {
-        await _publishToRedis(memo.uuid)
-    } else if (INTER_PROCESS_QUEUE === 'rabbitmq') {
-        await _publishToRabbitmq(memo.uuid)
     } else if (INTER_PROCESS_QUEUE === 'pgmq') {
         await _publishToPgmq(memo.uuid)
     } else {

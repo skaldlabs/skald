@@ -69,21 +69,10 @@ export const DATABASE_URL =
     process.env.DATABASE_URL || `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`
 
 // queue configuration
-export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'redis'
+export const INTER_PROCESS_QUEUE = process.env.INTER_PROCESS_QUEUE || 'pgmq'
 
 export const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL
 export const SQS_DLQ_QUEUE_URL = process.env.SQS_DLQ_QUEUE_URL
-
-export const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
-export const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')
-export const CHANNEL_NAME = process.env.CHANNEL_NAME || 'process_memo'
-
-export const RABBITMQ_HOST = process.env.RABBITMQ_HOST || 'localhost'
-export const RABBITMQ_PORT = process.env.RABBITMQ_PORT || '5672'
-export const RABBITMQ_USER = process.env.RABBITMQ_USER || 'guest'
-export const RABBITMQ_PASSWORD = process.env.RABBITMQ_PASSWORD || 'guest'
-export const RABBITMQ_VHOST = process.env.RABBITMQ_VHOST || '/'
-export const RABBITMQ_QUEUE_NAME = process.env.RABBITMQ_QUEUE_NAME || 'process_memo'
 
 export const PGMQ_QUEUE_NAME = process.env.PGMQ_QUEUE_NAME || 'process_memo'
 export const PGMQ_DLQ_NAME = process.env.PGMQ_DLQ_NAME || 'process_memo_dlq'
