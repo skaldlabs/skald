@@ -46,6 +46,7 @@ jest.mock('../lib/createMemoUtils', () => {
 process.env.S3_BUCKET_NAME = 'test-bucket'
 process.env.AWS_REGION = 'us-east-1'
 process.env.DATALAB_API_KEY = 'test-key'
+process.env.DOCUMENT_EXTRACTION_PROVIDER = 'datalab'
 
 describe('Memo API Tests', () => {
     let app: Express
