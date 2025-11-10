@@ -1,6 +1,8 @@
 services:
     db:
-        image: pgvector/pgvector:pg17
+        build:
+            context: .
+            dockerfile: postgres.Dockerfile
         environment:
             POSTGRES_DB: skald
             POSTGRES_USER: postgres
@@ -15,22 +17,6 @@ services:
             interval: 5s
             timeout: 5s
             retries: 5
-
-    rabbitmq:
-        image: rabbitmq:3.13-management-alpine
-        environment:
-            RABBITMQ_DEFAULT_USER: guest
-            RABBITMQ_DEFAULT_PASS: guest
-        ports:
-            - '5672:5672' # AMQP port
-            - '15672:15672' # Management UI port
-        healthcheck:
-            test: ['CMD', 'rabbitmq-diagnostics', 'ping']
-            interval: 10s
-            timeout: 5s
-            retries: 5
-        volumes:
-            - rabbitmq_data:/var/lib/rabbitmq
 
     api:
         build:
@@ -52,12 +38,10 @@ services:
             - OPENAI_API_KEY=${OPENAI_API_KEY:-}
             - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
             - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-            - INTER_PROCESS_QUEUE=rabbitmq
-            - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
-            - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
-            - RABBITMQ_USER=${RABBITMQ_USER:-guest}
-            - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
-            - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+            - INTER_PROCESS_QUEUE=pgmq
+            - PGMQ_QUEUE_NAME=process_memo
+            - PGMQ_DLQ_NAME=process_memo_dlq
+            - PGMQ_MAX_RETRIES=3
             - IS_SELF_HOSTED_DEPLOY=true
             - IS_DEVELOPMENT=true
             - EMAIL_VERIFICATION_ENABLED=false
@@ -68,8 +52,6 @@ services:
             - '8080:8080'
         depends_on:
             db:
-                condition: service_healthy
-            rabbitmq:
                 condition: service_healthy
         restart: unless-stopped
 
@@ -92,21 +74,16 @@ services:
             - OPENAI_API_KEY=${OPENAI_API_KEY:-}
             - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
             - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-            - INTER_PROCESS_QUEUE=rabbitmq
-            - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
-            - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
-            - RABBITMQ_USER=${RABBITMQ_USER:-guest}
-            - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
-            - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
-            - RABBITMQ_QUEUE_NAME=process_memo
+            - INTER_PROCESS_QUEUE=pgmq
+            - PGMQ_QUEUE_NAME=process_memo
+            - PGMQ_DLQ_NAME=process_memo_dlq
+            - PGMQ_MAX_RETRIES=3
             - IS_DEVELOPMENT=true
             - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
             - DOCUMENT_EXTRACTION_PROVIDER=${DOCUMENT_EXTRACTION_PROVIDER:-docling}
             - DOCLING_SERVICE_URL=http://docling-serve:5001
         depends_on:
             db:
-                condition: service_healthy
-            rabbitmq:
                 condition: service_healthy
         restart: unless-stopped
 
@@ -152,4 +129,3 @@ services:
 
 volumes:
     postgres_data:
-    rabbitmq_data:

@@ -19,12 +19,14 @@ import {
     RABBITMQ_PASSWORD,
     RABBITMQ_VHOST,
     RABBITMQ_QUEUE_NAME,
+    PGMQ_QUEUE_NAME,
     TEST,
 } from '../settings'
 import { logger } from './logger'
 import { EntityData } from '@mikro-orm/core'
 import { generateS3Key, uploadFileToS3 } from './s3Utils'
 import { publishMessage } from '@/lib/sqsClient'
+import { sendMessage } from '@/lib/pgmqClient'
 
 export interface MemoData {
     content?: string
@@ -172,6 +174,12 @@ async function _publishToRabbitmq(memoUuid: string): Promise<void> {
     await connection.close()
 }
 
+async function _publishToPgmq(memoUuid: string): Promise<void> {
+    const message = JSON.stringify({ memo_uuid: memoUuid })
+    const msgId = await sendMessage(PGMQ_QUEUE_NAME, message)
+    logger.info({ memoUuid, messageId: msgId, queueName: PGMQ_QUEUE_NAME }, 'Published memo to PGMQ queue')
+}
+
 export async function sendMemoForAsyncProcessing(memo: Memo): Promise<void> {
     if (TEST) {
         return
@@ -182,6 +190,8 @@ export async function sendMemoForAsyncProcessing(memo: Memo): Promise<void> {
         await _publishToRedis(memo.uuid)
     } else if (INTER_PROCESS_QUEUE === 'rabbitmq') {
         await _publishToRabbitmq(memo.uuid)
+    } else if (INTER_PROCESS_QUEUE === 'pgmq') {
+        await _publishToPgmq(memo.uuid)
     } else {
         throw new Error(`Invalid inter-process queue: ${INTER_PROCESS_QUEUE}`)
     }

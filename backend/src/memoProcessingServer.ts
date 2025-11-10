@@ -12,6 +12,7 @@ import { createClient } from 'redis'
 import { processMemo } from '@/memoProcessingServer/processMemo'
 import { runSQSConsumer } from '@/memoProcessingServer/sqsConsumer'
 import { runRabbitMQConsumer, closeRabbitMQ } from '@/memoProcessingServer/rabbitMqConsumer'
+import { runPgmqConsumer } from '@/memoProcessingServer/pgmqConsumer'
 import { MikroORM } from '@mikro-orm/core'
 import config from '@/mikro-orm.config'
 import { logger } from '@/lib/logger'
@@ -62,6 +63,11 @@ export const startMemoProcessingServer = async () => {
         case 'rabbitmq':
             logger.info('Running with RabbitMQ')
             await runRabbitMQConsumer(orm)
+            break
+
+        case 'pgmq':
+            logger.info('Running with PGMQ')
+            await runPgmqConsumer(orm)
             break
 
         default:

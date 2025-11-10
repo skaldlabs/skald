@@ -85,6 +85,10 @@ export const RABBITMQ_PASSWORD = process.env.RABBITMQ_PASSWORD || 'guest'
 export const RABBITMQ_VHOST = process.env.RABBITMQ_VHOST || '/'
 export const RABBITMQ_QUEUE_NAME = process.env.RABBITMQ_QUEUE_NAME || 'process_memo'
 
+export const PGMQ_QUEUE_NAME = process.env.PGMQ_QUEUE_NAME || 'process_memo'
+export const PGMQ_DLQ_NAME = process.env.PGMQ_DLQ_NAME || 'process_memo_dlq'
+export const PGMQ_MAX_RETRIES = parseInt(process.env.PGMQ_MAX_RETRIES || '3')
+
 export const AWS_REGION = process.env.AWS_REGION || 'us-east-2'
 export const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID
 export const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY

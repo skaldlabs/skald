@@ -27,7 +27,9 @@ services:
       - web
 
   db:
-    image: pgvector/pgvector:pg16
+    build:
+      context: .
+      dockerfile: postgres.Dockerfile
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-skald2}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -38,22 +40,6 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - backend
-
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-skald}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-skald}
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
-      interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
@@ -79,20 +65,16 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - FRONTEND_URL=https://${UI_DOMAIN}
       - API_URL=https://${API_DOMAIN}
-      - INTER_PROCESS_QUEUE=rabbitmq
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=${RABBITMQ_USER:-skald}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-skald}
-      - RABBITMQ_VHOST=/
+      - INTER_PROCESS_QUEUE=pgmq
+      - PGMQ_QUEUE_NAME=process_memo
+      - PGMQ_DLQ_NAME=process_memo_dlq
+      - PGMQ_MAX_RETRIES=3
       - SECURE_SSL_REDIRECT=false
       - EXPRESS_SERVER_PORT=8000
       - DOCUMENT_EXTRACTION_PROVIDER=${DOCUMENT_EXTRACTION_PROVIDER:-docling}
       - DOCLING_SERVICE_URL=http://docling-serve:5001
     depends_on:
       db:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -120,19 +102,15 @@ services:
       - IS_SELF_HOSTED_DEPLOY=true
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - INTER_PROCESS_QUEUE=rabbitmq
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=${RABBITMQ_USER:-skald}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-skald}
-      - RABBITMQ_VHOST=/
+      - INTER_PROCESS_QUEUE=pgmq
+      - PGMQ_QUEUE_NAME=process_memo
+      - PGMQ_DLQ_NAME=process_memo_dlq
+      - PGMQ_MAX_RETRIES=3
       - SECRET_KEY=${SECRET_KEY}
       - DOCUMENT_EXTRACTION_PROVIDER=${DOCUMENT_EXTRACTION_PROVIDER:-docling}
       - DOCLING_SERVICE_URL=http://docling-serve:5001
     depends_on:
       db:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -171,7 +149,6 @@ services:
 
 volumes:
   postgres_data:
-  rabbitmq_data:
   traefik-certificates:
 
 networks:
