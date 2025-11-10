@@ -213,10 +213,13 @@ const pendingInvites = async (req: Request, res: Response) => {
     }
 
     // Find invites where the current user's email matches the invited email
-    const invites = await DI.organizationMembershipInvites.find({
-        email: user.email,
-        acceptedAt: null,
-    })
+    const invites = await DI.organizationMembershipInvites.find(
+        {
+            email: user.email,
+            acceptedAt: null,
+        },
+        { populate: ['organization'] }
+    )
 
     if (invites.length === 0) {
         return res.status(200).json([])
@@ -440,7 +443,7 @@ organizationRouter.get('/', organization)
 organizationRouter.post('/', create)
 organizationRouter.get('/:id/members', validateUuidParams('id'), members)
 organizationRouter.post('/:id/invite_member', validateUuidParams('id'), inviteMember)
-organizationRouter.get('/:id/pending_invites', validateUuidParams('id'), pendingInvites)
+organizationRouter.get('/pending_invites', pendingInvites)
 organizationRouter.post('/:id/accept_invite', validateUuidParams('id'), acceptInvite)
 organizationRouter.get('/:id/sent_invites', validateUuidParams('id'), sentInvites)
 organizationRouter.post('/:id/cancel_invite', validateUuidParams('id'), cancelInvite)

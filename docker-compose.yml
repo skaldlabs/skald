@@ -62,6 +62,8 @@ services:
             - IS_DEVELOPMENT=true
             - EMAIL_VERIFICATION_ENABLED=false
             - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
+            - DOCUMENT_EXTRACTION_PROVIDER=${DOCUMENT_EXTRACTION_PROVIDER:-docling}
+            - DOCLING_SERVICE_URL=http://docling-serve:5001
         ports:
             - '8080:8080'
         depends_on:
@@ -99,6 +101,8 @@ services:
             - RABBITMQ_QUEUE_NAME=process_memo
             - IS_DEVELOPMENT=true
             - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
+            - DOCUMENT_EXTRACTION_PROVIDER=${DOCUMENT_EXTRACTION_PROVIDER:-docling}
+            - DOCLING_SERVICE_URL=http://docling-serve:5001
         depends_on:
             db:
                 condition: service_healthy
@@ -131,6 +135,20 @@ services:
         profiles:
             - local-embedding
         restart: unless-stopped
+
+    docling-serve:
+        image: quay.io/docling-project/docling-serve:latest
+        environment:
+            - DOCLING_SERVE_ENABLE_UI=0
+        ports:
+            - '5001:5001'
+        restart: unless-stopped
+        healthcheck:
+            test: ['CMD', 'curl', '-f', 'http://localhost:5001/health']
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
 
 volumes:
     postgres_data:

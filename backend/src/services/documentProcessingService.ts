@@ -1,5 +1,6 @@
 import { generateS3Key, generatePresignedUrl } from '@/lib/s3Utils'
-import { DATALAB_API_KEY } from '@/settings'
+import { DATALAB_API_KEY, DOCUMENT_EXTRACTION_PROVIDER } from '@/settings'
+import { DoclingService } from './doclingService'
 
 interface MarkerJobResponse {
     success: boolean
@@ -26,6 +27,17 @@ export class DocumentProcessingService {
     private static readonly PRESIGNED_URL_EXPIRATION = 1200 // 20 minutes
 
     static async sendDocumentForProcessing(projectUuid: string, memoUuid: string): Promise<string> {
+        // Delegate to the appropriate provider based on configuration
+        if (DOCUMENT_EXTRACTION_PROVIDER === 'docling') {
+            return DoclingService.sendDocumentForProcessing(projectUuid, memoUuid)
+        } else if (DOCUMENT_EXTRACTION_PROVIDER === 'datalab') {
+            return this.sendDocumentToDatalab(projectUuid, memoUuid)
+        } else {
+            throw new Error(`Unsupported document extraction provider: ${DOCUMENT_EXTRACTION_PROVIDER}`)
+        }
+    }
+
+    private static async sendDocumentToDatalab(projectUuid: string, memoUuid: string): Promise<string> {
         // Step 1: Generate S3 key and pre-signed URL
         const s3Key = generateS3Key(projectUuid, memoUuid)
         const presignedUrl = await generatePresignedUrl(s3Key, this.PRESIGNED_URL_EXPIRATION)
