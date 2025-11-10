@@ -24,6 +24,7 @@ import { MemoChunk } from '../entities/MemoChunk'
 import { Organization } from '../entities/Organization'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
 import { UsageRecord } from '../entities/UsageRecord'
+import { OrganizationSubscription } from '../entities/OrganizationSubscription'
 
 // Mock S3 utilities
 jest.mock('../lib/s3Utils', () => ({
@@ -67,6 +68,7 @@ describe('Memo API Tests', () => {
         DI.organizations = orm.em.getRepository(Organization)
         DI.organizationMemberships = orm.em.getRepository(OrganizationMembership)
         DI.usageRecords = orm.em.getRepository(UsageRecord)
+        DI.organizationSubscriptions = orm.em.getRepository(OrganizationSubscription)
 
         app = express()
         app.use(express.json())
