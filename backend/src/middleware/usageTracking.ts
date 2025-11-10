@@ -50,7 +50,7 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
                 const organization = await extractOrganization(req)
 
                 if (organization) {
-                    const service = new UsageTrackingService()
+                    const service = new UsageTrackingService(DI.em)
                     const { withinLimit, currentCount, limit } = await service.checkLimit(organization, limitType)
 
                     if (!withinLimit) {
@@ -96,7 +96,7 @@ export function trackUsage(limitType: LimitType, options: TrackUsageOptions = {}
                     return
                 }
 
-                const service = new UsageTrackingService()
+                const service = new UsageTrackingService(DI.em)
 
                 // Increment usage or just check alerts
                 if (increment) {
