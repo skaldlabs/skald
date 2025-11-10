@@ -11,10 +11,9 @@ interface DoclingConvertRequest {
 }
 
 interface DoclingConvertResponse {
-    status: string
-    output: {
-        md_content?: string
-    }[]
+    document: {
+        md_content: string
+    }
 }
 
 export class DoclingService {
@@ -52,10 +51,10 @@ export class DoclingService {
 
         const result = (await response.json()) as DoclingConvertResponse
 
-        if (!result.output || result.output.length === 0 || !result.output[0].md_content) {
+        if (!result.document || !result.document.md_content) {
             throw new Error('Docling returned no markdown content')
         }
 
-        return result.output[0].md_content
+        return result.document.md_content
     }
 }
