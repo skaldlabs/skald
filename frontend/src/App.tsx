@@ -20,7 +20,11 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
         return <Navigate to="/verify-email" />
     }
 
-    if (isAuthenticated && user?.email_verified && !user?.default_organization) {
+    if (isAuthenticated && user?.email_verified && !user?.name) {
+        return <Navigate to="/complete-profile" />
+    }
+
+    if (isAuthenticated && user?.email_verified && user?.name && !user?.default_organization) {
         return <Navigate to="/create-organization" />
     }
 
@@ -59,6 +63,7 @@ function App() {
                 />
                 <Route path="/signup" element={<SignupFlow currentStep={SignupFlowStep.Signup} />} />
                 <Route path="/verify-email" element={<SignupFlow currentStep={SignupFlowStep.VerifyEmail} />} />
+                <Route path="/complete-profile" element={<SignupFlow currentStep={SignupFlowStep.CompleteProfile} />} />
                 <Route
                     path="/create-organization"
                     element={<SignupFlow currentStep={SignupFlowStep.CreateOrganization} />}

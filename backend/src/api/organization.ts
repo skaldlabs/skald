@@ -144,7 +144,7 @@ const members = async (req: Request, res: Response) => {
     )
     const membersInfo = members.map((m) => ({
         email: m.user.email,
-        name: m.user.name || '',
+        name: m.user.first_name + ' ' + m.user.last_name || '',
         role: OrganizationMembershipRole[m.accessLevel as OrganizationMembershipRole] ?? 'MEMBER',
         joined_at: m.joinedAt.toISOString(),
     }))
@@ -355,7 +355,7 @@ const sentInvites = async (req: Request, res: Response) => {
         id: i.id,
         email: i.email,
         created_at: i.createdAt.toISOString(),
-        invited_by_name: i.invitedBy.name || '',
+        invited_by_name: i.invitedBy.first_name + ' ' + i.invitedBy.last_name,
         invited_by_email: i.invitedBy.email,
     }))
 

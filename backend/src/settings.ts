@@ -205,6 +205,7 @@ export const EMAIL_VERIFICATION_ENABLED = strToBool(
 // Resend
 export const RESEND_API_KEY = process.env.RESEND_API_KEY
 export const EMAIL_DOMAIN = process.env.EMAIL_DOMAIN || 'useskald.com'
+export const RESEND_DEFAULT_AUDIENCE_ID = process.env.RESEND_DEFAULT_AUDIENCE_ID || ''
 
 // Frontend URL
 export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
