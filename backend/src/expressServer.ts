@@ -93,6 +93,7 @@ export const startExpressServer = async () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     app.use(function onError(err: any, req: Request, res: Response, next: NextFunction) {
         if (IS_DEVELOPMENT) {
+            logger.error({ err })
             return res.status(500).json({ error: String(err) })
         }
 

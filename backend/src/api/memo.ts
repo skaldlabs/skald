@@ -1,11 +1,11 @@
 import express, { Request, Response } from 'express'
 import { z } from 'zod'
 import multer from 'multer'
+import { RequestContext } from '@mikro-orm/postgresql'
 import { DI } from '@/di'
 import { NextFunction } from 'express'
 import { createNewMemo, createNewDocumentMemo, sendMemoForAsyncProcessing } from '@/lib/createMemoUtils'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
-import { trackUsage } from '@/middleware/usageTracking'
 import { Project } from '@/entities/Project'
 import { MemoContent } from '@/entities/MemoContent'
 import { MemoSummary } from '@/entities/MemoSummary'
@@ -14,8 +14,11 @@ import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
 import { deleteFileFromS3 } from '@/lib/s3Utils'
-import { DATALAB_API_KEY, TEST, DOCUMENT_EXTRACTION_PROVIDER, DOCLING_SERVICE_URL } from '@/settings'
+import { DATALAB_API_KEY, IS_SELF_HOSTED_DEPLOY, TEST, DOCUMENT_EXTRACTION_PROVIDER, DOCLING_SERVICE_URL } from '@/settings'
 import * as Sentry from '@sentry/node'
+import { Organization } from '@/entities/Organization'
+import { UsageTrackingService } from '@/services/usageTrackingService'
+import { calculateMemoWritesUsage } from '@/lib/usageTrackingUtils'
 
 // Allowed file types for document uploads
 const ALLOWED_MIMETYPES = [
@@ -184,6 +187,13 @@ const createPlaintextMemo = async (req: Request, res: Response) => {
     }
 
     const memo = await createNewMemo({ ...validatedData.data, type: 'plaintext' }, project)
+
+    const writeOperationsUsed = calculateMemoWritesUsage(validatedData.data.content)
+
+    await new UsageTrackingService(DI.em).incrementMemoOperations(
+        { uuid: project.organization.uuid } as Organization,
+        writeOperationsUsed
+    )
 
     return res.status(201).json({ memo_uuid: memo.uuid })
 }
@@ -445,12 +455,8 @@ export const getMemoStatus = async (req: Request, res: Response) => {
 export const memoRouter = express.Router({ mergeParams: true })
 memoRouter.use(requireProjectAccess())
 memoRouter.get('/', listMemos)
-memoRouter.post(
-    '/',
-    trackUsage('memo_operations'),
-    upload.single('file'),
-    handleMulterError,
-    (req: Request, res: Response) => {
+memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, res: Response) =>
+    RequestContext.create(DI.orm.em, async () => {
         // route to appropriate handler based on content type
         if (req.file) {
             // Check if the required provider configuration is available
@@ -466,16 +472,25 @@ memoRouter.post(
                     })
                 }
             }
-            return createFileMemo(req, res)
+
+            if (!IS_SELF_HOSTED_DEPLOY) {
+                const organizationSubscription = await DI.organizationSubscriptions.findOne({
+                    organization: req.context?.requestUser?.project?.organization?.uuid,
+                })
+                if (!organizationSubscription) {
+                    return res.status(404).json({ error: 'Organization subscription not found' })
+                }
+                if (organizationSubscription.plan.slug === 'free' && req.file.size > 5 * 1024 * 1024) {
+                    return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
+                }
+            }
+
+            return await createFileMemo(req, res)
         }
-        return createPlaintextMemo(req, res)
-    }
+        return await createPlaintextMemo(req, res)
+    })
 )
 memoRouter.get('/:id/status', [validateMemoOperationRequestMiddleware()], getMemoStatus)
 memoRouter.get('/:id', [validateMemoOperationRequestMiddleware()], getMemo)
-memoRouter.patch('/:id', [validateMemoOperationRequestMiddleware(), trackUsage('memo_operations')], updateMemo)
-memoRouter.delete(
-    '/:id',
-    [validateMemoOperationRequestMiddleware(), trackUsage('memo_operations', { increment: false })],
-    deleteMemo
-)
+memoRouter.patch('/:id', [validateMemoOperationRequestMiddleware()], updateMemo)
+memoRouter.delete('/:id', [validateMemoOperationRequestMiddleware()], deleteMemo)

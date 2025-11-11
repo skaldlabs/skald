@@ -27,54 +27,54 @@ interface UsageMetric {
 }
 
 class UsageTrackingService {
+    private em: EntityManager
+
+    constructor(em: EntityManager) {
+        this.em = em.fork()
+    }
+
     /**
      * Increment memo operations counter for current billing period
      */
-    async incrementMemoOperations(organization: Organization): Promise<void> {
-        const em = DI.em.fork()
+    async incrementMemoOperations(organization: Organization, incrementBy: number = 1): Promise<void> {
+        const usageRecord = await this.getOrCreateCurrentUsage(organization)
 
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
-
-        await em.nativeUpdate(
+        await this.em.nativeUpdate(
             UsageRecord,
             { id: usageRecord.id },
-            { memo_operations_count: usageRecord.memo_operations_count + 1, updated_at: new Date() }
+            { memo_operations_count: usageRecord.memo_operations_count + incrementBy, updated_at: new Date() }
         )
 
         // Check and send usage alerts if needed
-        await this.checkAndSendUsageAlerts(organization, 'memo_operations', em)
+        await this.checkAndSendUsageAlerts(organization, 'memo_operations')
 
-        await em.flush()
+        await this.em.flush()
     }
 
     /**
      * Increment chat queries counter for current billing period
      */
     async incrementChatQueries(organization: Organization): Promise<void> {
-        const em = DI.em.fork()
+        const usageRecord = await this.getOrCreateCurrentUsage(organization)
 
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
-
-        await em.nativeUpdate(
+        await this.em.nativeUpdate(
             UsageRecord,
             { id: usageRecord.id },
             { chat_queries_count: usageRecord.chat_queries_count + 1, updated_at: new Date() }
         )
 
         // Check and send usage alerts if needed
-        await this.checkAndSendUsageAlerts(organization, 'chat_queries', em)
+        await this.checkAndSendUsageAlerts(organization, 'chat_queries')
 
         // Only flush if we created our own entity manager
-        await em.flush()
+        await this.em.flush()
     }
 
     /**
      * Get current billing period usage with limits
      */
     async getCurrentUsage(organization: Organization): Promise<UsageData> {
-        const em = DI.em.fork()
-
-        const subscription = await em.findOne(
+        const subscription = await this.em.findOne(
             OrganizationSubscription,
             { organization: organization.uuid },
             { populate: ['plan'] }
@@ -84,11 +84,11 @@ class UsageTrackingService {
             throw new Error('Organization subscription not found')
         }
 
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
+        const usageRecord = await this.getOrCreateCurrentUsage(organization)
         const plan = subscription.plan
 
         // Get projects count for the organization
-        const projectsCount = await em.count('Project', { organization: organization.uuid })
+        const projectsCount = await this.em.count('Project', { organization: organization.uuid })
 
         // Calculate usage metrics
         const calcUsage = (count: number, limit: number | null): UsageMetric => {
@@ -120,9 +120,7 @@ class UsageTrackingService {
         organization: Organization,
         limitType: 'memo_operations' | 'chat_queries' | 'projects'
     ): Promise<{ withinLimit: boolean; currentCount: number; limit: number | null }> {
-        const em = DI.em.fork()
-
-        const subscription = await em.findOne(
+        const subscription = await this.em.findOne(
             OrganizationSubscription,
             { organization: organization.uuid },
             { populate: ['plan'] }
@@ -133,7 +131,7 @@ class UsageTrackingService {
         }
 
         const plan = subscription.plan
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
+        const usageRecord = await this.getOrCreateCurrentUsage(organization)
 
         let currentCount: number
         let limit: number | null
@@ -148,7 +146,7 @@ class UsageTrackingService {
                 limit = plan.chat_queries_limit ?? null
                 break
             case 'projects':
-                currentCount = await em.count('Project', { organization: organization.uuid })
+                currentCount = await this.em.count('Project', { organization: organization.uuid })
                 limit = plan.projects_limit ?? null
                 break
         }
@@ -165,8 +163,8 @@ class UsageTrackingService {
     /**
      * Get or create usage record for current billing period
      */
-    private async getOrCreateCurrentUsage(organization: Organization, em: EntityManager): Promise<UsageRecord> {
-        const subscription = await em.findOne(
+    private async getOrCreateCurrentUsage(organization: Organization): Promise<UsageRecord> {
+        const subscription = await this.em.findOne(
             OrganizationSubscription,
             { organization: organization.uuid },
             { populate: ['organization'] }
@@ -179,13 +177,13 @@ class UsageTrackingService {
         const periodStart = subscription.current_period_start.toISOString().split('T')[0]
         const periodEnd = subscription.current_period_end.toISOString().split('T')[0]
 
-        let usageRecord = await em.findOne(UsageRecord, {
+        let usageRecord = await this.em.findOne(UsageRecord, {
             organization: organization.uuid,
             billing_period_start: periodStart,
         })
 
         if (!usageRecord) {
-            usageRecord = em.create(UsageRecord, {
+            usageRecord = this.em.create(UsageRecord, {
                 organization,
                 billing_period_start: periodStart,
                 billing_period_end: periodEnd,
@@ -195,7 +193,7 @@ class UsageTrackingService {
                 created_at: new Date(),
                 updated_at: new Date(),
             })
-            await em.persistAndFlush(usageRecord)
+            await this.em.persistAndFlush(usageRecord)
         }
 
         return usageRecord
@@ -206,13 +204,12 @@ class UsageTrackingService {
      */
     private async checkAndSendUsageAlerts(
         organization: Organization,
-        limitType: 'memo_operations' | 'chat_queries' | 'projects',
-        em: EntityManager
+        limitType: 'memo_operations' | 'chat_queries' | 'projects'
     ): Promise<void> {
-        const usageRecord = await this.getOrCreateCurrentUsage(organization, em)
-        await em.refresh(usageRecord)
+        const usageRecord = await this.getOrCreateCurrentUsage(organization)
+        await this.em.refresh(usageRecord)
 
-        const subscription = await em.findOne(
+        const subscription = await this.em.findOne(
             OrganizationSubscription,
             { organization: organization.uuid },
             { populate: ['plan'] }
@@ -237,7 +234,7 @@ class UsageTrackingService {
                 limit = plan.chat_queries_limit ?? null
                 break
             case 'projects':
-                currentCount = await em.count('Project', { organization: organization.uuid })
+                currentCount = await this.em.count('Project', { organization: organization.uuid })
                 limit = plan.projects_limit ?? null
                 break
         }
@@ -255,7 +252,7 @@ class UsageTrackingService {
             if (!usageRecord.alerts_sent[alertKey]) {
                 await this.sendUsageAlert(organization, limitType, 80, currentCount, limit)
                 usageRecord.alerts_sent[alertKey] = true
-                await em.persistAndFlush(usageRecord)
+                await this.em.persistAndFlush(usageRecord)
             }
         }
 
@@ -265,7 +262,7 @@ class UsageTrackingService {
             if (!usageRecord.alerts_sent[alertKey]) {
                 await this.sendUsageAlert(organization, limitType, 100, currentCount, limit)
                 usageRecord.alerts_sent[alertKey] = true
-                await em.persistAndFlush(usageRecord)
+                await this.em.persistAndFlush(usageRecord)
             }
         }
     }

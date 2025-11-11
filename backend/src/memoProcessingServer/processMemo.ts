@@ -5,6 +5,10 @@ import { logger } from '@/lib/logger'
 import { DocumentProcessingService } from '@/services/documentProcessingService'
 import { MemoContent } from '@/entities/MemoContent'
 import { randomUUID } from 'node:crypto'
+import { UsageTrackingService } from '@/services/usageTrackingService'
+import { calculateMemoWritesUsage } from '@/lib/usageTrackingUtils'
+import { Project } from '@/entities/Project'
+import { Organization } from '@/entities/Organization'
 
 const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
     const sql = `
@@ -48,6 +52,16 @@ const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
         await em.persistAndFlush(memoContent)
 
         row.content = markdown
+
+        const writeOperationsUsed = calculateMemoWritesUsage(markdown)
+        const project = await em.findOne(Project, { uuid: row.project_id })
+        if (!project) {
+            throw new Error(`Project not found: ${row.project_id}`)
+        }
+        await new UsageTrackingService(em).incrementMemoOperations(
+            { uuid: project.organization.uuid } as Organization,
+            writeOperationsUsed
+        )
     }
 
     if (!row.content) {
