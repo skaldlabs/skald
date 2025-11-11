@@ -2,7 +2,7 @@ import { Project } from '@/entities/Project'
 import { MemoFilter } from '@/lib/filterUtils'
 import { EmbeddingService } from '@/services/embeddingService'
 import { RerankService } from '@/services/rerankService'
-import { QueryRewriteService } from '@/services/queryRewriteService'
+import { rewrite } from '@/agents/chatAgent/queryRewrite'
 import { memoChunkVectorSearch } from '@/embeddings/vectorSearch'
 import { VECTOR_SEARCH_TOP_K, POST_RERANK_TOP_K } from '@/settings'
 import { getTitleAndSummaryAndContentForMemoList } from '@/queries/memo'
@@ -30,7 +30,7 @@ async function chunkVectorSearch(
                 ])
                 .flat()
 
-            const rewrittenQuery = await QueryRewriteService.rewrite(query, conversationMessages)
+            const rewrittenQuery = await rewrite(query, conversationMessages)
 
             if (rewrittenQuery !== query) {
                 processedQuery = rewrittenQuery
