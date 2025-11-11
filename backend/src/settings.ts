@@ -76,6 +76,7 @@ export const SQS_DLQ_QUEUE_URL = process.env.SQS_DLQ_QUEUE_URL
 
 export const REDIS_HOST = process.env.REDIS_HOST || 'localhost'
 export const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379')
+export const REDIS_URL = process.env.REDIS_URL
 export const CHANNEL_NAME = process.env.CHANNEL_NAME || 'process_memo'
 
 export const RABBITMQ_HOST = process.env.RABBITMQ_HOST || 'localhost'

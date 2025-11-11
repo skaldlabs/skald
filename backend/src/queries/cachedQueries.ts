@@ -2,6 +2,7 @@ import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { UsageRecord } from '@/entities/UsageRecord'
 import { redisDel, redisGet, redisIncrBy, redisSet } from '@/lib/redisClient'
 import { EntityManager } from '@mikro-orm/core'
+import { logger } from '@/lib/logger'
 
 const REDIS_TRUE_VALUE = 'true'
 const REDIS_FALSE_VALUE = 'false'
@@ -11,8 +12,11 @@ export class CachedQueries {
         const cacheKey = `isOrganizationOnFreePlan:${organizationUuid}`
         const cachedValue = await redisGet(cacheKey)
         if (cachedValue) {
+            logger.debug('Cache hit (isOrganizationOnFreePlan). Key:', cacheKey, 'Value:', cachedValue)
             return cachedValue === REDIS_TRUE_VALUE
         }
+
+        logger.debug('Cache miss (isOrganizationOnFreePlan). Key:', cacheKey)
 
         const organizationSubscription = await em.findOne(
             OrganizationSubscription,
@@ -25,6 +29,7 @@ export class CachedQueries {
 
         const isOnFreePlan = organizationSubscription.plan.slug === 'free'
         void redisSet(cacheKey, isOnFreePlan ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
+
         return isOnFreePlan
     }
 
@@ -40,11 +45,16 @@ export class CachedQueries {
             redisGet(chatQueriesCacheKey),
         ])
         if (memoWritesCached && chatQueriesCached) {
+            logger.debug('Cache hit (getOrganizationUsage). Key:', memoWritesCacheKey, 'Value:', memoWritesCached)
+            logger.debug('Cache hit (getOrganizationUsage). Key:', chatQueriesCacheKey, 'Value:', chatQueriesCached)
             return {
                 memoWrites: parseInt(memoWritesCached),
                 chatQueries: parseInt(chatQueriesCached),
             }
         }
+
+        logger.debug('Cache miss (getOrganizationUsage). Key:', memoWritesCacheKey)
+        logger.debug('Cache miss (getOrganizationUsage). Key:', chatQueriesCacheKey)
 
         const usageRecord = await em.findOne(UsageRecord, { organization: organizationUuid })
         if (!usageRecord) {
@@ -54,25 +64,25 @@ export class CachedQueries {
             }
         }
 
-        const [memoWrites, chatQueries] = await Promise.all([
+        await Promise.all([
             redisIncrBy(memoWritesCacheKey, usageRecord.memo_operations_count),
             redisIncrBy(chatQueriesCacheKey, usageRecord.chat_queries_count),
         ])
 
         return {
-            memoWrites,
-            chatQueries,
+            memoWrites: usageRecord.memo_operations_count,
+            chatQueries: usageRecord.chat_queries_count,
         }
     }
 
-    static async incrementMemoWritesCache(organizationUuid: string, incrementBy: number = 1): Promise<number> {
+    static async incrementMemoWritesCache(organizationUuid: string, incrementBy: number = 1): Promise<void> {
         const cacheKey = `organizationMemoWrites:${organizationUuid}`
-        return await redisIncrBy(cacheKey, incrementBy)
+        await redisIncrBy(cacheKey, incrementBy)
     }
 
-    static async incrementChatQueriesCache(organizationUuid: string, incrementBy: number = 1): Promise<number> {
+    static async incrementChatQueriesCache(organizationUuid: string, incrementBy: number = 1): Promise<void> {
         const cacheKey = `organizationChatQueries:${organizationUuid}`
-        return await redisIncrBy(cacheKey, incrementBy)
+        await redisIncrBy(cacheKey, incrementBy)
     }
 
     static async clearOrganizationUsageCache(organizationUuid: string): Promise<void> {
