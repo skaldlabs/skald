@@ -1,11 +1,3 @@
-/**
- * Usage Tracking Middleware
- *
- * Middleware that tracks usage for memo operations, chat queries, and projects.
- * Only tracks on successful responses (status < 400).
- * Respects IS_SELF_HOSTED_DEPLOY flag to disable tracking for self-hosted instances.
- */
-
 import { Request, Response, NextFunction } from 'express'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { IS_SELF_HOSTED_DEPLOY, TEST } from '@/settings'
