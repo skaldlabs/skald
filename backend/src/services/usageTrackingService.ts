@@ -9,6 +9,7 @@ import { UsageRecord } from '@/entities/UsageRecord'
 import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { EntityManager } from '@mikro-orm/core'
 import { logger } from '@/lib/logger'
+import { CachedQueries } from '@/queries/cachedQueries'
 
 interface UsageData {
     billing_period_start: string
@@ -45,6 +46,13 @@ class UsageTrackingService {
             { memo_operations_count: usageRecord.memo_operations_count + incrementBy, updated_at: new Date() }
         )
 
+        const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(this.em, organization.uuid)
+        if (isOrgOnFreePlan) {
+            // we only cache free plan usage because we need to check if the limit has been reached to stop
+            // the service. those on non-free plans can continue using us and will pay for the usage.
+            await CachedQueries.incrementMemoWritesCache(organization.uuid, incrementBy)
+        }
+
         // Check and send usage alerts if needed
         await this.checkAndSendUsageAlerts(organization, 'memo_operations')
 
@@ -62,6 +70,13 @@ class UsageTrackingService {
             { id: usageRecord.id },
             { chat_queries_count: usageRecord.chat_queries_count + 1, updated_at: new Date() }
         )
+
+        const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(this.em, organization.uuid)
+        if (isOrgOnFreePlan) {
+            // we only cache free plan usage because we need to check if the limit has been reached to stop
+            // the service. those on non-free plans can continue using us and will pay for the usage.
+            await CachedQueries.incrementChatQueriesCache(organization.uuid, 1)
+        }
 
         // Check and send usage alerts if needed
         await this.checkAndSendUsageAlerts(organization, 'chat_queries')
@@ -131,6 +146,7 @@ class UsageTrackingService {
         }
 
         const plan = subscription.plan
+
         const usageRecord = await this.getOrCreateCurrentUsage(organization)
 
         let currentCount: number

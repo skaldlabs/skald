@@ -36,3 +36,8 @@ export const redisDel = async (key: string): Promise<void> => {
     const redisClient = await getRedisClient()
     await redisClient.del(key)
 }
+
+export const redisIncrBy = async (key: string, value: number): Promise<number> => {
+    const redisClient = await getRedisClient()
+    return await redisClient.incrBy(key, value)
+}

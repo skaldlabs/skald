@@ -12,7 +12,7 @@ import { UsageRecord } from '@/entities/UsageRecord'
 import { DI } from '@/di'
 import { EntityManager } from '@mikro-orm/core'
 import { logger } from '@/lib/logger'
-import { redisDel } from '@/lib/redisClient'
+import { CachedQueries } from '@/queries/cachedQueries'
 
 /**
  * Subscription status enum matching Django SubscriptionStatus
@@ -579,8 +579,7 @@ class SubscriptionService {
 
             if (plan.slug !== 'free') {
                 // with a new subscription the org is no longer hitting the usage limit so we need to clear the cache
-                await redisDel(`isOrganizationOnFreePlan:${subscription.organization.uuid}`)
-                await redisDel(`organizationUsageLimitReached:${subscription.organization.uuid}`)
+                await CachedQueries.clearOrganizationUsageCache(subscription.organization.uuid)
             }
 
             subscription.stripe_subscription_id = stripeSubscription.id
@@ -662,8 +661,7 @@ class SubscriptionService {
 
             if (newPlan.slug !== 'free') {
                 // with a new subscription the org is no longer hitting the usage limit so we need to clear the cache
-                await redisDel(`isOrganizationOnFreePlan:${subscription.organization.uuid}`)
-                await redisDel(`organizationUsageLimitReached:${subscription.organization.uuid}`)
+                await CachedQueries.clearOrganizationUsageCache(subscription.organization.uuid)
             }
 
             await entityManager.populate(subscription, ['plan'])

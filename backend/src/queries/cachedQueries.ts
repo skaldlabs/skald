@@ -1,74 +1,102 @@
 import { OrganizationMembership } from '@/entities/OrganizationMembership'
 import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { UsageRecord } from '@/entities/UsageRecord'
-import { redisGet, redisSet } from '@/lib/redisClient'
-import { EntityManager } from '@mikro-orm/postgresql'
+import { redisDel, redisGet, redisIncrBy, redisSet } from '@/lib/redisClient'
+import { EntityManager } from '@mikro-orm/core'
 
 const REDIS_TRUE_VALUE = 'true'
 const REDIS_FALSE_VALUE = 'false'
 
-export const isUserOrgMemberCached = async (em: EntityManager, userId: bigint, organizationUuid: string) => {
-    const cacheKey = `isUserOrgMembers:${userId}:${organizationUuid}`
-    const cachedValue = await redisGet(cacheKey)
-    if (cachedValue) {
-        return cachedValue === REDIS_TRUE_VALUE
-    }
+export class CachedQueries {
+    static async isUserOrgMember(em: EntityManager, userId: bigint, organizationUuid: string): Promise<boolean> {
+        const cacheKey = `isUserOrgMembers:${userId}:${organizationUuid}`
+        const cachedValue = await redisGet(cacheKey)
+        if (cachedValue) {
+            return cachedValue === REDIS_TRUE_VALUE
+        }
 
-    const isMember =
-        (await em.findOne(OrganizationMembership, { user: userId, organization: organizationUuid })) !== null
-    if (isMember) {
-        void redisSet(cacheKey, REDIS_TRUE_VALUE)
-        return true
-    }
+        const isMember =
+            (await em.findOne(OrganizationMembership, { user: userId, organization: organizationUuid })) !== null
+        if (isMember) {
+            void redisSet(cacheKey, REDIS_TRUE_VALUE)
+            return true
+        }
 
-    return false
-}
-
-export const isOrganizationOnFreePlanCached = async (em: EntityManager, organizationUuid: string) => {
-    const cacheKey = `isOrganizationOnFreePlan:${organizationUuid}`
-    const cachedValue = await redisGet(cacheKey)
-    if (cachedValue) {
-        return cachedValue === REDIS_TRUE_VALUE
-    }
-
-    const organizationSubscription = await em.findOne(
-        OrganizationSubscription,
-        { organization: organizationUuid },
-        { populate: ['plan'] }
-    )
-    if (!organizationSubscription) {
         return false
     }
 
-    const isOnFreePlan = organizationSubscription.plan.slug === 'free'
-    void redisSet(cacheKey, isOnFreePlan ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
-    return isOnFreePlan
-}
+    static async isOrganizationOnFreePlan(em: EntityManager, organizationUuid: string): Promise<boolean> {
+        const cacheKey = `isOrganizationOnFreePlan:${organizationUuid}`
+        const cachedValue = await redisGet(cacheKey)
+        if (cachedValue) {
+            return cachedValue === REDIS_TRUE_VALUE
+        }
 
-export const organizationUsageLimitReachedCached = async (em: EntityManager, organizationUuid: string) => {
-    const cacheKey = `organizationUsageLimitReached:${organizationUuid}`
-    const cachedValue = await redisGet(cacheKey)
-    if (cachedValue) {
-        return cachedValue === REDIS_TRUE_VALUE
+        const organizationSubscription = await em.findOne(
+            OrganizationSubscription,
+            { organization: organizationUuid },
+            { populate: ['plan'] }
+        )
+        if (!organizationSubscription) {
+            return false
+        }
+
+        const isOnFreePlan = organizationSubscription.plan.slug === 'free'
+        void redisSet(cacheKey, isOnFreePlan ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
+        return isOnFreePlan
     }
 
-    const [organizationSubscription, usageRecord] = await Promise.all([
-        em.findOne(OrganizationSubscription, { organization: organizationUuid }, { populate: ['plan'] }),
-        em.findOne(UsageRecord, { organization: organizationUuid }),
-    ])
+    static async getOrganizationUsage(
+        em: EntityManager,
+        organizationUuid: string
+    ): Promise<{ memoWrites: number; chatQueries: number }> {
+        const memoWritesCacheKey = `organizationMemoWrites:${organizationUuid}`
+        const chatQueriesCacheKey = `organizationChatQueries:${organizationUuid}`
 
-    if (!organizationSubscription || !usageRecord) {
-        return false
+        const [memoWritesCached, chatQueriesCached] = await Promise.all([
+            redisGet(memoWritesCacheKey),
+            redisGet(chatQueriesCacheKey),
+        ])
+        if (memoWritesCached && chatQueriesCached) {
+            return {
+                memoWrites: parseInt(memoWritesCached),
+                chatQueries: parseInt(chatQueriesCached),
+            }
+        }
+
+        const usageRecord = await em.findOne(UsageRecord, { organization: organizationUuid })
+        if (!usageRecord) {
+            return {
+                memoWrites: 0,
+                chatQueries: 0,
+            }
+        }
+
+        const [memoWrites, chatQueries] = await Promise.all([
+            redisIncrBy(memoWritesCacheKey, usageRecord.memo_operations_count),
+            redisIncrBy(chatQueriesCacheKey, usageRecord.chat_queries_count),
+        ])
+
+        return {
+            memoWrites,
+            chatQueries,
+        }
     }
 
-    const usageLimitReached =
-        usageRecord.memo_operations_count >= (organizationSubscription.plan.memo_operations_limit ?? 0) ||
-        usageRecord.chat_queries_count >= (organizationSubscription.plan.chat_queries_limit ?? 0)
-
-    if (usageLimitReached) {
-        void redisSet(cacheKey, REDIS_TRUE_VALUE)
-        return true
+    static async incrementMemoWritesCache(organizationUuid: string, incrementBy: number = 1): Promise<number> {
+        const cacheKey = `organizationMemoWrites:${organizationUuid}`
+        return await redisIncrBy(cacheKey, incrementBy)
     }
 
-    return false
+    static async incrementChatQueriesCache(organizationUuid: string, incrementBy: number = 1): Promise<number> {
+        const cacheKey = `organizationChatQueries:${organizationUuid}`
+        return await redisIncrBy(cacheKey, incrementBy)
+    }
+
+    static async clearOrganizationUsageCache(organizationUuid: string): Promise<void> {
+        await redisDel(`isOrganizationOnFreePlan:${organizationUuid}`)
+        await redisDel(`organizationUsageLimitReached:${organizationUuid}`)
+        await redisDel(`organizationMemoWrites:${organizationUuid}`)
+        await redisDel(`organizationChatQueries:${organizationUuid}`)
+    }
 }

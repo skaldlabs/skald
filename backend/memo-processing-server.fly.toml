@@ -14,6 +14,7 @@ primary_region = 'dfw'
 [env]
   LANGSMITH_TRACING = 'true'
   INTER_PROCESS_QUEUE = 'sqs'
+  IS_CLOUD = 'true'
 
 [[vm]]
   memory = '2gb'

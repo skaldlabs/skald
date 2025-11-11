@@ -191,6 +191,8 @@ if (IS_SELF_HOSTED_DEPLOY) {
     }
 }
 
+export const IS_CLOUD = strToBool(process.env.IS_CLOUD)
+
 export { CORS_ALLOWED_ORIGINS }
 
 export const ENABLE_SECURITY_SETTINGS = strToBool(process.env.ENABLE_SECURITY_SETTINGS, !IS_DEVELOPMENT)

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 
 import { DI } from '@/di'
-import { isUserOrgMemberCached } from '@/queries/cachedQueries'
+import { CachedQueries } from '@/queries/cachedQueries'
 
 export const requireAuth = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -36,7 +36,7 @@ export const requireProjectAccess = () => {
             }
             req.context.requestUser.project = project
 
-            const isMember = await isUserOrgMemberCached(
+            const isMember = await CachedQueries.isUserOrgMember(
                 DI.em,
                 req.context.requestUser.userInstance.id,
                 req.context.requestUser.project.organization.uuid

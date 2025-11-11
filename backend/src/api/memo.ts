@@ -14,7 +14,7 @@ import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
 import { deleteFileFromS3 } from '@/lib/s3Utils'
-import { DATALAB_API_KEY, IS_SELF_HOSTED_DEPLOY, TEST } from '@/settings'
+import { DATALAB_API_KEY, IS_CLOUD, TEST } from '@/settings'
 import * as Sentry from '@sentry/node'
 import { Organization } from '@/entities/Organization'
 import { UsageTrackingService } from '@/services/usageTrackingService'
@@ -465,7 +465,7 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
                 return res.status(500).json({ error: 'Setting DATALAB_API_KEY is required for uploading documents' })
             }
 
-            if (!IS_SELF_HOSTED_DEPLOY) {
+            if (IS_CLOUD) {
                 const organizationSubscription = await DI.organizationSubscriptions.findOne({
                     organization: req.context?.requestUser?.project?.organization?.uuid,
                 })
