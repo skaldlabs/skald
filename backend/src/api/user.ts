@@ -6,6 +6,7 @@ import { requireAuth } from '@/middleware/authMiddleware'
 import { EMAIL_VERIFICATION_ENABLED, ENABLE_SECURITY_SETTINGS } from '@/settings'
 import { addContactToResend, isValidEmail } from '@/lib/emailUtils'
 import { posthogCapture } from '@/lib/posthogUtils'
+import { User } from '@/entities/User'
 
 interface UserResponse {
     email: string
@@ -51,7 +52,7 @@ export const login = async (req: Request, res: Response) => {
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
-        name: user.first_name + ' ' + user.last_name,
+        name: _fullName(user),
     }
 
     res.json({ user: userResponse })
@@ -122,7 +123,7 @@ const createUser = async (req: Request, res: Response) => {
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
-        name: user.first_name + ' ' + user.last_name,
+        name: _fullName(user),
     }
 
     res.status(201).json({ user: userResponse })
@@ -173,7 +174,7 @@ const getUserDetails = async (req: Request, res: Response) => {
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
-        name: user.first_name + ' ' + user.last_name,
+        name: _fullName(user),
     }
 
     res.status(200).json(userResponse)
@@ -221,7 +222,7 @@ const setCurrentProject = async (req: Request, res: Response) => {
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
-        name: user.first_name + ' ' + user.last_name,
+        name: _fullName(user),
     }
 
     res.status(200).json(userResponse)
@@ -278,10 +279,22 @@ const updateUserDetails = async (req: Request, res: Response) => {
         current_project: user.current_project?.uuid,
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
-        name: user.first_name + ' ' + user.last_name,
+        name: _fullName(user),
     }
 
     res.status(200).json(userResponse)
+}
+
+const _fullName = (user: User): string | null => {
+    if (!user.first_name) {
+        return null
+    }
+
+    if (!user.last_name) {
+        return user.first_name
+    }
+
+    return `${user.first_name} ${user.last_name}`
 }
 
 export const userRouter = express.Router({ mergeParams: true })
