@@ -19,6 +19,7 @@ import * as Sentry from '@sentry/node'
 import { Organization } from '@/entities/Organization'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { calculateMemoWritesUsage } from '@/lib/usageTrackingUtils'
+import { CachedQueries } from '@/queries/cachedQueries'
 
 // Allowed file types for document uploads
 const ALLOWED_MIMETYPES = [
@@ -457,6 +458,21 @@ memoRouter.use(requireProjectAccess())
 memoRouter.get('/', listMemos)
 memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, res: Response) =>
     RequestContext.create(DI.orm.em, async () => {
+        const project = req.context?.requestUser?.project
+        if (!project) {
+            return res.status(404).json({ error: 'Project not found' })
+        }
+
+        const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(DI.em, project.organization.uuid)
+        if (isOrgOnFreePlan) {
+            const usage = await CachedQueries.getOrganizationUsage(DI.em, project.organization.uuid)
+            if (usage.memoWrites >= 1000) {
+                return res.status(403).json({
+                    error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue creating memos.",
+                })
+            }
+        }
+
         // route to appropriate handler based on content type
         if (req.file) {
             if (!DATALAB_API_KEY && !TEST) {
@@ -465,16 +481,8 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
                 return res.status(500).json({ error: 'Setting DATALAB_API_KEY is required for uploading documents' })
             }
 
-            if (IS_CLOUD) {
-                const organizationSubscription = await DI.organizationSubscriptions.findOne({
-                    organization: req.context?.requestUser?.project?.organization?.uuid,
-                })
-                if (!organizationSubscription) {
-                    return res.status(404).json({ error: 'Organization subscription not found' })
-                }
-                if (organizationSubscription.plan.slug === 'free' && req.file.size > 5 * 1024 * 1024) {
-                    return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
-                }
+            if (IS_CLOUD && isOrgOnFreePlan && req.file.size > 5 * 1024 * 1024) {
+                return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
             }
 
             return await createFileMemo(req, res)
