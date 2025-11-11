@@ -13,7 +13,7 @@ interface ProjectState {
     error: string | null
     fetchProjects: () => Promise<void>
     createProject: (name: string) => Promise<Project | null>
-    updateProject: (uuid: string, name: string) => Promise<void>
+    updateProject: (uuid: string, updates: { name?: string; query_rewrite_enabled?: boolean }) => Promise<void>
     deleteProject: (uuid: string) => Promise<void>
     setCurrentProject: (project: Project | null) => Promise<void>
     initializeCurrentProject: () => Promise<void>
@@ -89,12 +89,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         return newProject
     },
 
-    updateProject: async (uuid: string, name: string) => {
+    updateProject: async (uuid: string, updates: { name?: string; query_rewrite_enabled?: boolean }) => {
         set({ loading: true, error: null })
 
-        const response = await api.put(`${getOrgPath()}/projects/${uuid}/`, {
-            name,
-        })
+        const response = await api.put(`${getOrgPath()}/projects/${uuid}/`, updates)
 
         if (response.error) {
             set({
@@ -106,9 +104,9 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         }
 
         set((state) => ({
-            projects: state.projects.map((p) => (p.uuid === uuid ? { ...p, name } : p)),
+            projects: state.projects.map((p) => (p.uuid === uuid ? { ...p, ...updates } : p)),
             currentProject:
-                state.currentProject?.uuid === uuid ? { ...state.currentProject, name } : state.currentProject,
+                state.currentProject?.uuid === uuid ? { ...state.currentProject, ...updates } : state.currentProject,
             loading: false,
             error: null,
         }))
