@@ -463,13 +463,22 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
             return res.status(404).json({ error: 'Project not found' })
         }
 
-        const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(DI.em, project.organization.uuid)
-        if (isOrgOnFreePlan) {
-            const usage = await CachedQueries.getOrganizationUsage(DI.em, project.organization.uuid)
-            if (usage.memoWrites >= 1000) {
-                return res.status(403).json({
-                    error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue creating memos.",
-                })
+        // cloud limits
+        if (IS_CLOUD) {
+            const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(DI.em, project.organization.uuid)
+            // we only check usage for free plan users because we need to check if the limit has been reached to stop
+            // the service. those on non-free plans can continue using us and will pay for the usage.
+            if (isOrgOnFreePlan) {
+                const usage = await CachedQueries.getOrganizationUsage(DI.em, project.organization.uuid)
+                if (usage.memoWrites >= 1000) {
+                    return res.status(403).json({
+                        error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue creating memos.",
+                    })
+                }
+            }
+
+            if (req.file && req.file.size > 5 * 1024 * 1024) {
+                return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
             }
         }
 
@@ -480,11 +489,6 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
                 // we should provide them with a local docling service in the future in order to be able to do this without a third-party service.
                 return res.status(500).json({ error: 'Setting DATALAB_API_KEY is required for uploading documents' })
             }
-
-            if (IS_CLOUD && isOrgOnFreePlan && req.file.size > 5 * 1024 * 1024) {
-                return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
-            }
-
             return await createFileMemo(req, res)
         }
         return await createPlaintextMemo(req, res)
