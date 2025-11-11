@@ -5,6 +5,7 @@ let redisClient: ReturnType<typeof createClient> | null = null
 
 const REDIS_DEFAULT_TTL = 60 * 60 * 24 // 24 hours
 
+// TODO: make these all secure to redis failures
 export const getRedisClient = async () => {
     if (redisClient) {
         return redisClient
