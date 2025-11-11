@@ -3,6 +3,7 @@ import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { UsageRecord } from '@/entities/UsageRecord'
 import { redisDel, redisGet, redisIncrBy, redisSet } from '@/lib/redisClient'
 import { EntityManager } from '@mikro-orm/core'
+import { IS_CLOUD } from '@/settings'
 
 const REDIS_TRUE_VALUE = 'true'
 const REDIS_FALSE_VALUE = 'false'
@@ -10,14 +11,18 @@ const REDIS_FALSE_VALUE = 'false'
 export class CachedQueries {
     static async isUserOrgMember(em: EntityManager, userId: bigint, organizationUuid: string): Promise<boolean> {
         const cacheKey = `isUserOrgMembers:${userId}:${organizationUuid}`
-        const cachedValue = await redisGet(cacheKey)
-        if (cachedValue) {
-            return cachedValue === REDIS_TRUE_VALUE
+
+        // self-hosted deployments don't require redis
+        if (IS_CLOUD) {
+            const cachedValue = await redisGet(cacheKey)
+            if (cachedValue) {
+                return cachedValue === REDIS_TRUE_VALUE
+            }
         }
 
         const isMember =
             (await em.findOne(OrganizationMembership, { user: userId, organization: organizationUuid })) !== null
-        if (isMember) {
+        if (isMember && IS_CLOUD) {
             void redisSet(cacheKey, REDIS_TRUE_VALUE)
             return true
         }
