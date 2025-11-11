@@ -6,9 +6,7 @@ export interface ApiStreamData {
 }
 
 export interface ApiErrorData {
-    message: string
-    code?: string
-    details?: Record<string, unknown>
+    error: string
 }
 
 // Keep this in sync with the Project serializer in skald/api/project_api.py

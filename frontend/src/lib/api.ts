@@ -209,9 +209,22 @@ export const api = {
             body: JSON.stringify(data),
             signal: controller.signal,
         })
-            .then((response) => {
+            .then(async (response) => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`)
+                    // Try to parse error message from JSON response
+                    try {
+                        const errorData = await response.json()
+                        if (onError) {
+                            onError({ error: errorData.error || `HTTP error! status: ${response.status}` })
+                        }
+                        return
+                    } catch {
+                        // If JSON parsing fails, use generic error
+                        if (onError) {
+                            onError({ error: `HTTP error! status: ${response.status}` })
+                        }
+                        return
+                    }
                 }
 
                 const reader = response.body?.getReader()
@@ -243,7 +256,7 @@ export const api = {
                                     } catch (error) {
                                         console.error('Error parsing SSE message:', error)
                                         if (onError) {
-                                            onError({ message: 'Failed to parse SSE message', details: { error } })
+                                            onError({ error: 'Failed to parse SSE message' })
                                         }
                                     }
                                 }
