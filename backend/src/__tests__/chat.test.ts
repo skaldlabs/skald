@@ -24,10 +24,30 @@ import * as chatAgent from '../agents/chatAgent/chatAgent'
 import { ChatMessage } from '@/entities/ChatMessage'
 import { Chat } from '@/entities/Chat'
 import { randomUUID } from 'crypto'
+import { rewrite } from '../agents/chatAgent/queryRewrite'
+import { LLMService } from '../services/llmService'
 
 // Mock external dependencies
 jest.mock('../agents/chatAgent/preprocessing')
 jest.mock('../agents/chatAgent/chatAgent')
+jest.mock('../services/llmService')
+jest.mock('@sentry/node', () => ({
+    captureException: jest.fn(),
+}))
+jest.mock('../lib/logger', () => ({
+    logger: {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+    },
+}))
+jest.mock('../settings', () => {
+    const originalModule = jest.requireActual('../settings')
+    return {
+        ...originalModule,
+        SECRET_KEY: process.env.SECRET_KEY || 'UNSAFE_DEFAULT_SECRET_KEY',
+    }
+})
 
 describe('Chat API', () => {
     let app: Express
@@ -777,6 +797,221 @@ describe('Chat API', () => {
             const em2 = orm.em.fork()
             const chats = await em2.find(Chat, { project: project2.uuid })
             expect(chats.length).toBeGreaterThan(0)
+        })
+
+        it('should pass conversation history and llmProvider to runChatAgent', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const testChat = await createTestChat(orm, project)
+            const token = generateAccessToken('test@example.com')
+
+            // Create some existing messages
+            const em = orm.em.fork()
+            const userMessage = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: randomUUID(),
+                project: project,
+                chat: testChat,
+                content: 'What is authentication?',
+                sent_by: 'user',
+                sent_at: new Date(Date.now() - 1000),
+            })
+            const modelMessage = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: userMessage.message_group_id,
+                project: project,
+                chat: testChat,
+                content: 'Authentication is the process of verifying identity...',
+                sent_by: 'model',
+                sent_at: new Date(Date.now() - 500),
+            })
+            await em.persistAndFlush([userMessage, modelMessage])
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'tell me more',
+                    chat_id: testChat.uuid,
+                    llm_provider: 'anthropic',
+                })
+
+            // Verify that prepareContextForChatAgent was called with only query, project, and filters
+            expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalled()
+            const prepareContextArgs = (chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mock.calls[0]
+            expect(prepareContextArgs[0]).toBe('tell me more') // query
+            expect(prepareContextArgs[1]).toBeDefined() // project
+            expect(prepareContextArgs[2]).toEqual([]) // filters (empty array)
+            expect(prepareContextArgs.length).toBe(3) // Only 3 arguments
+
+            // Verify that runChatAgent was called with conversation history and llmProvider
+            expect(chatAgent.runChatAgent).toHaveBeenCalled()
+            const runChatArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
+            expect(runChatArgs.query).toBe('tell me more')
+            expect(runChatArgs.conversationHistory).toBeDefined()
+            expect(Array.isArray(runChatArgs.conversationHistory)).toBe(true)
+            expect(runChatArgs.conversationHistory.length).toBeGreaterThan(0) // Should have conversation history
+            expect(runChatArgs.llmProvider).toBe('anthropic') // llmProvider
+        })
+
+        it('should pass default llm provider to runChatAgent when not specified', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+
+            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
+            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+
+            await request(app)
+                .post('/api/chat')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+                .send({
+                    query: 'test query',
+                })
+
+            // Verify that runChatAgent was called with default LLM_PROVIDER
+            expect(chatAgent.runChatAgent).toHaveBeenCalled()
+            const runChatArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
+            expect(runChatArgs.llmProvider).toBe('openai') // Default LLM_PROVIDER from mocked settings
+        })
+    })
+
+    describe('Query Rewrite', () => {
+        beforeEach(() => {
+            jest.clearAllMocks()
+        })
+
+        describe('rewrite', () => {
+            it('should call LLMService.getLLM with correct parameters', async () => {
+                const mockInvoke = jest.fn().mockResolvedValue({
+                    content: 'How to authenticate users with API?',
+                })
+
+                const mockLLM = {
+                    invoke: mockInvoke,
+                }
+
+                ;(LLMService.getLLM as jest.Mock).mockReturnValue(mockLLM)
+
+                const query = 'how to auth users api'
+                const result = await rewrite(query, [])
+
+                expect(LLMService.getLLM).toHaveBeenCalledWith(0.3)
+                expect(mockInvoke).toHaveBeenCalledWith([
+                    { role: 'system', content: expect.any(String) },
+                    { role: 'user', content: expect.stringContaining(query) },
+                ])
+                expect(result).toBe('How to authenticate users with API?')
+            })
+
+            it('should include conversation history in the prompt', async () => {
+                const mockInvoke = jest.fn().mockResolvedValue({
+                    content: 'Tell me more about database migrations',
+                })
+
+                const mockLLM = {
+                    invoke: mockInvoke,
+                }
+
+                ;(LLMService.getLLM as jest.Mock).mockReturnValue(mockLLM)
+
+                const query = 'tell me more'
+                const conversationHistory = [
+                    { role: 'user' as const, content: 'What are database migrations?' },
+                    { role: 'assistant' as const, content: 'Database migrations are...' },
+                ]
+
+                await rewrite(query, conversationHistory)
+
+                const callArgs = mockInvoke.mock.calls[0][0]
+                const userMessage = callArgs[1].content
+
+                expect(userMessage).toContain('CONVERSATION CONTEXT')
+                expect(userMessage).toContain('What are database migrations?')
+                expect(userMessage).toContain('Database migrations are...')
+            })
+
+            it('should return original query on API error', async () => {
+                const mockInvoke = jest.fn().mockRejectedValue(new Error('API Error'))
+
+                const mockLLM = {
+                    invoke: mockInvoke,
+                }
+
+                ;(LLMService.getLLM as jest.Mock).mockReturnValue(mockLLM)
+
+                const query = 'how to auth'
+                const result = await rewrite(query, [])
+
+                expect(result).toBe(query) // Should fall back to original
+            })
+
+            it('should return original query when LLM returns empty response', async () => {
+                const mockInvoke = jest.fn().mockResolvedValue({
+                    content: '',
+                })
+
+                const mockLLM = {
+                    invoke: mockInvoke,
+                }
+
+                ;(LLMService.getLLM as jest.Mock).mockReturnValue(mockLLM)
+
+                const query = 'how to auth'
+                const result = await rewrite(query, [])
+
+                expect(result).toBe(query)
+            })
+
+            it('should limit conversation history to last 3 conversation pairs', async () => {
+                const mockInvoke = jest.fn().mockResolvedValue({
+                    content: 'Enhanced query',
+                })
+
+                const mockLLM = {
+                    invoke: mockInvoke,
+                }
+
+                ;(LLMService.getLLM as jest.Mock).mockReturnValue(mockLLM)
+
+                const query = 'tell me more'
+                const conversationHistory = [
+                    { role: 'user' as const, content: 'Message 1' },
+                    { role: 'assistant' as const, content: 'Response 1' },
+                    { role: 'user' as const, content: 'Message 2' },
+                    { role: 'assistant' as const, content: 'Response 2' },
+                    { role: 'user' as const, content: 'Message 3' },
+                    { role: 'assistant' as const, content: 'Response 3' },
+                    { role: 'user' as const, content: 'Message 4' },
+                    { role: 'assistant' as const, content: 'Response 4' },
+                ]
+
+                await rewrite(query, conversationHistory)
+
+                const callArgs = mockInvoke.mock.calls[0][0]
+                const userMessage = callArgs[1].content
+
+                // Should only include last 3 messages from the 8-element array
+                // slice(-3) gives indices [5, 6, 7] which are: Response 3, Message 4, Response 4
+                expect(userMessage).toContain('Response 3')
+                expect(userMessage).toContain('Message 4')
+                expect(userMessage).toContain('Response 4')
+                expect(userMessage).not.toContain('Message 1')
+                expect(userMessage).not.toContain('Message 2')
+            })
         })
     })
 })

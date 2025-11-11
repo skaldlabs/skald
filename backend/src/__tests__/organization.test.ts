@@ -355,7 +355,7 @@ describe('Organization API', () => {
         })
     })
 
-    describe('GET /api/organization/:id/pending_invites', () => {
+    describe('GET /api/organization/pending_invites', () => {
         it('should return pending invites for the requesting user', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
@@ -383,7 +383,7 @@ describe('Organization API', () => {
             const token = generateAccessToken('test@example.com')
 
             const response = await request(app)
-                .get(`/api/organization/${org.uuid}/pending_invites`)
+                .get(`/api/organization/pending_invites`)
                 .set('Cookie', [`accessToken=${token}`])
 
             expect(response.status).toBe(200)
