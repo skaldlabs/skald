@@ -22,8 +22,10 @@ export class CachedQueries {
 
         const isMember =
             (await em.findOne(OrganizationMembership, { user: userId, organization: organizationUuid })) !== null
-        if (isMember && IS_CLOUD) {
-            void redisSet(cacheKey, REDIS_TRUE_VALUE)
+        if (isMember) {
+            if (IS_CLOUD) {
+                void redisSet(cacheKey, REDIS_TRUE_VALUE)
+            }
             return true
         }
 
