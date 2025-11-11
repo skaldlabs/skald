@@ -24,18 +24,29 @@ interface DetailedMemoViewProps {
 }
 
 export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
-    const getExpirationExtraStyles = (dateString: string): string => {
+    const getExpirationStyles = (dateString: string) => {
         const expirationDate = new Date(dateString)
         const now = new Date()
         const oneMonthFromNow = addMonths(now, 1)
 
-        if (isBefore(expirationDate, now)) {
-            return 'text-destructive'
+        const isExpired = isBefore(expirationDate, now)
+        const isExpiringSoon = isBefore(expirationDate, oneMonthFromNow)
+
+        let valueStyles = 'text-muted-foreground'
+        let labelStyles = 'text-white'
+
+        if (isExpired) {
+            valueStyles = 'text-destructive'
+            labelStyles = 'text-destructive'
+        } else if (isExpiringSoon) {
+            valueStyles = 'text-amber-600'
+            labelStyles = 'text-amber-600'
         }
-        if (isBefore(expirationDate, oneMonthFromNow)) {
-            return 'text-amber-600'
+
+        return {
+            labelStyles,
+            valueStyles,
         }
-        return 'text-muted-foreground'
     }
 
     const getExpirationLabel = (dateString: string): string => {
@@ -48,8 +59,8 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
         return 'Expires:'
     }
 
-    const expirationColorClass = memo.expiration_date ? getExpirationExtraStyles(memo.expiration_date) : null
-    const expirationLabelClass = expirationColorClass === 'text-muted-foreground' ? 'text-white' : expirationColorClass
+    const expirationStyles = memo.expiration_date ? getExpirationStyles(memo.expiration_date) : null
+    const expirationLabel = memo.expiration_date ? getExpirationLabel(memo.expiration_date) : null
 
     const getStatusBadge = () => {
         if (memo.archived) {
@@ -155,14 +166,14 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                             </div>
                         )}
 
-                        {memo.expiration_date && (
+                        {memo.expiration_date && expirationStyles && expirationLabel && (
                             <div className="flex items-center gap-2 text-sm">
-                                <AlertCircle className={`h-4 w-4 ${expirationColorClass ?? ''}`} />
+                                <AlertCircle className={`h-4 w-4 ${expirationStyles.valueStyles}`} />
                                 <div>
-                                    <div className={`font-medium ${expirationLabelClass ?? ''}`}>
-                                        {getExpirationLabel(memo.expiration_date)}
+                                    <div className={`font-medium ${expirationStyles.labelStyles}`}>
+                                        {expirationLabel}
                                     </div>
-                                    <span className={expirationColorClass ?? ''}>
+                                    <span className={expirationStyles.valueStyles}>
                                         {formatDate(memo.expiration_date)}
                                     </span>
                                 </div>

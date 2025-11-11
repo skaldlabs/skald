@@ -14,7 +14,7 @@ import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
 import { deleteFileFromS3 } from '@/lib/s3Utils'
-import { DATALAB_API_KEY, IS_CLOUD, TEST } from '@/settings'
+import { DATALAB_API_KEY, IS_CLOUD, TEST, DOCUMENT_EXTRACTION_PROVIDER, DOCLING_SERVICE_URL } from '@/settings'
 import * as Sentry from '@sentry/node'
 import { Organization } from '@/entities/Organization'
 import { UsageTrackingService } from '@/services/usageTrackingService'
@@ -484,10 +484,18 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
 
         // route to appropriate handler based on content type
         if (req.file) {
-            if (!DATALAB_API_KEY && !TEST) {
-                // self-hosted folks will need a DATALAB_API_KEY to upload documents.
-                // we should provide them with a local docling service in the future in order to be able to do this without a third-party service.
-                return res.status(500).json({ error: 'Setting DATALAB_API_KEY is required for uploading documents' })
+            // Check if the required provider configuration is available
+            if (!TEST) {
+                if (DOCUMENT_EXTRACTION_PROVIDER === 'datalab' && !DATALAB_API_KEY) {
+                    return res.status(500).json({
+                        error: 'DATALAB_API_KEY is required when DOCUMENT_EXTRACTION_PROVIDER is set to "datalab"'
+                    })
+                }
+                if (DOCUMENT_EXTRACTION_PROVIDER === 'docling' && !DOCLING_SERVICE_URL) {
+                    return res.status(500).json({
+                        error: 'DOCLING_SERVICE_URL is required when DOCUMENT_EXTRACTION_PROVIDER is set to "docling"'
+                    })
+                }
             }
             return await createFileMemo(req, res)
         }

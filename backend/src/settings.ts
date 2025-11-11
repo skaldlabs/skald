@@ -228,5 +228,26 @@ export const LOG_LEVEL = process.env.LOG_LEVEL || 'warn'
 export const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY || 'phc_B77mcYC1EycR6bKLgSNzjM9aaeiWXhoeizyriFIxWf2' // it's a public key that can be leaked
 export const POSTHOG_HOST = process.env.POSTHOG_HOST || 'https://us.i.posthog.com'
 
+// ---- Document Extraction Provider Configuration ----
+export const DOCUMENT_EXTRACTION_PROVIDER = process.env.DOCUMENT_EXTRACTION_PROVIDER || 'docling'
+
 // Datalab API (for converting documents to markdown)
 export const DATALAB_API_KEY = process.env.DATALAB_API_KEY
+
+// Docling Service (for converting documents to markdown)
+export const DOCLING_SERVICE_URL = process.env.DOCLING_SERVICE_URL || 'http://localhost:5001'
+
+// Validation of document extraction provider configuration on startup
+const SUPPORTED_DOCUMENT_EXTRACTION_PROVIDERS = ['datalab', 'docling']
+if (!SUPPORTED_DOCUMENT_EXTRACTION_PROVIDERS.includes(DOCUMENT_EXTRACTION_PROVIDER)) {
+    throw new Error(
+        `Invalid DOCUMENT_EXTRACTION_PROVIDER: ${DOCUMENT_EXTRACTION_PROVIDER}. Supported: ${SUPPORTED_DOCUMENT_EXTRACTION_PROVIDERS.join(', ')}`
+    )
+}
+
+// Warn if document extraction provider API keys are missing
+if (!IS_DEVELOPMENT && DOCUMENT_EXTRACTION_PROVIDER === 'datalab' && !DATALAB_API_KEY) {
+    logger.warn('DATALAB_API_KEY not set for datalab provider in production')
+} else if (!IS_DEVELOPMENT && DOCUMENT_EXTRACTION_PROVIDER === 'docling' && !DOCLING_SERVICE_URL) {
+    logger.warn('DOCLING_SERVICE_URL not set for docling provider in production')
+}

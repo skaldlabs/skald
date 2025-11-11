@@ -30,4 +30,7 @@ export class Project {
         index: 'skald_project_owner_id_5fc4828a',
     })
     owner!: User
+
+    @Property({ default: false })
+    query_rewrite_enabled!: boolean
 }

@@ -2,9 +2,11 @@ import { Project } from '@/entities/Project'
 import { MemoFilter } from '@/lib/filterUtils'
 import { EmbeddingService } from '@/services/embeddingService'
 import { RerankService } from '@/services/rerankService'
+import { rewrite } from '@/agents/chatAgent/queryRewrite'
 import { memoChunkVectorSearch } from '@/embeddings/vectorSearch'
 import { VECTOR_SEARCH_TOP_K, POST_RERANK_TOP_K } from '@/settings'
 import { getTitleAndSummaryAndContentForMemoList } from '@/queries/memo'
+import { logger } from '@/lib/logger'
 
 interface RerankResult {
     index: number
@@ -12,8 +14,33 @@ interface RerankResult {
     relevance_score: number
 }
 
-async function chunkVectorSearch(query: string, project: Project, filters?: MemoFilter[]): Promise<string[]> {
-    const embeddingVector = await EmbeddingService.generateEmbedding(query, 'search')
+async function chunkVectorSearch(
+    query: string,
+    project: Project,
+    filters?: MemoFilter[],
+    conversationHistory: Array<[string, string]> = []
+): Promise<string[]> {
+    let processedQuery = query
+    if (project.query_rewrite_enabled) {
+        try {
+            const conversationMessages = conversationHistory
+                .map(([userMsg, assistantMsg]) => [
+                    { role: 'user' as const, content: userMsg },
+                    { role: 'assistant' as const, content: assistantMsg },
+                ])
+                .flat()
+
+            const rewrittenQuery = await rewrite(query, conversationMessages)
+
+            if (rewrittenQuery !== query) {
+                processedQuery = rewrittenQuery
+            }
+        } catch (error) {
+            logger.warn({ err: error, query }, 'Query rewriting failed, using original query')
+        }
+    }
+
+    const embeddingVector = await EmbeddingService.generateEmbedding(processedQuery, 'search')
     const chunkResults = await memoChunkVectorSearch(project, embeddingVector, VECTOR_SEARCH_TOP_K, 0.95, filters)
     const relevantMemoUuids = Array.from(new Set(chunkResults.map((c) => c.chunk.memo_uuid)))
 
@@ -36,8 +63,10 @@ async function chunkVectorSearch(query: string, project: Project, filters?: Memo
         rerankDataBatches.push(rerankData.slice(i, i + 25))
     }
 
-    // rerank all batches concurrently
-    const results = (await Promise.all(rerankDataBatches.map((batch) => RerankService.rerank(query, batch)))).flat()
+    // rerank all batches concurrently using the processed query
+    const results = (
+        await Promise.all(rerankDataBatches.map((batch) => RerankService.rerank(processedQuery, batch)))
+    ).flat()
 
     return results.map((r) => r.document)
 }
