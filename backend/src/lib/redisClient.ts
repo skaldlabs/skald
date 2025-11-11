@@ -41,3 +41,10 @@ export const redisIncrBy = async (key: string, value: number): Promise<number> =
     const redisClient = await getRedisClient()
     return await redisClient.incrBy(key, value)
 }
+
+export const closeRedisClient = async (): Promise<void> => {
+    if (redisClient) {
+        await redisClient.quit()
+        redisClient = null
+    }
+}

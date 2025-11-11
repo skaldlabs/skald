@@ -1,5 +1,6 @@
 import { MikroORM } from '@mikro-orm/postgresql'
 import config from '../mikro-orm.config'
+import { closeRedisClient } from '@/lib/redisClient'
 
 export const createTestDatabase = async () => {
     const testConfig = {
@@ -64,4 +65,9 @@ export const clearDatabase = async (orm: MikroORM) => {
 
 export const closeDatabase = async (orm: MikroORM) => {
     await orm.close(true)
+    try {
+        await closeRedisClient()
+    } catch {
+        // Ignore errors if Redis wasn't connected
+    }
 }
