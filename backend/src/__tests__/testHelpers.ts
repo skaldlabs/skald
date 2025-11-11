@@ -19,7 +19,6 @@ export const createTestUser = async (orm: MikroORM, email: string, password: str
         email,
         password: hashedPassword,
         emailVerified: true,
-        name: '',
         first_name: '',
         last_name: '',
         is_superuser: false,
