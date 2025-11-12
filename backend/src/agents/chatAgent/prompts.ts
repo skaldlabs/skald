@@ -25,7 +25,7 @@ Refusal policy - Be helpful and eager to assist:
 - Prefer partial answers over refusals. For example: "I found information about X and Y, but couldn't find details about Z in the knowledge base."
 - When in doubt, lean towards providing an answer with appropriate caveats.
 
-Here's the context with result numbers you should cite:
+Here's the context you should cite:
 {context}
 `
 
