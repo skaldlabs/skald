@@ -44,7 +44,7 @@ export const CreateOrganizationForm = ({ hasPendingInvites }: CreateOrganization
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-center">Create Your Organization</CardTitle>
+                <CardTitle className="text-center">Create Organization</CardTitle>
                 <p className="text-center text-muted-foreground">
                     {hasPendingInvites
                         ? 'Or create a new organization to get started with Skald'
@@ -58,19 +58,19 @@ export const CreateOrganizationForm = ({ hasPendingInvites }: CreateOrganization
                             control={form.control}
                             name="name"
                             rules={{
-                                required: 'Organization name is required',
+                                required: 'Company name is required',
                                 minLength: {
                                     value: 2,
-                                    message: 'Organization name must be at least 2 characters',
+                                    message: 'Company name must be at least 2 characters',
                                 },
                             }}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Organization Name</FormLabel>
+                                    <FormLabel>Company Name</FormLabel>
                                     <FormControl>
                                         <div className="relative">
                                             <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input {...field} placeholder="Enter organization name" className="pl-10" />
+                                            <Input {...field} placeholder="Enter company name" className="pl-10" />
                                         </div>
                                     </FormControl>
                                     <FormMessage />

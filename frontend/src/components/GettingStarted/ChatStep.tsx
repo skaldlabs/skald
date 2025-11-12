@@ -103,7 +103,7 @@ export const ChatStep = () => {
     const getCodeExample = () => {
         return getChatExample(activeTab, {
             apiKey: apiKey || '',
-            query: '{query}',
+            query: '<placeholder>',
         })
     }
 
@@ -125,16 +125,7 @@ export const ChatStep = () => {
                         code={getCodeExample().code}
                         language={getCodeExample().language}
                         onCopy={handleCodeCopy}
-                        inputs={[
-                            {
-                                key: 'query',
-                                value: chatQuery,
-                                onChange: setChatQuery,
-                                placeholder: 'Your question here...',
-                                type: 'input',
-                                disabled: isDisabled,
-                            },
-                        ]}
+                        inputs={[]}
                     />
                 </div>
 

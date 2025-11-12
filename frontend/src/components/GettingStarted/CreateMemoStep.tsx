@@ -9,6 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { useProjectStore } from '@/stores/projectStore'
 import { api } from '@/lib/api'
 import '@/components/GettingStarted/GettingStarted.scss'
+import { useAuthStore } from '@/stores/authStore'
 
 interface PaginatedResponse<T> {
     count: number
@@ -23,13 +24,13 @@ export const CreateMemoStep = () => {
     const apiKey = useOnboardingStore((state) => state.apiKey)
     const isCreatingMemo = useOnboardingStore((state) => state.isCreatingMemo)
     const memoCreated = useOnboardingStore((state) => state.memoCreated)
-    const setMemoTitle = useOnboardingStore((state) => state.setMemoTitle)
-    const setMemoContent = useOnboardingStore((state) => state.setMemoContent)
     const createMemo = useOnboardingStore((state) => state.createMemo)
     const currentProject = useProjectStore((state) => state.currentProject)
     const [activeTab, setActiveTab] = useState('curl')
     const [isWaitingForMemo, setIsWaitingForMemo] = useState(false)
     const isMobile = useIsMobile()
+
+    const user = useAuthStore((state) => state.user)
 
     const initialMemoCountRef = useRef<number | null>(null)
     const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -139,8 +140,8 @@ export const CreateMemoStep = () => {
 
     const currentExample = getCreateMemoExample(activeTab, {
         apiKey: apiKey || '',
-        title: '{title}',
-        content: '{content}',
+        title: `Introduction to ${user?.organization_name}`,
+        content: `${user?.organization_name} is a really cool company that makes a really cool product.`,
     })
 
     const isDisabled = !apiKey
@@ -152,18 +153,16 @@ export const CreateMemoStep = () => {
                 <h2 className="step-title">Create your first memo {isComplete && <Check className="title-check" />}</h2>
 
                 <p className="step-description">
-                    Memos are the basic unit of knowledge in Skald. You can store anything as a memo: notes, documents,
-                    code snippets, specs, recipes, FAQs, etc.
+                    Memos are the basic unit of knowledge in Skald. They can be anything: a document, a note, or some
+                    code.
                 </p>
 
                 <p className="step-description">
-                    When you add a memo, Skald automatically handles chunking, embeddings, indexing, summarization, and
-                    tagging.
+                    After a memo is processed, it's automatically available as context for chat and search.
                 </p>
 
                 <p className="step-description font-bold">
-                    Fill in the title and content in the code below, then copy and paste it into your terminal to create
-                    your first memo
+                    Create your first memo now using one of the code examples below.
                 </p>
 
                 <div className="code-section" ref={codeBlockRef}>
@@ -172,24 +171,7 @@ export const CreateMemoStep = () => {
                         code={currentExample.code}
                         language={currentExample.language}
                         onCopy={handleCodeCopy}
-                        inputs={[
-                            {
-                                key: 'title',
-                                value: memoTitle,
-                                onChange: setMemoTitle,
-                                placeholder: 'Write a title for your memo...',
-                                type: 'input',
-                                disabled: isDisabled,
-                            },
-                            {
-                                key: 'content',
-                                value: memoContent,
-                                onChange: setMemoContent,
-                                placeholder: 'Content of your memo...',
-                                type: 'textarea',
-                                disabled: isDisabled,
-                            },
-                        ]}
+                        inputs={[]}
                     />
                 </div>
 

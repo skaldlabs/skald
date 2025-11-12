@@ -8,9 +8,10 @@ export const curlCreateMemoSnippet = `curl -X POST '${domain}/api/v1/memo/' \\
   -H 'Authorization: Bearer {apiKey}' \\
   -H 'Content-Type: application/json' \\
   -d '{
-  "title": "{title}",
-  "content": "{content}"
-}'`
+    "title": "{title}",
+    "content": "{content}"
+  }'
+`
 
 export const nodejsCreateMemoSnippet = `const { Skald } = require('@skald-labs/skald-node');
 
