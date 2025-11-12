@@ -150,7 +150,9 @@ export const CreateMemoStep = () => {
     return (
         <div className={`getting-started-step ${isComplete ? 'complete' : ''} ${isDisabled ? 'disabled' : ''}`}>
             <div className="step-content">
-                <h2 className="step-title">Create your first memo {isComplete && <Check className="title-check" />}</h2>
+                <h2 className="step-title">
+                    Add context to your agent {isComplete && <Check className="title-check" />}
+                </h2>
 
                 <p className="step-description">
                     Memos are the basic unit of knowledge in Skald. They can be anything: a document, a note, or some
@@ -162,7 +164,7 @@ export const CreateMemoStep = () => {
                 </p>
 
                 <p className="step-description font-bold">
-                    Create your first memo now using one of the code examples below.
+                    ➡️ Create your first memo now using one of the code examples below:
                 </p>
 
                 <div className="code-section" ref={codeBlockRef}>
