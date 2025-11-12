@@ -31,6 +31,12 @@ jest.mock('@/lib/redisClient', () => {
             cache.delete(key)
             return Promise.resolve()
         }),
+        redisIncrBy: jest.fn((key: string, value: number) => {
+            const current = parseInt(cache.get(key) || '0')
+            const newValue = current + value
+            cache.set(key, newValue.toString())
+            return Promise.resolve(newValue)
+        }),
         redisSetAndIncrement: jest.fn((key: string, value: number) => {
             const current = parseInt(cache.get(key) || '0')
             const newValue = current + value

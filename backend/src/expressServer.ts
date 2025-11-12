@@ -109,6 +109,7 @@ export const startExpressServer = async () => {
             await gracefulShutdown('listen-error', 1)
             return
         }
+
         logger.info(`Express server started at http://${HOST}:${EXPRESS_SERVER_PORT}`)
     })
 

@@ -466,6 +466,7 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
         // cloud limits
         if (IS_CLOUD) {
             const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(DI.em, project.organization.uuid)
+            logger.debug('isOrgOnFreePlan', isOrgOnFreePlan)
             // we only check usage for free plan users because we need to check if the limit has been reached to stop
             // the service. those on non-free plans can continue using us and will pay for the usage.
             if (isOrgOnFreePlan) {
@@ -488,12 +489,12 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
             if (!TEST) {
                 if (DOCUMENT_EXTRACTION_PROVIDER === 'datalab' && !DATALAB_API_KEY) {
                     return res.status(500).json({
-                        error: 'DATALAB_API_KEY is required when DOCUMENT_EXTRACTION_PROVIDER is set to "datalab"'
+                        error: 'DATALAB_API_KEY is required when DOCUMENT_EXTRACTION_PROVIDER is set to "datalab"',
                     })
                 }
                 if (DOCUMENT_EXTRACTION_PROVIDER === 'docling' && !DOCLING_SERVICE_URL) {
                     return res.status(500).json({
-                        error: 'DOCLING_SERVICE_URL is required when DOCUMENT_EXTRACTION_PROVIDER is set to "docling"'
+                        error: 'DOCLING_SERVICE_URL is required when DOCUMENT_EXTRACTION_PROVIDER is set to "docling"',
                     })
                 }
             }
