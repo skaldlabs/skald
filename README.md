@@ -6,10 +6,10 @@
 
 <p align="center">
     <a href="https://pypi.org/project/skald-sdk/">
-        <img src="https://img.shields.io/badge/pypi-v.0.1.0-blue" alt="skald-sdk Python">
+        <img src="https://img.shields.io/badge/pypi-v.0.3.1-blue" alt="skald-sdk Python">
     </a>
     <a href="https://www.npmjs.com/package/@skald-labs/skald-node">
-        <img src="https://img.shields.io/badge/npm-v.0.1.3-blue" alt="skald-node">
+        <img src="https://img.shields.io/badge/npm-v.0.3.0-blue" alt="skald-node">
     </a>
     <a href="https://rubygems.org/gems/skald">
         <img src="https://img.shields.io/badge/gem-v.0.1.0-blue" alt="Skald Ruby">
@@ -18,7 +18,7 @@
         <img src="https://img.shields.io/badge/composer-v.1.0.2-blue" alt="skald/skald-php">
     </a>
     <a href="https://github.com/skaldlabs/skald-go">
-        <img src="https://img.shields.io/badge/go-v.0.1.0-blue" alt="skald-go">
+        <img src="https://img.shields.io/badge/go-v.0.2.0-blue" alt="skald-go">
     </a>
     <a href="https://github.com/skaldlabs/skald-csharp">
         <img src="https://img.shields.io/badge/csharp-v.0.1.0-blue" alt="skald-csharp">
