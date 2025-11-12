@@ -467,10 +467,10 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
                         error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue creating memos.",
                     })
                 }
-            }
 
-            if (req.file && req.file.size > 5 * 1024 * 1024) {
-                return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
+                if (req.file && req.file.size > 5 * 1024 * 1024) {
+                    return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
+                }
             }
         }
 
