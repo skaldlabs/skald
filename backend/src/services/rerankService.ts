@@ -1,13 +1,28 @@
-import { EMBEDDING_PROVIDER, VOYAGE_API_KEY, OPENAI_API_KEY, OPENAI_MODEL, EMBEDDING_SERVICE_URL } from '@/settings'
+import { EMBEDDING_PROVIDER, VOYAGE_API_KEY, EMBEDDING_SERVICE_URL } from '@/settings'
 import { VoyageAIClient } from 'voyageai'
-import OpenAI from 'openai'
+import { z } from 'zod'
+import { LLMService } from '@/services/llmService'
 
 const VOYAGE_RERANK_MODEL = process.env.VOYAGE_RERANK_MODEL || 'rerank-2-lite'
 const POST_RERANK_TOP_K = parseInt(process.env.POST_RERANK_TOP_K || '10')
 
+// Zod schema for rerank item
+const RerankItemSchema = z.object({
+    index: z.number().int().describe('Original index in input array'),
+    document: z.string().describe('The original document text verbatim'),
+    relevance_score: z.number().min(0.0).max(1.0).describe('Relevance score between 0.0 and 1.0'),
+})
+
+// Zod schema for rerank output
+const RerankOutputSchema = z.object({
+    results: z
+        .array(RerankItemSchema)
+        .describe('Array of reranked results sorted by relevance_score in descending order'),
+})
+
 const RERANK_PROMPT = `You are a strict reranking function.
 
-INPUTS YOU WILL RECEIVE (JSON):
+INPUTS YOU WILL RECEIVE:
 - "query": string
 - "documents": array of strings (candidate documents)
 
@@ -16,22 +31,10 @@ For each document, assign a relevance score in the closed interval [0.0, 1.0] in
 Higher is more relevant. Consider semantic meaning, factual alignment with the query, and usefulness to answer the query.
 
 RULES:
-- Return a single JSON object with this EXACT schema:
-  {
-    "results": [
-      {"index": <int, original index in input array>,
-       "document": <string, the original document text verbatim>,
-       "relevance_score": <float between 0.0 and 1.0> }
-    ],
-    "total_tokens": null
-  }
 - The "results" array MUST be sorted by "relevance_score" in descending order.
-- Use only the keys shown above; DO NOT include any extra keys.
-- "index" MUST map to the original position of the document in the input list.
+- "index" MUST map to the original position of the document in the input list (0-indexed).
 - "document" MUST be returned verbatim (do not edit).
-- "relevance_score" MUST be a float in [0.0, 1.0] (use up to 6 decimal places as needed).
-- "total_tokens" must be set to null. (A calling wrapper will replace it with an actual integer.)
-- Output ONLY valid JSON. No comments, no trailing text.`
+- "relevance_score" MUST be a float in [0.0, 1.0] (use up to 6 decimal places as needed).`
 
 interface RerankItem {
     index: number
@@ -47,6 +50,14 @@ interface RerankResult {
     index: number
     document: any
     relevance_score: number
+}
+
+const _buildOpenAIRerankPrompt = (query: string, results: any[]): string => {
+    const documents = results
+        .map((doc, idx) => `[${idx}] ${typeof doc === 'string' ? doc : JSON.stringify(doc)}`)
+        .join('\n\n')
+
+    return `${RERANK_PROMPT}\n\nQuery: ${query}\n\nDocuments:\n${documents}`
 }
 
 export class RerankService {
@@ -100,27 +111,26 @@ export class RerankService {
     }
 
     private static async rerankOpenAI(query: string, results: any[]): Promise<RerankResult[]> {
-        const client = new OpenAI({ apiKey: OPENAI_API_KEY })
-
-        const payload = { query, documents: results }
-        const payloadJson = JSON.stringify(payload)
-
-        const response = await client.chat.completions.create({
-            model: OPENAI_MODEL,
-            temperature: 0,
-            response_format: { type: 'json_object' },
-            messages: [
-                { role: 'system', content: RERANK_PROMPT },
-                { role: 'user', content: `Here are the inputs as JSON:\n\n${payloadJson}` },
-            ],
+        const llm = LLMService.getLLM(0, 'openai')
+        const structuredLlm = llm.withStructuredOutput(RerankOutputSchema, {
+            name: 'RerankAgent',
         })
 
-        const content = response.choices[0]?.message?.content
-        if (!content) {
-            throw new Error('No response from OpenAI')
-        }
+        const prompt = _buildOpenAIRerankPrompt(query, results)
 
-        const rerankOutput: RerankOutput = JSON.parse(content)
+        const result = await structuredLlm.invoke(
+            [
+                {
+                    role: 'user',
+                    content: prompt,
+                },
+            ],
+            {
+                callbacks: [], // Disable LangSmith tracing
+            }
+        )
+
+        const rerankOutput = result as z.infer<typeof RerankOutputSchema>
         return this.normalizeRerankResults(rerankOutput, results)
     }
 

@@ -1,5 +1,5 @@
 import { LLMService } from '@/services/llmService'
-import { CHAT_AGENT_INSTRUCTIONS } from '@/agents/chatAgent/prompts'
+import { CHAT_AGENT_INSTRUCTIONS, CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES } from '@/agents/chatAgent/prompts'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 import * as Sentry from '@sentry/node'
 
@@ -18,17 +18,26 @@ export async function runChatAgent({
     context = '',
     clientSystemPrompt = null,
     conversationHistory = [],
-    llmProvider,
+    options = {
+        enableReferences: false,
+    },
 }: {
     query: string
     context?: string
     clientSystemPrompt?: string | null
     conversationHistory?: Array<[string, string]>
-    llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+    options?: {
+        llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+        enableReferences?: boolean
+    }
 }): Promise<ChatAgentResult> {
+    const { llmProvider, enableReferences } = options
+
     // Use the LLM directly for non-streaming
     const llm = LLMService.getLLM(0, llmProvider)
-    const prompts: [string, string][] = [['system', CHAT_AGENT_INSTRUCTIONS]]
+    const prompts: [string, string][] = [
+        ['system', enableReferences ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
+    ]
     if (clientSystemPrompt) {
         prompts.push(['system', clientSystemPrompt || ''])
     }
@@ -56,19 +65,29 @@ export async function* streamChatAgent({
     context = '',
     clientSystemPrompt = null,
     conversationHistory = [],
-    llmProvider,
+    options = {
+        enableReferences: false,
+    },
 }: {
     query: string
     context?: string
     clientSystemPrompt?: string | null
     conversationHistory?: Array<[string, string]>
     llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+    options?: {
+        llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+        enableReferences?: boolean
+    }
 }): AsyncGenerator<StreamChunk> {
+    const { llmProvider, enableReferences } = options
+
     try {
         // For streaming, we'll use the LLM directly instead of the agent
         const llm = LLMService.getLLM(0, llmProvider)
 
-        const prompts: [string, string][] = [['system', CHAT_AGENT_INSTRUCTIONS]]
+        const prompts: [string, string][] = [
+            ['system', enableReferences ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
+        ]
         if (clientSystemPrompt) {
             prompts.push(['system', clientSystemPrompt || ''])
         }

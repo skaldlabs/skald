@@ -15,6 +15,7 @@ export const chat = async (req: Request, res: Response) => {
     const filters = req.body.filters || []
     const chatId = req.body.chat_id
     const clientSystemPrompt = req.body.system_prompt || null
+    const enableReferences = req.body.enable_references || false
 
     // experimental: allow the client to specify the LLM provider (not the model yet)
     // we will not document this or add this to SDKs until we're certain of the behavior we want
@@ -46,18 +47,14 @@ export const chat = async (req: Request, res: Response) => {
         if (isOrgOnFreePlan) {
             const usage = await CachedQueries.getOrganizationUsage(DI.em, project.organization.uuid)
             if (usage.chatQueries >= 100) {
-                return res
-                    .status(403)
-                    .json({
-                        error: "You've reached your plan limit of 100 chat queries. Upgrade your plan to continue using chat.",
-                    })
+                return res.status(403).json({
+                    error: "You've reached your plan limit of 100 chat queries. Upgrade your plan to continue using chat.",
+                })
             }
             if (usage.memoWrites >= 1000) {
-                return res
-                    .status(403)
-                    .json({
-                        error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue chat.",
-                    })
+                return res.status(403).json({
+                    error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue chat.",
+                })
             }
         }
     }
@@ -81,6 +78,11 @@ export const chat = async (req: Request, res: Response) => {
         contextStr += `Result ${i + 1}: ${rerankedResults[i].document}\n\n`
     }
 
+    const chatAgentOptions = {
+        llmProvider,
+        enableReferences,
+    }
+
     try {
         if (stream) {
             const fullResponse = await _generateStreamingResponse({
@@ -89,7 +91,7 @@ export const chat = async (req: Request, res: Response) => {
                 clientSystemPrompt,
                 res,
                 conversationHistory,
-                llmProvider,
+                options: chatAgentOptions,
             })
             const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
             res.write(`data: ${JSON.stringify({ type: 'done', chat_id: finalChatId })}\n\n`)
@@ -101,7 +103,7 @@ export const chat = async (req: Request, res: Response) => {
                 context: contextStr,
                 clientSystemPrompt,
                 conversationHistory,
-                llmProvider,
+                options: chatAgentOptions,
             })
             const finalChatId = await createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
 
@@ -132,14 +134,19 @@ export const _generateStreamingResponse = async ({
     clientSystemPrompt = null,
     res,
     conversationHistory = [],
-    llmProvider,
+    options = {
+        enableReferences: false,
+    },
 }: {
     query: string
     contextStr: string
     clientSystemPrompt?: string | null
     res: Response
     conversationHistory?: Array<[string, string]>
-    llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+    options?: {
+        llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+        enableReferences?: boolean
+    }
 }): Promise<string> => {
     _setStreamingResponseHeaders(res)
 
@@ -153,7 +160,7 @@ export const _generateStreamingResponse = async ({
             context: contextStr,
             clientSystemPrompt,
             conversationHistory,
-            llmProvider,
+            options,
         })) {
             // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
             if (chunk.content && typeof chunk.content === 'object') {

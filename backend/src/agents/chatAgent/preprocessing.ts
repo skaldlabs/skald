@@ -85,6 +85,8 @@ export async function prepareContextForChatAgent(
         relevance_score: 1.0 - index * 0.01, // Simple decreasing score
     }))
 
+    console.log('rerankResults', rerankResults)
+
     // sort by relevance score
     rerankResults.sort((a, b) => b.relevance_score - a.relevance_score)
 
