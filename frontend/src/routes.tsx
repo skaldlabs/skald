@@ -5,6 +5,7 @@ import { GettingStartedPage } from '@/pages/GettingStartedPage'
 import { MemosPage } from '@/pages/MemosPage'
 import { PlaygroundPage } from '@/pages/PlaygroundPage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
+import { AdminPage } from '@/pages/AdminPage'
 import { isSelfHostedDeploy } from '@/config'
 
 const RootRedirect = () => {
@@ -20,6 +21,7 @@ const defaultRoutes = [
     { path: '/projects/:uuid/memos', component: () => <MemosPage /> },
     { path: '/projects/:uuid/memos/:memoUuid', component: () => <MemosPage /> },
     { path: '/projects/:uuid/playground', component: () => <PlaygroundPage /> },
+    { path: '/admin', component: () => <AdminPage /> },
 ]
 
 const cloudRoutes = [{ path: '/organization/subscription', component: () => <SubscriptionPage /> }]

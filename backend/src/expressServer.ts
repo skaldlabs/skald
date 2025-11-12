@@ -24,6 +24,7 @@ import { memoRouter } from '@/api/memo'
 import { subscriptionRouter } from '@/api/subscription'
 import { planRouter } from '@/api/plan'
 import { stripeWebhook } from '@/api/stripe_webhook'
+import { adminRouter } from '@/api/admin'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackChatUsage } from '@/middleware/trackChatUsageMiddleware'
@@ -82,6 +83,7 @@ export const startExpressServer = async () => {
     organizationRouter.use('/:organization_uuid/projects', projectRouter)
     organizationRouter.use('/:organization_uuid/subscription', subscriptionRouter)
     privateRoutesRouter.use('/plans', planRouter)
+    privateRoutesRouter.use('/admin', adminRouter)
 
     app.use('/api', privateRoutesRouter)
 

@@ -15,6 +15,7 @@ interface UserResponse {
     email_verified: boolean
     organization_name?: string | null
     name?: string | null
+    is_superuser: boolean
 }
 
 export const login = async (req: Request, res: Response) => {
@@ -53,6 +54,7 @@ export const login = async (req: Request, res: Response) => {
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
+        is_superuser: user.is_superuser,
     }
 
     res.json({ user: userResponse })
@@ -124,6 +126,7 @@ const createUser = async (req: Request, res: Response) => {
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
+        is_superuser: user.is_superuser,
     }
 
     res.status(201).json({ user: userResponse })
@@ -175,6 +178,7 @@ const getUserDetails = async (req: Request, res: Response) => {
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
+        is_superuser: user.is_superuser,
     }
 
     res.status(200).json(userResponse)
@@ -223,6 +227,7 @@ const setCurrentProject = async (req: Request, res: Response) => {
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
+        is_superuser: user.is_superuser,
     }
 
     res.status(200).json(userResponse)
@@ -280,6 +285,7 @@ const updateUserDetails = async (req: Request, res: Response) => {
         email_verified: user.emailVerified,
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
+        is_superuser: user.is_superuser,
     }
 
     res.status(200).json(userResponse)

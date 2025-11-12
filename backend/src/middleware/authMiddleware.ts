@@ -14,6 +14,21 @@ export const requireAuth = () => {
     }
 }
 
+export const requireSuperuser = () => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        if (!req.context || !req.context.requestUser || req.context.requestUser.userType === 'unauthenticatedUser') {
+            return res.status(401).json({ error: 'Unauthorized' })
+        }
+
+        const user = req.context.requestUser.userInstance
+        if (!user || !user.is_superuser) {
+            return res.status(403).json({ error: 'Forbidden' })
+        }
+
+        return next()
+    }
+}
+
 export const isUserOrgMember = async (user: User, organization: Organization): Promise<boolean> => {
     return (await DI.organizationMemberships.findOne({ user, organization })) !== null
 }

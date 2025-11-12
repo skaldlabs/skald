@@ -1,4 +1,16 @@
-import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings, CreditCard, BookOpen } from 'lucide-react'
+import {
+    MessageSquare,
+    Files,
+    LogOut,
+    Hotel,
+    Rocket,
+    Sun,
+    Moon,
+    Settings,
+    CreditCard,
+    BookOpen,
+    ShieldCheck,
+} from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
@@ -79,6 +91,12 @@ export const Sider = () => {
             label: 'Documentation ↗',
             hasAccess: () => true,
             onClick: () => window.open('https://docs.useskald.com', '_blank', 'noopener,noreferrer'),
+        },
+        {
+            key: '/admin',
+            icon: <ShieldCheck className="h-4 w-4" />,
+            label: 'Admin',
+            hasAccess: (user) => user?.is_superuser || false,
         },
     ]
 
