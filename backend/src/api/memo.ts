@@ -21,14 +21,6 @@ import { UsageTrackingService } from '@/services/usageTrackingService'
 import { calculateMemoWritesUsage } from '@/lib/usageTrackingUtils'
 import { CachedQueries } from '@/queries/cachedQueries'
 
-// Allowed file types for document uploads
-const ALLOWED_MIMETYPES = [
-    'application/pdf', // pdf
-    'application/msword', // doc
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
-]
-
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx']
 
 // configure multer for file uploads (store in memory)
@@ -38,11 +30,10 @@ const upload = multer({
         fileSize: 100 * 1024 * 1024, // 100MB limit
     },
     fileFilter: (req, file, cb) => {
-        const mimetype = file.mimetype.toLowerCase()
         const originalname = file.originalname.toLowerCase()
         const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) => originalname.endsWith(ext))
 
-        if (ALLOWED_MIMETYPES.includes(mimetype) && hasValidExtension) {
+        if (hasValidExtension) {
             cb(null, true)
         } else {
             cb(new Error(`Invalid file type. Allowed types: ${ALLOWED_EXTENSIONS.join(', ')}`) as any, false)
