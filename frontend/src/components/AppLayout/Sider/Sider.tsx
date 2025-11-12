@@ -9,7 +9,7 @@ import {
     Settings,
     CreditCard,
     BookOpen,
-    ShieldCheck,
+    GlobeLock,
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
@@ -92,12 +92,6 @@ export const Sider = () => {
             hasAccess: () => true,
             onClick: () => window.open('https://docs.useskald.com', '_blank', 'noopener,noreferrer'),
         },
-        {
-            key: '/admin',
-            icon: <ShieldCheck className="h-4 w-4" />,
-            label: 'Admin',
-            hasAccess: (user) => user?.is_superuser || false,
-        },
     ]
 
     const cloudConfigMenuItems: MenuItem[] = [
@@ -109,9 +103,20 @@ export const Sider = () => {
         },
     ]
 
+    const adminConfigMenuItems: MenuItem[] = isSelfHostedDeploy
+        ? []
+        : [
+              {
+                  key: '/admin',
+                  icon: <GlobeLock className="h-4 w-4" />,
+                  label: 'Admin Area',
+                  hasAccess: (user) => user?.is_superuser || false,
+              },
+          ]
+
     const configMenuItems: MenuItem[] = isSelfHostedDeploy
         ? defaultConfigMenuItems
-        : [...defaultConfigMenuItems, ...cloudConfigMenuItems]
+        : [...defaultConfigMenuItems, ...cloudConfigMenuItems, ...adminConfigMenuItems]
 
     const handleMenuClick = (key: string, onClick?: () => void) => {
         if (onClick) {

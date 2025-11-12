@@ -4,7 +4,9 @@ import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { UserCheck } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { UserCheck, Search } from 'lucide-react'
+import { useAuthStore } from '@/stores/authStore'
 
 interface UserListItem {
     id: string
@@ -23,6 +25,8 @@ export const AdminDashboard = () => {
     const [users, setUsers] = useState<UserListItem[]>([])
     const [loading, setLoading] = useState(true)
     const [impersonating, setImpersonating] = useState<string | null>(null)
+    const [searchQuery, setSearchQuery] = useState('')
+    const { user: currentUser } = useAuthStore()
 
     useEffect(() => {
         fetchUsers()
@@ -54,11 +58,20 @@ export const AdminDashboard = () => {
         }, 1000)
     }
 
+    // Filter out current user and apply search
+    const filteredUsers = users
+        .filter((user) => user.email !== currentUser?.email)
+        .filter((user) => {
+            if (!searchQuery) return true
+            const query = searchQuery.toLowerCase()
+            return user.email.toLowerCase().includes(query) || user.name?.toLowerCase().includes(query)
+        })
+
     if (loading) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Admin Dashboard</CardTitle>
+                    <CardTitle>Impersonat users</CardTitle>
                     <CardDescription>Loading users...</CardDescription>
                 </CardHeader>
             </Card>
@@ -66,12 +79,23 @@ export const AdminDashboard = () => {
     }
 
     return (
-        <Card>
+        <Card className="mt-4">
             <CardHeader>
-                <CardTitle>Admin Dashboard</CardTitle>
-                <CardDescription>Manage and impersonate users</CardDescription>
+                <CardTitle>Impersonate users</CardTitle>
+                <CardDescription>Log in as another user for debugging purposes</CardDescription>
             </CardHeader>
             <CardContent>
+                <div className="mb-4">
+                    <div className="relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by email or name..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-8"
+                        />
+                    </div>
+                </div>
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -84,7 +108,7 @@ export const AdminDashboard = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {users.map((user) => (
+                        {filteredUsers.map((user) => (
                             <TableRow key={user.id}>
                                 <TableCell className="font-medium">{user.email}</TableCell>
                                 <TableCell>{user.name || '-'}</TableCell>
