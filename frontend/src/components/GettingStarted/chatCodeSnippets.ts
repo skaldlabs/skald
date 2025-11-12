@@ -8,9 +8,10 @@ export const curlChatSnippet = `curl -X POST '${domain}/api/v1/chat/' \\
   -H 'Authorization: Bearer {apiKey}' \\
   -H 'Content-Type: application/json' \\
   -d '{
-  "query": "{query}",
-  "stream": false
-}'`
+    "query": "{query}",
+    "stream": false
+  }'
+`
 
 export const nodejsChatSnippet = `const { Skald } = require('@skald-labs/skald-node');
 

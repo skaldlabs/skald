@@ -8,6 +8,7 @@ import { getChatExample } from '@/components/GettingStarted/chatExamples'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import { useIsMobile } from '@/hooks/use-mobile'
 import '@/components/GettingStarted/GettingStarted.scss'
+import { useAuthStore } from '@/stores/authStore'
 
 export const ChatStep = () => {
     const apiKey = useOnboardingStore((state) => state.apiKey)
@@ -24,6 +25,7 @@ export const ChatStep = () => {
     const codeBlockRef = useRef<HTMLDivElement | null>(null)
     const waitingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const isMobile = useIsMobile()
+    const user = useAuthStore((state) => state.user)
 
     // Auto-scroll to bottom when new messages are added
     useEffect(() => {
@@ -103,7 +105,7 @@ export const ChatStep = () => {
     const getCodeExample = () => {
         return getChatExample(activeTab, {
             apiKey: apiKey || '',
-            query: '{query}',
+            query: `What does ${user?.organization_name} do?`,
         })
     }
 
@@ -113,10 +115,9 @@ export const ChatStep = () => {
     return (
         <div className={`getting-started-step ${isComplete ? 'complete' : ''} ${isDisabled ? 'disabled' : ''}`}>
             <div className="step-content">
-                <h2 className="step-title">Chat with your memos {isComplete && <Check className="title-check" />}</h2>
+                <h2 className="step-title">Chat with your agent {isComplete && <Check className="title-check" />}</h2>
                 <p className="step-description">
-                    Type your question in the code below, then copy and paste it into your terminal to chat with your
-                    memos
+                    ⚡ Ask a question and get really fast responses from your agent based on the context you added.
                 </p>
 
                 <div className="code-section" ref={codeBlockRef}>
@@ -125,16 +126,7 @@ export const ChatStep = () => {
                         code={getCodeExample().code}
                         language={getCodeExample().language}
                         onCopy={handleCodeCopy}
-                        inputs={[
-                            {
-                                key: 'query',
-                                value: chatQuery,
-                                onChange: setChatQuery,
-                                placeholder: 'Your question here...',
-                                type: 'input',
-                                disabled: isDisabled,
-                            },
-                        ]}
+                        inputs={[]}
                     />
                 </div>
 
