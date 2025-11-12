@@ -19,4 +19,6 @@ module.exports = {
     // Run tests serially to avoid database conflicts within each shard
     // When running with --shard, each shard gets its own database in CI
     maxWorkers: 1,
+    // Setup files to run before tests
+    setupFilesAfterEnv: ['<rootDir>/src/__tests__/jest.setup.ts'],
 }

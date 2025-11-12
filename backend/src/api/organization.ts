@@ -3,7 +3,7 @@ import { Request, Response } from 'express'
 import { DI } from '@/di'
 import { User } from '@/entities/User'
 import { Organization } from '@/entities/Organization'
-import { FRONTEND_URL, IS_SELF_HOSTED_DEPLOY } from '@/settings'
+import { FRONTEND_URL, IS_CLOUD, IS_SELF_HOSTED_DEPLOY } from '@/settings'
 import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
 import { sendEmail, isValidEmail } from '@/lib/emailUtils'
 import { SubscriptionService } from '@/services/subscriptionService'
@@ -101,7 +101,7 @@ const create = async (req: Request, res: Response) => {
 
     user.current_project = project
 
-    if (!IS_SELF_HOSTED_DEPLOY) {
+    if (IS_CLOUD) {
         const subscriptionService = new SubscriptionService()
         await subscriptionService.createDefaultSubscription(organization, DI.em)
     }

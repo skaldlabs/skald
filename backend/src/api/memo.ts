@@ -14,11 +14,12 @@ import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
 import { deleteFileFromS3 } from '@/lib/s3Utils'
-import { DATALAB_API_KEY, IS_SELF_HOSTED_DEPLOY, TEST, DOCUMENT_EXTRACTION_PROVIDER, DOCLING_SERVICE_URL } from '@/settings'
+import { DATALAB_API_KEY, IS_CLOUD, TEST, DOCUMENT_EXTRACTION_PROVIDER, DOCLING_SERVICE_URL } from '@/settings'
 import * as Sentry from '@sentry/node'
 import { Organization } from '@/entities/Organization'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { calculateMemoWritesUsage } from '@/lib/usageTrackingUtils'
+import { CachedQueries } from '@/queries/cachedQueries'
 
 // Allowed file types for document uploads
 const ALLOWED_MIMETYPES = [
@@ -457,34 +458,46 @@ memoRouter.use(requireProjectAccess())
 memoRouter.get('/', listMemos)
 memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, res: Response) =>
     RequestContext.create(DI.orm.em, async () => {
+        const project = req.context?.requestUser?.project
+        if (!project) {
+            return res.status(404).json({ error: 'Project not found' })
+        }
+
+        // cloud limits
+        if (IS_CLOUD) {
+            const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(DI.em, project.organization.uuid)
+            logger.debug('isOrgOnFreePlan', isOrgOnFreePlan)
+            // we only check usage for free plan users because we need to check if the limit has been reached to stop
+            // the service. those on non-free plans can continue using us and will pay for the usage.
+            if (isOrgOnFreePlan) {
+                const usage = await CachedQueries.getOrganizationUsage(DI.em, project.organization.uuid)
+                if (usage.memoWrites >= 1000) {
+                    return res.status(403).json({
+                        error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue creating memos.",
+                    })
+                }
+            }
+
+            if (req.file && req.file.size > 5 * 1024 * 1024) {
+                return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
+            }
+        }
+
         // route to appropriate handler based on content type
         if (req.file) {
             // Check if the required provider configuration is available
             if (!TEST) {
                 if (DOCUMENT_EXTRACTION_PROVIDER === 'datalab' && !DATALAB_API_KEY) {
                     return res.status(500).json({
-                        error: 'DATALAB_API_KEY is required when DOCUMENT_EXTRACTION_PROVIDER is set to "datalab"'
+                        error: 'DATALAB_API_KEY is required when DOCUMENT_EXTRACTION_PROVIDER is set to "datalab"',
                     })
                 }
                 if (DOCUMENT_EXTRACTION_PROVIDER === 'docling' && !DOCLING_SERVICE_URL) {
                     return res.status(500).json({
-                        error: 'DOCLING_SERVICE_URL is required when DOCUMENT_EXTRACTION_PROVIDER is set to "docling"'
+                        error: 'DOCLING_SERVICE_URL is required when DOCUMENT_EXTRACTION_PROVIDER is set to "docling"',
                     })
                 }
             }
-
-            if (!IS_SELF_HOSTED_DEPLOY) {
-                const organizationSubscription = await DI.organizationSubscriptions.findOne({
-                    organization: req.context?.requestUser?.project?.organization?.uuid,
-                })
-                if (!organizationSubscription) {
-                    return res.status(404).json({ error: 'Organization subscription not found' })
-                }
-                if (organizationSubscription.plan.slug === 'free' && req.file.size > 5 * 1024 * 1024) {
-                    return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
-                }
-            }
-
             return await createFileMemo(req, res)
         }
         return await createPlaintextMemo(req, res)

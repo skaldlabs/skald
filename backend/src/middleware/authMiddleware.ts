@@ -1,11 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
+
+import { DI } from '@/di'
 import { User } from '@/entities/User'
 import { Organization } from '@/entities/Organization'
-import { DI } from '@/di'
-
-export const isUserOrgMember = async (user: User, organization: Organization): Promise<boolean> => {
-    return (await DI.organizationMemberships.findOne({ user, organization })) !== null
-}
 
 export const requireAuth = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -15,6 +12,10 @@ export const requireAuth = () => {
 
         return next()
     }
+}
+
+export const isUserOrgMember = async (user: User, organization: Organization): Promise<boolean> => {
+    return (await DI.organizationMemberships.findOne({ user, organization })) !== null
 }
 
 export const requireProjectAccess = () => {

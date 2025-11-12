@@ -19,6 +19,7 @@ primary_region = 'dfw'
   LANGSMITH_TRACING = 'true'
   FRONTEND_URL = 'https://platform.useskald.com'
   INTER_PROCESS_QUEUE = 'sqs'
+  IS_CLOUD = 'true'
 
 
 [http_service]

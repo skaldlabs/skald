@@ -9,12 +9,12 @@ import { MemoTag } from '@/entities/MemoTag'
 import { MemoSummary } from '@/entities/MemoSummary'
 import { MemoContent } from '@/entities/MemoContent'
 import { ProjectAPIKey } from '@/entities/ProjectAPIKey'
-import { trackUsage } from '@/middleware/usageTracking'
 import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
 import crypto, { randomUUID } from 'crypto'
 import { posthogCapture } from '@/lib/posthogUtils'
 import { ChatMessage } from '@/entities/ChatMessage'
 import { Chat } from '@/entities/Chat'
+import { UsageTrackingService } from '@/services/usageTrackingService'
 
 export const projectRouter = express.Router({ mergeParams: true })
 
@@ -158,6 +158,15 @@ const create = async (req: Request, res: Response) => {
         return res.status(403).json({ error: 'You are not a member of this organization' })
     }
 
+    const service = new UsageTrackingService(DI.em)
+    const { withinLimit, limit } = await service.checkLimit(organization, 'projects')
+
+    if (!withinLimit) {
+        // Limit exceeded - return 403 error
+        return res.status(403).json({
+            error: `You've reached your plan limit of ${limit} projects. Upgrade your plan to create more projects.`,
+        })
+    }
     const project = DI.projects.create({
         uuid: randomUUID(),
         name,
@@ -358,7 +367,7 @@ const generateApiKeyEndpoint = async (req: Request, res: Response) => {
 }
 
 projectRouter.get('/', list)
-projectRouter.post('/', trackUsage('projects'), create)
+projectRouter.post('/', create)
 projectRouter.get('/:uuid', validateUuidParams('uuid'), retrieve)
 projectRouter.put('/:uuid', validateUuidParams('uuid'), update)
 projectRouter.delete('/:uuid', validateUuidParams('uuid'), destroy)

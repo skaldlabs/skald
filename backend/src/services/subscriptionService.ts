@@ -12,6 +12,7 @@ import { UsageRecord } from '@/entities/UsageRecord'
 import { DI } from '@/di'
 import { EntityManager } from '@mikro-orm/core'
 import { logger } from '@/lib/logger'
+import { CachedQueries } from '@/queries/cachedQueries'
 
 /**
  * Subscription status enum matching Django SubscriptionStatus
@@ -576,6 +577,11 @@ class SubscriptionService {
                 throw new Error(`Plan not found for price ID ${priceId}`)
             }
 
+            if (plan.slug !== 'free') {
+                // with a new subscription the org is no longer hitting the usage limit so we need to clear the cache
+                await CachedQueries.clearOrganizationUsageCache(subscription.organization.uuid)
+            }
+
             subscription.stripe_subscription_id = stripeSubscription.id
             subscription.plan = plan
             subscription.status = stripeSubscription.status || SubscriptionStatus.ACTIVE
@@ -651,6 +657,11 @@ class SubscriptionService {
 
             if (!newPlan) {
                 throw new Error(`Plan not found for price ID ${priceId}`)
+            }
+
+            if (newPlan.slug !== 'free') {
+                // with a new subscription the org is no longer hitting the usage limit so we need to clear the cache
+                await CachedQueries.clearOrganizationUsageCache(subscription.organization.uuid)
             }
 
             await entityManager.populate(subscription, ['plan'])

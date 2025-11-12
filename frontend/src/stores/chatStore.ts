@@ -140,8 +140,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
             (error: ApiErrorData | Event) => {
                 console.error('Chat stream error:', error)
                 get().finishStreaming(assistantMessageId)
-                get().updateStreamingMessage(assistantMessageId, 'Error: Failed to get response')
-                toast.error('Failed to send message')
+
+                // Extract error message from ApiErrorData or use generic message
+                const errorMessage =
+                    'error' in error && typeof error.error === 'string' ? error.error : 'Failed to get response'
+
+                get().updateStreamingMessage(assistantMessageId, `Error: ${errorMessage}`)
+                toast.error(errorMessage)
             }
         )
 

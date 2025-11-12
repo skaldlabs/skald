@@ -2,10 +2,12 @@ import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
 import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
 import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
-import { IS_DEVELOPMENT, LLM_PROVIDER, SUPPORTED_LLM_PROVIDERS } from '@/settings'
+import { IS_CLOUD, IS_DEVELOPMENT, LLM_PROVIDER, SUPPORTED_LLM_PROVIDERS } from '@/settings'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
 import { getOptimizedChatHistory, createChatMessagePair } from '@/lib/chatUtils'
+import { CachedQueries } from '@/queries/cachedQueries'
+import { DI } from '@/di'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -37,6 +39,27 @@ export const chat = async (req: Request, res: Response) => {
     if (!project) {
         // we should never get here, but do this for type safety and extra security
         return res.status(404).json({ error: 'Project not found' })
+    }
+
+    if (IS_CLOUD) {
+        const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(DI.em, project.organization.uuid)
+        if (isOrgOnFreePlan) {
+            const usage = await CachedQueries.getOrganizationUsage(DI.em, project.organization.uuid)
+            if (usage.chatQueries >= 100) {
+                return res
+                    .status(403)
+                    .json({
+                        error: "You've reached your plan limit of 100 chat queries. Upgrade your plan to continue using chat.",
+                    })
+            }
+            if (usage.memoWrites >= 1000) {
+                return res
+                    .status(403)
+                    .json({
+                        error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue chat.",
+                    })
+            }
+        }
     }
 
     const memoFilters = []
