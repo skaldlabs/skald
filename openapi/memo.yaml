@@ -1,0 +1,1002 @@
+openapi: 3.0.3
+info:
+  title: Skald Memo API
+  description: |
+    The Skald Memo API provides full CRUD operations for managing memos in your knowledge base.
+    Memos can be plaintext content or document uploads (PDF, DOC, DOCX, PPTX).
+
+    **Free Tier Limits:**
+    - Memo writes: 1000 per month
+    - File uploads: 5MB max file size
+
+    **Paid Plans:**
+    - Unlimited memo writes
+    - File uploads: 100MB max file size
+  version: 1.0.0
+  contact:
+    name: Skald Labs
+    url: https://skald.com
+
+servers:
+  - url: https://api.skald.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/v1/memo:
+    get:
+      summary: List memos
+      description: |
+        Retrieve a paginated list of memos for your project.
+        Returns memo metadata without full content (use GET /api/v1/memo/:id for full content).
+      operationId: listMemos
+      tags:
+        - Memos
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: page_size
+          in: query
+          description: Number of memos per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+      responses:
+        '200':
+          description: Successful response with paginated memos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoListResponse'
+              examples:
+                memoList:
+                  summary: Example memo list
+                  value:
+                    results:
+                      - uuid: "550e8400-e29b-41d4-a716-446655440000"
+                        created_at: "2024-01-15T10:30:00Z"
+                        updated_at: "2024-01-15T10:30:00Z"
+                        title: "Authentication Guide"
+                        summary: "Comprehensive guide on implementing authentication"
+                        content_length: 5420
+                        metadata:
+                          category: "security"
+                          priority: "high"
+                        client_reference_id: "auth-guide-2024"
+                        processing_status: "processed"
+                      - uuid: "550e8400-e29b-41d4-a716-446655440001"
+                        created_at: "2024-01-14T15:20:00Z"
+                        updated_at: "2024-01-14T15:25:00Z"
+                        title: "API Documentation"
+                        summary: "Complete API reference and examples"
+                        content_length: 12800
+                        metadata:
+                          category: "documentation"
+                        client_reference_id: null
+                        processing_status: "processed"
+                    count: 42
+                    page: 1
+                    page_size: 20
+                    total_pages: 3
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a memo
+      description: |
+        Create a new memo with either plaintext content or a document upload.
+
+        **For plaintext memos:** Use Content-Type: application/json
+        **For document uploads:** Use Content-Type: multipart/form-data
+
+        Supported document formats: PDF, DOC, DOCX, PPTX
+
+        Documents are processed asynchronously. Use GET /api/v1/memo/:id/status to check processing status.
+      operationId: createMemo
+      tags:
+        - Memos
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaintextMemoCreate'
+            examples:
+              simpleTextMemo:
+                summary: Simple plaintext memo
+                value:
+                  title: "Meeting Notes - Q1 Planning"
+                  content: "Discussed Q1 objectives including:\n- Launch new API features\n- Improve documentation\n- Expand to new markets"
+              memoWithMetadata:
+                summary: Memo with tags and metadata
+                value:
+                  title: "Database Migration Guide"
+                  content: "Step-by-step guide for migrating from PostgreSQL 13 to 15..."
+                  source: "internal-wiki"
+                  reference_id: "db-mig-2024-01"
+                  tags: ["database", "migration", "postgresql"]
+                  metadata:
+                    category: "infrastructure"
+                    author: "devops-team"
+                    priority: "high"
+              memoWithExpiration:
+                summary: Memo with expiration date
+                value:
+                  title: "Temporary Access Credentials"
+                  content: "Credentials for staging environment access..."
+                  expiration_date: "2024-12-31T23:59:59Z"
+                  tags: ["credentials", "temporary"]
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentMemoCreate'
+            encoding:
+              file:
+                contentType: application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.openxmlformats-officedocument.presentationml.presentation
+      responses:
+        '201':
+          description: Memo created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoCreateResponse'
+              examples:
+                created:
+                  summary: Memo created
+                  value:
+                    memo_uuid: "550e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingTitle:
+                  summary: Missing title
+                  value:
+                    error: "Title is required"
+                missingContent:
+                  summary: Missing content
+                  value:
+                    error: "Content is required"
+                noFile:
+                  summary: No file provided
+                  value:
+                    error: "No file provided"
+                fileTooLarge:
+                  summary: File size exceeds limit
+                  value:
+                    error: "File size exceeds 100MB limit"
+                invalidFileType:
+                  summary: Invalid file type
+                  value:
+                    error: "Invalid file type. Allowed types: .pdf, .doc, .docx, .pptx"
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - quota exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                quotaExceeded:
+                  summary: Free tier limit reached
+                  value:
+                    error: "You've reached your plan limit of 1000 memo writes per month. Please upgrade your plan to continue."
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                processingFailed:
+                  summary: Document processing failed
+                  value:
+                    error: "Failed to process uploaded file"
+
+  /api/v1/memo/{id}:
+    get:
+      summary: Retrieve a memo
+      description: |
+        Retrieve full details of a specific memo by UUID or client reference ID.
+        Includes full content, metadata, tags, and chunks.
+      operationId: getMemo
+      tags:
+        - Memos
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Memo UUID or client reference ID
+          required: true
+          schema:
+            type: string
+            example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: id_type
+          in: query
+          description: Type of ID being provided
+          required: false
+          schema:
+            type: string
+            enum:
+              - memo_uuid
+              - reference_id
+            default: memo_uuid
+            example: "memo_uuid"
+      responses:
+        '200':
+          description: Successful response with memo details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoDetail'
+              examples:
+                fullMemo:
+                  summary: Complete memo with chunks
+                  value:
+                    uuid: "550e8400-e29b-41d4-a716-446655440000"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+                    title: "Authentication Guide"
+                    content: "Authentication is the process of verifying the identity of a user..."
+                    summary: "Comprehensive guide on implementing authentication with JWT tokens"
+                    metadata:
+                      category: "security"
+                      priority: "high"
+                    client_reference_id: "auth-guide-2024"
+                    source: "internal-wiki"
+                    type: "plaintext"
+                    expiration_date: null
+                    archived: false
+                    processing_status: "processed"
+                    tags:
+                      - uuid: "660e8400-e29b-41d4-a716-446655440000"
+                        tag: "authentication"
+                      - uuid: "660e8400-e29b-41d4-a716-446655440001"
+                        tag: "security"
+                    chunks:
+                      - uuid: "770e8400-e29b-41d4-a716-446655440000"
+                        chunk_content: "Authentication is the process of verifying..."
+                        chunk_index: 0
+                      - uuid: "770e8400-e29b-41d4-a716-446655440001"
+                        chunk_content: "JWT tokens provide a stateless authentication mechanism..."
+                        chunk_index: 1
+        '400':
+          description: Bad request - invalid id_type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidIdType:
+                  summary: Invalid id_type parameter
+                  value:
+                    error: "id_type must be either 'memo_uuid' or 'reference_id'"
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Memo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                notFound:
+                  summary: Memo not found
+                  value:
+                    error: "Memo not found"
+
+    patch:
+      summary: Update a memo
+      description: |
+        Update specific fields of a memo. All fields are optional.
+
+        **Note:** Updating the `content` field triggers reprocessing and will:
+        - Delete existing summary
+        - Delete existing tags
+        - Delete existing chunks
+        - Re-chunk and re-embed the new content
+      operationId: updateMemo
+      tags:
+        - Memos
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Memo UUID or client reference ID
+          required: true
+          schema:
+            type: string
+            example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: id_type
+          in: query
+          description: Type of ID being provided
+          required: false
+          schema:
+            type: string
+            enum:
+              - memo_uuid
+              - reference_id
+            default: memo_uuid
+            example: "memo_uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoUpdate'
+            examples:
+              updateTitle:
+                summary: Update title only
+                value:
+                  title: "Authentication Guide (Updated 2024)"
+              updateMetadata:
+                summary: Update metadata
+                value:
+                  metadata:
+                    category: "security"
+                    priority: "critical"
+                    reviewed: true
+              updateContent:
+                summary: Update content (triggers reprocessing)
+                value:
+                  content: "Updated authentication guide with OAuth 2.0 information..."
+              updateMultiple:
+                summary: Update multiple fields
+                value:
+                  title: "Complete Auth Guide"
+                  source: "engineering-docs"
+                  client_reference_id: "auth-guide-v2"
+                  metadata:
+                    version: "2.0"
+      responses:
+        '200':
+          description: Memo updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - ok
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Memo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                notFound:
+                  summary: Memo not found
+                  value:
+                    error: "Memo not found"
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unavailable:
+                  summary: Service unavailable
+                  value:
+                    error: "Service unavailable"
+
+    delete:
+      summary: Delete a memo
+      description: |
+        Permanently delete a memo and all associated data including:
+        - Memo content and metadata
+        - Summary and tags
+        - All chunks and embeddings
+        - Associated S3 files (for document memos)
+
+        This operation cannot be undone.
+      operationId: deleteMemo
+      tags:
+        - Memos
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Memo UUID or client reference ID
+          required: true
+          schema:
+            type: string
+            example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: id_type
+          in: query
+          description: Type of ID being provided
+          required: false
+          schema:
+            type: string
+            enum:
+              - memo_uuid
+              - reference_id
+            default: memo_uuid
+            example: "memo_uuid"
+      responses:
+        '204':
+          description: Memo deleted successfully (no content)
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Memo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                notFound:
+                  summary: Memo not found
+                  value:
+                    error: "Memo not found"
+
+  /api/v1/memo/{id}/status:
+    get:
+      summary: Get memo processing status
+      description: |
+        Check the processing status of a memo.
+        Useful for monitoring document uploads or content updates that trigger async processing.
+
+        **Processing Statuses:**
+        - `processing`: Memo is currently being processed (chunking, embedding, summarization)
+        - `processed`: Processing completed successfully
+        - `error`: Processing failed (check error_reason field)
+
+        **Cache Headers:**
+        - Processed memos: cached for 1 year (immutable)
+        - Error status: cached for 24 hours
+        - Processing status: no cache
+      operationId: getMemoStatus
+      tags:
+        - Memos
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Memo UUID or client reference ID
+          required: true
+          schema:
+            type: string
+            example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: id_type
+          in: query
+          description: Type of ID being provided
+          required: false
+          schema:
+            type: string
+            enum:
+              - memo_uuid
+              - reference_id
+            default: memo_uuid
+            example: "memo_uuid"
+      responses:
+        '200':
+          description: Processing status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoStatus'
+              examples:
+                processing:
+                  summary: Memo is being processed
+                  value:
+                    memo_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "processing"
+                    processing_started_at: "2024-01-15T10:30:00Z"
+                    processing_completed_at: null
+                    error_reason: null
+                processed:
+                  summary: Memo processing completed
+                  value:
+                    memo_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "processed"
+                    processing_started_at: "2024-01-15T10:30:00Z"
+                    processing_completed_at: "2024-01-15T10:30:45Z"
+                    error_reason: null
+                error:
+                  summary: Memo processing failed
+                  value:
+                    memo_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                    status: "error"
+                    processing_started_at: "2024-01-15T10:30:00Z"
+                    processing_completed_at: "2024-01-15T10:31:00Z"
+                    error_reason: "Failed to extract text from document"
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Memo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                notFound:
+                  summary: Memo not found
+                  value:
+                    error: "Memo not found"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Project API Key
+      description: |
+        Use your Skald Project API Key with the format: sk_proj_<40_hex_chars>
+        Include it in the Authorization header as: Authorization: Bearer sk_proj_...
+
+  schemas:
+    PlaintextMemoCreate:
+      type: object
+      description: Schema for creating a plaintext memo
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Title of the memo
+          example: "API Authentication Guide"
+        content:
+          type: string
+          description: Full text content of the memo
+          example: "This guide covers authentication methods for our API..."
+        source:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Source or origin of the memo content
+          example: "internal-wiki"
+        reference_id:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: |
+            Client-provided reference ID for external system integration.
+            Can be used to retrieve the memo instead of UUID.
+          example: "wiki-page-1234"
+        expiration_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional expiration date for the memo (must be in the future)
+          example: "2024-12-31T23:59:59Z"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Optional tags for categorization
+          example: ["authentication", "api", "security"]
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata as key-value pairs
+          example:
+            category: "documentation"
+            priority: "high"
+            author: "engineering-team"
+
+    DocumentMemoCreate:
+      type: object
+      description: Schema for creating a document memo via file upload
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: |
+            Document file to upload.
+            Supported formats: PDF, DOC, DOCX, PPTX
+            Max size: 100MB (5MB on free tier)
+        title:
+          type: string
+          maxLength: 255
+          description: Optional title (defaults to filename if not provided)
+          example: "Q1 Planning Document"
+        source:
+          type: string
+          maxLength: 255
+          description: Source or origin of the document
+          example: "google-drive"
+        reference_id:
+          type: string
+          maxLength: 255
+          description: Client-provided reference ID
+          example: "gdrive-doc-xyz789"
+        expiration_date:
+          type: string
+          format: date-time
+          description: Optional expiration date (ISO 8601 format)
+          example: "2024-12-31T23:59:59Z"
+        tags:
+          type: string
+          description: JSON string array of tags
+          example: '["planning", "q1", "strategy"]'
+        metadata:
+          type: string
+          description: JSON string of custom metadata
+          example: '{"department": "product", "quarter": "Q1"}'
+
+    MemoUpdate:
+      type: object
+      description: Schema for updating a memo (all fields optional)
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Updated title
+          example: "Updated API Guide"
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Updated custom metadata
+          example:
+            category: "security"
+            reviewed: true
+        client_reference_id:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Updated client reference ID
+          example: "new-ref-id-2024"
+        source:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Updated source
+          example: "updated-wiki"
+        expiration_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Updated expiration date
+          example: "2025-12-31T23:59:59Z"
+        content:
+          type: string
+          nullable: true
+          description: |
+            Updated content (triggers reprocessing).
+            WARNING: This will delete existing summary, tags, and chunks.
+          example: "Updated content with new information..."
+
+    MemoListResponse:
+      type: object
+      description: Paginated list of memos
+      required:
+        - results
+        - count
+        - page
+        - page_size
+        - total_pages
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoSummary'
+        count:
+          type: integer
+          description: Total number of memos
+          example: 42
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        page_size:
+          type: integer
+          description: Number of items per page
+          example: 20
+        total_pages:
+          type: integer
+          description: Total number of pages
+          example: 3
+
+    MemoSummary:
+      type: object
+      description: Summary information about a memo (without full content)
+      required:
+        - uuid
+        - created_at
+        - updated_at
+        - title
+        - content_length
+        - metadata
+        - processing_status
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-15T10:30:00Z"
+        title:
+          type: string
+          description: Memo title
+          example: "Authentication Guide"
+        summary:
+          type: string
+          nullable: true
+          description: AI-generated summary (null if not yet processed)
+          example: "Comprehensive guide on implementing authentication"
+        content_length:
+          type: integer
+          description: Length of content in characters
+          example: 5420
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata
+          example:
+            category: "security"
+        client_reference_id:
+          type: string
+          nullable: true
+          description: Client-provided reference ID
+          example: "auth-guide-2024"
+        processing_status:
+          type: string
+          enum:
+            - processing
+            - processed
+            - error
+          description: Current processing status
+          example: "processed"
+
+    MemoDetail:
+      type: object
+      description: Complete memo details including content and chunks
+      required:
+        - uuid
+        - created_at
+        - updated_at
+        - title
+        - metadata
+        - processing_status
+        - archived
+        - tags
+        - chunks
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-15T10:30:00Z"
+        title:
+          type: string
+          description: Memo title
+          example: "Authentication Guide"
+        content:
+          type: string
+          nullable: true
+          description: Full content (null for documents not yet processed)
+          example: "Authentication is the process of verifying..."
+        summary:
+          type: string
+          nullable: true
+          description: AI-generated summary
+          example: "Comprehensive guide on implementing authentication"
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Custom metadata
+          example:
+            category: "security"
+        client_reference_id:
+          type: string
+          nullable: true
+          description: Client-provided reference ID
+          example: "auth-guide-2024"
+        source:
+          type: string
+          nullable: true
+          description: Source or origin
+          example: "internal-wiki"
+        type:
+          type: string
+          enum:
+            - plaintext
+            - document
+          description: Type of memo
+          example: "plaintext"
+        expiration_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Expiration date
+          example: null
+        archived:
+          type: boolean
+          description: Whether memo is archived
+          example: false
+        processing_status:
+          type: string
+          enum:
+            - processing
+            - processed
+            - error
+          description: Current processing status
+          example: "processed"
+        tags:
+          type: array
+          items:
+            type: object
+            required:
+              - uuid
+              - tag
+            properties:
+              uuid:
+                type: string
+                format: uuid
+                description: Tag UUID
+                example: "660e8400-e29b-41d4-a716-446655440000"
+              tag:
+                type: string
+                description: Tag value
+                example: "authentication"
+        chunks:
+          type: array
+          items:
+            type: object
+            required:
+              - uuid
+              - chunk_content
+              - chunk_index
+            properties:
+              uuid:
+                type: string
+                format: uuid
+                description: Chunk UUID
+                example: "770e8400-e29b-41d4-a716-446655440000"
+              chunk_content:
+                type: string
+                description: Text content of this chunk
+                example: "Authentication is the process of verifying..."
+              chunk_index:
+                type: integer
+                description: Sequential index of this chunk
+                example: 0
+
+    MemoCreateResponse:
+      type: object
+      description: Response after creating a memo
+      required:
+        - memo_uuid
+      properties:
+        memo_uuid:
+          type: string
+          format: uuid
+          description: UUID of the created memo
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    MemoStatus:
+      type: object
+      description: Processing status of a memo
+      required:
+        - memo_uuid
+        - status
+      properties:
+        memo_uuid:
+          type: string
+          format: uuid
+          description: UUID of the memo
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum:
+            - processing
+            - processed
+            - error
+          description: Current processing status
+          example: "processed"
+        processing_started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When processing started
+          example: "2024-01-15T10:30:00Z"
+        processing_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When processing completed (or failed)
+          example: "2024-01-15T10:30:45Z"
+        error_reason:
+          type: string
+          nullable: true
+          description: Error message if status is 'error'
+          example: null
+
+    Error:
+      type: object
+      description: Error response object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Memo not found"
+
+tags:
+  - name: Memos
+    description: |
+      Complete CRUD operations for managing memos in your knowledge base.
+      Supports both plaintext content and document uploads with async processing.

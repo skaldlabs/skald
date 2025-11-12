@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: Skald Search API
+  description: |
+    The Skald Search API provides semantic search capabilities across your memo knowledge base.
+    It uses vector embeddings to perform intelligent searches that understand the meaning of your queries.
+  version: 1.0.0
+  contact:
+    name: Skald Labs
+    url: https://skald.com
+
+servers:
+  - url: https://api.skald.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/v1/search:
+    post:
+      summary: Perform semantic search
+      description: |
+        Search across your project's memos using semantic vector search.
+        Returns the most relevant memo chunks based on the query, with optional filtering.
+      operationId: searchMemos
+      tags:
+        - Search
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: The search query text
+                  example: "How do I authenticate users?"
+                limit:
+                  type: integer
+                  description: Maximum number of results to return
+                  minimum: 1
+                  maximum: 50
+                  default: 10
+                  example: 10
+                filters:
+                  type: array
+                  description: Optional filters to apply to the search results
+                  items:
+                    $ref: '#/components/schemas/MemoFilter'
+            examples:
+              basicSearch:
+                summary: Basic search query
+                value:
+                  query: "authentication methods"
+                  limit: 10
+              searchWithFilters:
+                summary: Search with filters
+                value:
+                  query: "API documentation"
+                  limit: 20
+                  filters:
+                    - field: "tags"
+                      operator: "contains"
+                      value: "api"
+                      filter_type: "native_field"
+                    - field: "source"
+                      operator: "eq"
+                      value: "internal-docs"
+                      filter_type: "native_field"
+              metadataFilter:
+                summary: Search with custom metadata filter
+                value:
+                  query: "database schema"
+                  filters:
+                    - field: "category"
+                      operator: "in"
+                      value: ["backend", "database"]
+                      filter_type: "custom_metadata"
+      responses:
+        '200':
+          description: Successful search operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+              examples:
+                searchResults:
+                  summary: Example search results
+                  value:
+                    results:
+                      - memo_uuid: "550e8400-e29b-41d4-a716-446655440000"
+                        chunk_uuid: "660e8400-e29b-41d4-a716-446655440000"
+                        memo_title: "Authentication Guide"
+                        memo_summary: "Comprehensive guide on implementing authentication"
+                        content_snippet: "Authentication is the process of verifying the identity of a user..."
+                        chunk_content: "Authentication is the process of verifying the identity of a user. The recommended approach is to use JWT tokens with refresh token rotation..."
+                        distance: 0.23
+                      - memo_uuid: "550e8400-e29b-41d4-a716-446655440001"
+                        chunk_uuid: "660e8400-e29b-41d4-a716-446655440001"
+                        memo_title: "API Security Best Practices"
+                        memo_summary: "Best practices for securing REST APIs"
+                        content_snippet: "Securing your API requires multiple layers of protection..."
+                        chunk_content: "Securing your API requires multiple layers of protection. Always use HTTPS, implement rate limiting, and validate all inputs..."
+                        distance: 0.35
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingQuery:
+                  summary: Missing query parameter
+                  value:
+                    error: "Query is required"
+                invalidLimit:
+                  summary: Invalid limit value
+                  value:
+                    error: "Limit must be less than or equal to 50"
+                invalidFilter:
+                  summary: Invalid filter
+                  value:
+                    error: "Invalid filter: operator 'invalid_op' is not supported"
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Missing authentication
+                  value:
+                    error: "Unauthorized"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Project API Key
+      description: |
+        Use your Skald Project API Key with the format: sk_proj_<40_hex_chars>
+        Include it in the Authorization header as: Authorization: Bearer sk_proj_...
+
+  schemas:
+    MemoFilter:
+      type: object
+      description: Filter to apply to search results based on memo properties
+      required:
+        - field
+        - operator
+        - value
+        - filter_type
+      properties:
+        field:
+          type: string
+          description: |
+            The field name to filter on.
+            For native_field type: 'title', 'source', 'client_reference_id', 'tags'
+            For custom_metadata type: any custom metadata field name
+          example: "tags"
+        operator:
+          type: string
+          enum:
+            - eq
+            - neq
+            - contains
+            - startswith
+            - endswith
+            - in
+            - not_in
+          description: The comparison operator to use
+          example: "contains"
+        value:
+          description: |
+            The value to compare against. Type depends on the operator:
+            - eq, neq, contains, startswith, endswith: string
+            - in, not_in: array of strings
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+              items:
+                type: string
+          example: "authentication"
+        filter_type:
+          type: string
+          enum:
+            - native_field
+            - custom_metadata
+          description: |
+            Whether to filter on a native memo field or custom metadata.
+            Native fields: title, source, client_reference_id, tags
+            Custom metadata: any field in the memo's metadata object
+          example: "native_field"
+
+    SearchResult:
+      type: object
+      description: A single search result representing a matching memo chunk
+      properties:
+        memo_uuid:
+          type: string
+          format: uuid
+          description: Unique identifier of the parent memo
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        chunk_uuid:
+          type: string
+          format: uuid
+          description: Unique identifier of the specific memo chunk
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        memo_title:
+          type: string
+          description: Title of the parent memo
+          example: "Authentication Guide"
+        memo_summary:
+          type: string
+          description: AI-generated summary of the parent memo
+          example: "Comprehensive guide on implementing authentication"
+        content_snippet:
+          type: string
+          description: First 100 characters of the chunk content
+          example: "Authentication is the process of verifying the identity of a user..."
+        chunk_content:
+          type: string
+          description: Full content of the matching chunk
+          example: "Authentication is the process of verifying the identity of a user. The recommended approach is to use JWT tokens with refresh token rotation..."
+        distance:
+          type: number
+          format: float
+          description: Vector distance score (lower is more similar)
+          minimum: 0
+          maximum: 1
+          example: 0.23
+
+    Error:
+      type: object
+      description: Error response object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Query is required"
+
+tags:
+  - name: Search
+    description: Semantic search operations across memo knowledge base
