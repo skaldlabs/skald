@@ -1,4 +1,16 @@
-import { MessageSquare, Files, LogOut, Hotel, Rocket, Sun, Moon, Settings, CreditCard, BookOpen } from 'lucide-react'
+import {
+    MessageSquare,
+    Files,
+    LogOut,
+    Hotel,
+    Rocket,
+    Sun,
+    Moon,
+    Settings,
+    CreditCard,
+    BookOpen,
+    GlobeLock,
+} from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
@@ -91,9 +103,20 @@ export const Sider = () => {
         },
     ]
 
+    const adminConfigMenuItems: MenuItem[] = isSelfHostedDeploy
+        ? []
+        : [
+              {
+                  key: '/admin',
+                  icon: <GlobeLock className="h-4 w-4" />,
+                  label: 'Admin Area',
+                  hasAccess: (user) => user?.is_superuser || false,
+              },
+          ]
+
     const configMenuItems: MenuItem[] = isSelfHostedDeploy
         ? defaultConfigMenuItems
-        : [...defaultConfigMenuItems, ...cloudConfigMenuItems]
+        : [...defaultConfigMenuItems, ...cloudConfigMenuItems, ...adminConfigMenuItems]
 
     const handleMenuClick = (key: string, onClick?: () => void) => {
         if (onClick) {
