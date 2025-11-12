@@ -50,6 +50,13 @@ interface RerankResult {
     index: number
     document: any
     relevance_score: number
+    memo_uuid?: string
+    memo_title?: string
+}
+
+interface RerankMetadata {
+    memo_uuid: string
+    memo_title: string
 }
 
 const _buildOpenAIRerankPrompt = (query: string, results: any[]): string => {
@@ -65,22 +72,26 @@ export class RerankService {
      * Service for reranking results using various providers.
      */
 
-    static async rerank(query: string, results: any[]): Promise<RerankResult[]> {
+    static async rerank(query: string, results: any[], metadata?: RerankMetadata[]): Promise<RerankResult[]> {
         if (EMBEDDING_PROVIDER === 'voyage') {
-            return this.rerankVoyage(query, results)
+            return this.rerankVoyage(query, results, metadata)
         } else if (EMBEDDING_PROVIDER === 'openai') {
-            return this.rerankOpenAI(query, results)
+            return this.rerankOpenAI(query, results, metadata)
         } else if (EMBEDDING_PROVIDER === 'local') {
             // when EMBEDDING_PROVIDER=local, we use the so-called "local embedding service" to rerank the results
             // via its /rerank endpoint. this uses the sentence_transformers library and is meant for advanced usage
             // when those self-hosting don't want to send data to any third-party providers.
-            return this.rerankLocal(query, results)
+            return this.rerankLocal(query, results, metadata)
         }
 
         throw new Error(`Unsupported embedding provider: ${EMBEDDING_PROVIDER}`)
     }
 
-    private static async rerankVoyage(query: string, results: any[]): Promise<RerankResult[]> {
+    private static async rerankVoyage(
+        query: string,
+        results: any[],
+        metadata?: RerankMetadata[]
+    ): Promise<RerankResult[]> {
         const client = new VoyageAIClient({ apiKey: VOYAGE_API_KEY })
 
         const result = await client.rerank({
@@ -102,15 +113,26 @@ export class RerankService {
                 throw new Error('Invalid rerank result from Voyage')
             }
 
-            return {
+            const rerankResult: RerankResult = {
                 index,
                 document: results[index],
                 relevance_score: relevanceScore,
             }
+
+            if (metadata && metadata[index]) {
+                rerankResult.memo_uuid = metadata[index].memo_uuid
+                rerankResult.memo_title = metadata[index].memo_title
+            }
+
+            return rerankResult
         })
     }
 
-    private static async rerankOpenAI(query: string, results: any[]): Promise<RerankResult[]> {
+    private static async rerankOpenAI(
+        query: string,
+        results: any[],
+        metadata?: RerankMetadata[]
+    ): Promise<RerankResult[]> {
         const llm = LLMService.getLLM(0, 'openai')
         const structuredLlm = llm.withStructuredOutput(RerankOutputSchema, {
             name: 'RerankAgent',
@@ -131,10 +153,14 @@ export class RerankService {
         )
 
         const rerankOutput = result as z.infer<typeof RerankOutputSchema>
-        return this.normalizeRerankResults(rerankOutput, results)
+        return this.normalizeRerankResults(rerankOutput, results, metadata)
     }
 
-    private static async rerankLocal(query: string, results: any[]): Promise<RerankResult[]> {
+    private static async rerankLocal(
+        query: string,
+        results: any[],
+        metadata?: RerankMetadata[]
+    ): Promise<RerankResult[]> {
         if (!results || results.length === 0) {
             return []
         }
@@ -158,17 +184,30 @@ export class RerankService {
         }
 
         const data = (await response.json()) as { results: RerankResult[] }
-        const parsedResults = data.results.map((result) => ({
-            index: result.index,
-            document: result.document,
-            relevance_score: result.relevance_score,
-        }))
+        const parsedResults = data.results.map((result) => {
+            const rerankResult: RerankResult = {
+                index: result.index,
+                document: result.document,
+                relevance_score: result.relevance_score,
+            }
+
+            if (metadata && metadata[result.index]) {
+                rerankResult.memo_uuid = metadata[result.index].memo_uuid
+                rerankResult.memo_title = metadata[result.index].memo_title
+            }
+
+            return rerankResult
+        })
 
         parsedResults.sort((a, b) => b.relevance_score - a.relevance_score)
         return parsedResults
     }
 
-    private static normalizeRerankResults(rerankOutput: RerankOutput, originalResults: any[]): RerankResult[] {
+    private static normalizeRerankResults(
+        rerankOutput: RerankOutput,
+        originalResults: any[],
+        metadata?: RerankMetadata[]
+    ): RerankResult[] {
         /**
          * Normalizes rerank output to consistent format with top-k filtering.
          */
@@ -181,11 +220,18 @@ export class RerankService {
             }
 
             const score = Math.max(0.0, Math.min(1.0, item.relevance_score))
-            normalized.push({
+            const rerankResult: RerankResult = {
                 index: idx,
                 document: originalResults[idx],
                 relevance_score: parseFloat(score.toFixed(6)),
-            })
+            }
+
+            if (metadata && metadata[idx]) {
+                rerankResult.memo_uuid = metadata[idx].memo_uuid
+                rerankResult.memo_title = metadata[idx].memo_title
+            }
+
+            normalized.push(rerankResult)
         }
 
         normalized.sort((a, b) => b.relevance_score - a.relevance_score)
