@@ -231,7 +231,7 @@ export const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY || 'phc_B77mcYC1EycR6
 export const POSTHOG_HOST = process.env.POSTHOG_HOST || 'https://us.i.posthog.com'
 
 // ---- Document Extraction Provider Configuration ----
-export const DOCUMENT_EXTRACTION_PROVIDER = process.env.DOCUMENT_EXTRACTION_PROVIDER || 'docling'
+export const DOCUMENT_EXTRACTION_PROVIDER = process.env.DOCUMENT_EXTRACTION_PROVIDER || 'datalab'
 
 // Datalab API (for converting documents to markdown)
 export const DATALAB_API_KEY = process.env.DATALAB_API_KEY
