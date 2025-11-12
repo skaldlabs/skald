@@ -15,7 +15,7 @@ export const TalkToFounderModal = ({ open, onOpenChange }: TalkToFounderModalPro
         {
             id: 'founder1' as const,
             name: 'Pedrique',
-            image: '/pedrique.jpeg',
+            image: '/pedrique.webp',
             description: (
                 <>
                     <h3 className="mb-2">Pedrique</h3>
@@ -31,7 +31,7 @@ export const TalkToFounderModal = ({ open, onOpenChange }: TalkToFounderModalPro
         {
             id: 'founder2' as const,
             name: 'Yakko',
-            image: '/yakko.png',
+            image: '/yakko.webp',
             description: (
                 <>
                     <h3 className="mb-2">Yakko</h3>
