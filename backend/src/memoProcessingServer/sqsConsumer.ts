@@ -31,6 +31,7 @@ async function processMessage(orm: MikroORM, message: Message): Promise<void> {
         }
     } catch (error) {
         logger.error({ err: error }, 'Error processing message')
+        Sentry.captureException(error)
 
         await deleteMessage(message)
         if (!SQS_DLQ_QUEUE_URL) {
