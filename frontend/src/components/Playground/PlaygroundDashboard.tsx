@@ -42,7 +42,7 @@ export const PlaygroundDashboard = () => {
             <PageHeader title="Playground">
                 <Button variant="outline" size="sm" onClick={() => setIsConfigOpen(true)}>
                     <Settings className="h-4 w-4 mr-2" />
-                    Settings
+                    Configure
                 </Button>
             </PageHeader>
 
