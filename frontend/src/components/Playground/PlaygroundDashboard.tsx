@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import './Playground.scss'
 import { isSelfHostedDeploy } from '@/config'
 
@@ -20,7 +22,8 @@ const LLM_PROVIDERS = [
 
 export const PlaygroundDashboard = () => {
     const { currentProject } = useProjectStore()
-    const { systemPrompt, setSystemPrompt, llmProvider, setLlmProvider } = useChatStore()
+    const { systemPrompt, setSystemPrompt, llmProvider, setLlmProvider, enableReferences, setEnableReferences } =
+        useChatStore()
     const [isConfigOpen, setIsConfigOpen] = useState(false)
 
     if (!currentProject) {
@@ -39,7 +42,7 @@ export const PlaygroundDashboard = () => {
             <PageHeader title="Playground">
                 <Button variant="outline" size="sm" onClick={() => setIsConfigOpen(true)}>
                     <Settings className="h-4 w-4 mr-2" />
-                    Settings
+                    Configure
                 </Button>
             </PageHeader>
 
@@ -91,6 +94,22 @@ export const PlaygroundDashboard = () => {
                                 value={systemPrompt}
                                 onChange={(e) => setSystemPrompt(e.target.value)}
                                 className="min-h-[120px]"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <Label htmlFor="enable-references" className="text-base">
+                                    Enable Source References
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                    Show [X] reference links in chat responses
+                                </p>
+                            </div>
+                            <Switch
+                                id="enable-references"
+                                checked={enableReferences}
+                                onCheckedChange={setEnableReferences}
                             />
                         </div>
                     </div>

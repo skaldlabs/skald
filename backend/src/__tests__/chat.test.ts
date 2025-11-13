@@ -408,7 +408,11 @@ describe('Chat API', () => {
                 context: 'Result 1: First result\n\nResult 2: Second result\n\n',
                 clientSystemPrompt: null,
                 conversationHistory: [],
-                llmProvider: 'openai',
+                rerankResults: mockRerankedResults,
+                options: {
+                    llmProvider: 'openai',
+                    enableReferences: false,
+                },
             })
         })
 
@@ -440,7 +444,11 @@ describe('Chat API', () => {
                 context: 'Result 1: Result content\n\n',
                 clientSystemPrompt: customPrompt,
                 conversationHistory: [],
-                llmProvider: 'openai',
+                rerankResults: mockRerankedResults,
+                options: {
+                    llmProvider: 'openai',
+                    enableReferences: false,
+                },
             })
 
             const em = orm.em.fork()
@@ -479,7 +487,11 @@ describe('Chat API', () => {
                 context: 'Result 1: Result content\n\n',
                 clientSystemPrompt: null,
                 conversationHistory: [],
-                llmProvider: 'openai',
+                rerankResults: mockRerankedResults,
+                options: {
+                    llmProvider: 'openai',
+                    enableReferences: false,
+                },
             })
         })
 
@@ -517,7 +529,11 @@ describe('Chat API', () => {
                 context: 'Result 1: Result content\n\n',
                 clientSystemPrompt: clientSystemPrompt,
                 conversationHistory: [],
-                llmProvider: 'openai',
+                rerankResults: mockRerankedResults,
+                options: {
+                    llmProvider: 'openai',
+                    enableReferences: false,
+                },
             })
             // check that the created chat messages have the correct client system prompt
             const em = orm.em.fork()
@@ -562,7 +578,11 @@ describe('Chat API', () => {
                 context: 'Result 1: Result content\n\n',
                 clientSystemPrompt: null,
                 conversationHistory: [],
-                llmProvider: 'openai',
+                rerankResults: mockRerankedResults,
+                options: {
+                    llmProvider: 'openai',
+                    enableReferences: false,
+                },
             })
         })
 
@@ -859,7 +879,7 @@ describe('Chat API', () => {
             expect(runChatArgs.conversationHistory).toBeDefined()
             expect(Array.isArray(runChatArgs.conversationHistory)).toBe(true)
             expect(runChatArgs.conversationHistory.length).toBeGreaterThan(0) // Should have conversation history
-            expect(runChatArgs.llmProvider).toBe('anthropic') // llmProvider
+            expect(runChatArgs.options.llmProvider).toBe('anthropic') // llmProvider
         })
 
         it('should pass default llm provider to runChatAgent when not specified', async () => {
@@ -885,7 +905,7 @@ describe('Chat API', () => {
             // Verify that runChatAgent was called with default LLM_PROVIDER
             expect(chatAgent.runChatAgent).toHaveBeenCalled()
             const runChatArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
-            expect(runChatArgs.llmProvider).toBe('openai') // Default LLM_PROVIDER from mocked settings
+            expect(runChatArgs.options.llmProvider).toBe('openai') // Default LLM_PROVIDER from mocked settings
         })
     })
 

@@ -184,6 +184,30 @@
     opacity: 0.7;
 }
 
+.reference-link {
+    cursor: pointer;
+    display: inline;
+
+    .reference-link-text {
+        color: #3b82f6; /* blue-500 */
+        font-size: 0.875em;
+        font-weight: 400;
+        text-decoration: none;
+        transition: all 0.2s ease;
+
+        &:hover {
+            text-decoration: underline;
+            color: #2563eb; /* blue-600 */
+        }
+    }
+}
+
+.reference-link-fallback {
+    color: var(--muted-foreground);
+    font-size: 0.875em;
+    font-style: italic;
+}
+
 .chat-input-form {
     padding: 20px;
     border-top: 1px solid var(--border);

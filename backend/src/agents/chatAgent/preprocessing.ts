@@ -12,6 +12,8 @@ interface RerankResult {
     index: number
     document: string
     relevance_score: number
+    memo_uuid?: string
+    memo_title?: string
 }
 
 async function chunkVectorSearch(
@@ -19,7 +21,7 @@ async function chunkVectorSearch(
     project: Project,
     filters?: MemoFilter[],
     conversationHistory: Array<[string, string]> = []
-): Promise<string[]> {
+): Promise<RerankResult[]> {
     let processedQuery = query
     if (project.query_rewrite_enabled) {
         try {
@@ -47,6 +49,8 @@ async function chunkVectorSearch(
     const memoPropertiesMap = await getTitleAndSummaryAndContentForMemoList(project.uuid, relevantMemoUuids)
 
     const rerankData: string[] = []
+    const rerankMetadata: Array<{ memo_uuid: string; memo_title: string }> = []
+
     for (const chunkResult of chunkResults) {
         const chunk = chunkResult.chunk
 
@@ -54,21 +58,29 @@ async function chunkVectorSearch(
 
         const rerankSnippet = `Title: ${memo?.title}\n\nFull content summary: ${memo?.summary}\n\nChunk content: ${chunk.chunk_content}\n\n`
         rerankData.push(rerankSnippet)
+        rerankMetadata.push({ memo_uuid: chunk.memo_uuid, memo_title: memo?.title || '' })
     }
 
     // split into batches of 25 to ensure we're under token limits for the reranker
     // KLUDGE: this is hardcoded right now based on ~1k tokens per chunk and 32k token limit for the voyage reranker
     const rerankDataBatches: string[][] = []
+    const rerankMetadataBatches: Array<Array<{ memo_uuid: string; memo_title: string }>> = []
+
     for (let i = 0; i < rerankData.length; i += 25) {
         rerankDataBatches.push(rerankData.slice(i, i + 25))
+        rerankMetadataBatches.push(rerankMetadata.slice(i, i + 25))
     }
 
     // rerank all batches concurrently using the processed query
     const results = (
-        await Promise.all(rerankDataBatches.map((batch) => RerankService.rerank(processedQuery, batch)))
+        await Promise.all(
+            rerankDataBatches.map((batch, idx) =>
+                RerankService.rerank(processedQuery, batch, rerankMetadataBatches[idx])
+            )
+        )
     ).flat()
 
-    return results.map((r) => r.document)
+    return results
 }
 
 export async function prepareContextForChatAgent(
@@ -78,16 +90,7 @@ export async function prepareContextForChatAgent(
 ): Promise<RerankResult[]> {
     const results = await chunkVectorSearch(query, project, filters)
 
-    // convert strings back to rerank results with scores
-    const rerankResults: RerankResult[] = results.map((doc, index) => ({
-        index,
-        document: doc,
-        relevance_score: 1.0 - index * 0.01, // Simple decreasing score
-    }))
-
-    // sort by relevance score
-    rerankResults.sort((a, b) => b.relevance_score - a.relevance_score)
-
-    // return top K
-    return rerankResults.slice(0, POST_RERANK_TOP_K)
+    // results are already sorted by relevance score from the rerank service
+    // return top K (should already be limited, but ensure it)
+    return results.slice(0, POST_RERANK_TOP_K)
 }

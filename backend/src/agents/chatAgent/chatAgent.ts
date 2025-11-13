@@ -1,16 +1,22 @@
 import { LLMService } from '@/services/llmService'
-import { CHAT_AGENT_INSTRUCTIONS } from '@/agents/chatAgent/prompts'
+import { CHAT_AGENT_INSTRUCTIONS, CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES } from '@/agents/chatAgent/prompts'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 import * as Sentry from '@sentry/node'
 
 interface ChatAgentResult {
     output: string
     intermediate_steps?: any[]
+    references?: Record<number, { memo_uuid: string; memo_title: string }>
 }
 
 interface StreamChunk {
-    type: 'token' | 'error' | 'done'
+    type: 'token' | 'error' | 'done' | 'references'
     content?: string
+}
+
+interface RerankResult {
+    memo_uuid?: string
+    memo_title?: string
 }
 
 export async function runChatAgent({
@@ -18,17 +24,28 @@ export async function runChatAgent({
     context = '',
     clientSystemPrompt = null,
     conversationHistory = [],
-    llmProvider,
+    rerankResults = [],
+    options = {
+        enableReferences: false,
+    },
 }: {
     query: string
     context?: string
     clientSystemPrompt?: string | null
     conversationHistory?: Array<[string, string]>
-    llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+    rerankResults?: RerankResult[]
+    options?: {
+        llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+        enableReferences?: boolean
+    }
 }): Promise<ChatAgentResult> {
+    const { llmProvider, enableReferences } = options
+
     // Use the LLM directly for non-streaming
     const llm = LLMService.getLLM(0, llmProvider)
-    const prompts: [string, string][] = [['system', CHAT_AGENT_INSTRUCTIONS]]
+    const prompts: [string, string][] = [
+        ['system', enableReferences ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
+    ]
     if (clientSystemPrompt) {
         prompts.push(['system', clientSystemPrompt || ''])
     }
@@ -45,10 +62,27 @@ export async function runChatAgent({
         context,
     })
 
-    return {
+    const chatResult: ChatAgentResult = {
         output: typeof result.content === 'string' ? result.content : String(result.content),
         intermediate_steps: [],
     }
+
+    // Build references object if enableReferences is on
+    if (enableReferences && rerankResults.length > 0) {
+        const references: Record<number, { memo_uuid: string; memo_title: string }> = {}
+        for (let i = 0; i < rerankResults.length; i++) {
+            const rerankResult = rerankResults[i]
+            if (rerankResult.memo_uuid && rerankResult.memo_title) {
+                references[i + 1] = {
+                    memo_uuid: rerankResult.memo_uuid,
+                    memo_title: rerankResult.memo_title,
+                }
+            }
+        }
+        chatResult.references = references
+    }
+
+    return chatResult
 }
 
 export async function* streamChatAgent({
@@ -56,19 +90,31 @@ export async function* streamChatAgent({
     context = '',
     clientSystemPrompt = null,
     conversationHistory = [],
-    llmProvider,
+    rerankResults = [],
+    options = {
+        enableReferences: false,
+    },
 }: {
     query: string
     context?: string
     clientSystemPrompt?: string | null
     conversationHistory?: Array<[string, string]>
+    rerankResults?: RerankResult[]
     llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+    options?: {
+        llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
+        enableReferences?: boolean
+    }
 }): AsyncGenerator<StreamChunk> {
+    const { llmProvider, enableReferences } = options
+
     try {
         // For streaming, we'll use the LLM directly instead of the agent
         const llm = LLMService.getLLM(0, llmProvider)
 
-        const prompts: [string, string][] = [['system', CHAT_AGENT_INSTRUCTIONS]]
+        const prompts: [string, string][] = [
+            ['system', enableReferences ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
+        ]
         if (clientSystemPrompt) {
             prompts.push(['system', clientSystemPrompt || ''])
         }
@@ -90,6 +136,26 @@ export async function* streamChatAgent({
                 yield {
                     type: 'token',
                     content: String(chunk.content),
+                }
+            }
+        }
+
+        // After streaming completes, send references if enabled
+        if (enableReferences && rerankResults.length > 0) {
+            const references: Record<number, { memo_uuid: string; memo_title: string }> = {}
+            for (let i = 0; i < rerankResults.length; i++) {
+                const rerankResult = rerankResults[i]
+                if (rerankResult.memo_uuid && rerankResult.memo_title) {
+                    references[i + 1] = {
+                        memo_uuid: rerankResult.memo_uuid,
+                        memo_title: rerankResult.memo_title,
+                    }
+                }
+            }
+            if (Object.keys(references).length > 0) {
+                yield {
+                    type: 'references',
+                    content: JSON.stringify(references),
                 }
             }
         }

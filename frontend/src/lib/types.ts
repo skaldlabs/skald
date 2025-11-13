@@ -1,5 +1,5 @@
 export interface ApiStreamData {
-    type: 'token' | 'sources' | 'chat_context' | 'done' | 'error'
+    type: 'token' | 'sources' | 'chat_context' | 'done' | 'error' | 'references'
     content?: string
     data?: unknown
     chat_id?: string
