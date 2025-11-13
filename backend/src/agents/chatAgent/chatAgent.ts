@@ -19,6 +19,14 @@ interface RerankResult {
     memo_title?: string
 }
 
+/**
+ * Escapes curly braces in a string to prevent LangChain f-string parser errors.
+ * Single { or } characters need to be doubled ({{ or }}) to be treated as literals.
+ */
+export function escapeCurlyBraces(text: string): string {
+    return text.replace(/\{/g, '{{').replace(/\}/g, '}}')
+}
+
 export async function runChatAgent({
     query,
     context = '',
@@ -47,10 +55,14 @@ export async function runChatAgent({
         ['system', enableReferences ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
     ]
     if (clientSystemPrompt) {
-        prompts.push(['system', clientSystemPrompt || ''])
+        prompts.push(['system', escapeCurlyBraces(clientSystemPrompt || '')])
     }
 
-    prompts.push(...conversationHistory)
+    // Escape curly braces in conversation history to prevent f-string parser errors
+    const escapedHistory = conversationHistory.map(
+        ([role, content]) => [role, escapeCurlyBraces(content)] as [string, string]
+    )
+    prompts.push(...escapedHistory)
     prompts.push(['human', '{input}'])
 
     const prompt = ChatPromptTemplate.fromMessages(prompts)
@@ -116,10 +128,14 @@ export async function* streamChatAgent({
             ['system', enableReferences ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
         ]
         if (clientSystemPrompt) {
-            prompts.push(['system', clientSystemPrompt || ''])
+            prompts.push(['system', escapeCurlyBraces(clientSystemPrompt || '')])
         }
 
-        prompts.push(...conversationHistory)
+        // Escape curly braces in conversation history to prevent f-string parser errors
+        const escapedHistory = conversationHistory.map(
+            ([role, content]) => [role, escapeCurlyBraces(content)] as [string, string]
+        )
+        prompts.push(...escapedHistory)
         prompts.push(['human', '{input}'])
 
         const prompt = ChatPromptTemplate.fromMessages(prompts)
