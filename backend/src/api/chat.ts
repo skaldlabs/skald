@@ -91,6 +91,7 @@ export const chat = async (req: Request, res: Response) => {
                 clientSystemPrompt,
                 res,
                 conversationHistory,
+                rerankResults: rerankedResults,
                 options: chatAgentOptions,
             })
             const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
@@ -103,16 +104,23 @@ export const chat = async (req: Request, res: Response) => {
                 context: contextStr,
                 clientSystemPrompt,
                 conversationHistory,
+                rerankResults: rerankedResults,
                 options: chatAgentOptions,
             })
             const finalChatId = await createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
 
-            return res.status(200).json({
+            const response: any = {
                 ok: true,
                 chat_id: finalChatId,
                 response: result.output,
                 intermediate_steps: result.intermediate_steps || [],
-            })
+            }
+
+            if (result.references) {
+                response.references = result.references
+            }
+
+            return res.status(200).json(response)
         }
     } catch (error) {
         logger.error({ err: error }, 'Chat agent error')
@@ -128,12 +136,18 @@ export const _setStreamingResponseHeaders = (res: Response) => {
     res.setHeader('X-Accel-Buffering', 'no')
 }
 
+interface RerankResult {
+    memo_uuid?: string
+    memo_title?: string
+}
+
 export const _generateStreamingResponse = async ({
     query,
     contextStr,
     clientSystemPrompt = null,
     res,
     conversationHistory = [],
+    rerankResults = [],
     options = {
         enableReferences: false,
     },
@@ -143,6 +157,7 @@ export const _generateStreamingResponse = async ({
     clientSystemPrompt?: string | null
     res: Response
     conversationHistory?: Array<[string, string]>
+    rerankResults?: RerankResult[]
     options?: {
         llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
         enableReferences?: boolean
@@ -160,6 +175,7 @@ export const _generateStreamingResponse = async ({
             context: contextStr,
             clientSystemPrompt,
             conversationHistory,
+            rerankResults,
             options,
         })) {
             // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
@@ -174,7 +190,11 @@ export const _generateStreamingResponse = async ({
             // format as Server-Sent Event
             const data = JSON.stringify(chunk)
             res.write(`data: ${data}\n\n`)
-            fullResponse += chunk.content || ''
+
+            // Only accumulate token content, not references or other event types
+            if (chunk.type === 'token') {
+                fullResponse += chunk.content || ''
+            }
         }
     } catch (error) {
         logger.error({ err: error }, 'Streaming chat agent error')

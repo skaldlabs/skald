@@ -10,6 +10,7 @@ export interface ChatMessage {
     content: string
     timestamp: Date
     isStreaming?: boolean
+    references?: Record<number, { memo_uuid: string; memo_title: string }>
 }
 
 interface ChatState {
@@ -19,13 +20,19 @@ interface ChatState {
     currentStreamingMessageId: string | null
     systemPrompt: string
     llmProvider: string
+    enableReferences: boolean
     chatSessionId: string | null
     setSystemPrompt: (prompt: string) => void
     setLlmProvider: (provider: string) => void
+    setEnableReferences: (enabled: boolean) => void
     sendMessage: (query: string) => Promise<void>
     clearMessages: () => void
     addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }) => void
     updateStreamingMessage: (messageId: string, content: string) => void
+    setMessageReferences: (
+        messageId: string,
+        references: Record<number, { memo_uuid: string; memo_title: string }>
+    ) => void
     finishStreaming: (messageId: string) => void
 }
 
@@ -36,6 +43,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     currentStreamingMessageId: null,
     systemPrompt: '',
     llmProvider: 'openai',
+    enableReferences: false,
     chatSessionId: null,
 
     setSystemPrompt: (prompt: string) => {
@@ -44,6 +52,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     setLlmProvider: (provider: string) => {
         set({ llmProvider: provider })
+    },
+
+    setEnableReferences: (enabled: boolean) => {
+        set({ enableReferences: enabled })
     },
 
     addMessage: (message) => {
@@ -60,6 +72,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     updateStreamingMessage: (messageId, content) => {
         set((state) => ({
             messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, content } : msg)),
+        }))
+    },
+
+    setMessageReferences: (messageId, references) => {
+        set((state) => ({
+            messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, references } : msg)),
         }))
     },
 
@@ -115,6 +133,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
             payload.llm_provider = llmProvider
         }
 
+        const enableReferences = get().enableReferences
+        if (enableReferences) {
+            payload.enable_references = true
+        }
+
         const chatSessionId = get().chatSessionId
         if (chatSessionId) {
             payload.chat_id = chatSessionId
@@ -127,6 +150,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 if (data.type === 'token' && data.content) {
                     const currentContent = get().messages.find((m) => m.id === assistantMessageId)?.content || ''
                     get().updateStreamingMessage(assistantMessageId, currentContent + data.content)
+                } else if (data.type === 'references' && data.content) {
+                    try {
+                        const references = JSON.parse(data.content)
+                        get().setMessageReferences(assistantMessageId, references)
+                    } catch (error) {
+                        console.error('Failed to parse references:', error)
+                    }
                 } else if (data.type === 'done') {
                     get().finishStreaming(assistantMessageId)
                     if ('chat_id' in data && typeof data.chat_id === 'string') {

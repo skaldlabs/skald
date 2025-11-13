@@ -6,11 +6,17 @@ import * as Sentry from '@sentry/node'
 interface ChatAgentResult {
     output: string
     intermediate_steps?: any[]
+    references?: Record<number, { memo_uuid: string; memo_title: string }>
 }
 
 interface StreamChunk {
-    type: 'token' | 'error' | 'done'
+    type: 'token' | 'error' | 'done' | 'references'
     content?: string
+}
+
+interface RerankResult {
+    memo_uuid?: string
+    memo_title?: string
 }
 
 export async function runChatAgent({
@@ -18,6 +24,7 @@ export async function runChatAgent({
     context = '',
     clientSystemPrompt = null,
     conversationHistory = [],
+    rerankResults = [],
     options = {
         enableReferences: false,
     },
@@ -26,6 +33,7 @@ export async function runChatAgent({
     context?: string
     clientSystemPrompt?: string | null
     conversationHistory?: Array<[string, string]>
+    rerankResults?: RerankResult[]
     options?: {
         llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
         enableReferences?: boolean
@@ -54,10 +62,27 @@ export async function runChatAgent({
         context,
     })
 
-    return {
+    const chatResult: ChatAgentResult = {
         output: typeof result.content === 'string' ? result.content : String(result.content),
         intermediate_steps: [],
     }
+
+    // Build references object if enableReferences is on
+    if (enableReferences && rerankResults.length > 0) {
+        const references: Record<number, { memo_uuid: string; memo_title: string }> = {}
+        for (let i = 0; i < rerankResults.length; i++) {
+            const rerankResult = rerankResults[i]
+            if (rerankResult.memo_uuid && rerankResult.memo_title) {
+                references[i + 1] = {
+                    memo_uuid: rerankResult.memo_uuid,
+                    memo_title: rerankResult.memo_title,
+                }
+            }
+        }
+        chatResult.references = references
+    }
+
+    return chatResult
 }
 
 export async function* streamChatAgent({
@@ -65,6 +90,7 @@ export async function* streamChatAgent({
     context = '',
     clientSystemPrompt = null,
     conversationHistory = [],
+    rerankResults = [],
     options = {
         enableReferences: false,
     },
@@ -73,6 +99,7 @@ export async function* streamChatAgent({
     context?: string
     clientSystemPrompt?: string | null
     conversationHistory?: Array<[string, string]>
+    rerankResults?: RerankResult[]
     llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
     options?: {
         llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
@@ -109,6 +136,26 @@ export async function* streamChatAgent({
                 yield {
                     type: 'token',
                     content: String(chunk.content),
+                }
+            }
+        }
+
+        // After streaming completes, send references if enabled
+        if (enableReferences && rerankResults.length > 0) {
+            const references: Record<number, { memo_uuid: string; memo_title: string }> = {}
+            for (let i = 0; i < rerankResults.length; i++) {
+                const rerankResult = rerankResults[i]
+                if (rerankResult.memo_uuid && rerankResult.memo_title) {
+                    references[i + 1] = {
+                        memo_uuid: rerankResult.memo_uuid,
+                        memo_title: rerankResult.memo_title,
+                    }
+                }
+            }
+            if (Object.keys(references).length > 0) {
+                yield {
+                    type: 'references',
+                    content: JSON.stringify(references),
                 }
             }
         }
