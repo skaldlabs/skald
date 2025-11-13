@@ -10,6 +10,7 @@ import {
     CreditCard,
     BookOpen,
     GlobeLock,
+    FlaskConical,
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
@@ -67,6 +68,12 @@ export const Sider = () => {
                 key: `/projects/${currentProject?.uuid}/playground`,
                 icon: <MessageSquare className="h-4 w-4" />,
                 label: 'Playground',
+                hasAccess: () => true,
+            },
+            {
+                key: `/projects/${currentProject?.uuid}/evaluate`,
+                icon: <FlaskConical className="h-4 w-4" />,
+                label: 'Evaluate',
                 hasAccess: () => true,
             },
             {

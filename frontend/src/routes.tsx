@@ -4,6 +4,7 @@ import { ProjectSettingsPage } from '@/pages/ProjectSettingsPage'
 import { GettingStartedPage } from '@/pages/GettingStartedPage'
 import { MemosPage } from '@/pages/MemosPage'
 import { PlaygroundPage } from '@/pages/PlaygroundPage'
+import { EvaluatePage } from '@/pages/EvaluatePage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { isSelfHostedDeploy } from '@/config'
@@ -21,6 +22,7 @@ const defaultRoutes = [
     { path: '/projects/:uuid/memos', component: () => <MemosPage /> },
     { path: '/projects/:uuid/memos/:memoUuid', component: () => <MemosPage /> },
     { path: '/projects/:uuid/playground', component: () => <PlaygroundPage /> },
+    { path: '/projects/:uuid/evaluate', component: () => <EvaluatePage /> },
     { path: '/admin', component: () => <AdminPage /> },
 ]
 
