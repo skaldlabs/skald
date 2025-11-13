@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { api } from '@/lib/api'
 import { useProjectStore } from '@/stores/projectStore'
 import { toast } from 'sonner'
@@ -36,154 +37,172 @@ interface ChatState {
     finishStreaming: (messageId: string) => void
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
-    messages: [],
-    isLoading: false,
-    isStreaming: false,
-    currentStreamingMessageId: null,
-    systemPrompt: '',
-    llmProvider: 'openai',
-    enableReferences: false,
-    chatSessionId: null,
-
-    setSystemPrompt: (prompt: string) => {
-        set({ systemPrompt: prompt })
-    },
-
-    setLlmProvider: (provider: string) => {
-        set({ llmProvider: provider })
-    },
-
-    setEnableReferences: (enabled: boolean) => {
-        set({ enableReferences: enabled })
-    },
-
-    addMessage: (message) => {
-        const newMessage: ChatMessage = {
-            ...message,
-            id: message.id || crypto.randomUUID(),
-            timestamp: new Date(),
-        }
-        set((state) => ({
-            messages: [...state.messages, newMessage],
-        }))
-    },
-
-    updateStreamingMessage: (messageId, content) => {
-        set((state) => ({
-            messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, content } : msg)),
-        }))
-    },
-
-    setMessageReferences: (messageId, references) => {
-        set((state) => ({
-            messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, references } : msg)),
-        }))
-    },
-
-    finishStreaming: (messageId) => {
-        set((state) => ({
-            messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, isStreaming: false } : msg)),
+export const useChatStore = create<ChatState>()(
+    persist(
+        (set, get) => ({
+            messages: [],
+            isLoading: false,
             isStreaming: false,
             currentStreamingMessageId: null,
-        }))
-    },
+            systemPrompt: '',
+            llmProvider: 'openai',
+            enableReferences: false,
+            chatSessionId: null,
 
-    sendMessage: async (query: string) => {
-        const currentProject = useProjectStore.getState().currentProject
-        if (!currentProject) {
-            toast.error('No project selected')
-            return
-        }
-
-        if (!query.trim()) {
-            return
-        }
-
-        get().addMessage({
-            role: 'user',
-            content: query.trim(),
-        })
-
-        set({ isLoading: true, isStreaming: true })
-
-        const assistantMessageId = crypto.randomUUID()
-        get().addMessage({
-            id: assistantMessageId,
-            role: 'assistant',
-            content: '',
-            isStreaming: true,
-        })
-
-        set({ currentStreamingMessageId: assistantMessageId })
-
-        const payload: Record<string, unknown> = {
-            query: query.trim(),
-            project_id: currentProject.uuid,
-            stream: true,
-        }
-
-        const systemPrompt = get().systemPrompt.trim()
-        if (systemPrompt) {
-            payload.system_prompt = systemPrompt
-        }
-
-        const llmProvider = get().llmProvider
-        if (llmProvider) {
-            payload.llm_provider = llmProvider
-        }
-
-        const enableReferences = get().enableReferences
-        if (enableReferences) {
-            payload.enable_references = true
-        }
-
-        const chatSessionId = get().chatSessionId
-        if (chatSessionId) {
-            payload.chat_id = chatSessionId
-        }
-
-        api.stream(
-            '/v1/chat/',
-            payload,
-            (data: ApiStreamData) => {
-                if (data.type === 'token' && data.content) {
-                    const currentContent = get().messages.find((m) => m.id === assistantMessageId)?.content || ''
-                    get().updateStreamingMessage(assistantMessageId, currentContent + data.content)
-                } else if (data.type === 'references' && data.content) {
-                    try {
-                        const references = JSON.parse(data.content)
-                        get().setMessageReferences(assistantMessageId, references)
-                    } catch (error) {
-                        console.error('Failed to parse references:', error)
-                    }
-                } else if (data.type === 'done') {
-                    get().finishStreaming(assistantMessageId)
-                    if ('chat_id' in data && typeof data.chat_id === 'string') {
-                        set({ chatSessionId: data.chat_id })
-                    }
-                } else if (data.type === 'error') {
-                    get().finishStreaming(assistantMessageId)
-                    get().updateStreamingMessage(assistantMessageId, `Error: ${data.content || 'An error occurred'}`)
-                }
+            setSystemPrompt: (prompt: string) => {
+                set({ systemPrompt: prompt })
             },
-            (error: ApiErrorData | Event) => {
-                console.error('Chat stream error:', error)
-                get().finishStreaming(assistantMessageId)
 
-                // Extract error message from ApiErrorData or use generic message
-                const errorMessage =
-                    'error' in error && typeof error.error === 'string' ? error.error : 'Failed to get response'
+            setLlmProvider: (provider: string) => {
+                set({ llmProvider: provider })
+            },
 
-                get().updateStreamingMessage(assistantMessageId, `Error: ${errorMessage}`)
-                toast.error(errorMessage)
-            }
-        )
+            setEnableReferences: (enabled: boolean) => {
+                set({ enableReferences: enabled })
+            },
 
-        set({ isLoading: false })
-    },
+            addMessage: (message) => {
+                const newMessage: ChatMessage = {
+                    ...message,
+                    id: message.id || crypto.randomUUID(),
+                    timestamp: new Date(),
+                }
+                set((state) => ({
+                    messages: [...state.messages, newMessage],
+                }))
+            },
 
-    clearMessages: () => {
-        set({ messages: [], chatSessionId: null })
-    },
-}))
+            updateStreamingMessage: (messageId, content) => {
+                set((state) => ({
+                    messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, content } : msg)),
+                }))
+            },
+
+            setMessageReferences: (messageId, references) => {
+                set((state) => ({
+                    messages: state.messages.map((msg) => (msg.id === messageId ? { ...msg, references } : msg)),
+                }))
+            },
+
+            finishStreaming: (messageId) => {
+                set((state) => ({
+                    messages: state.messages.map((msg) =>
+                        msg.id === messageId ? { ...msg, isStreaming: false } : msg
+                    ),
+                    isStreaming: false,
+                    currentStreamingMessageId: null,
+                }))
+            },
+
+            sendMessage: async (query: string) => {
+                const currentProject = useProjectStore.getState().currentProject
+                if (!currentProject) {
+                    toast.error('No project selected')
+                    return
+                }
+
+                if (!query.trim()) {
+                    return
+                }
+
+                get().addMessage({
+                    role: 'user',
+                    content: query.trim(),
+                })
+
+                set({ isLoading: true, isStreaming: true })
+
+                const assistantMessageId = crypto.randomUUID()
+                get().addMessage({
+                    id: assistantMessageId,
+                    role: 'assistant',
+                    content: '',
+                    isStreaming: true,
+                })
+
+                set({ currentStreamingMessageId: assistantMessageId })
+
+                const payload: Record<string, unknown> = {
+                    query: query.trim(),
+                    project_id: currentProject.uuid,
+                    stream: true,
+                }
+
+                const systemPrompt = get().systemPrompt.trim()
+                if (systemPrompt) {
+                    payload.system_prompt = systemPrompt
+                }
+
+                const llmProvider = get().llmProvider
+                if (llmProvider) {
+                    payload.llm_provider = llmProvider
+                }
+
+                const enableReferences = get().enableReferences
+                if (enableReferences) {
+                    payload.enable_references = true
+                }
+
+                const chatSessionId = get().chatSessionId
+                if (chatSessionId) {
+                    payload.chat_id = chatSessionId
+                }
+
+                api.stream(
+                    '/v1/chat/',
+                    payload,
+                    (data: ApiStreamData) => {
+                        if (data.type === 'token' && data.content) {
+                            const currentContent =
+                                get().messages.find((m) => m.id === assistantMessageId)?.content || ''
+                            get().updateStreamingMessage(assistantMessageId, currentContent + data.content)
+                        } else if (data.type === 'references' && data.content) {
+                            try {
+                                const references = JSON.parse(data.content)
+                                get().setMessageReferences(assistantMessageId, references)
+                            } catch (error) {
+                                console.error('Failed to parse references:', error)
+                            }
+                        } else if (data.type === 'done') {
+                            get().finishStreaming(assistantMessageId)
+                            if ('chat_id' in data && typeof data.chat_id === 'string') {
+                                set({ chatSessionId: data.chat_id })
+                            }
+                        } else if (data.type === 'error') {
+                            get().finishStreaming(assistantMessageId)
+                            get().updateStreamingMessage(
+                                assistantMessageId,
+                                `Error: ${data.content || 'An error occurred'}`
+                            )
+                        }
+                    },
+                    (error: ApiErrorData | Event) => {
+                        console.error('Chat stream error:', error)
+                        get().finishStreaming(assistantMessageId)
+
+                        // Extract error message from ApiErrorData or use generic message
+                        const errorMessage =
+                            'error' in error && typeof error.error === 'string' ? error.error : 'Failed to get response'
+
+                        get().updateStreamingMessage(assistantMessageId, `Error: ${errorMessage}`)
+                        toast.error(errorMessage)
+                    }
+                )
+
+                set({ isLoading: false })
+            },
+
+            clearMessages: () => {
+                set({ messages: [], chatSessionId: null })
+            },
+        }),
+        {
+            name: 'playground-settings',
+            partialize: (state) => ({
+                systemPrompt: state.systemPrompt,
+                llmProvider: state.llmProvider,
+                enableReferences: state.enableReferences,
+            }),
+        }
+    )
+)
