@@ -1,7 +1,7 @@
 import { DeferMode, Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core'
 import { EvaluationDataset } from '@/entities/EvaluationDataset'
 
-@Entity({ tableName: 'skald_evaluationdataset' })
+@Entity({ tableName: 'skald_evaluationdatasetquestion' })
 export class EvaluationDatasetQuestion {
     @PrimaryKey({ type: 'uuid' })
     uuid!: string
