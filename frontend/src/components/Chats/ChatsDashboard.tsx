@@ -51,7 +51,7 @@ export const ChatsDashboard = () => {
 
     return (
         <div className="container mx-auto py-6 space-y-6">
-            <PageHeader title="Chats">
+            <PageHeader title="Agent chats">
                 <div className="flex gap-2">
                     <Button onClick={handleRefresh} disabled={loading} variant="outline" size="sm">
                         <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -59,7 +59,7 @@ export const ChatsDashboard = () => {
                     </Button>
                 </div>
             </PageHeader>
-
+            <p className="text-sm text-muted-foreground">List of all the chats your agent was engaged in</p>
             <ChatsTable chats={chats} loading={loading} onViewChat={handleViewChat} />
 
             <ChatDrawer

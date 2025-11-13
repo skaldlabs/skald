@@ -27,6 +27,7 @@ import { stripeWebhook } from '@/api/stripe_webhook'
 import { adminRouter } from '@/api/admin'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
+import { requireProjectAccess } from '@/middleware/authMiddleware'
 import { logger } from '@/lib/logger'
 import { posthog } from '@/lib/posthogUtils'
 import * as Sentry from '@sentry/node'
@@ -76,7 +77,7 @@ export const startExpressServer = async () => {
     app.use('/api/user', authRateLimiter, userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)
     privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
-    privateRoutesRouter.use('/v1/chat', chatRouter)
+    privateRoutesRouter.use('/v1/chat', [requireProjectAccess()], chatRouter)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
     privateRoutesRouter.use('/organizations', organizationRouter)
     organizationRouter.use('/:organization_uuid/projects', projectRouter)

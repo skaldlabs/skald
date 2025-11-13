@@ -9,7 +9,6 @@ import { getOptimizedChatHistory, createChatMessagePair } from '@/lib/chatUtils'
 import { CachedQueries } from '@/queries/cachedQueries'
 import { DI } from '@/di'
 import { Project } from '@/entities/Project'
-import { requireProjectAccess } from '@/middleware/authMiddleware'
 import { chatRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackChatUsage } from '@/middleware/trackChatUsageMiddleware'
 
@@ -342,7 +341,6 @@ export const getChat = async (req: Request, res: Response) => {
 }
 
 export const chatRouter = express.Router({ mergeParams: true })
-chatRouter.use(requireProjectAccess())
 chatRouter.get('/', listChats)
 chatRouter.get('/:id', getChat)
 chatRouter.post('/', [chatRateLimiter, trackChatUsage()], chat)

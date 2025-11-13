@@ -32,7 +32,7 @@ const ChatMessageDisplay = ({ message }: { message: ChatMessage }) => {
                     {isUser ? (
                         <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                     ) : (
-                        <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+                        <div className="text-sm prose prose-sm dark:prose-invert max-w-none react-markdown">
                             <ReactMarkdown>{message.content}</ReactMarkdown>
                         </div>
                     )}
@@ -73,7 +73,7 @@ export const ChatDrawer = ({ open, onClose, chat, loading }: ChatDrawerProps) =>
                             ))}
                         </div>
                     ) : chat ? (
-                        <div className="space-y-1">
+                        <div className="space-y-1 px-4">
                             {chat.messages.map((message) => (
                                 <ChatMessageDisplay key={message.uuid} message={message} />
                             ))}
