@@ -18,6 +18,7 @@ import { Organization } from '../entities/Organization'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
 import cookieParser from 'cookie-parser'
 import { chatRouter } from '../api/chat'
+import { requireProjectAccess } from '../middleware/authMiddleware'
 import * as chatAgentPreprocessing from '../agents/chatAgent/preprocessing'
 import * as chatAgent from '../agents/chatAgent/chatAgent'
 import { ChatMessage } from '@/entities/ChatMessage'
@@ -68,7 +69,7 @@ describe('Chat API', () => {
         app.use(cookieParser())
         app.use((req, res, next) => RequestContext.create(orm.em, next))
         app.use(userMiddleware())
-        app.use('/api/chat', chatRouter)
+        app.use('/api/chat', [requireProjectAccess()], chatRouter)
     })
 
     afterAll(async () => {
