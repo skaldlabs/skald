@@ -64,6 +64,12 @@ export const Sider = () => {
                 hasAccess: () => true,
             },
             {
+                key: `/projects/${currentProject?.uuid}/chats`,
+                icon: <MessageSquare className="h-4 w-4" />,
+                label: 'Chats',
+                hasAccess: () => true,
+            },
+            {
                 key: `/projects/${currentProject?.uuid}/playground`,
                 icon: <MessageSquare className="h-4 w-4" />,
                 label: 'Playground',

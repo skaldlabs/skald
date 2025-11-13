@@ -2,9 +2,9 @@ import express from 'express'
 import cors from 'cors'
 import { RequestContext } from '@mikro-orm/postgresql'
 import { userMiddleware } from '@/middleware/userMiddleware'
-import { chat } from '@/api/chat'
+import { chatRouter } from '@/api/chat'
 import { health } from '@/api/health'
-import { requireAuth, requireProjectAccess } from '@/middleware/authMiddleware'
+import { requireAuth } from '@/middleware/authMiddleware'
 import { initDI } from '@/di'
 import { Request, Response, NextFunction } from 'express'
 import { search } from '@/api/search'
@@ -26,8 +26,7 @@ import { planRouter } from '@/api/plan'
 import { stripeWebhook } from '@/api/stripe_webhook'
 import { adminRouter } from '@/api/admin'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
-import { authRateLimiter, chatRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
-import { trackChatUsage } from '@/middleware/trackChatUsageMiddleware'
+import { authRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { logger } from '@/lib/logger'
 import { posthog } from '@/lib/posthogUtils'
 import * as Sentry from '@sentry/node'
@@ -77,7 +76,7 @@ export const startExpressServer = async () => {
     app.use('/api/user', authRateLimiter, userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)
     privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
-    privateRoutesRouter.post('/v1/chat', [chatRateLimiter, requireProjectAccess(), trackChatUsage()], chat)
+    privateRoutesRouter.use('/v1/chat', chatRouter)
     privateRoutesRouter.post('/v1/search', [requireProjectAccess()], search)
     privateRoutesRouter.use('/organizations', organizationRouter)
     organizationRouter.use('/:organization_uuid/projects', projectRouter)
