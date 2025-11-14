@@ -73,6 +73,7 @@ export const chat = async (req: Request, res: Response) => {
     const ragResultState = await ragGraph.invoke({
         query,
         project,
+        chatId,
         filters,
         clientSystemPrompt,
         options: {
@@ -81,20 +82,20 @@ export const chat = async (req: Request, res: Response) => {
                 enabled: enableReferences,
             },
             queryRewrite: {
-                enabled: true,
+                enabled: false,
             },
             vectorSearch: {
-                topK: 10,
+                topK: 3,
                 similarityThreshold: 0.5,
             },
             reranking: {
-                enabled: true,
-                topK: 10,
+                enabled: false,
+                topK: 4,
             },
         },
     })
 
-    const { query: finalQuery, contextStr, prompt, rerankedResults } = ragResultState;
+    const { query: finalQuery, contextStr, prompt, rerankedResults } = ragResultState
 
     try {
         if (stream) {
@@ -111,29 +112,39 @@ export const chat = async (req: Request, res: Response) => {
             res.write(`data: ${JSON.stringify({ type: 'done', chat_id: finalChatId })}\n\n`)
             res.end()
         } else {
-            // // non-streaming response
-            // const result = await runChatAgent({
-            //     query,
-            //     context: contextStr,
-            //     clientSystemPrompt,
-            //     conversationHistory,
-            //     rerankResults: rerankedResults,
-            //     options: chatAgentOptions,
-            // })
-            // const finalChatId = await createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
+            // non-streaming response - compose full response from stream
+            let fullResponse = ''
+            let references: Record<number, { memo_uuid: string; memo_title: string }> | undefined
 
-            // const response: any = {
-            //     ok: true,
-            //     chat_id: finalChatId,
-            //     response: result.output,
-            //     intermediate_steps: result.intermediate_steps || [],
-            // }
+            for await (const chunk of streamChatAgent({
+                query: finalQuery,
+                prompt,
+                contextStr: contextStr || '',
+                rerankResults: rerankedResults || [],
+                enableReferences,
+                llmProvider,
+            })) {
+                if (chunk.type === 'token') {
+                    fullResponse += chunk.content || ''
+                } else if (chunk.type === 'references' && chunk.content) {
+                    references = JSON.parse(chunk.content)
+                }
+            }
 
-            // if (result.references) {
-            //     response.references = result.references
-            // }
+            const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
 
-            // return res.status(200).json(response)
+            const response: any = {
+                ok: true,
+                chat_id: finalChatId,
+                response: fullResponse,
+                intermediate_steps: [],
+            }
+
+            if (references) {
+                response.references = references
+            }
+
+            return res.status(200).json(response)
         }
     } catch (error) {
         logger.error({ err: error }, 'Chat agent error')
@@ -186,15 +197,6 @@ export const _generateStreamingResponse = async ({
             enableReferences,
             llmProvider,
         })) {
-            // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
-            if (chunk.content && typeof chunk.content === 'object') {
-                // extract text from dict (Anthropic format)
-                const content = chunk.content as any
-                chunk.content = content.text || content.content || String(content)
-            } else if (chunk.content && typeof chunk.content !== 'string') {
-                chunk.content = String(chunk.content)
-            }
-
             // format as Server-Sent Event
             const data = JSON.stringify(chunk)
             res.write(`data: ${data}\n\n`)
