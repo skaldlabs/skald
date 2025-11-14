@@ -19,6 +19,9 @@ import { UsageRecord } from '@/entities/UsageRecord'
 import { StripeEvent } from '@/entities/StripeEvent'
 import { Chat } from '@/entities/Chat'
 import { ChatMessage } from '@/entities/ChatMessage'
+import { EvaluationDataset } from '@/entities/EvaluationDataset'
+import { EvaluationDatasetQuestion } from '@/entities/EvaluationDatasetQuestion'
+import { Experiment } from '@/entities/Experiment'
 
 export const DI = {} as {
     server: http.Server
@@ -42,6 +45,9 @@ export const DI = {} as {
     stripeEvents: EntityRepository<StripeEvent>
     chats: EntityRepository<Chat>
     chatMessages: EntityRepository<ChatMessage>
+    evaluationDatasets: EntityRepository<EvaluationDataset>
+    evaluationDatasetQuestions: EntityRepository<EvaluationDatasetQuestion>
+    experiments: EntityRepository<Experiment>
 }
 
 export const initDI = async (): Promise<typeof DI> => {
@@ -65,6 +71,9 @@ export const initDI = async (): Promise<typeof DI> => {
     DI.stripeEvents = DI.orm.em.getRepository(StripeEvent)
     DI.chats = DI.orm.em.getRepository(Chat)
     DI.chatMessages = DI.orm.em.getRepository(ChatMessage)
+    DI.evaluationDatasets = DI.orm.em.getRepository(EvaluationDataset)
+    DI.evaluationDatasetQuestions = DI.orm.em.getRepository(EvaluationDatasetQuestion)
+    DI.experiments = DI.orm.em.getRepository(Experiment)
 
     return DI
 }

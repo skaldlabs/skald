@@ -14,8 +14,8 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
         referencesEnabled: false,
     }
 
-    // Parse and validate llmProvider
-    const llmProvider = ragConfig.llmProvider || LLM_PROVIDER
+    // Parse and validate llmProvider (snake_case only)
+    const llmProvider = ragConfig.llm_provider || LLM_PROVIDER
 
     const supportedLLMProviders = IS_CLOUD ? CLOUD_LLM_PROVIDERS : SUPPORTED_LLM_PROVIDERS
     if (!supportedLLMProviders.includes(llmProvider)) {
@@ -25,8 +25,8 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
         }
     }
 
-    // queryRewriteEnabled must be a boolean
-    const queryRewriteEnabled = ragConfig.queryRewrite?.enabled ?? defaults.queryRewriteEnabled
+    // queryRewriteEnabled must be a boolean (snake_case only)
+    const queryRewriteEnabled = ragConfig.query_rewrite?.enabled ?? defaults.queryRewriteEnabled
     if (typeof queryRewriteEnabled !== 'boolean') {
         return {
             parsedRagConfig: null,
@@ -34,7 +34,7 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
         }
     }
 
-    // rerankingEnabled must be a boolean
+    // rerankingEnabled must be a boolean (snake_case only)
     const rerankingEnabled = ragConfig.reranking?.enabled ?? defaults.rerankingEnabled
     if (typeof rerankingEnabled !== 'boolean') {
         return {
@@ -51,8 +51,8 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
         }
     }
 
-    // vectorSearchTopK must be between 1 and 200
-    const vectorSearchTopK = ragConfig.vectorSearch?.topK ?? defaults.vectorSearchTopK
+    // vectorSearchTopK must be between 1 and 200 (snake_case only)
+    const vectorSearchTopK = ragConfig.vector_search?.top_k ?? defaults.vectorSearchTopK
     if (typeof vectorSearchTopK !== 'number' || vectorSearchTopK < 1 || vectorSearchTopK > 200) {
         return {
             parsedRagConfig: null,
@@ -60,8 +60,8 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
         }
     }
 
-    // similarityThreshold must be between 0 and 1
-    const similarityThreshold = ragConfig.vectorSearch?.similarityThreshold ?? defaults.similarityThreshold
+    // similarityThreshold must be between 0 and 1 (snake_case only)
+    const similarityThreshold = ragConfig.vector_search?.similarity_threshold ?? defaults.similarityThreshold
     if (typeof similarityThreshold !== 'number' || similarityThreshold < 0 || similarityThreshold > 1) {
         return {
             parsedRagConfig: null,
@@ -69,8 +69,8 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
         }
     }
 
-    // rerankingTopK must be between 1 and 100 and must be smaller than vector search top k
-    const rerankingTopK = ragConfig.reranking?.topK ?? defaults.rerankingTopK
+    // rerankingTopK must be between 1 and 100 and must be smaller than vector search top k (snake_case only)
+    const rerankingTopK = ragConfig.reranking?.top_k ?? defaults.rerankingTopK
     if (typeof rerankingTopK !== 'number' || rerankingTopK < 1 || rerankingTopK > 100) {
         return {
             parsedRagConfig: null,
@@ -85,7 +85,7 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
         }
     }
 
-    return {
+    const result = {
         parsedRagConfig: {
             llmProvider: llmProvider as 'openai' | 'anthropic' | 'local' | 'groq',
             references: {
@@ -105,4 +105,5 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
         },
         error: null,
     }
+    return result
 }
