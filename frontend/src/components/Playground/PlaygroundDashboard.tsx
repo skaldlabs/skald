@@ -9,10 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Slider } from '@/components/ui/slider'
+import { RagConfigForm } from './RagConfigForm'
 import './Playground.scss'
 import { isSelfHostedDeploy } from '@/config'
 
@@ -101,122 +98,7 @@ export const PlaygroundDashboard = () => {
 
                         <div className="border-t pt-6">
                             <h4 className="text-md font-semibold mb-4">RAG Configuration (Advanced)</h4>
-
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-0.5">
-                                        <Label htmlFor="query-rewrite" className="text-base">
-                                            Query Rewrite
-                                        </Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Rewrite queries for better search results
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        id="query-rewrite"
-                                        checked={ragConfig.queryRewriteEnabled}
-                                        onCheckedChange={(checked) => setRagConfig({ queryRewriteEnabled: checked })}
-                                    />
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-0.5">
-                                        <Label htmlFor="reranking" className="text-base">
-                                            Reranking
-                                        </Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Re-rank search results for relevance
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        id="reranking"
-                                        checked={ragConfig.rerankingEnabled}
-                                        onCheckedChange={(checked) => setRagConfig({ rerankingEnabled: checked })}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="vector-top-k" className="text-sm font-medium">
-                                            Vector Search Top K
-                                        </Label>
-                                        <Input
-                                            id="vector-top-k"
-                                            type="number"
-                                            min={1}
-                                            max={200}
-                                            value={ragConfig.vectorSearchTopK}
-                                            onChange={(e) => {
-                                                const value = Math.max(1, Math.min(200, parseInt(e.target.value) || 1))
-                                                setRagConfig({ vectorSearchTopK: value })
-                                            }}
-                                            className="w-20 h-8"
-                                        />
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Number of results to retrieve (1-200)
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="similarity-threshold" className="text-sm font-medium">
-                                            Similarity Threshold
-                                        </Label>
-                                        <span className="text-sm font-mono">{ragConfig.similarityThreshold.toFixed(2)}</span>
-                                    </div>
-                                    <Slider
-                                        id="similarity-threshold"
-                                        min={0}
-                                        max={1}
-                                        step={0.01}
-                                        value={[ragConfig.similarityThreshold]}
-                                        onValueChange={([value]) => setRagConfig({ similarityThreshold: value })}
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Minimum similarity score for results (0-1)
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="reranking-top-k" className="text-sm font-medium">
-                                            Reranking Top K
-                                        </Label>
-                                        <Input
-                                            id="reranking-top-k"
-                                            type="number"
-                                            min={1}
-                                            max={100}
-                                            value={ragConfig.rerankingTopK}
-                                            onChange={(e) => {
-                                                const value = Math.max(1, Math.min(100, Math.min(ragConfig.vectorSearchTopK, parseInt(e.target.value) || 1)))
-                                                setRagConfig({ rerankingTopK: value })
-                                            }}
-                                            className="w-20 h-8"
-                                        />
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Number of results after reranking (1-100, ≤ vector top K)
-                                    </p>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-0.5">
-                                        <Label htmlFor="enable-references" className="text-base">
-                                            Enable Source References
-                                        </Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Show [X] reference links in chat responses
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        id="enable-references"
-                                        checked={ragConfig.referencesEnabled}
-                                        onCheckedChange={(checked) => setRagConfig({ referencesEnabled: checked })}
-                                    />
-                                </div>
-                            </div>
+                            <RagConfigForm ragConfig={ragConfig} onChange={setRagConfig} />
                         </div>
                     </div>
                 </SheetContent>

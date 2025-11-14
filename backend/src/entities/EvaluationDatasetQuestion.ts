@@ -6,10 +6,10 @@ export class EvaluationDatasetQuestion {
     @PrimaryKey({ type: 'uuid' })
     uuid!: string
 
-    @Property()
+    @Property({ type: 'text' })
     question!: string
 
-    @Property()
+    @Property({ type: 'text' })
     answer!: string
 
     @ManyToOne({

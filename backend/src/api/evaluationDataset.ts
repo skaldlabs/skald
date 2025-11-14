@@ -67,7 +67,7 @@ const list = async (req: Request, res: Response) => {
     const response: EvaluationDatasetResponse[] = datasets.map((dataset) => ({
         uuid: dataset.uuid,
         name: dataset.name,
-        description: dataset.description,
+        description: dataset.description || '',
         created_at: dataset.created_at,
     }))
 
@@ -145,7 +145,7 @@ const create = async (req: Request, res: Response) => {
         const response: EvaluationDatasetResponse = {
             uuid: dataset.uuid,
             name: dataset.name,
-            description: dataset.description,
+            description: dataset.description || '',
             created_at: dataset.created_at,
         }
 
@@ -193,7 +193,7 @@ const getDataset = async (req: Request, res: Response) => {
     const response: EvaluationDatasetDetailResponse = {
         uuid: dataset.uuid,
         name: dataset.name,
-        description: dataset.description,
+        description: dataset.description || '',
         created_at: dataset.created_at,
         questions: questions.map((q) => ({
             uuid: q.uuid,

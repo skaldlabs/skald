@@ -22,6 +22,7 @@ import { ChatMessage } from '@/entities/ChatMessage'
 import { EvaluationDataset } from '@/entities/EvaluationDataset'
 import { EvaluationDatasetQuestion } from '@/entities/EvaluationDatasetQuestion'
 import { Experiment } from '@/entities/Experiment'
+import { ExperimentResult } from '@/entities/ExperimentResult'
 
 export const DI = {} as {
     server: http.Server
@@ -48,6 +49,7 @@ export const DI = {} as {
     evaluationDatasets: EntityRepository<EvaluationDataset>
     evaluationDatasetQuestions: EntityRepository<EvaluationDatasetQuestion>
     experiments: EntityRepository<Experiment>
+    experimentResults: EntityRepository<ExperimentResult>
 }
 
 export const initDI = async (): Promise<typeof DI> => {
@@ -74,6 +76,7 @@ export const initDI = async (): Promise<typeof DI> => {
     DI.evaluationDatasets = DI.orm.em.getRepository(EvaluationDataset)
     DI.evaluationDatasetQuestions = DI.orm.em.getRepository(EvaluationDatasetQuestion)
     DI.experiments = DI.orm.em.getRepository(Experiment)
+    DI.experimentResults = DI.orm.em.getRepository(ExperimentResult)
 
     return DI
 }

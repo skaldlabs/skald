@@ -9,8 +9,8 @@ export class EvaluationDataset {
     @Property()
     name!: string
 
-    @Property()
-    description!: string
+    @Property({ nullable: true })
+    description?: string
 
     @ManyToOne({
         entity: () => Project,

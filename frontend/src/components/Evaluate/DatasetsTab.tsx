@@ -4,35 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus } from 'lucide-react'
 import { CreateDatasetDialog } from './CreateDatasetDialog'
 import { DatasetDetailView } from './DatasetDetailView'
-import { api, getProjectPath } from '@/lib/api'
-
-interface EvaluationDataset {
-    uuid: string
-    name: string
-    description: string
-    created_at: string
-}
+import { useEvaluateDatasetsStore } from '@/stores/evaluateDatasetsStore'
 
 export const DatasetsTab = () => {
-    const [datasets, setDatasets] = useState<EvaluationDataset[]>([])
+    const { datasets, loading, fetchDatasets } = useEvaluateDatasetsStore()
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-    const [isLoading, setIsLoading] = useState(true)
     const [selectedDatasetUuid, setSelectedDatasetUuid] = useState<string | null>(null)
-
-    const fetchDatasets = async () => {
-        setIsLoading(true)
-        try {
-            const projectPath = getProjectPath()
-            const response = await api.get<EvaluationDataset[]>(`${projectPath}/evaluation-datasets`)
-            if (response.data) {
-                setDatasets(response.data)
-            }
-        } catch (error) {
-            console.error('Failed to fetch datasets:', error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
 
     useEffect(() => {
         fetchDatasets()
@@ -66,7 +43,7 @@ export const DatasetsTab = () => {
                 </Button>
             </div>
 
-            {isLoading ? (
+            {loading ? (
                 <div className="text-muted-foreground">Loading datasets...</div>
             ) : datasets.length === 0 ? (
                 <div className="text-muted-foreground text-center py-8">

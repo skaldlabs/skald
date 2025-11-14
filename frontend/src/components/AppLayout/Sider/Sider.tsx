@@ -73,7 +73,7 @@ export const Sider = () => {
             {
                 key: `/projects/${currentProject?.uuid}/evaluate`,
                 icon: <FlaskConical className="h-4 w-4" />,
-                label: 'Evaluate',
+                label: 'Evaluate (Alpha)',
                 hasAccess: () => true,
             },
             {

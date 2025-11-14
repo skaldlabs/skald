@@ -12,6 +12,15 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api, getProjectPath } from '@/lib/api'
+import { RagConfigForm, type RagConfig } from '@/components/Playground/RagConfigForm'
+import { Cpu } from 'lucide-react'
+import { isSelfHostedDeploy } from '@/config'
+
+const LLM_PROVIDERS = [
+    { value: 'openai', label: 'OpenAI' },
+    { value: 'anthropic', label: 'Anthropic' },
+    { value: 'groq', label: 'Groq' },
+]
 
 interface EvaluationDataset {
     uuid: string
@@ -29,10 +38,19 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [selectedDatasetUuid, setSelectedDatasetUuid] = useState<string>('')
-    const [propertiesJson, setPropertiesJson] = useState('{}')
     const [datasets, setDatasets] = useState<EvaluationDataset[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [systemPrompt, setSystemPrompt] = useState('')
+    const [llmProvider, setLlmProvider] = useState('openai')
+    const [ragConfig, setRagConfig] = useState<RagConfig>({
+        queryRewriteEnabled: false,
+        rerankingEnabled: true,
+        vectorSearchTopK: 100,
+        similarityThreshold: 0.8,
+        rerankingTopK: 50,
+        referencesEnabled: false,
+    })
 
     useEffect(() => {
         if (open) {
@@ -61,18 +79,29 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
             return
         }
 
-        let properties: Record<string, any>
-        try {
-            properties = JSON.parse(propertiesJson)
-        } catch (err) {
-            setError('Invalid JSON in properties field')
-            return
-        }
-
         setIsLoading(true)
 
         try {
             const projectPath = getProjectPath()
+
+            // Convert ragConfig to the backend format
+            const properties: Record<string, any> = {
+                rag_config: {
+                    query_rewrite: { enabled: ragConfig.queryRewriteEnabled },
+                    reranking: { enabled: ragConfig.rerankingEnabled, top_k: ragConfig.rerankingTopK },
+                    vector_search: { top_k: ragConfig.vectorSearchTopK, similarity_threshold: ragConfig.similarityThreshold },
+                    references: { enabled: ragConfig.referencesEnabled },
+                }
+            }
+
+            // Add system prompt if provided
+            if (systemPrompt.trim()) {
+                properties.client_system_prompt = systemPrompt.trim()
+            }
+
+            // Add LLM provider
+            properties.llm_provider = llmProvider
+
             const response = await api.post(`${projectPath}/experiments`, {
                 title,
                 description,
@@ -87,7 +116,16 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
                 setTitle('')
                 setDescription('')
                 setSelectedDatasetUuid('')
-                setPropertiesJson('{}')
+                setSystemPrompt('')
+                setLlmProvider('openai')
+                setRagConfig({
+                    queryRewriteEnabled: false,
+                    rerankingEnabled: true,
+                    vectorSearchTopK: 100,
+                    similarityThreshold: 0.8,
+                    rerankingTopK: 50,
+                    referencesEnabled: false,
+                })
                 onExperimentCreated()
             }
         } catch (error) {
@@ -148,18 +186,48 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
                         </Select>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="properties">Properties (JSON)</Label>
-                        <Textarea
-                            id="properties"
-                            value={propertiesJson}
-                            onChange={(e) => setPropertiesJson(e.target.value)}
-                            placeholder='{"model": "gpt-4", "temperature": 0.7}'
-                            className="min-h-[100px] font-mono text-sm"
+                    <div className="border-t pt-4">
+                        <h4 className="text-md font-semibold mb-4">Configuration</h4>
+
+                        <div className="space-y-4 mb-6">
+                            {!isSelfHostedDeploy && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="llm-provider">LLM Provider</Label>
+                                    <Select value={llmProvider} onValueChange={setLlmProvider}>
+                                        <SelectTrigger id="llm-provider">
+                                            <div className="flex items-center gap-2">
+                                                <Cpu className="h-4 w-4" />
+                                                <SelectValue placeholder="Select LLM provider" />
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {LLM_PROVIDERS.map((provider) => (
+                                                <SelectItem key={provider.value} value={provider.value}>
+                                                    {provider.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <Label htmlFor="system-prompt">System Prompt</Label>
+                                <Textarea
+                                    id="system-prompt"
+                                    value={systemPrompt}
+                                    onChange={(e) => setSystemPrompt(e.target.value)}
+                                    placeholder="Enter a custom system prompt to guide the AI's responses (optional)"
+                                    className="min-h-[80px]"
+                                />
+                            </div>
+                        </div>
+
+                        <h4 className="text-md font-semibold mb-4">RAG Configuration</h4>
+                        <RagConfigForm
+                            ragConfig={ragConfig}
+                            onChange={(config) => setRagConfig({ ...ragConfig, ...config })}
                         />
-                        <p className="text-xs text-muted-foreground">
-                            Enter experiment configuration as JSON (e.g., model parameters, settings)
-                        </p>
                     </div>
 
                     {error && <div className="text-sm text-red-500">{error}</div>}

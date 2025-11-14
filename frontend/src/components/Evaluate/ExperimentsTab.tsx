@@ -4,37 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus } from 'lucide-react'
 import { CreateExperimentDialog } from './CreateExperimentDialog'
 import { ExperimentDetailView } from './ExperimentDetailView'
-import { api, getProjectPath } from '@/lib/api'
-
-interface Experiment {
-    uuid: string
-    title: string
-    description: string
-    properties: Record<string, any>
-    evaluation_dataset_uuid: string
-    created_at: string
-}
+import { useEvaluateExperimentsStore } from '@/stores/evaluateExperimentsStore'
 
 export const ExperimentsTab = () => {
-    const [experiments, setExperiments] = useState<Experiment[]>([])
+    const { experiments, loading, fetchExperiments } = useEvaluateExperimentsStore()
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-    const [isLoading, setIsLoading] = useState(true)
     const [selectedExperimentUuid, setSelectedExperimentUuid] = useState<string | null>(null)
-
-    const fetchExperiments = async () => {
-        setIsLoading(true)
-        try {
-            const projectPath = getProjectPath()
-            const response = await api.get<Experiment[]>(`${projectPath}/experiments`)
-            if (response.data) {
-                setExperiments(response.data)
-            }
-        } catch (error) {
-            console.error('Failed to fetch experiments:', error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
 
     useEffect(() => {
         fetchExperiments()
@@ -68,7 +43,7 @@ export const ExperimentsTab = () => {
                 </Button>
             </div>
 
-            {isLoading ? (
+            {loading ? (
                 <div className="text-muted-foreground">Loading experiments...</div>
             ) : experiments.length === 0 ? (
                 <div className="text-muted-foreground text-center py-8">
@@ -79,7 +54,11 @@ export const ExperimentsTab = () => {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Title</TableHead>
-                            <TableHead>Description</TableHead>
+                            <TableHead>Dataset</TableHead>
+                            <TableHead>Avg Total Time (ms)</TableHead>
+                            <TableHead>Avg TTFT (ms)</TableHead>
+                            <TableHead>Avg LLM Rating</TableHead>
+                            <TableHead>Avg Human Rating</TableHead>
                             <TableHead>Created</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -91,7 +70,27 @@ export const ExperimentsTab = () => {
                                 onClick={() => handleExperimentClick(experiment.uuid)}
                             >
                                 <TableCell className="font-medium">{experiment.title}</TableCell>
-                                <TableCell>{experiment.description}</TableCell>
+                                <TableCell>{experiment.evaluation_dataset_name}</TableCell>
+                                <TableCell>
+                                    {experiment.statistics.average_total_answer_time_ms !== null
+                                        ? Math.round(experiment.statistics.average_total_answer_time_ms).toLocaleString()
+                                        : '-'}
+                                </TableCell>
+                                <TableCell>
+                                    {experiment.statistics.average_time_to_first_token_ms !== null
+                                        ? Math.round(experiment.statistics.average_time_to_first_token_ms).toLocaleString()
+                                        : '-'}
+                                </TableCell>
+                                <TableCell>
+                                    {experiment.statistics.average_llm_answer_rating !== null
+                                        ? experiment.statistics.average_llm_answer_rating.toFixed(2)
+                                        : '-'}
+                                </TableCell>
+                                <TableCell>
+                                    {experiment.statistics.average_human_answer_rating !== null
+                                        ? experiment.statistics.average_human_answer_rating.toFixed(2)
+                                        : '-'}
+                                </TableCell>
                                 <TableCell>{new Date(experiment.created_at).toLocaleDateString()}</TableCell>
                             </TableRow>
                         ))}

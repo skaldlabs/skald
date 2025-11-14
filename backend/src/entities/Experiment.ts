@@ -10,11 +10,11 @@ export class Experiment {
     @Property()
     title!: string
 
-    @Property()
-    description!: string
+    @Property({ nullable: true })
+    description?: string
 
-    @Property()
-    properties!: Record<string, any>
+    @Property({ type: 'json', nullable: true })
+    properties?: Record<string, any>
 
     @ManyToOne({
         entity: () => Project,

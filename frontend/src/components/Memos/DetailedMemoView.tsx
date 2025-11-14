@@ -197,7 +197,7 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                     <CardContent>
                         <div className="h-64 w-full overflow-y-auto">
                             <div className="prose prose-sm max-w-none">
-                                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed react-markdown">
                                     <ReactMarkdown>{memo.content}</ReactMarkdown>
                                 </pre>
                             </div>
