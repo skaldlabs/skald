@@ -1,13 +1,14 @@
 import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
-import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
-import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
+import { streamChatAgent } from '@/agents/chatAgent/chatAgent'
 import { IS_CLOUD, IS_DEVELOPMENT, LLM_PROVIDER, SUPPORTED_LLM_PROVIDERS } from '@/settings'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
-import { getOptimizedChatHistory, createChatMessagePair } from '@/lib/chatUtils'
+import { createChatMessagePair } from '@/lib/chatUtils'
 import { CachedQueries } from '@/queries/cachedQueries'
 import { DI } from '@/di'
+import { ragGraph } from '@/agents/chatAgent/ragGraph'
+import { ChatPromptTemplate } from '@langchain/core/prompts'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -69,58 +70,70 @@ export const chat = async (req: Request, res: Response) => {
         }
     }
 
-    const conversationHistory = await getOptimizedChatHistory(chatId, project)
+    const ragResultState = await ragGraph.invoke({
+        query,
+        project,
+        filters,
+        clientSystemPrompt,
+        options: {
+            llmProvider,
+            references: {
+                enabled: enableReferences,
+            },
+            queryRewrite: {
+                enabled: true,
+            },
+            vectorSearch: {
+                topK: 10,
+                similarityThreshold: 0.5,
+            },
+            reranking: {
+                enabled: true,
+                topK: 10,
+            },
+        },
+    })
 
-    const rerankedResults = await prepareContextForChatAgent(query, project, memoFilters)
-
-    let contextStr = ''
-    for (let i = 0; i < rerankedResults.length; i++) {
-        contextStr += `Result ${i + 1}: ${rerankedResults[i].document}\n\n`
-    }
-
-    const chatAgentOptions = {
-        llmProvider,
-        enableReferences,
-    }
+    const { query: finalQuery, contextStr, prompt, rerankedResults } = ragResultState;
 
     try {
         if (stream) {
             const fullResponse = await _generateStreamingResponse({
-                query,
-                contextStr,
-                clientSystemPrompt,
                 res,
-                conversationHistory,
-                rerankResults: rerankedResults,
-                options: chatAgentOptions,
+                query: finalQuery,
+                contextStr: contextStr || '',
+                prompt,
+                rerankResults: rerankedResults || [],
+                enableReferences,
+                llmProvider,
             })
             const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
             res.write(`data: ${JSON.stringify({ type: 'done', chat_id: finalChatId })}\n\n`)
             res.end()
         } else {
-            // non-streaming response
-            const result = await runChatAgent({
-                query,
-                context: contextStr,
-                clientSystemPrompt,
-                conversationHistory,
-                rerankResults: rerankedResults,
-                options: chatAgentOptions,
-            })
-            const finalChatId = await createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
+            // // non-streaming response
+            // const result = await runChatAgent({
+            //     query,
+            //     context: contextStr,
+            //     clientSystemPrompt,
+            //     conversationHistory,
+            //     rerankResults: rerankedResults,
+            //     options: chatAgentOptions,
+            // })
+            // const finalChatId = await createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
 
-            const response: any = {
-                ok: true,
-                chat_id: finalChatId,
-                response: result.output,
-                intermediate_steps: result.intermediate_steps || [],
-            }
+            // const response: any = {
+            //     ok: true,
+            //     chat_id: finalChatId,
+            //     response: result.output,
+            //     intermediate_steps: result.intermediate_steps || [],
+            // }
 
-            if (result.references) {
-                response.references = result.references
-            }
+            // if (result.references) {
+            //     response.references = result.references
+            // }
 
-            return res.status(200).json(response)
+            // return res.status(200).json(response)
         }
     } catch (error) {
         logger.error({ err: error }, 'Chat agent error')
@@ -142,26 +155,21 @@ interface RerankResult {
 }
 
 export const _generateStreamingResponse = async ({
-    query,
-    contextStr,
-    clientSystemPrompt = null,
     res,
-    conversationHistory = [],
-    rerankResults = [],
-    options = {
-        enableReferences: false,
-    },
+    query,
+    prompt,
+    contextStr,
+    rerankResults,
+    enableReferences,
+    llmProvider,
 }: {
-    query: string
-    contextStr: string
-    clientSystemPrompt?: string | null
     res: Response
-    conversationHistory?: Array<[string, string]>
-    rerankResults?: RerankResult[]
-    options?: {
-        llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
-        enableReferences?: boolean
-    }
+    query: string
+    prompt: ChatPromptTemplate
+    contextStr: string
+    rerankResults: RerankResult[]
+    enableReferences: boolean
+    llmProvider: 'openai' | 'anthropic' | 'local' | 'groq'
 }): Promise<string> => {
     _setStreamingResponseHeaders(res)
 
@@ -172,11 +180,11 @@ export const _generateStreamingResponse = async ({
     try {
         for await (const chunk of streamChatAgent({
             query,
-            context: contextStr,
-            clientSystemPrompt,
-            conversationHistory,
+            prompt,
+            contextStr,
             rerankResults,
-            options,
+            enableReferences,
+            llmProvider,
         })) {
             // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
             if (chunk.content && typeof chunk.content === 'object') {
