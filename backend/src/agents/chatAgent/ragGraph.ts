@@ -19,7 +19,7 @@ interface RerankResult {
     memo_title?: string
 }
 
-interface RAGOptions {
+export interface RAGConfig {
     llmProvider: 'openai' | 'anthropic' | 'local' | 'groq'
     references: {
         enabled: boolean
@@ -43,7 +43,7 @@ const RAGState = Annotation.Root({
     query: Annotation<string>,
     filters: Annotation<MemoFilter[]>,
     clientSystemPrompt: Annotation<string | null>,
-    options: Annotation<RAGOptions>,
+    ragConfig: Annotation<RAGConfig>,
     chatId: Annotation<string | null>,
     conversationHistory: Annotation<Array<['human' | 'ai' | 'system', string]> | null>,
     rewrittenQuery: Annotation<string | null>,
@@ -53,6 +53,8 @@ const RAGState = Annotation.Root({
     prompt: Annotation<ChatPromptTemplate>,
     contextStr: Annotation<string | null>,
 })
+
+export const CLOUD_LLM_PROVIDERS = ['openai', 'anthropic', 'groq']
 
 async function getChatHistoryNode(state: typeof RAGState.State) {
     const { chatId, project } = state
@@ -64,8 +66,9 @@ async function getChatHistoryNode(state: typeof RAGState.State) {
 }
 
 async function queryRewriteNode(state: typeof RAGState.State) {
-    const { query, conversationHistory, options } = state
-    if (!options.queryRewrite.enabled) {
+    const { query, conversationHistory, ragConfig } = state
+
+    if (!ragConfig.queryRewrite.enabled) {
         return { rewrittenQuery: null }
     }
 
@@ -86,7 +89,7 @@ async function queryRewriteNode(state: typeof RAGState.State) {
 }
 
 async function vectorSearchNode(state: typeof RAGState.State) {
-    const { rewrittenQuery, query, project, filters, options } = state
+    const { rewrittenQuery, query, project, filters, ragConfig } = state
 
     const searchQuery = rewrittenQuery || query
 
@@ -94,8 +97,8 @@ async function vectorSearchNode(state: typeof RAGState.State) {
     const chunkResults = await memoChunkVectorSearch(
         project,
         embeddingVector,
-        options.vectorSearch.topK,
-        options.vectorSearch.similarityThreshold,
+        ragConfig.vectorSearch.topK,
+        ragConfig.vectorSearch.similarityThreshold,
         filters
     )
 
@@ -116,12 +119,12 @@ async function getMemoPropertiesNode(state: typeof RAGState.State) {
 }
 
 async function rerankNode(state: typeof RAGState.State) {
-    const { chunkResults, memoPropertiesMap, query, rewrittenQuery, options } = state
+    const { chunkResults, memoPropertiesMap, query, rewrittenQuery, ragConfig } = state
     if (!chunkResults) {
         return { rerankedResults: [] }
     }
 
-    if (!options.reranking.enabled) {
+    if (!ragConfig.reranking.enabled) {
         // map chunks to rerank results
         const rerankedResults: RerankResult[] = []
         for (let i = 0; i < chunkResults.length; i++) {
@@ -178,11 +181,11 @@ async function rerankNode(state: typeof RAGState.State) {
 
     // sort
     results.sort((a, b) => b.relevance_score - a.relevance_score)
-    return { rerankedResults: results.slice(0, options.reranking.topK) }
+    return { rerankedResults: results.slice(0, ragConfig.reranking.topK) }
 }
 
 function buildLLMInputsNode(state: typeof RAGState.State) {
-    const { conversationHistory, options, rerankedResults, clientSystemPrompt } = state
+    const { conversationHistory, ragConfig, rerankedResults, clientSystemPrompt } = state
 
     let contextStr = ''
     for (let i = 0; i < rerankedResults.length; i++) {
@@ -190,7 +193,7 @@ function buildLLMInputsNode(state: typeof RAGState.State) {
     }
 
     const prompts: [string, string][] = [
-        ['system', options.references.enabled ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
+        ['system', ragConfig.references.enabled ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
     ]
 
     if (clientSystemPrompt) {
@@ -205,7 +208,7 @@ function buildLLMInputsNode(state: typeof RAGState.State) {
     return { prompt, contextStr }
 }
 
-// ideally we'd dynamically skip nodes based on the options but
+// ideally we'd dynamically skip nodes based on the ragConfig but
 // that's annoyingly very hard with TypeScript it seems
 // so we let the nodes themselves decide whether to run or not
 const ragGraphDefinition = new StateGraph(RAGState)

@@ -78,7 +78,7 @@ const _estimateTokens = (text: string): number => {
 export const getOptimizedChatHistory = async (
     chatId: string | undefined,
     project: Project
-): Promise<Array<[string, string]>> => {
+): Promise<Array<['human' | 'ai' | 'system', string]>> => {
     if (!chatId) {
         return []
     }
@@ -92,21 +92,21 @@ export const getOptimizedChatHistory = async (
     const totalTokens = _estimateTokens(totalText)
 
     if (totalTokens <= TOKEN_THRESHOLD) {
-        return history.map((msg) => [msg.role === 'user' ? 'human' : 'ai', msg.content] as [string, string])
+        return history.map((msg) => [msg.role === 'user' ? 'human' : 'ai', msg.content])
     }
 
     const recentMessages = history.slice(-RECENT_MESSAGES_TO_KEEP)
     const oldMessages = history.slice(0, -RECENT_MESSAGES_TO_KEEP)
 
     const summary = await _summarizeOldMessages(oldMessages)
-    const formattedHistory: Array<[string, string]> = []
+    const formattedHistory: Array<['human' | 'ai' | 'system', string]> = []
 
     if (summary) {
         formattedHistory.push(['system', `Previous conversation summary: ${summary}`])
     }
 
     for (const msg of recentMessages) {
-        formattedHistory.push([msg.role === 'user' ? 'human' : 'ai', msg.content] as [string, string])
+        formattedHistory.push([msg.role === 'user' ? 'human' : 'ai', msg.content])
     }
 
     return formattedHistory

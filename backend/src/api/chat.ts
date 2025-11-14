@@ -1,13 +1,14 @@
 import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
 import { streamChatAgent } from '@/agents/chatAgent/chatAgent'
-import { IS_CLOUD, IS_DEVELOPMENT, LLM_PROVIDER, SUPPORTED_LLM_PROVIDERS } from '@/settings'
+import { IS_CLOUD, IS_DEVELOPMENT } from '@/settings'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
 import { createChatMessagePair } from '@/lib/chatUtils'
 import { CachedQueries } from '@/queries/cachedQueries'
 import { DI } from '@/di'
 import { ragGraph } from '@/agents/chatAgent/ragGraph'
+import { parseRagConfig } from '@/lib/ragUtils'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
 
 export const chat = async (req: Request, res: Response) => {
@@ -16,18 +17,7 @@ export const chat = async (req: Request, res: Response) => {
     const filters = req.body.filters || []
     const chatId = req.body.chat_id
     const clientSystemPrompt = req.body.system_prompt || null
-    const enableReferences = req.body.enable_references || false
-
-    // experimental: allow the client to specify the LLM provider (not the model yet)
-    // we will not document this or add this to SDKs until we're certain of the behavior we want
-    // initially this is meant to support testing in the playground
-    // using this feature requires that the instance have API keys for all supported providers
-    const llmProvider = req.body.llm_provider || LLM_PROVIDER
-    if (!['openai', 'anthropic', 'groq'].includes(llmProvider)) {
-        return res.status(400).json({
-            error: `Invalid LLM provider: ${llmProvider}. Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(', ')}`,
-        })
-    }
+    const ragConfig = req.body.rag_config || {}
 
     if (!query) {
         return res.status(400).json({ error: 'Query is required' })
@@ -35,6 +25,10 @@ export const chat = async (req: Request, res: Response) => {
 
     if (!Array.isArray(filters)) {
         return res.status(400).json({ error: 'Filters must be a list' })
+    }
+    const { parsedRagConfig, error } = parseRagConfig(ragConfig)
+    if (error || !parsedRagConfig) {
+        return res.status(400).json({ error: error || 'Error parsing rag_config' })
     }
 
     const project = req.context?.requestUser?.project
@@ -76,23 +70,7 @@ export const chat = async (req: Request, res: Response) => {
         chatId,
         filters,
         clientSystemPrompt,
-        options: {
-            llmProvider,
-            references: {
-                enabled: enableReferences,
-            },
-            queryRewrite: {
-                enabled: false,
-            },
-            vectorSearch: {
-                topK: 3,
-                similarityThreshold: 0.5,
-            },
-            reranking: {
-                enabled: false,
-                topK: 4,
-            },
-        },
+        ragConfig: parsedRagConfig,
     })
 
     const { query: finalQuery, contextStr, prompt, rerankedResults } = ragResultState
@@ -105,8 +83,8 @@ export const chat = async (req: Request, res: Response) => {
                 contextStr: contextStr || '',
                 prompt,
                 rerankResults: rerankedResults || [],
-                enableReferences,
-                llmProvider,
+                enableReferences: parsedRagConfig.references.enabled,
+                llmProvider: parsedRagConfig.llmProvider,
             })
             const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
             res.write(`data: ${JSON.stringify({ type: 'done', chat_id: finalChatId })}\n\n`)
@@ -121,8 +99,8 @@ export const chat = async (req: Request, res: Response) => {
                 prompt,
                 contextStr: contextStr || '',
                 rerankResults: rerankedResults || [],
-                enableReferences,
-                llmProvider,
+                enableReferences: parsedRagConfig.references.enabled,
+                llmProvider: parsedRagConfig.llmProvider,
             })) {
                 if (chunk.type === 'token') {
                     fullResponse += chunk.content || ''
