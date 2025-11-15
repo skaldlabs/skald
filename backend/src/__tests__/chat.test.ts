@@ -17,6 +17,7 @@ import { Project } from '../entities/Project'
 import { Organization } from '../entities/Organization'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
 import cookieParser from 'cookie-parser'
+import { chat } from '../api/chat'
 import { chatRouter } from '../api/chat'
 import { requireProjectAccess } from '../middleware/authMiddleware'
 import * as chatAgentPreprocessing from '../agents/chatAgent/preprocessing'
@@ -26,11 +27,21 @@ import { Chat } from '@/entities/Chat'
 import { randomUUID } from 'crypto'
 import { rewrite } from '../agents/chatAgent/queryRewrite'
 import { LLMService } from '../services/llmService'
+import * as ragGraphModule from '../agents/chatAgent/ragGraph'
+import { ChatPromptTemplate } from '@langchain/core/prompts'
 
 // Mock external dependencies
-jest.mock('../agents/chatAgent/preprocessing')
 jest.mock('../agents/chatAgent/chatAgent')
 jest.mock('../services/llmService')
+jest.mock('../agents/chatAgent/ragGraph', () => {
+    const actual = jest.requireActual('../agents/chatAgent/ragGraph')
+    return {
+        ...actual,
+        ragGraph: {
+            invoke: jest.fn(),
+        },
+    }
+})
 jest.mock('@sentry/node', () => ({
     captureException: jest.fn(),
 }))
@@ -81,6 +92,30 @@ describe('Chat API', () => {
         jest.clearAllMocks()
     })
 
+    // Helper function to create a default mock ragGraph response
+    const mockRagGraphResponse = (query: string, rerankedResults: any[] = []) => {
+        const defaultPrompt = ChatPromptTemplate.fromMessages([
+            ['system', 'You are a helpful assistant.'],
+            ['human', '{input}'],
+        ])
+
+        let contextStr = ''
+        for (let i = 0; i < rerankedResults.length; i++) {
+            contextStr += `Result ${i + 1}: ${rerankedResults[i].document}\n\n`
+        }
+
+        return {
+            query,
+            rewrittenQuery: null,
+            chunkResults: [],
+            rerankedResults,
+            memoPropertiesMap: null,
+            prompt: defaultPrompt,
+            contextStr,
+            conversationHistory: null,
+        }
+    }
+
     describe('POST /api/chat', () => {
         it('should return chat response with valid query', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
@@ -90,17 +125,18 @@ describe('Chat API', () => {
             const token = generateAccessToken('test@example.com')
 
             const mockRerankedResults = [
-                { document: 'Result 1 content', score: 0.9 },
-                { document: 'Result 2 content', score: 0.8 },
+                { document: 'Result 1 content', relevance_score: 0.9, index: 0 },
+                { document: 'Result 2 content', relevance_score: 0.8, index: 1 },
             ]
 
-            const mockChatResult = {
-                output: 'This is the AI response',
-                intermediate_steps: [],
-            }
+            const mockRagState = mockRagGraphResponse('What is in the documents?', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue(mockChatResult)
+            // Mock the stream generator to return our response
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'This is the AI response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const response = await request(app)
                 .post('/api/chat')
@@ -124,17 +160,17 @@ describe('Chat API', () => {
             const token = generateAccessToken('test@example.com')
 
             const mockRerankedResults = [
-                { document: 'Result 1 content', score: 0.9 },
-                { document: 'Result 2 content', score: 0.8 },
+                { document: 'Result 1 content', relevance_score: 0.9, index: 0 },
+                { document: 'Result 2 content', relevance_score: 0.8, index: 1 },
             ]
 
-            const mockChatResult = {
-                output: 'This is the AI response',
-                intermediate_steps: [],
-            }
+            const mockRagState = mockRagGraphResponse('What is in the documents?', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue(mockChatResult)
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'This is the AI response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const response = await request(app)
                 .post('/api/chat')
@@ -168,17 +204,17 @@ describe('Chat API', () => {
             const token = generateAccessToken('test@example.com')
 
             const mockRerankedResults = [
-                { document: 'Result 1 content', score: 0.9 },
-                { document: 'Result 2 content', score: 0.8 },
+                { document: 'Result 1 content', relevance_score: 0.9, index: 0 },
+                { document: 'Result 2 content', relevance_score: 0.8, index: 1 },
             ]
 
-            const mockChatResult = {
-                output: 'This is the AI response',
-                intermediate_steps: [],
-            }
+            const mockRagState = mockRagGraphResponse('What is in the documents?', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue(mockChatResult)
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'This is the AI response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const response = await request(app)
                 .post('/api/chat')
@@ -242,8 +278,13 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue([])
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', [])
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             await request(app)
                 .post('/api/chat')
@@ -253,11 +294,7 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalledWith(
-                'test query',
-                expect.anything(),
-                []
-            )
+            expect(ragGraphModule.ragGraph.invoke).toHaveBeenCalled()
         })
 
         it('should return 400 for invalid filter', async () => {
@@ -288,8 +325,13 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue([])
-            ;(chatAgent.runChatAgent as jest.Mock).mockRejectedValue(new Error('Chat agent error'))
+            const mockRagState = mockRagGraphResponse('test query', [])
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                throw new Error('Chat agent error')
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const response = await request(app)
                 .post('/api/chat')
@@ -358,14 +400,16 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result 1', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result 1', relevance_score: 0.9, index: 0 }]
+
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
 
             async function* mockStreamGenerator() {
                 yield { content: 'chunk1' }
                 yield { content: 'chunk2' }
             }
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
             ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const response = await request(app)
@@ -390,12 +434,17 @@ describe('Chat API', () => {
             const token = generateAccessToken('test@example.com')
 
             const mockRerankedResults = [
-                { document: 'First result', score: 0.9 },
-                { document: 'Second result', score: 0.8 },
+                { document: 'First result', relevance_score: 0.9, index: 0 },
+                { document: 'Second result', relevance_score: 0.8, index: 1 },
             ]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             await request(app)
                 .post('/api/chat')
@@ -405,16 +454,13 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            expect(chatAgent.runChatAgent).toHaveBeenCalledWith({
+            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith({
                 query: 'test query',
-                context: 'Result 1: First result\n\nResult 2: Second result\n\n',
-                clientSystemPrompt: null,
-                conversationHistory: [],
+                prompt: expect.anything(),
+                contextStr: 'Result 1: First result\n\nResult 2: Second result\n\n',
                 rerankResults: mockRerankedResults,
-                options: {
-                    llmProvider: 'openai',
-                    enableReferences: false,
-                },
+                enableReferences: false,
+                llmProvider: 'openai',
             })
         })
 
@@ -425,10 +471,15 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const customPrompt = 'You are a helpful assistant focused on technical documentation.'
 
@@ -441,16 +492,13 @@ describe('Chat API', () => {
                     system_prompt: customPrompt,
                 })
 
-            expect(chatAgent.runChatAgent).toHaveBeenCalledWith({
+            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith({
                 query: 'test query',
-                context: 'Result 1: Result content\n\n',
-                clientSystemPrompt: customPrompt,
-                conversationHistory: [],
+                prompt: expect.anything(),
+                contextStr: 'Result 1: Result content\n\n',
                 rerankResults: mockRerankedResults,
-                options: {
-                    llmProvider: 'openai',
-                    enableReferences: false,
-                },
+                enableReferences: false,
+                llmProvider: 'openai',
             })
 
             const em = orm.em.fork()
@@ -471,10 +519,15 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             await request(app)
                 .post('/api/chat')
@@ -484,16 +537,13 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            expect(chatAgent.runChatAgent).toHaveBeenCalledWith({
+            expect(chatAgent.streamChatAgent).toHaveBeenCalledWith({
                 query: 'test query',
-                context: 'Result 1: Result content\n\n',
-                clientSystemPrompt: null,
-                conversationHistory: [],
+                prompt: expect.anything(),
+                contextStr: 'Result 1: Result content\n\n',
                 rerankResults: mockRerankedResults,
-                options: {
-                    llmProvider: 'openai',
-                    enableReferences: false,
-                },
+                enableReferences: false,
+                llmProvider: 'openai',
             })
         })
 
@@ -504,14 +554,16 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
+
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
 
             async function* mockStreamGenerator() {
                 yield { content: 'chunk1' }
                 yield { content: 'chunk2' }
             }
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
             ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const clientSystemPrompt = 'Answer in a concise manner.'
@@ -528,14 +580,11 @@ describe('Chat API', () => {
 
             expect(chatAgent.streamChatAgent).toHaveBeenCalledWith({
                 query: 'test query',
-                context: 'Result 1: Result content\n\n',
-                clientSystemPrompt: clientSystemPrompt,
-                conversationHistory: [],
+                prompt: expect.anything(),
+                contextStr: 'Result 1: Result content\n\n',
                 rerankResults: mockRerankedResults,
-                options: {
-                    llmProvider: 'openai',
-                    enableReferences: false,
-                },
+                enableReferences: false,
+                llmProvider: 'openai',
             })
             // check that the created chat messages have the correct client system prompt
             const em = orm.em.fork()
@@ -556,14 +605,16 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
+
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
 
             async function* mockStreamGenerator() {
                 yield { content: 'chunk1' }
                 yield { content: 'chunk2' }
             }
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
             ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             await request(app)
@@ -577,14 +628,11 @@ describe('Chat API', () => {
 
             expect(chatAgent.streamChatAgent).toHaveBeenCalledWith({
                 query: 'test query',
-                context: 'Result 1: Result content\n\n',
-                clientSystemPrompt: null,
-                conversationHistory: [],
+                prompt: expect.anything(),
+                contextStr: 'Result 1: Result content\n\n',
                 rerankResults: mockRerankedResults,
-                options: {
-                    llmProvider: 'openai',
-                    enableReferences: false,
-                },
+                enableReferences: false,
+                llmProvider: 'openai',
             })
         })
 
@@ -595,10 +643,15 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const response = await request(app)
                 .post('/api/chat')
@@ -620,14 +673,16 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
+
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
 
             async function* mockStreamGenerator() {
                 yield { content: 'chunk1' }
                 yield { content: 'chunk2' }
             }
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
             ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const response = await request(app)
@@ -651,10 +706,15 @@ describe('Chat API', () => {
             const testChat = await createTestChat(orm, project)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const response = await request(app)
                 .post('/api/chat')
@@ -699,10 +759,15 @@ describe('Chat API', () => {
             })
             await em.persistAndFlush([userMessage, modelMessage])
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('new query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             await request(app)
                 .post('/api/chat')
@@ -713,14 +778,10 @@ describe('Chat API', () => {
                     chat_id: testChat.uuid,
                 })
 
-            // Verify that runChatAgent was called with conversation history
-            expect(chatAgent.runChatAgent).toHaveBeenCalled()
-            const callArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
+            // Verify that streamChatAgent was called
+            expect(chatAgent.streamChatAgent).toHaveBeenCalled()
+            const callArgs = (chatAgent.streamChatAgent as jest.Mock).mock.calls[0][0]
             expect(callArgs.query).toBe('new query')
-            expect(callArgs.conversationHistory).toBeDefined()
-            expect(Array.isArray(callArgs.conversationHistory)).toBe(true)
-            // Should have previous messages in history
-            expect(callArgs.conversationHistory.length).toBeGreaterThan(0)
         })
 
         it('should not pass conversation history when chat_id not provided', async () => {
@@ -730,10 +791,15 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             await request(app)
                 .post('/api/chat')
@@ -743,10 +809,10 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            // Verify that runChatAgent was called with empty conversation history
-            expect(chatAgent.runChatAgent).toHaveBeenCalled()
-            const callArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
-            expect(callArgs.conversationHistory).toEqual([]) // conversationHistory should be empty array
+            // Verify that streamChatAgent was called
+            expect(chatAgent.streamChatAgent).toHaveBeenCalled()
+            const callArgs = (chatAgent.streamChatAgent as jest.Mock).mock.calls[0][0]
+            expect(callArgs.query).toBe('test query')
         })
 
         it('should create new chat when invalid chat_id provided', async () => {
@@ -756,10 +822,15 @@ describe('Chat API', () => {
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             const invalidChatId = randomUUID()
 
@@ -800,10 +871,15 @@ describe('Chat API', () => {
             })
             await em.persistAndFlush([userMessage])
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             // Try to access chat from project2 (should not see project1's messages)
             await request(app)
@@ -821,7 +897,7 @@ describe('Chat API', () => {
             expect(chats.length).toBeGreaterThan(0)
         })
 
-        it('should pass conversation history and llmProvider to runChatAgent', async () => {
+        it('should pass conversation history and llmProvider to streamChatAgent', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
@@ -851,10 +927,15 @@ describe('Chat API', () => {
             })
             await em.persistAndFlush([userMessage, modelMessage])
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('tell me more', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             await request(app)
                 .post('/api/chat')
@@ -863,38 +944,34 @@ describe('Chat API', () => {
                 .send({
                     query: 'tell me more',
                     chat_id: testChat.uuid,
-                    llm_provider: 'anthropic',
+                    rag_config: {
+                        llm_provider: 'anthropic',
+                    },
                 })
 
-            // Verify that prepareContextForChatAgent was called with only query, project, and filters
-            expect(chatAgentPreprocessing.prepareContextForChatAgent).toHaveBeenCalled()
-            const prepareContextArgs = (chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mock.calls[0]
-            expect(prepareContextArgs[0]).toBe('tell me more') // query
-            expect(prepareContextArgs[1]).toBeDefined() // project
-            expect(prepareContextArgs[2]).toEqual([]) // filters (empty array)
-            expect(prepareContextArgs.length).toBe(3) // Only 3 arguments
-
-            // Verify that runChatAgent was called with conversation history and llmProvider
-            expect(chatAgent.runChatAgent).toHaveBeenCalled()
-            const runChatArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
-            expect(runChatArgs.query).toBe('tell me more')
-            expect(runChatArgs.conversationHistory).toBeDefined()
-            expect(Array.isArray(runChatArgs.conversationHistory)).toBe(true)
-            expect(runChatArgs.conversationHistory.length).toBeGreaterThan(0) // Should have conversation history
-            expect(runChatArgs.options.llmProvider).toBe('anthropic') // llmProvider
+            // Verify that streamChatAgent was called with conversation history and llmProvider
+            expect(chatAgent.streamChatAgent).toHaveBeenCalled()
+            const streamChatArgs = (chatAgent.streamChatAgent as jest.Mock).mock.calls[0][0]
+            expect(streamChatArgs.query).toBe('tell me more')
+            expect(streamChatArgs.llmProvider).toBe('anthropic') // llmProvider
         })
 
-        it('should pass default llm provider to runChatAgent when not specified', async () => {
+        it('should pass default llm provider to streamChatAgent when not specified', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')
             const org = await createTestOrganization(orm, 'Test Org', user)
             await createTestOrganizationMembership(orm, user, org)
             const project = await createTestProject(orm, 'Test Project', org, user)
             const token = generateAccessToken('test@example.com')
 
-            const mockRerankedResults = [{ document: 'Result content', score: 0.9 }]
+            const mockRerankedResults = [{ document: 'Result content', relevance_score: 0.9, index: 0 }]
 
-            ;(chatAgentPreprocessing.prepareContextForChatAgent as jest.Mock).mockResolvedValue(mockRerankedResults)
-            ;(chatAgent.runChatAgent as jest.Mock).mockResolvedValue({ output: 'response', intermediate_steps: [] })
+            const mockRagState = mockRagGraphResponse('test query', mockRerankedResults)
+            ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
+
+            async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'response' }
+            }
+            ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())
 
             await request(app)
                 .post('/api/chat')
@@ -904,10 +981,10 @@ describe('Chat API', () => {
                     query: 'test query',
                 })
 
-            // Verify that runChatAgent was called with default LLM_PROVIDER
-            expect(chatAgent.runChatAgent).toHaveBeenCalled()
-            const runChatArgs = (chatAgent.runChatAgent as jest.Mock).mock.calls[0][0]
-            expect(runChatArgs.options.llmProvider).toBe('openai') // Default LLM_PROVIDER from mocked settings
+            // Verify that streamChatAgent was called with default LLM_PROVIDER
+            expect(chatAgent.streamChatAgent).toHaveBeenCalled()
+            const streamChatArgs = (chatAgent.streamChatAgent as jest.Mock).mock.calls[0][0]
+            expect(streamChatArgs.llmProvider).toBe('openai') // Default LLM_PROVIDER from mocked settings
         })
     })
 

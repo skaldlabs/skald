@@ -80,6 +80,10 @@ export const useAuthStore = create<AuthState>((set) => {
                     organization_name: user.organization_name,
                     current_organization_uuid: user.current_organization_uuid,
                 })
+
+                // Initialize projects after successful auth
+                // This ensures currentProject is available on page refresh
+                await useProjectStore.getState().fetchProjects()
             } else {
                 set({ isAuthenticated: false, user: null })
             }
@@ -112,6 +116,9 @@ export const useAuthStore = create<AuthState>((set) => {
                 organization_name: user.organization_name,
                 current_organization_uuid: user.current_organization_uuid,
             })
+
+            // Initialize projects after successful login
+            await useProjectStore.getState().fetchProjects()
 
             return true
         },

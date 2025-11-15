@@ -14,6 +14,15 @@ export interface ChatMessage {
     references?: Record<number, { memo_uuid: string; memo_title: string }>
 }
 
+export interface RagConfig {
+    queryRewriteEnabled: boolean
+    rerankingEnabled: boolean
+    vectorSearchTopK: number
+    similarityThreshold: number
+    rerankingTopK: number
+    referencesEnabled: boolean
+}
+
 interface ChatState {
     messages: ChatMessage[]
     isLoading: boolean
@@ -21,11 +30,11 @@ interface ChatState {
     currentStreamingMessageId: string | null
     systemPrompt: string
     llmProvider: string
-    enableReferences: boolean
+    ragConfig: RagConfig
     chatSessionId: string | null
     setSystemPrompt: (prompt: string) => void
     setLlmProvider: (provider: string) => void
-    setEnableReferences: (enabled: boolean) => void
+    setRagConfig: (config: Partial<RagConfig>) => void
     sendMessage: (query: string) => Promise<void>
     clearMessages: () => void
     addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }) => void
@@ -46,7 +55,14 @@ export const useChatStore = create<ChatState>()(
             currentStreamingMessageId: null,
             systemPrompt: '',
             llmProvider: 'openai',
-            enableReferences: false,
+            ragConfig: {
+                queryRewriteEnabled: false,
+                rerankingEnabled: true,
+                vectorSearchTopK: 100,
+                similarityThreshold: 0.8,
+                rerankingTopK: 50,
+                referencesEnabled: false,
+            },
             chatSessionId: null,
 
             setSystemPrompt: (prompt: string) => {
@@ -57,8 +73,10 @@ export const useChatStore = create<ChatState>()(
                 set({ llmProvider: provider })
             },
 
-            setEnableReferences: (enabled: boolean) => {
-                set({ enableReferences: enabled })
+            setRagConfig: (config: Partial<RagConfig>) => {
+                set((state) => ({
+                    ragConfig: { ...state.ragConfig, ...config },
+                }))
             },
 
             addMessage: (message) => {
@@ -133,19 +151,23 @@ export const useChatStore = create<ChatState>()(
                     payload.system_prompt = systemPrompt
                 }
 
-                const llmProvider = get().llmProvider
-                if (llmProvider) {
-                    payload.llm_provider = llmProvider
-                }
-
-                const enableReferences = get().enableReferences
-                if (enableReferences) {
-                    payload.enable_references = true
-                }
-
                 const chatSessionId = get().chatSessionId
                 if (chatSessionId) {
                     payload.chat_id = chatSessionId
+                }
+
+                // Include RAG config
+                const ragConfig = get().ragConfig
+                const llmProvider = get().llmProvider
+                payload.rag_config = {
+                    llm_provider: llmProvider,
+                    query_rewrite: { enabled: ragConfig.queryRewriteEnabled },
+                    reranking: { enabled: ragConfig.rerankingEnabled, top_k: ragConfig.rerankingTopK },
+                    vector_search: {
+                        top_k: ragConfig.vectorSearchTopK,
+                        similarity_threshold: ragConfig.similarityThreshold,
+                    },
+                    references: { enabled: ragConfig.referencesEnabled },
                 }
 
                 api.stream(
@@ -201,7 +223,7 @@ export const useChatStore = create<ChatState>()(
             partialize: (state) => ({
                 systemPrompt: state.systemPrompt,
                 llmProvider: state.llmProvider,
-                enableReferences: state.enableReferences,
+                ragConfig: state.ragConfig,
             }),
         }
     )

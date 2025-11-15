@@ -160,6 +160,19 @@ export const api = {
             ...config,
         })
     },
+    patch: async <T>(
+        path: string,
+        data: Record<string, unknown> = {},
+        config: ApiConfig = {}
+    ): Promise<ApiResponse<T>> => {
+        return _makeRequest<T>({
+            method: 'patch',
+            url: `${baseUrl}${path}`,
+            data,
+            headers: { ...config.headers },
+            ...config,
+        })
+    },
     delete: async <T>(path: string, config: ApiConfig = {}): Promise<ApiResponse<T>> => {
         return _makeRequest<T>({
             method: 'delete',

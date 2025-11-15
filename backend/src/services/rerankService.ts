@@ -34,7 +34,7 @@ RULES:
 - The "results" array MUST be sorted by "relevance_score" in descending order.
 - "index" MUST map to the original position of the document in the input list (0-indexed).
 - "document" MUST be returned verbatim (do not edit).
-- "relevance_score" MUST be a float in [0.0, 1.0] (use up to 6 decimal places as needed).`
+- "relevance_score" MUST be a float in [0.0, 1.0] (use up to 2 decimal places as needed).`
 
 interface RerankItem {
     index: number

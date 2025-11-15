@@ -1,13 +1,15 @@
 import express, { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
-import { prepareContextForChatAgent } from '@/agents/chatAgent/preprocessing'
-import { runChatAgent, streamChatAgent } from '@/agents/chatAgent/chatAgent'
-import { IS_CLOUD, IS_DEVELOPMENT, LLM_PROVIDER, SUPPORTED_LLM_PROVIDERS } from '@/settings'
+import { streamChatAgent } from '@/agents/chatAgent/chatAgent'
+import { IS_CLOUD, IS_DEVELOPMENT } from '@/settings'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
-import { getOptimizedChatHistory, createChatMessagePair } from '@/lib/chatUtils'
+import { createChatMessagePair } from '@/lib/chatUtils'
 import { CachedQueries } from '@/queries/cachedQueries'
 import { DI } from '@/di'
+import { ragGraph } from '@/agents/chatAgent/ragGraph'
+import { parseRagConfig } from '@/lib/ragUtils'
+import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { Project } from '@/entities/Project'
 import { chatRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackChatUsage } from '@/middleware/trackChatUsageMiddleware'
@@ -18,18 +20,7 @@ export const chat = async (req: Request, res: Response) => {
     const filters = req.body.filters || []
     const chatId = req.body.chat_id
     const clientSystemPrompt = req.body.system_prompt || null
-    const enableReferences = req.body.enable_references || false
-
-    // experimental: allow the client to specify the LLM provider (not the model yet)
-    // we will not document this or add this to SDKs until we're certain of the behavior we want
-    // initially this is meant to support testing in the playground
-    // using this feature requires that the instance have API keys for all supported providers
-    const llmProvider = req.body.llm_provider || LLM_PROVIDER
-    if (!['openai', 'anthropic', 'groq'].includes(llmProvider)) {
-        return res.status(400).json({
-            error: `Invalid LLM provider: ${llmProvider}. Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(', ')}`,
-        })
-    }
+    const ragConfig = req.body.rag_config || {}
 
     if (!query) {
         return res.status(400).json({ error: 'Query is required' })
@@ -37,6 +28,10 @@ export const chat = async (req: Request, res: Response) => {
 
     if (!Array.isArray(filters)) {
         return res.status(400).json({ error: 'Filters must be a list' })
+    }
+    const { parsedRagConfig, error } = parseRagConfig(ragConfig)
+    if (error || !parsedRagConfig) {
+        return res.status(400).json({ error: error || 'Error parsing rag_config' })
     }
 
     const project = req.context?.requestUser?.project
@@ -72,55 +67,64 @@ export const chat = async (req: Request, res: Response) => {
         }
     }
 
-    const conversationHistory = await getOptimizedChatHistory(chatId, project)
+    console.log(parsedRagConfig)
 
-    const rerankedResults = await prepareContextForChatAgent(query, project, memoFilters)
+    const ragResultState = await ragGraph.invoke({
+        query,
+        project,
+        chatId,
+        filters,
+        clientSystemPrompt,
+        ragConfig: parsedRagConfig,
+    })
 
-    let contextStr = ''
-    for (let i = 0; i < rerankedResults.length; i++) {
-        contextStr += `Result ${i + 1}: ${rerankedResults[i].document}\n\n`
-    }
-
-    const chatAgentOptions = {
-        llmProvider,
-        enableReferences,
-    }
+    const { query: finalQuery, contextStr, prompt, rerankedResults } = ragResultState
 
     try {
         if (stream) {
             const fullResponse = await _generateStreamingResponse({
-                query,
-                contextStr,
-                clientSystemPrompt,
                 res,
-                conversationHistory,
-                rerankResults: rerankedResults,
-                options: chatAgentOptions,
+                query: finalQuery,
+                contextStr: contextStr || '',
+                prompt,
+                rerankResults: rerankedResults || [],
+                enableReferences: parsedRagConfig.references.enabled,
+                llmProvider: parsedRagConfig.llmProvider,
             })
             const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
             res.write(`data: ${JSON.stringify({ type: 'done', chat_id: finalChatId })}\n\n`)
             res.end()
         } else {
-            // non-streaming response
-            const result = await runChatAgent({
-                query,
-                context: contextStr,
-                clientSystemPrompt,
-                conversationHistory,
-                rerankResults: rerankedResults,
-                options: chatAgentOptions,
-            })
-            const finalChatId = await createChatMessagePair(project, query, result.output, chatId, clientSystemPrompt)
+            // non-streaming response - compose full response from stream
+            let fullResponse = ''
+            let references: Record<number, { memo_uuid: string; memo_title: string }> | undefined
+
+            for await (const chunk of streamChatAgent({
+                query: finalQuery,
+                prompt,
+                contextStr: contextStr || '',
+                rerankResults: rerankedResults || [],
+                enableReferences: parsedRagConfig.references.enabled,
+                llmProvider: parsedRagConfig.llmProvider,
+            })) {
+                if (chunk.type === 'token') {
+                    fullResponse += chunk.content || ''
+                } else if (chunk.type === 'references' && chunk.content) {
+                    references = JSON.parse(chunk.content)
+                }
+            }
+
+            const finalChatId = await createChatMessagePair(project, query, fullResponse, chatId, clientSystemPrompt)
 
             const response: any = {
                 ok: true,
                 chat_id: finalChatId,
-                response: result.output,
-                intermediate_steps: result.intermediate_steps || [],
+                response: fullResponse,
+                intermediate_steps: [],
             }
 
-            if (result.references) {
-                response.references = result.references
+            if (references) {
+                response.references = references
             }
 
             return res.status(200).json(response)
@@ -145,51 +149,39 @@ interface RerankResult {
 }
 
 export const _generateStreamingResponse = async ({
-    query,
-    contextStr,
-    clientSystemPrompt = null,
     res,
-    conversationHistory = [],
-    rerankResults = [],
-    options = {
-        enableReferences: false,
-    },
+    query,
+    prompt,
+    contextStr,
+    rerankResults,
+    enableReferences,
+    llmProvider,
 }: {
-    query: string
-    contextStr: string
-    clientSystemPrompt?: string | null
     res: Response
-    conversationHistory?: Array<[string, string]>
-    rerankResults?: RerankResult[]
-    options?: {
-        llmProvider?: 'openai' | 'anthropic' | 'local' | 'groq'
-        enableReferences?: boolean
-    }
+    query: string
+    prompt: ChatPromptTemplate
+    contextStr: string
+    rerankResults: RerankResult[]
+    enableReferences: boolean
+    llmProvider: 'openai' | 'anthropic' | 'local' | 'groq'
 }): Promise<string> => {
     _setStreamingResponseHeaders(res)
 
     // establish connection
     res.write(': ping\n\n')
 
+    console.log('llmProvider', llmProvider)
+
     let fullResponse = ''
     try {
         for await (const chunk of streamChatAgent({
             query,
-            context: contextStr,
-            clientSystemPrompt,
-            conversationHistory,
+            prompt,
+            contextStr,
             rerankResults,
-            options,
+            enableReferences,
+            llmProvider,
         })) {
-            // KLUDGE: we shouldn't do this type of handling here, this should be the responsibility of streamChatAgent
-            if (chunk.content && typeof chunk.content === 'object') {
-                // extract text from dict (Anthropic format)
-                const content = chunk.content as any
-                chunk.content = content.text || content.content || String(content)
-            } else if (chunk.content && typeof chunk.content !== 'string') {
-                chunk.content = String(chunk.content)
-            }
-
             // format as Server-Sent Event
             const data = JSON.stringify(chunk)
             res.write(`data: ${data}\n\n`)

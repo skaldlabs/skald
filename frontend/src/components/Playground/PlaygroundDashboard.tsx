@@ -9,8 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+import { RagConfigForm } from './RagConfigForm'
 import './Playground.scss'
 import { isSelfHostedDeploy } from '@/config'
 
@@ -22,8 +21,7 @@ const LLM_PROVIDERS = [
 
 export const PlaygroundDashboard = () => {
     const { currentProject } = useProjectStore()
-    const { systemPrompt, setSystemPrompt, llmProvider, setLlmProvider, enableReferences, setEnableReferences } =
-        useChatStore()
+    const { systemPrompt, setSystemPrompt, llmProvider, setLlmProvider, ragConfig, setRagConfig } = useChatStore()
     const [isConfigOpen, setIsConfigOpen] = useState(false)
 
     if (!currentProject) {
@@ -52,9 +50,10 @@ export const PlaygroundDashboard = () => {
             </div>
 
             <Sheet open={isConfigOpen} onOpenChange={setIsConfigOpen}>
-                <SheetContent side="right" className="w-[400px] sm:w-[500px] sm:max-w-none">
+                <SheetContent side="right" className="w-[400px] sm:w-[500px] sm:max-w-none overflow-y-auto">
                     <div className="space-y-6 p-8">
                         <h3 className="text-lg font-semibold">Settings</h3>
+
                         {!isSelfHostedDeploy ? (
                             <div className="llm-provider-selector">
                                 <label htmlFor="llm-provider" className="block text-sm font-medium mb-2">
@@ -97,20 +96,9 @@ export const PlaygroundDashboard = () => {
                             />
                         </div>
 
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <Label htmlFor="enable-references" className="text-base">
-                                    Enable Source References
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Show [X] reference links in chat responses
-                                </p>
-                            </div>
-                            <Switch
-                                id="enable-references"
-                                checked={enableReferences}
-                                onCheckedChange={setEnableReferences}
-                            />
+                        <div className="border-t pt-6">
+                            <h4 className="text-md font-semibold mb-4">RAG Configuration (Advanced)</h4>
+                            <RagConfigForm ragConfig={ragConfig} onChange={setRagConfig} />
                         </div>
                     </div>
                 </SheetContent>

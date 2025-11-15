@@ -5,6 +5,8 @@ import { GettingStartedPage } from '@/pages/GettingStartedPage'
 import { MemosPage } from '@/pages/MemosPage'
 import { ChatsPage } from '@/pages/ChatsPage'
 import { PlaygroundPage } from '@/pages/PlaygroundPage'
+import { ExperimentsPage } from '@/pages/ExperimentsPage'
+import { DatasetsPage } from '@/pages/DatasetsPage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { isSelfHostedDeploy } from '@/config'
@@ -23,6 +25,8 @@ const defaultRoutes = [
     { path: '/projects/:uuid/memos/:memoUuid', component: () => <MemosPage /> },
     { path: '/projects/:uuid/chats', component: () => <ChatsPage /> },
     { path: '/projects/:uuid/playground', component: () => <PlaygroundPage /> },
+    { path: '/projects/:uuid/evaluate/experiments', component: () => <ExperimentsPage /> },
+    { path: '/projects/:uuid/evaluate/datasets', component: () => <DatasetsPage /> },
     { path: '/admin', component: () => <AdminPage /> },
 ]
 
