@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import express, { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
 import { streamChatAgent } from '@/agents/chatAgent/chatAgent'
 import { IS_CLOUD, IS_DEVELOPMENT } from '@/settings'
@@ -10,6 +10,9 @@ import { DI } from '@/di'
 import { ragGraph } from '@/agents/chatAgent/ragGraph'
 import { parseRagConfig } from '@/lib/ragUtils'
 import { ChatPromptTemplate } from '@langchain/core/prompts'
+import { Project } from '@/entities/Project'
+import { chatRateLimiter } from '@/middleware/rateLimitMiddleware'
+import { trackChatUsage } from '@/middleware/trackChatUsageMiddleware'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -197,3 +200,139 @@ export const _generateStreamingResponse = async ({
     }
     return fullResponse
 }
+
+export const listChats = async (req: Request, res: Response) => {
+    const project = req.context?.requestUser?.project as Project
+
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    const page = parseInt(req.query.page as string) || 1
+    const pageSize = parseInt(req.query.page_size as string) || 20
+    const maxPageSize = 100
+
+    if (pageSize > maxPageSize) {
+        return res.status(400).json({ error: `page_size must be less than or equal to ${maxPageSize}` })
+    }
+
+    if (page < 1) {
+        return res.status(400).json({ error: 'page must be greater than or equal to 1' })
+    }
+
+    const offset = (page - 1) * pageSize
+
+    const [chats, totalCount] = await DI.chats.findAndCount(
+        { project },
+        {
+            orderBy: { created_at: 'DESC' },
+            limit: pageSize,
+            offset: offset,
+        }
+    )
+
+    // Get all messages for these chats
+    const chatUuids = chats.map((chat) => chat.uuid)
+    const allMessages = await DI.chatMessages.find(
+        {
+            chat: { $in: chatUuids },
+        },
+        {
+            orderBy: { sent_at: 'ASC' },
+        }
+    )
+
+    // Group messages by chat and extract relevant data
+    const chatDataMap = new Map<
+        string,
+        {
+            firstUserMessage: string | null
+            messageCount: number
+            lastMessageAt: Date | null
+        }
+    >()
+
+    for (const message of allMessages) {
+        const chatId = message.chat.uuid
+        const chatData = chatDataMap.get(chatId) || {
+            firstUserMessage: null,
+            messageCount: 0,
+            lastMessageAt: null,
+        }
+
+        chatData.messageCount++
+
+        if (message.sent_by === 'user' && !chatData.firstUserMessage) {
+            chatData.firstUserMessage = message.content
+        }
+
+        if (!chatData.lastMessageAt || message.sent_at > chatData.lastMessageAt) {
+            chatData.lastMessageAt = message.sent_at
+        }
+
+        chatDataMap.set(chatId, chatData)
+    }
+
+    const results = chats.map((chat) => {
+        const chatData = chatDataMap.get(chat.uuid) || {
+            firstUserMessage: null,
+            messageCount: 0,
+            lastMessageAt: null,
+        }
+
+        return {
+            uuid: chat.uuid,
+            created_at: chat.created_at,
+            title: chatData.firstUserMessage || 'Untitled Chat',
+            message_count: chatData.messageCount,
+            last_message_at: chatData.lastMessageAt || chat.created_at,
+        }
+    })
+
+    return res.status(200).json({
+        results,
+        count: totalCount,
+        page,
+        page_size: pageSize,
+        total_pages: Math.ceil(totalCount / pageSize),
+    })
+}
+
+export const getChat = async (req: Request, res: Response) => {
+    const project = req.context?.requestUser?.project as Project
+    const { id } = req.params
+
+    const chat = await DI.chats.findOne({ uuid: id, project })
+
+    if (!chat) {
+        return res.status(404).json({ error: 'Chat not found' })
+    }
+
+    // Get all messages for this chat
+    const messages = await DI.chatMessages.find(
+        { chat },
+        {
+            orderBy: { sent_at: 'ASC' },
+        }
+    )
+
+    const chatMessages = messages.map((message) => ({
+        uuid: message.uuid,
+        content: message.content,
+        sent_by: message.sent_by,
+        sent_at: message.sent_at,
+        skald_system_prompt: message.skald_system_prompt,
+        client_system_prompt: message.client_system_prompt,
+    }))
+
+    return res.status(200).json({
+        uuid: chat.uuid,
+        created_at: chat.created_at,
+        messages: chatMessages,
+    })
+}
+
+export const chatRouter = express.Router({ mergeParams: true })
+chatRouter.get('/', listChats)
+chatRouter.get('/:id', getChat)
+chatRouter.post('/', [chatRateLimiter, trackChatUsage()], chat)

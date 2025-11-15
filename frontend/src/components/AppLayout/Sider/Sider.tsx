@@ -11,6 +11,7 @@ import {
     BookOpen,
     GlobeLock,
     FlaskConical,
+    List,
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
@@ -92,6 +93,11 @@ export const Sider = () => {
                         hasAccess: () => true,
                     },
                 ],
+              {
+                key: `/projects/${currentProject?.uuid}/chats`,
+                icon: <List className="h-4 w-4" />,
+                label: 'Agent chats',
+                hasAccess: () => true,
             },
             {
                 key: `/projects/${currentProject?.uuid}/settings`,

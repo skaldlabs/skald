@@ -90,7 +90,5 @@ export async function prepareContextForChatAgent(
 ): Promise<RerankResult[]> {
     const results = await chunkVectorSearch(query, project, filters)
 
-    // results are already sorted by relevance score from the rerank service
-    // return top K (should already be limited, but ensure it)
-    return results.slice(0, POST_RERANK_TOP_K)
+    return results.sort((a, b) => b.relevance_score - a.relevance_score).slice(0, POST_RERANK_TOP_K)
 }

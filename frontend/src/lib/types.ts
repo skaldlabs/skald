@@ -76,3 +76,29 @@ export interface SearchResult {
 }
 
 export type SearchMethod = 'title_contains' | 'title_startswith' | 'chunk_vector_search'
+
+// Keep this in sync with backend/api/chat.ts
+export interface Chat {
+    uuid: string
+    created_at: string
+    title: string
+    message_count: number
+    last_message_at: string
+}
+
+// Keep this in sync with backend/api/chat.ts
+export interface ChatMessage {
+    uuid: string
+    content: string
+    sent_by: 'user' | 'model'
+    sent_at: string
+    skald_system_prompt?: string
+    client_system_prompt?: string
+}
+
+// Keep this in sync with backend/api/chat.ts
+export interface DetailedChat {
+    uuid: string
+    created_at: string
+    messages: ChatMessage[]
+}

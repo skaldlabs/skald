@@ -3,6 +3,7 @@ import { OrganizationPage } from '@/pages/OrganizationPage'
 import { ProjectSettingsPage } from '@/pages/ProjectSettingsPage'
 import { GettingStartedPage } from '@/pages/GettingStartedPage'
 import { MemosPage } from '@/pages/MemosPage'
+import { ChatsPage } from '@/pages/ChatsPage'
 import { PlaygroundPage } from '@/pages/PlaygroundPage'
 import { ExperimentsPage } from '@/pages/ExperimentsPage'
 import { DatasetsPage } from '@/pages/DatasetsPage'
@@ -22,6 +23,7 @@ const defaultRoutes = [
     { path: '/projects/:uuid/settings', component: () => <ProjectSettingsPage /> },
     { path: '/projects/:uuid/memos', component: () => <MemosPage /> },
     { path: '/projects/:uuid/memos/:memoUuid', component: () => <MemosPage /> },
+    { path: '/projects/:uuid/chats', component: () => <ChatsPage /> },
     { path: '/projects/:uuid/playground', component: () => <PlaygroundPage /> },
     { path: '/projects/:uuid/evaluate/experiments', component: () => <ExperimentsPage /> },
     { path: '/projects/:uuid/evaluate/datasets', component: () => <DatasetsPage /> },

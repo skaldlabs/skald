@@ -12,13 +12,15 @@ import {
 } from './testHelpers'
 import { generateAccessToken } from '../lib/tokenUtils'
 import { userMiddleware } from '../middleware/userMiddleware'
-import { requireProjectAccess } from '../middleware/authMiddleware'
 import { User } from '../entities/User'
 import { Project } from '../entities/Project'
 import { Organization } from '../entities/Organization'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
 import cookieParser from 'cookie-parser'
 import { chat } from '../api/chat'
+import { chatRouter } from '../api/chat'
+import { requireProjectAccess } from '../middleware/authMiddleware'
+import * as chatAgentPreprocessing from '../agents/chatAgent/preprocessing'
 import * as chatAgent from '../agents/chatAgent/chatAgent'
 import { ChatMessage } from '@/entities/ChatMessage'
 import { Chat } from '@/entities/Chat'
@@ -70,13 +72,15 @@ describe('Chat API', () => {
         DI.projects = orm.em.getRepository(Project)
         DI.organizations = orm.em.getRepository(Organization)
         DI.organizationMemberships = orm.em.getRepository(OrganizationMembership)
+        DI.chats = orm.em.getRepository(Chat)
+        DI.chatMessages = orm.em.getRepository(ChatMessage)
 
         app = express()
         app.use(express.json())
         app.use(cookieParser())
         app.use((req, res, next) => RequestContext.create(orm.em, next))
         app.use(userMiddleware())
-        app.post('/api/chat', [requireProjectAccess()], chat)
+        app.use('/api/chat', [requireProjectAccess()], chatRouter)
     })
 
     afterAll(async () => {
@@ -981,6 +985,170 @@ describe('Chat API', () => {
             expect(chatAgent.streamChatAgent).toHaveBeenCalled()
             const streamChatArgs = (chatAgent.streamChatAgent as jest.Mock).mock.calls[0][0]
             expect(streamChatArgs.llmProvider).toBe('openai') // Default LLM_PROVIDER from mocked settings
+        })
+    })
+
+    describe('GET /api/chat/', () => {
+        it('should list all chats for a project', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            // Create test chats with messages
+            const em = orm.em.fork()
+            const chat1 = await createTestChat(orm, project)
+            const chat2 = await createTestChat(orm, project)
+
+            // Add messages to chat1
+            const message1 = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: randomUUID(),
+                project: project,
+                chat: chat1,
+                content: 'First question',
+                sent_by: 'user',
+                sent_at: new Date(Date.now() - 1000),
+            })
+            const message2 = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: message1.message_group_id,
+                project: project,
+                chat: chat1,
+                content: 'First response',
+                sent_by: 'model',
+                sent_at: new Date(Date.now() - 500),
+            })
+
+            // Add messages to chat2
+            const message3 = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: randomUUID(),
+                project: project,
+                chat: chat2,
+                content: 'Second question',
+                sent_by: 'user',
+                sent_at: new Date(),
+            })
+
+            await em.persistAndFlush([message1, message2, message3])
+
+            const response = await request(app)
+                .get('/api/chat/')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+
+            expect(response.status).toBe(200)
+            expect(response.body.results).toHaveLength(2)
+            expect(response.body.count).toBe(2)
+            expect(response.body.results[0].title).toBeDefined()
+            expect(response.body.results[0].message_count).toBeGreaterThan(0)
+        })
+
+        it('should return empty list when no chats exist', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .get('/api/chat/')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+
+            expect(response.status).toBe(200)
+            expect(response.body.results).toHaveLength(0)
+            expect(response.body.count).toBe(0)
+        })
+
+        it('should support pagination', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            // Create 3 chats
+            await createTestChat(orm, project)
+            await createTestChat(orm, project)
+            await createTestChat(orm, project)
+
+            const response = await request(app)
+                .get('/api/chat/')
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid, page: 1, page_size: 2 })
+
+            expect(response.status).toBe(200)
+            expect(response.body.results).toHaveLength(2)
+            expect(response.body.count).toBe(3)
+            expect(response.body.page).toBe(1)
+            expect(response.body.page_size).toBe(2)
+            expect(response.body.total_pages).toBe(2)
+        })
+    })
+
+    describe('GET /api/chat/:id', () => {
+        it('should return chat details with all messages', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const testChat = await createTestChat(orm, project)
+
+            // Add messages
+            const em = orm.em.fork()
+            const message1 = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: randomUUID(),
+                project: project,
+                chat: testChat,
+                content: 'User question',
+                sent_by: 'user',
+                sent_at: new Date(Date.now() - 1000),
+            })
+            const message2 = em.create(ChatMessage, {
+                uuid: randomUUID(),
+                message_group_id: message1.message_group_id,
+                project: project,
+                chat: testChat,
+                content: 'Model response',
+                sent_by: 'model',
+                sent_at: new Date(),
+            })
+            await em.persistAndFlush([message1, message2])
+
+            const response = await request(app)
+                .get(`/api/chat/${testChat.uuid}`)
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+
+            expect(response.status).toBe(200)
+            expect(response.body.uuid).toBe(testChat.uuid)
+            expect(response.body.messages).toHaveLength(2)
+            expect(response.body.messages[0].content).toBe('User question')
+            expect(response.body.messages[1].content).toBe('Model response')
+        })
+
+        it('should return 404 for non-existent chat', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const nonExistentChatId = randomUUID()
+
+            const response = await request(app)
+                .get(`/api/chat/${nonExistentChatId}`)
+                .set('Cookie', [`accessToken=${token}`])
+                .query({ project_id: project.uuid })
+
+            expect(response.status).toBe(404)
+            expect(response.body.error).toBe('Chat not found')
         })
     })
 
