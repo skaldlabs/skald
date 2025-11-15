@@ -10,6 +10,7 @@ import { streamChatAgent } from '@/agents/chatAgent/chatAgent'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
 import { llmJudgeAgent } from '@/agents/llmJudgeAgent'
+import { UsageTrackingService } from '@/services/usageTrackingService'
 
 export const experimentRouter = express.Router({ mergeParams: true })
 
@@ -374,6 +375,8 @@ const run = async (req: Request, res: Response) => {
             },
             created_at: new Date(),
         })
+
+        await new UsageTrackingService(DI.em).incrementChatQueries(project.organization)
 
         await DI.em.persistAndFlush(experimentResult)
 

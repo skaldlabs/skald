@@ -3,7 +3,15 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { ChevronLeft, ChevronDown, Play, ChevronRight } from 'lucide-react'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import { ChevronLeft, ChevronDown, Play, ChevronRight, InfoIcon } from 'lucide-react'
 import { useEvaluateExperimentsStore, type ExperimentResult } from '@/stores/evaluateExperimentsStore'
 import { useEvaluateDatasetsStore } from '@/stores/evaluateDatasetsStore'
 import { ExperimentResultModal } from './ExperimentResultModal'
@@ -23,6 +31,7 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
     const [isPropertiesOpen, setIsPropertiesOpen] = useState(false)
     const [selectedResult, setSelectedResult] = useState<ExperimentResult | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,6 +50,15 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
     const handleResultClick = (result: ExperimentResult) => {
         setSelectedResult(result)
         setIsModalOpen(true)
+    }
+
+    const handleRunExperimentClick = () => {
+        setIsConfirmDialogOpen(true)
+    }
+
+    const handleConfirmRun = async () => {
+        setIsConfirmDialogOpen(false)
+        await handleRunExperiment()
     }
 
     const handleRunExperiment = async () => {
@@ -126,9 +144,12 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                             <span>{questions.length} questions</span>
                         </div>
                     </div>
-                    <Button onClick={handleRunExperiment} disabled={isRunning || questions.length === 0}>
+                    <Button
+                        onClick={handleRunExperimentClick}
+                        disabled={isRunning || questions.length === 0 || results.length > 0}
+                    >
                         <Play className="h-4 w-4 mr-2" />
-                        {isRunning ? 'Running...' : 'Run Experiment'}
+                        {results.length > 0 ? 'Experiment Complete' : isRunning ? 'Running...' : 'Run Experiment'}
                     </Button>
                 </div>
 
@@ -346,6 +367,33 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                     </div>
                 )}
             </div>
+
+            <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Run Experiment</DialogTitle>
+                        <DialogDescription>
+                            Running this experiment will use{' '}
+                            <b>
+                                {questions.length} write{questions.length !== 1 ? 's' : ''}
+                            </b>
+                            . Proceed?
+                            <br />
+                            <br />
+                            <b>
+                                <InfoIcon className="h-4 w-4 inline" /> Note:
+                            </b>{' '}
+                            Do not close the browser window or leave this page while the experiment is running.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleConfirmRun}>Proceed</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <ExperimentResultModal result={selectedResult} open={isModalOpen} onOpenChange={setIsModalOpen} />
         </div>

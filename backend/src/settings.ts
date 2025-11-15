@@ -109,7 +109,7 @@ export const LOCAL_LLM_API_KEY = process.env.LOCAL_LLM_API_KEY || 'not-needed'
 
 // Groq
 export const GROQ_API_KEY = process.env.GROQ_API_KEY
-export const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant' // 'openai/gpt-oss-120b'
+export const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant'
 
 // ---- Embedding Provider Configuration ----
 export const EMBEDDING_PROVIDER = process.env.EMBEDDING_PROVIDER || 'voyage'
