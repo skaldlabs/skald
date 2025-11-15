@@ -64,6 +64,8 @@ export const chat = async (req: Request, res: Response) => {
         }
     }
 
+    console.log(parsedRagConfig)
+
     const ragResultState = await ragGraph.invoke({
         query,
         project,
@@ -164,6 +166,8 @@ export const _generateStreamingResponse = async ({
 
     // establish connection
     res.write(': ping\n\n')
+
+    console.log('llmProvider', llmProvider)
 
     let fullResponse = ''
     try {

@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { ChevronLeft, ChevronDown, Play } from 'lucide-react'
+import { ChevronLeft, ChevronDown, Play, ChevronRight } from 'lucide-react'
 import { useEvaluateExperimentsStore, type ExperimentResult } from '@/stores/evaluateExperimentsStore'
 import { useEvaluateDatasetsStore } from '@/stores/evaluateDatasetsStore'
 import { ExperimentResultModal } from './ExperimentResultModal'
-import { getProjectPath } from '@/lib/api'
 
 interface ExperimentDetailViewProps {
     experimentUuid: string
@@ -95,7 +93,7 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
             <div className="p-4">
                 <Button variant="ghost" onClick={onBack} className="mb-4">
                     <ChevronLeft className="h-4 w-4 mr-2" />
-                    Back to Experiments
+                    Back to experiments list
                 </Button>
                 <div className="text-red-500">Experiment not found</div>
             </div>
@@ -108,7 +106,7 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
         <div className="p-4">
             <Button variant="ghost" onClick={onBack} className="mb-4">
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                Back to Experiments
+                Back to experiments list
             </Button>
 
             <div className="mb-6">
@@ -128,10 +126,7 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                             <span>{questions.length} questions</span>
                         </div>
                     </div>
-                    <Button
-                        onClick={handleRunExperiment}
-                        disabled={isRunning || questions.length === 0}
-                    >
+                    <Button onClick={handleRunExperiment} disabled={isRunning || questions.length === 0}>
                         <Play className="h-4 w-4 mr-2" />
                         {isRunning ? 'Running...' : 'Run Experiment'}
                     </Button>
@@ -141,7 +136,9 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-2 text-sm">
                             <span>Running experiment...</span>
-                            <span>{progress.completed} / {progress.total}</span>
+                            <span>
+                                {progress.completed} / {progress.total}
+                            </span>
                         </div>
                         <Progress value={(progress.completed / progress.total) * 100} />
                     </div>
@@ -159,9 +156,10 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                     // Handle properties whether they're an object or a JSON string
                     let props: Record<string, any>
                     try {
-                        props = typeof currentExperiment.properties === 'string'
-                            ? JSON.parse(currentExperiment.properties)
-                            : currentExperiment.properties
+                        props =
+                            typeof currentExperiment.properties === 'string'
+                                ? JSON.parse(currentExperiment.properties)
+                                : currentExperiment.properties
                     } catch {
                         return (
                             <div>
@@ -183,15 +181,16 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                     // Extract rag_config, llm_provider, client_system_prompt, and other properties
                     const { rag_config, llm_provider, client_system_prompt, ...otherProps } = props
                     const hasOtherProps = Object.keys(otherProps).length > 0
-                    const hasGeneralConfig = llm_provider || client_system_prompt
 
                     return (
                         <Collapsible open={isPropertiesOpen} onOpenChange={setIsPropertiesOpen}>
                             <CollapsibleTrigger asChild>
                                 <Button variant="ghost" className="p-0 h-auto font-semibold text-lg mb-3">
-                                    <ChevronDown
-                                        className={`h-5 w-5 mr-2 transition-transform ${isPropertiesOpen ? 'transform rotate-180' : ''}`}
-                                    />
+                                    {isPropertiesOpen ? (
+                                        <ChevronDown className="h-5 w-5 mr-2" />
+                                    ) : (
+                                        <ChevronRight className="h-5 w-5 mr-2" />
+                                    )}
                                     Properties
                                 </Button>
                             </CollapsibleTrigger>
@@ -213,7 +212,9 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                                         {client_system_prompt && (
                                             <TableRow>
                                                 <TableCell className="font-medium">System Prompt</TableCell>
-                                                <TableCell className="whitespace-pre-wrap">{client_system_prompt}</TableCell>
+                                                <TableCell className="whitespace-pre-wrap">
+                                                    {client_system_prompt}
+                                                </TableCell>
                                             </TableRow>
                                         )}
                                         {rag_config?.query_rewrite && (
@@ -234,7 +235,9 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                                                 </TableRow>
                                                 {rag_config.reranking.enabled && (
                                                     <TableRow>
-                                                        <TableCell className="font-medium pl-8">Reranking Top K</TableCell>
+                                                        <TableCell className="font-medium pl-8">
+                                                            Reranking Top K
+                                                        </TableCell>
                                                         <TableCell>{rag_config.reranking.top_k}</TableCell>
                                                     </TableRow>
                                                 )}
@@ -248,7 +251,9 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                                                 </TableRow>
                                                 <TableRow>
                                                     <TableCell className="font-medium">Similarity Threshold</TableCell>
-                                                    <TableCell>{rag_config.vector_search.similarity_threshold}</TableCell>
+                                                    <TableCell>
+                                                        {rag_config.vector_search.similarity_threshold}
+                                                    </TableCell>
                                                 </TableRow>
                                             </>
                                         )}
@@ -260,16 +265,17 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                                                 </TableCell>
                                             </TableRow>
                                         )}
-                                        {hasOtherProps && Object.entries(otherProps).map(([key, value]) => (
-                                            <TableRow key={key}>
-                                                <TableCell className="font-medium">{key}</TableCell>
-                                                <TableCell>
-                                                    {typeof value === 'object'
-                                                        ? JSON.stringify(value, null, 2)
-                                                        : String(value)}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                        {hasOtherProps &&
+                                            Object.entries(otherProps).map(([key, value]) => (
+                                                <TableRow key={key}>
+                                                    <TableCell className="font-medium">{key}</TableCell>
+                                                    <TableCell>
+                                                        {typeof value === 'object'
+                                                            ? JSON.stringify(value, null, 2)
+                                                            : String(value)}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
                                     </TableBody>
                                 </Table>
                             </CollapsibleContent>
@@ -284,11 +290,12 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[250px]">Question</TableHead>
-                                        <TableHead className="w-[250px]">Answer</TableHead>
-                                        <TableHead className="w-[250px]">Expected Answer</TableHead>
-                                        <TableHead className="w-[120px]">Total Time (ms)</TableHead>
-                                        <TableHead className="w-[120px]">TTFT (ms)</TableHead>
+                                        <TableHead className="w-[200px]">Question</TableHead>
+                                        <TableHead className="w-[200px]">Answer</TableHead>
+                                        <TableHead className="w-[200px]">Expected Answer</TableHead>
+                                        <TableHead className="w-[100px]">LLM Rating</TableHead>
+                                        <TableHead className="w-[100px]">Total Time (ms)</TableHead>
+                                        <TableHead className="w-[100px]">TTFT (ms)</TableHead>
                                         <TableHead className="w-[150px]">Run Date</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -310,9 +317,15 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="max-w-[250px] truncate" title={result.expected_answer}>
+                                                <div className="max-w-[200px] truncate" title={result.expected_answer}>
                                                     {result.expected_answer}
                                                 </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {result.llm_answer_rating !== null &&
+                                                result.llm_answer_rating !== undefined
+                                                    ? `${result.llm_answer_rating.toFixed(1)} / 10`
+                                                    : '-'}
                                             </TableCell>
                                             <TableCell>
                                                 {result.total_answer_time_ms
@@ -324,9 +337,7 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                                                     ? result.time_to_first_token_ms.toLocaleString()
                                                     : '-'}
                                             </TableCell>
-                                            <TableCell>
-                                                {new Date(result.created_at).toLocaleString()}
-                                            </TableCell>
+                                            <TableCell>{new Date(result.created_at).toLocaleString()}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>

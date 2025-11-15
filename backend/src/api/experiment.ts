@@ -9,6 +9,7 @@ import { parseRagConfig } from '@/lib/ragUtils'
 import { streamChatAgent } from '@/agents/chatAgent/chatAgent'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
+import { llmJudgeAgent } from '@/agents/llmJudgeAgent'
 
 export const experimentRouter = express.Router({ mergeParams: true })
 
@@ -355,6 +356,8 @@ const run = async (req: Request, res: Response) => {
 
         const totalTime = Date.now() - startTime
 
+        const llmJudgeResult = await llmJudgeAgent.judge(question.question, fullResponse, question.answer)
+
         // Create the experiment result
         const experimentResult = DI.em.create(ExperimentResult, {
             uuid: randomUUID(),
@@ -363,6 +366,7 @@ const run = async (req: Request, res: Response) => {
             answer: fullResponse,
             total_answer_time_ms: totalTime,
             time_to_first_token_ms: timeToFirstToken,
+            llm_answer_rating: llmJudgeResult.score,
             metadata: {
                 client_system_prompt: clientSystemPrompt,
                 contextStr: contextStr || '',
@@ -413,9 +417,7 @@ const getResults = async (req: Request, res: Response) => {
         return res.status(403).json({ error: 'You do not have access to this project' })
     }
 
-    const experiment = await DI.experiments.findOne(
-        { uuid: experimentUuid, project: project }
-    )
+    const experiment = await DI.experiments.findOne({ uuid: experimentUuid, project: project })
     if (!experiment) {
         return res.status(404).json({ error: 'Experiment not found' })
     }
@@ -432,6 +434,8 @@ const getResults = async (req: Request, res: Response) => {
         answer: result.answer,
         total_answer_time_ms: result.total_answer_time_ms,
         time_to_first_token_ms: result.time_to_first_token_ms,
+        llm_answer_rating: result.llm_answer_rating,
+        human_answer_rating: result.human_answer_rating,
         created_at: result.created_at,
     }))
 

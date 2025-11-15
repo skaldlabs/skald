@@ -151,11 +151,6 @@ export const useChatStore = create<ChatState>()(
                     payload.system_prompt = systemPrompt
                 }
 
-                const llmProvider = get().llmProvider
-                if (llmProvider) {
-                    payload.llm_provider = llmProvider
-                }
-
                 const chatSessionId = get().chatSessionId
                 if (chatSessionId) {
                     payload.chat_id = chatSessionId
@@ -163,10 +158,15 @@ export const useChatStore = create<ChatState>()(
 
                 // Include RAG config
                 const ragConfig = get().ragConfig
+                const llmProvider = get().llmProvider
                 payload.rag_config = {
+                    llm_provider: llmProvider,
                     query_rewrite: { enabled: ragConfig.queryRewriteEnabled },
                     reranking: { enabled: ragConfig.rerankingEnabled, top_k: ragConfig.rerankingTopK },
-                    vector_search: { top_k: ragConfig.vectorSearchTopK, similarity_threshold: ragConfig.similarityThreshold },
+                    vector_search: {
+                        top_k: ragConfig.vectorSearchTopK,
+                        similarity_threshold: ragConfig.similarityThreshold,
+                    },
                     references: { enabled: ragConfig.referencesEnabled },
                 }
 

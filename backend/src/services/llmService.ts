@@ -19,6 +19,8 @@ import {
 export class LLMService {
     private static provider: string = LLM_PROVIDER
 
+    // TODO: we should not only allow configuring the model here but we should  also have
+    // model "types" that can be used e.g. "fast", "default", "high-quality", etc. for each provider.
     /**
      * Get an LLM instance based on environment configuration
      * @param temperature - Temperature for the LLM (default: 0 for deterministic output)

@@ -28,17 +28,19 @@ export interface ExperimentResult {
     answer: string
     total_answer_time_ms?: number
     time_to_first_token_ms?: number
+    llm_answer_rating?: number
+    human_answer_rating?: number
     created_at: string
 }
 
-interface CreateExperimentPayload {
+interface CreateExperimentPayload extends Record<string, unknown> {
     title: string
     description: string
     properties: Record<string, any>
     evaluation_dataset_uuid: string
 }
 
-interface RunExperimentPayload {
+interface RunExperimentPayload extends Record<string, unknown> {
     evaluation_dataset_question_uuid: string
 }
 
@@ -118,9 +120,7 @@ export const useEvaluateExperimentsStore = create<EvaluateExperimentsState>((set
         set({ loading: true, error: null })
         try {
             const projectPath = getProjectPath()
-            const response = await api.get<ExperimentResult[]>(
-                `${projectPath}/experiments/${experimentUuid}/results`
-            )
+            const response = await api.get<ExperimentResult[]>(`${projectPath}/experiments/${experimentUuid}/results`)
 
             if (response.error || !response.data) {
                 const errorMsg = response.error || 'Failed to fetch experiment results'

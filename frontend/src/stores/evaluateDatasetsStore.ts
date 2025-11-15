@@ -20,7 +20,7 @@ export interface EvaluationDatasetDetail extends EvaluationDataset {
     questions: EvaluationDatasetQuestion[]
 }
 
-interface CreateDatasetPayload {
+interface CreateDatasetPayload extends Record<string, unknown> {
     name: string
     description: string
     questions: {
@@ -29,7 +29,7 @@ interface CreateDatasetPayload {
     }[]
 }
 
-interface UpdateQuestionPayload {
+interface UpdateQuestionPayload extends Record<string, unknown> {
     question: string
     answer: string
 }
@@ -81,9 +81,7 @@ export const useEvaluateDatasetsStore = create<EvaluateDatasetsState>((set, get)
         set({ loading: true, error: null })
         try {
             const projectPath = getProjectPath()
-            const response = await api.get<EvaluationDatasetDetail>(
-                `${projectPath}/evaluation-datasets/${datasetUuid}`
-            )
+            const response = await api.get<EvaluationDatasetDetail>(`${projectPath}/evaluation-datasets/${datasetUuid}`)
 
             if (response.error || !response.data) {
                 const errorMsg = response.error || 'Failed to fetch dataset'

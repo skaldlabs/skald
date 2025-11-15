@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -46,9 +40,9 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
     const [ragConfig, setRagConfig] = useState<RagConfig>({
         queryRewriteEnabled: false,
         rerankingEnabled: true,
-        vectorSearchTopK: 100,
+        vectorSearchTopK: 50,
         similarityThreshold: 0.8,
-        rerankingTopK: 50,
+        rerankingTopK: 25,
         referencesEnabled: false,
     })
 
@@ -87,20 +81,21 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
             // Convert ragConfig to the backend format
             const properties: Record<string, any> = {
                 rag_config: {
+                    llm_provider: llmProvider,
                     query_rewrite: { enabled: ragConfig.queryRewriteEnabled },
                     reranking: { enabled: ragConfig.rerankingEnabled, top_k: ragConfig.rerankingTopK },
-                    vector_search: { top_k: ragConfig.vectorSearchTopK, similarity_threshold: ragConfig.similarityThreshold },
+                    vector_search: {
+                        top_k: ragConfig.vectorSearchTopK,
+                        similarity_threshold: ragConfig.similarityThreshold,
+                    },
                     references: { enabled: ragConfig.referencesEnabled },
-                }
+                },
             }
 
             // Add system prompt if provided
             if (systemPrompt.trim()) {
                 properties.client_system_prompt = systemPrompt.trim()
             }
-
-            // Add LLM provider
-            properties.llm_provider = llmProvider
 
             const response = await api.post(`${projectPath}/experiments`, {
                 title,

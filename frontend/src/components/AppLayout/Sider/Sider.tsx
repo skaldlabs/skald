@@ -39,6 +39,8 @@ interface MenuItem {
     label: string
     hasAccess: (user: UserDetails | null) => boolean
     onClick?: () => void
+    children?: MenuItem[]
+    isParent?: boolean
 }
 
 export const Sider = () => {
@@ -71,10 +73,25 @@ export const Sider = () => {
                 hasAccess: () => true,
             },
             {
-                key: `/projects/${currentProject?.uuid}/evaluate`,
+                key: 'evaluate',
                 icon: <FlaskConical className="h-4 w-4" />,
                 label: 'Evaluate (Alpha)',
                 hasAccess: () => true,
+                isParent: true,
+                children: [
+                    {
+                        key: `/projects/${currentProject?.uuid}/evaluate/experiments`,
+                        icon: <FlaskConical className="h-4 w-4" />,
+                        label: 'Experiments',
+                        hasAccess: () => true,
+                    },
+                    {
+                        key: `/projects/${currentProject?.uuid}/evaluate/datasets`,
+                        icon: <FlaskConical className="h-4 w-4" />,
+                        label: 'Datasets',
+                        hasAccess: () => true,
+                    },
+                ],
             },
             {
                 key: `/projects/${currentProject?.uuid}/settings`,
@@ -150,16 +167,39 @@ export const Sider = () => {
                             <SidebarGroupContent>
                                 <SidebarMenu>
                                     {accessibleItems.map((item) => (
-                                        <SidebarMenuItem key={item.key}>
-                                            <SidebarMenuButton
-                                                isActive={location.pathname === item.key}
-                                                onClick={() => handleMenuClick(item.key, item.onClick)}
-                                                className="w-full justify-start cursor-pointer"
-                                            >
-                                                {item.icon}
-                                                <span className="ml-2">{item.label}</span>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
+                                        <div key={item.key}>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton
+                                                    isActive={!item.isParent && location.pathname === item.key}
+                                                    onClick={() =>
+                                                        !item.isParent && handleMenuClick(item.key, item.onClick)
+                                                    }
+                                                    className={`w-full justify-start ${item.isParent ? 'cursor-default' : 'cursor-pointer'}`}
+                                                >
+                                                    {item.icon}
+                                                    <span className="ml-2">{item.label}</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            {item.children && (
+                                                <div className="bg-muted/30">
+                                                    {item.children
+                                                        .filter((child) => child.hasAccess(user))
+                                                        .map((child) => (
+                                                            <SidebarMenuItem key={child.key}>
+                                                                <SidebarMenuButton
+                                                                    isActive={location.pathname === child.key}
+                                                                    onClick={() =>
+                                                                        handleMenuClick(child.key, child.onClick)
+                                                                    }
+                                                                    className="w-full justify-start cursor-pointer pl-8"
+                                                                >
+                                                                    {child.label}
+                                                                </SidebarMenuButton>
+                                                            </SidebarMenuItem>
+                                                        ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     ))}
                                 </SidebarMenu>
                             </SidebarGroupContent>

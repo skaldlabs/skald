@@ -106,8 +106,8 @@ async function vectorSearchNode(state: typeof RAGState.State) {
 }
 
 async function getMemoPropertiesNode(state: typeof RAGState.State) {
-    const { chunkResults, project } = state
-    if (!chunkResults) {
+    const { chunkResults, project, ragConfig } = state
+    if (!chunkResults || !ragConfig.reranking.enabled) {
         return { memoPropertiesMap: null }
     }
 

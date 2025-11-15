@@ -15,7 +15,7 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
     }
 
     // Parse and validate llmProvider (snake_case only)
-    const llmProvider = ragConfig.llm_provider || LLM_PROVIDER
+    const llmProvider = ragConfig.llm_provider || ragConfig.llmProvider || LLM_PROVIDER
 
     const supportedLLMProviders = IS_CLOUD ? CLOUD_LLM_PROVIDERS : SUPPORTED_LLM_PROVIDERS
     if (!supportedLLMProviders.includes(llmProvider)) {
