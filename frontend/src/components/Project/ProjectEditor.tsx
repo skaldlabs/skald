@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { Project } from '@/lib/types'
 import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 
 interface ProjectNameEditorProps {
     project: Project
@@ -87,12 +86,6 @@ export const ProjectEditor = ({ project }: ProjectNameEditorProps) => {
                     </div>
                 )}
                 <div className="flex items-center justify-between mt-4">
-                    <div className="space-y-0.5">
-                        <Label htmlFor="query-rewrite" className="text-base">
-                            Enable Query Rewriting
-                        </Label>
-                        <p className="text-sm text-muted-foreground">Better results but slower response time</p>
-                    </div>
                     <Switch
                         id="query-rewrite"
                         checked={project.query_rewrite_enabled}
