@@ -29,9 +29,7 @@ interface CreateDatasetDialogProps {
 export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: CreateDatasetDialogProps) => {
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
-    const [questions, setQuestions] = useState<Question[]>([
-        { id: crypto.randomUUID(), question: '', answer: '' },
-    ])
+    const [questions, setQuestions] = useState<Question[]>([{ id: crypto.randomUUID(), question: '', answer: '' }])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -89,7 +87,7 @@ export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: Cr
                 setQuestions([{ id: crypto.randomUUID(), question: '', answer: '' }])
                 onDatasetCreated()
             }
-        } catch (err) {
+        } catch {
             setError('Failed to create dataset')
         } finally {
             setIsSubmitting(false)
