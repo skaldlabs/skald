@@ -66,30 +66,6 @@ export const CreateMemoStep = () => {
         }
     }, [])
 
-    // Listen for manual copy events (CTRL+C / CMD+C) on desktop
-    useEffect(() => {
-        if (isMobile) return
-
-        const handleCopy = (e: ClipboardEvent) => {
-            console.log('Code copied manually! event:', e)
-            // Check if the selection is within our code block
-            const selection = window.getSelection()
-            if (!selection || !codeBlockRef.current) return
-
-            // Check if the selection intersects with our code block
-            if (codeBlockRef.current.contains(selection.anchorNode)) {
-                // Manual copy detected, trigger the same behavior as copy button
-                handleCodeCopy()
-            }
-        }
-
-        document.addEventListener('copy', handleCopy)
-
-        return () => {
-            document.removeEventListener('copy', handleCopy)
-        }
-    }, [isMobile, memoCreated])
-
     const stopPolling = () => {
         if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current)

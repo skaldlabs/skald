@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Copy, Check } from 'lucide-react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -32,27 +32,6 @@ export const InteractiveCodeBlock = ({ code, language = 'bash', onCopy }: Intera
         setTimeout(() => setIsCopied(false), 2000)
         onCopy?.()
     }
-
-    useEffect(() => {
-        const handleManualCopy = (e: ClipboardEvent) => {
-            const selection = window.getSelection()
-            if (!selection || !codeContentRef.current) return
-
-            if (codeContentRef.current.contains(selection.anchorNode)) {
-                e.preventDefault()
-
-                e.clipboardData?.setData('text/plain', code)
-
-                onCopy?.()
-            }
-        }
-
-        document.addEventListener('copy', handleManualCopy)
-
-        return () => {
-            document.removeEventListener('copy', handleManualCopy)
-        }
-    }, [code, onCopy])
 
     return (
         <div className="code-block-wrapper interactive">
