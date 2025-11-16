@@ -10,8 +10,6 @@
         "dev": "vite",
         "build": "tsc -b && vite build",
         "lint": "eslint frontend",
-        "format": "prettier --write 'backend/**/*.{ts,js,json}'",
-        "format:check": "prettier --check 'backend/**/*.{ts,js,json}'",
         "preview": "vite preview",
         "prepare": "husky",
         "deploy": "flyctl deploy -c ui.fly.toml -a skald-platform-ui --remote-only"
