@@ -1,38 +1,38 @@
-import {
-    MessageSquare,
-    Files,
-    LogOut,
-    Hotel,
-    Rocket,
-    Sun,
-    Moon,
-    Settings,
-    CreditCard,
-    BookOpen,
-    GlobeLock,
-    FlaskConical,
-    List,
-} from 'lucide-react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useState } from 'react'
-import { useAuthStore, UserDetails } from '@/stores/authStore'
+import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
+import { TalkToFounderModal } from '@/components/AppLayout/Sider/TalkToFounderModal'
+import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
+import { useTheme } from '@/components/ThemeProvider'
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
+    SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarHeader,
 } from '@/components/ui/sidebar'
-import { useTheme } from '@/components/ThemeProvider'
-import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
-import { useProjectStore } from '@/stores/projectStore'
-import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
-import { TalkToFounderModal } from '@/components/AppLayout/Sider/TalkToFounderModal'
 import { isSelfHostedDeploy } from '@/config'
+import { useAuthStore, UserDetails } from '@/stores/authStore'
+import { useProjectStore } from '@/stores/projectStore'
+import {
+    BookOpen,
+    CreditCard,
+    Files,
+    FlaskConical,
+    GlobeLock,
+    Hotel,
+    List,
+    LogOut,
+    MessageSquare,
+    Moon,
+    Rocket,
+    Settings,
+    Sun,
+} from 'lucide-react'
+import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 interface MenuItem {
     key: string
@@ -246,6 +246,10 @@ export const Sider = () => {
 
                             {/* Icon buttons row */}
                             <div className="flex justify-center gap-2 px-2 py-1 mt-1">
+                                <SidebarMenuItem className="flex-col">
+                                    <p className="text-xs truncate">{user?.name}</p>
+                                    <p className="text-xs truncate">{user?.email}</p>
+                                </SidebarMenuItem>
                                 <SidebarMenuButton
                                     onClick={toggleTheme}
                                     className="h-8 w-8 p-0 cursor-pointer flex items-center justify-center"
