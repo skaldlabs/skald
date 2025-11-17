@@ -17,23 +17,29 @@ A world where Nordic culture, mythology, and languages are celebrated and unders
 ## Core Values
 
 ### 1. Authenticity
+
 We prioritize historically accurate and culturally respectful content, working closely with Nordic scholars and cultural experts.
 
 ### 2. Innovation
+
 We embrace new technologies and teaching methodologies to create the most engaging learning experiences.
 
 ### 3. Community
+
 We foster a supportive, inclusive community of learners and educators who share our passion for Nordic culture.
 
 ### 4. Accessibility
+
 We believe everyone should have access to quality Nordic education, regardless of their background or location.
 
 ### 5. Sustainability
+
 As a Nordic company, we're committed to environmental responsibility and sustainable business practices.
 
 ## What We Do
 
 Odin offers comprehensive learning platforms covering:
+
 - **Nordic Mythology**: Interactive lessons on gods, sagas, and ancient tales
 - **Nordic Languages**: Courses in Norwegian, Swedish, Danish, Icelandic, and Faroese
 - **Nordic Culture**: Deep dives into history, traditions, design, and contemporary life

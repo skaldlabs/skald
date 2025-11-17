@@ -42,22 +42,21 @@ With Skald you don't need to implement RAG ever again. Push context to our API, 
 ## [Node SDK](https://github.com/skaldlabs/skald-node) example
 
 ```js
-import { Skald } from '@skald-labs/skald-node';
+import { Skald } from '@skald-labs/skald-node'
 
-const skald = new Skald('your-api-key-here');
+const skald = new Skald('your-api-key-here')
 
 const result = await skald.createMemo({
-  title: 'Meeting Notes',
-  content: 'Full content of the memo...'
-});
+    title: 'Meeting Notes',
+    content: 'Full content of the memo...',
+})
 
 const result = await skald.chat({
-  query: 'What were the main points discussed in the Q1 meeting?'
-});
+    query: 'What were the main points discussed in the Q1 meeting?',
+})
 ```
 
 <small>[Python](https://docs.useskald.com/docs/sdks/python#usage) - [Ruby](https://docs.useskald.com/docs/sdks/ruby#usage) - [Go](https://docs.useskald.com/docs/sdks/go#usage) - [PHP](https://docs.useskald.com/docs/sdks/php#quick-start) - [C#](https://github.com/skaldlabs/skald-csharp) - [MCP](https://docs.useskald.com/docs/sdks/mcp) - [CLI](https://docs.useskald.com/docs/sdks/cli)</small>
-
 
 ## ⚡ Try it
 
@@ -82,17 +81,17 @@ You can deploy Skald without **any** third-party dependencies (including OpenAI)
 
 ## ✨ Features:
 
-* **Chat:** Chat with your knowledge in Skald with just one API call.
-* **Search:** Use semantic search to find relevant context based on user queries.
-* **Generate:** Generate content from your knowledge like documentation and reports.
-* **Powerful filtering**: Speed up and improve responses by filtering the accessible knowledge in every query.
-* **Amazing DX, no bullsh*t:** Implement in minutes with SDKs for every major language. Don't see yours? open an issue and we'll build it!
-* **Truly open-source:** Our open source version is fully-featured, easy to deploy, and can even run with no third-party dependencies.
+- **Chat:** Chat with your knowledge in Skald with just one API call.
+- **Search:** Use semantic search to find relevant context based on user queries.
+- **Generate:** Generate content from your knowledge like documentation and reports.
+- **Powerful filtering**: Speed up and improve responses by filtering the accessible knowledge in every query.
+- **Amazing DX, no bullsh\*t:** Implement in minutes with SDKs for every major language. Don't see yours? open an issue and we'll build it!
+- **Truly open-source:** Our open source version is fully-featured, easy to deploy, and can even run with no third-party dependencies.
 
 ## 🚀 Get started
 
-* [Cloud](https://useskald.com): free tier with no credit card required
-* [Self-hosted](https://docs.useskald.com/docs/self-host/intro): get a fully-featured production deploy with SSL live in less than an hour
+- [Cloud](https://useskald.com): free tier with no credit card required
+- [Self-hosted](https://docs.useskald.com/docs/self-host/intro): get a fully-featured production deploy with SSL live in less than an hour
 
 ## 🗒️ License
 

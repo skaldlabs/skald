@@ -15,13 +15,8 @@
         "deploy": "flyctl deploy -c ui.fly.toml -a skald-platform-ui --remote-only"
     },
     "lint-staged": {
-        "*.{js,jsx,ts,tsx}": [
-            "eslint",
-            "prettier --write --ignore-unknown"
-        ],
-        "*.json": [
-            "prettier --write --parser json"
-        ]
+        "*.{js,jsx,ts,tsx}": ["eslint", "prettier --write --ignore-unknown"],
+        "*.json": ["prettier --write --parser json"]
     },
     "dependencies": {
         "@hookform/resolvers": "^5.2.2",
