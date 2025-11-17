@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { LoginPage } from '@/pages/LoginPage'
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { useAuthStore } from '@/stores/authStore'
 import { SignupFlow, SignupFlowStep } from '@/components/SignupFlow'
 import { privateRoutes } from '@/routes'
@@ -61,6 +63,15 @@ function App() {
                         </PublicRoute>
                     }
                 />
+                <Route
+                    path="/forgot-password"
+                    element={
+                        <PublicRoute>
+                            <ForgotPasswordPage />
+                        </PublicRoute>
+                    }
+                />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/signup" element={<SignupFlow currentStep={SignupFlowStep.Signup} />} />
                 <Route path="/verify-email" element={<SignupFlow currentStep={SignupFlowStep.VerifyEmail} />} />
                 <Route path="/complete-profile" element={<SignupFlow currentStep={SignupFlowStep.CompleteProfile} />} />

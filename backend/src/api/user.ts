@@ -7,6 +7,7 @@ import { EMAIL_VERIFICATION_ENABLED, ENABLE_SECURITY_SETTINGS } from '@/settings
 import { addContactToResend, isValidEmail } from '@/lib/emailUtils'
 import { posthogCapture } from '@/lib/posthogUtils'
 import { User } from '@/entities/User'
+import { passwordResetRouter } from '@/api/passwordReset'
 
 interface UserResponse {
     email: string
@@ -311,3 +312,4 @@ userRouter.post('/change_password', [requireAuth()], changePassword)
 userRouter.get('/details', [requireAuth()], getUserDetails)
 userRouter.post('/set_current_project', [requireAuth()], setCurrentProject)
 userRouter.post('/details', [requireAuth()], updateUserDetails)
+userRouter.use('/', passwordResetRouter)

@@ -13,6 +13,7 @@ import { MemoContent } from '@/entities/MemoContent'
 import { Organization } from '@/entities/Organization'
 import { OrganizationMembershipInvite } from '@/entities/OrganizationMembershipInvite'
 import { EmailVerificationCode } from '@/entities/EmailVerificationCode'
+import { PasswordResetToken } from '@/entities/PasswordResetToken'
 import { Plan } from '@/entities/Plan'
 import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { UsageRecord } from '@/entities/UsageRecord'
@@ -40,6 +41,7 @@ export const DI = {} as {
     memoTags: EntityRepository<MemoTag>
     memoContents: EntityRepository<MemoContent>
     emailVerificationCodes: EntityRepository<EmailVerificationCode>
+    passwordResetTokens: EntityRepository<PasswordResetToken>
     plans: EntityRepository<Plan>
     organizationSubscriptions: EntityRepository<OrganizationSubscription>
     usageRecords: EntityRepository<UsageRecord>
@@ -67,6 +69,7 @@ export const initDI = async (): Promise<typeof DI> => {
     DI.memoTags = DI.orm.em.getRepository(MemoTag)
     DI.memoContents = DI.orm.em.getRepository(MemoContent)
     DI.emailVerificationCodes = DI.orm.em.getRepository(EmailVerificationCode)
+    DI.passwordResetTokens = DI.orm.em.getRepository(PasswordResetToken)
     DI.plans = DI.orm.em.getRepository(Plan)
     DI.organizationSubscriptions = DI.orm.em.getRepository(OrganizationSubscription)
     DI.usageRecords = DI.orm.em.getRepository(UsageRecord)

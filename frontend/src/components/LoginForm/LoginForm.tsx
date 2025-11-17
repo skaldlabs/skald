@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Mail, Lock } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -16,6 +16,7 @@ interface LoginFormData {
 
 export const LoginForm = () => {
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
     const login = useAuthStore((state) => state.login)
     const navigate = useNavigate()
 
@@ -87,16 +88,37 @@ export const LoginForm = () => {
                                 }}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Password</FormLabel>
+                                        <div className="flex items-center justify-between">
+                                            <FormLabel>Password</FormLabel>
+                                            <Link
+                                                to="/forgot-password"
+                                                className="text-xs text-primary hover:underline"
+                                                tabIndex={-1}
+                                            >
+                                                Forgot password?
+                                            </Link>
+                                        </div>
                                         <FormControl>
                                             <div className="relative">
                                                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                                 <Input
                                                     {...field}
-                                                    type="password"
+                                                    type={showPassword ? 'text' : 'password'}
                                                     placeholder="Enter your password"
-                                                    className="pl-10"
+                                                    className="pl-10 pr-10"
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                    tabIndex={-1}
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
                                             </div>
                                         </FormControl>
                                         <FormMessage />
