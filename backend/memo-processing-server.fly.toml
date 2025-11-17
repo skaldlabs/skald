@@ -16,7 +16,19 @@ primary_region = 'dfw'
   INTER_PROCESS_QUEUE = 'sqs'
   IS_CLOUD = 'true'
 
+[deploy]
+  strategy = "immediate"
+
 [[vm]]
   memory = '2gb'
   cpu_kind = 'shared'
   cpus = 2
+
+[processes]
+  worker = "node dist/index.js --mode=memo-processing-server"
+
+[[services]]
+  processes = ["worker"]
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
