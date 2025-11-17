@@ -9,24 +9,28 @@ Odin is committed to providing a welcoming, safe, and inclusive environment for 
 All team members are expected to:
 
 ### Be Respectful
+
 - Treat everyone with dignity and respect
 - Value diverse perspectives and experiences
 - Listen actively and communicate thoughtfully
 - Respect cultural differences and boundaries
 
 ### Be Collaborative
+
 - Share knowledge and resources openly
 - Provide constructive feedback
 - Support teammates' growth and development
 - Work together toward common goals
 
 ### Be Professional
+
 - Maintain confidentiality when required
 - Meet commitments and deadlines
 - Take responsibility for your actions
 - Communicate clearly and honestly
 
 ### Be Inclusive
+
 - Use inclusive language
 - Welcome newcomers and help them succeed
 - Actively work to reduce barriers
@@ -68,6 +72,7 @@ All reports will be handled with discretion and confidentiality.
 ## Consequences
 
 Violations may result in:
+
 - Verbal or written warning
 - Mandatory training or counseling
 - Temporary suspension
@@ -83,4 +88,5 @@ Odin strictly prohibits retaliation against anyone who reports concerns in good 
 Contact people@odinlearn.com for clarification on any aspect of this Code of Conduct.
 
 ---
-*Last updated: January 2025*
+
+_Last updated: January 2025_

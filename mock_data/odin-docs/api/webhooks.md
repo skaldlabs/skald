@@ -9,16 +9,19 @@ Webhooks allow you to receive HTTP POST notifications when specific events occur
 ## Supported Events
 
 ### User Events
+
 - `user.lesson.completed` - User completes a language lesson
 - `user.progress.milestone` - User reaches a learning milestone
 - `user.streak.achieved` - User maintains a learning streak
 
 ### Content Events
+
 - `content.mythology.updated` - Mythology content is updated
 - `content.saga.added` - New saga content is added
 - `content.rune.inscriptions.updated` - New runic inscriptions are added
 
 ### System Events
+
 - `api.key.expiring` - API key will expire soon (30 days)
 - `api.rate_limit.warning` - Approaching rate limit (80%)
 - `api.quota.exceeded` - Monthly quota exceeded
@@ -43,18 +46,18 @@ Response:
 
 ```json
 {
-  "success": true,
-  "data": {
-    "webhook": {
-      "id": "webhook_abc123",
-      "url": "https://your-domain.com/webhooks/odin",
-      "events": ["user.lesson.completed", "content.mythology.updated"],
-      "description": "Production webhook for user events",
-      "status": "active",
-      "created_at": "2025-10-10T12:00:00Z",
-      "secret": "whsec_abc123..."
+    "success": true,
+    "data": {
+        "webhook": {
+            "id": "webhook_abc123",
+            "url": "https://your-domain.com/webhooks/odin",
+            "events": ["user.lesson.completed", "content.mythology.updated"],
+            "description": "Production webhook for user events",
+            "status": "active",
+            "created_at": "2025-10-10T12:00:00Z",
+            "secret": "whsec_abc123..."
+        }
     }
-  }
 }
 ```
 
@@ -64,20 +67,20 @@ All webhook deliveries follow this structure:
 
 ```json
 {
-  "id": "evt_abc123",
-  "type": "user.lesson.completed",
-  "created_at": "2025-10-10T12:30:00Z",
-  "data": {
-    "user_id": "user_xyz789",
-    "lesson_id": "lesson_non_01",
-    "language": "non",
-    "score": 95,
-    "completion_time_seconds": 450
-  },
-  "metadata": {
-    "api_version": "v1",
-    "request_id": "req_123456"
-  }
+    "id": "evt_abc123",
+    "type": "user.lesson.completed",
+    "created_at": "2025-10-10T12:30:00Z",
+    "data": {
+        "user_id": "user_xyz789",
+        "lesson_id": "lesson_non_01",
+        "language": "non",
+        "score": 95,
+        "completion_time_seconds": 450
+    },
+    "metadata": {
+        "api_version": "v1",
+        "request_id": "req_123456"
+    }
 }
 ```
 
@@ -89,19 +92,19 @@ Triggered when a user completes a language lesson.
 
 ```json
 {
-  "id": "evt_001",
-  "type": "user.lesson.completed",
-  "created_at": "2025-10-10T12:30:00Z",
-  "data": {
-    "user_id": "user_xyz789",
-    "lesson_id": "lesson_non_01",
-    "language": "non",
-    "lesson_title": "Introduction to Old Norse",
-    "score": 95,
-    "completion_time_seconds": 450,
-    "exercises_completed": 12,
-    "exercises_total": 12
-  }
+    "id": "evt_001",
+    "type": "user.lesson.completed",
+    "created_at": "2025-10-10T12:30:00Z",
+    "data": {
+        "user_id": "user_xyz789",
+        "lesson_id": "lesson_non_01",
+        "language": "non",
+        "lesson_title": "Introduction to Old Norse",
+        "score": 95,
+        "completion_time_seconds": 450,
+        "exercises_completed": 12,
+        "exercises_total": 12
+    }
 }
 ```
 
@@ -111,17 +114,17 @@ Triggered when a user reaches a learning milestone.
 
 ```json
 {
-  "id": "evt_002",
-  "type": "user.progress.milestone",
-  "created_at": "2025-10-10T14:00:00Z",
-  "data": {
-    "user_id": "user_xyz789",
-    "milestone": "lessons_completed_10",
-    "language": "non",
-    "total_lessons": 10,
-    "level": "beginner",
-    "next_milestone": "lessons_completed_25"
-  }
+    "id": "evt_002",
+    "type": "user.progress.milestone",
+    "created_at": "2025-10-10T14:00:00Z",
+    "data": {
+        "user_id": "user_xyz789",
+        "milestone": "lessons_completed_10",
+        "language": "non",
+        "total_lessons": 10,
+        "level": "beginner",
+        "next_milestone": "lessons_completed_25"
+    }
 }
 ```
 
@@ -131,16 +134,16 @@ Triggered when mythology content is updated.
 
 ```json
 {
-  "id": "evt_003",
-  "type": "content.mythology.updated",
-  "created_at": "2025-10-10T15:00:00Z",
-  "data": {
-    "content_type": "deity",
-    "deity_id": "deity_thor",
-    "update_type": "enrichment",
-    "changes": ["Added new story references", "Updated family relationships"],
-    "version": "1.2"
-  }
+    "id": "evt_003",
+    "type": "content.mythology.updated",
+    "created_at": "2025-10-10T15:00:00Z",
+    "data": {
+        "content_type": "deity",
+        "deity_id": "deity_thor",
+        "update_type": "enrichment",
+        "changes": ["Added new story references", "Updated family relationships"],
+        "version": "1.2"
+    }
 }
 ```
 
@@ -150,16 +153,16 @@ Triggered when you approach your rate limit.
 
 ```json
 {
-  "id": "evt_004",
-  "type": "api.rate_limit.warning",
-  "created_at": "2025-10-10T16:00:00Z",
-  "data": {
-    "api_key_id": "key_abc123",
-    "current_usage": 8000,
-    "limit": 10000,
-    "usage_percentage": 80,
-    "reset_at": "2025-10-10T17:00:00Z"
-  }
+    "id": "evt_004",
+    "type": "api.rate_limit.warning",
+    "created_at": "2025-10-10T16:00:00Z",
+    "data": {
+        "api_key_id": "key_abc123",
+        "current_usage": 8000,
+        "limit": 10000,
+        "usage_percentage": 80,
+        "reset_at": "2025-10-10T17:00:00Z"
+    }
 }
 ```
 
@@ -186,47 +189,41 @@ X-Odin-Signature: t=1696680000,v1=abc123def456...
 ### Example Verification (Node.js)
 
 ```javascript
-const crypto = require('crypto');
+const crypto = require('crypto')
 
 function verifyWebhookSignature(payload, signature, secret) {
-  const parts = signature.split(',');
-  const timestamp = parts[0].split('=')[1];
-  const receivedSignature = parts[1].split('=')[1];
+    const parts = signature.split(',')
+    const timestamp = parts[0].split('=')[1]
+    const receivedSignature = parts[1].split('=')[1]
 
-  // Prevent replay attacks - reject if older than 5 minutes
-  const currentTime = Math.floor(Date.now() / 1000);
-  if (currentTime - parseInt(timestamp) > 300) {
-    return false;
-  }
+    // Prevent replay attacks - reject if older than 5 minutes
+    const currentTime = Math.floor(Date.now() / 1000)
+    if (currentTime - parseInt(timestamp) > 300) {
+        return false
+    }
 
-  // Compute signature
-  const signedPayload = `${timestamp}.${payload}`;
-  const computedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
+    // Compute signature
+    const signedPayload = `${timestamp}.${payload}`
+    const computedSignature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex')
 
-  // Compare signatures
-  return crypto.timingSafeEqual(
-    Buffer.from(computedSignature),
-    Buffer.from(receivedSignature)
-  );
+    // Compare signatures
+    return crypto.timingSafeEqual(Buffer.from(computedSignature), Buffer.from(receivedSignature))
 }
 
 // Express.js example
-app.post('/webhooks/odin', express.raw({type: 'application/json'}), (req, res) => {
-  const signature = req.headers['x-odin-signature'];
-  const payload = req.body.toString();
+app.post('/webhooks/odin', express.raw({ type: 'application/json' }), (req, res) => {
+    const signature = req.headers['x-odin-signature']
+    const payload = req.body.toString()
 
-  if (!verifyWebhookSignature(payload, signature, process.env.WEBHOOK_SECRET)) {
-    return res.status(401).send('Invalid signature');
-  }
+    if (!verifyWebhookSignature(payload, signature, process.env.WEBHOOK_SECRET)) {
+        return res.status(401).send('Invalid signature')
+    }
 
-  const event = JSON.parse(payload);
-  // Process event...
+    const event = JSON.parse(payload)
+    // Process event...
 
-  res.status(200).send('OK');
-});
+    res.status(200).send('OK')
+})
 ```
 
 ### Example Verification (Python)
@@ -282,14 +279,14 @@ Your endpoint should:
 
 ```javascript
 app.post('/webhooks/odin', (req, res) => {
-  // Immediately acknowledge
-  res.status(200).send('OK');
+    // Immediately acknowledge
+    res.status(200).send('OK')
 
-  // Process asynchronously
-  processWebhookAsync(req.body).catch(err => {
-    console.error('Webhook processing error:', err);
-  });
-});
+    // Process asynchronously
+    processWebhookAsync(req.body).catch((err) => {
+        console.error('Webhook processing error:', err)
+    })
+})
 ```
 
 ## Retry Logic
@@ -328,20 +325,20 @@ Response:
 
 ```json
 {
-  "success": true,
-  "data": {
-    "logs": [
-      {
-        "id": "log_abc123",
-        "event_id": "evt_001",
-        "event_type": "user.lesson.completed",
-        "delivered_at": "2025-10-10T12:30:05Z",
-        "response_status": 200,
-        "response_time_ms": 145,
-        "attempt": 1
-      }
-    ]
-  }
+    "success": true,
+    "data": {
+        "logs": [
+            {
+                "id": "log_abc123",
+                "event_id": "evt_001",
+                "event_type": "user.lesson.completed",
+                "delivered_at": "2025-10-10T12:30:05Z",
+                "response_status": 200,
+                "response_time_ms": 145,
+                "attempt": 1
+            }
+        ]
+    }
 }
 ```
 

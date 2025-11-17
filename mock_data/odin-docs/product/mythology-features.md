@@ -9,6 +9,7 @@ Odin's mythology learning platform brings the rich world of Norse mythology to l
 ### Interactive Story Library
 
 #### Sagas and Tales
+
 - **Complete Story Collection**: Access 500+ authentic Norse myths and sagas
 - **Difficulty Levels**: Stories categorized by complexity (Beginner, Intermediate, Advanced)
 - **Interactive Reading**: Clickable terms provide instant context and definitions
@@ -16,6 +17,7 @@ Odin's mythology learning platform brings the rich world of Norse mythology to l
 - **Illustrated Content**: Custom artwork depicting key scenes and characters
 
 #### Story Categories
+
 - Creation myths and cosmology
 - Tales of Asgard and the Aesir
 - Vanir gods and nature spirits
@@ -27,7 +29,9 @@ Odin's mythology learning platform brings the rich world of Norse mythology to l
 ### Character Encyclopedia
 
 #### God and Goddess Profiles
+
 Each deity profile includes:
+
 - **Origins and Etymology**: Name meanings and linguistic roots
 - **Domain and Powers**: Areas of influence and supernatural abilities
 - **Family Tree**: Interactive genealogy charts
@@ -37,6 +41,7 @@ Each deity profile includes:
 - **Modern Influence**: Contemporary cultural references
 
 #### Featured Characters
+
 - **Aesir Gods**: Odin, Thor, Frigg, Tyr, Baldur, and more
 - **Vanir Gods**: Freyr, Freyja, Njord
 - **Giants (Jotnar)**: Ymir, Loki, Skadi, Thrym
@@ -46,17 +51,18 @@ Each deity profile includes:
 ### Nine Realms Explorer
 
 #### Interactive Cosmology Map
+
 - **3D Visualization**: Navigate through Yggdrasil and the Nine Realms
 - **Realm Details**: In-depth information about each world
-  - Asgard (realm of the Aesir)
-  - Midgard (realm of humans)
-  - Vanaheim (realm of the Vanir)
-  - Jotunheim (realm of giants)
-  - Alfheim (realm of light elves)
-  - Svartalfheim (realm of dark elves/dwarves)
-  - Niflheim (realm of ice and mist)
-  - Muspelheim (realm of fire)
-  - Helheim (realm of the dead)
+    - Asgard (realm of the Aesir)
+    - Midgard (realm of humans)
+    - Vanaheim (realm of the Vanir)
+    - Jotunheim (realm of giants)
+    - Alfheim (realm of light elves)
+    - Svartalfheim (realm of dark elves/dwarves)
+    - Niflheim (realm of ice and mist)
+    - Muspelheim (realm of fire)
+    - Helheim (realm of the dead)
 - **Locations and Landmarks**: Famous places within each realm
 - **Inhabitants**: Creatures and beings native to each world
 - **Travel Routes**: Mythological paths between realms
@@ -64,6 +70,7 @@ Each deity profile includes:
 ### Learning Paths
 
 #### Structured Courses
+
 - **Introduction to Norse Mythology** (8 hours)
 - **Gods and Goddesses Deep Dive** (12 hours)
 - **The Hero's Journey in Norse Sagas** (10 hours)
@@ -72,7 +79,9 @@ Each deity profile includes:
 - **Comparative Mythology** (15 hours) - Norse myths vs. other traditions
 
 #### Custom Learning Tracks
+
 Create personalized learning journeys based on:
+
 - Specific characters or story arcs
 - Thematic interests (war, wisdom, love, death, etc.)
 - Historical periods and sources
@@ -81,12 +90,14 @@ Create personalized learning journeys based on:
 ### Interactive Features
 
 #### Mythology Timeline
+
 - **Chronological View**: Events ordered from creation to Ragnarok
 - **Multiple Timelines**: Different source traditions (Poetic Edda, Prose Edda, sagas)
 - **Filtering**: View events by character, realm, or theme
 - **Annotations**: Scholarly notes and interpretations
 
 #### Quiz and Assessment
+
 - **Knowledge Checks**: Test your understanding after each story
 - **Character Matching**: Identify gods by their attributes
 - **Story Sequencing**: Arrange events in correct order
@@ -94,6 +105,7 @@ Create personalized learning journeys based on:
 - **Leaderboards**: Compete with other learners (optional)
 
 #### Discussion and Community
+
 - **Story Discussions**: Comment on myths and share interpretations
 - **Expert Q&A**: Monthly sessions with mythology scholars
 - **User Annotations**: Highlight and note interesting passages
@@ -102,13 +114,16 @@ Create personalized learning journeys based on:
 ### Source Materials
 
 #### Primary Texts
+
 Access to translations of original sources:
+
 - **Poetic Edda**: Complete translation with annotations
 - **Prose Edda**: Snorri Sturluson's work
 - **Sagas**: Volsunga Saga, Ynglinga Saga, and more
 - **Rune Inscriptions**: Archaeological sources
 
 #### Scholarly Commentary
+
 - Modern interpretations and analysis
 - Historical context and accuracy notes
 - Archaeological evidence
@@ -118,6 +133,7 @@ Access to translations of original sources:
 ### Gamification Elements
 
 #### Achievements and Badges
+
 - Complete story collections
 - Master character knowledge
 - Explore all Nine Realms
@@ -125,6 +141,7 @@ Access to translations of original sources:
 - Contribute to community discussions
 
 #### Progress Tracking
+
 - Stories read counter
 - Characters studied
 - Learning hours
@@ -134,18 +151,21 @@ Access to translations of original sources:
 ### Advanced Features
 
 #### Search and Discovery
+
 - **Full-Text Search**: Find stories mentioning specific terms
 - **Semantic Search**: Discover related myths by theme
 - **Character Graph**: See relationships and connections
 - **Cross-References**: Link between related stories and characters
 
 #### Personalization
+
 - **Recommended Stories**: Based on reading history
 - **Learning Preferences**: Adjust difficulty and depth
 - **Bookmarks and Notes**: Save favorite content
 - **Custom Collections**: Curate your own story anthologies
 
 #### Integration with Other Features
+
 - **Language Learning**: Read myths in Old Norse with translations
 - **Cultural Context**: Connect myths to Nordic countries and history
 - **Travel Guides**: Visit archaeological sites mentioned in myths
@@ -153,18 +173,21 @@ Access to translations of original sources:
 ## Educational Value
 
 ### For Students
+
 - Comprehensive curriculum-aligned content
 - Citation-ready source materials
 - Study guides and essay prompts
 - Teacher resources available
 
 ### For Enthusiasts
+
 - Deep dives into favorite characters and stories
 - Rare and obscure tales
 - Modern adaptations and influences
 - Community of like-minded learners
 
 ### For Researchers
+
 - Access to multiple source translations
 - Scholarly annotations and bibliography
 - Export and citation tools
@@ -173,6 +196,7 @@ Access to translations of original sources:
 ## Content Quality
 
 All mythology content is:
+
 - **Academically Vetted**: Reviewed by Norse mythology scholars
 - **Properly Sourced**: Clear citations to original texts
 - **Culturally Respectful**: Avoiding appropriation and misrepresentation

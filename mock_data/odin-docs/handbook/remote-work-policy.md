@@ -7,31 +7,37 @@ At Odin, we believe great work can happen anywhere. Our remote work policy is de
 ## Eligibility
 
 ### Fully Remote Roles
+
 Some positions are designated as fully remote and can be performed from anywhere within approved countries.
 
 **Approved countries**: Norway, Sweden, Denmark, Iceland, Finland, United States, Canada, United Kingdom, Germany, Netherlands, Estonia
 
 ### Hybrid Roles
+
 Most roles are hybrid-eligible, allowing you to split time between office and remote work.
 
 **Standard hybrid arrangement**: 2-3 days in office, 2-3 days remote (to be decided with your manager)
 
 ### Office-Based Roles
+
 Some roles require regular office presence due to nature of work (e.g., facilities, some IT support, events coordination).
 
 ## Remote Work Arrangements
 
 ### Regular Remote Work
+
 - Must be discussed and approved by your manager
 - Formalized through HR with a remote work agreement
 - Can be modified based on team needs with 30 days notice
 
 ### Temporary Remote Work
+
 - Short-term remote work (up to 2 weeks) can be arranged with manager approval
 - Useful for travel, personal circumstances, or focus time
 - No formal agreement required
 
 ### Work From Anywhere
+
 - All employees can work from anywhere for up to 8 weeks per year
 - Must maintain working hours with at least 4-hour overlap with your team
 - Requires manager approval with 2 weeks notice
@@ -40,18 +46,21 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Requirements for Remote Work
 
 ### Technology
+
 - Reliable high-speed internet (minimum 25 Mbps download, 5 Mbps upload)
 - Dedicated, quiet workspace
 - Company-provided laptop and equipment
 - Webcam and headset for video calls
 
 ### Availability
+
 - Must be available during core working hours (10am-3pm local time)
 - Responsive on Slack during working hours
 - Calendar kept up-to-date
 - Attend required video meetings with camera on
 
 ### Security
+
 - Use company VPN when accessing internal systems
 - Secure home network (WPA2 or better)
 - Privacy when handling sensitive information
@@ -59,6 +68,7 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 - Lock screen when away from computer
 
 ### Productivity
+
 - Maintain same performance standards as in-office work
 - Regular check-ins with manager
 - Clear communication about work status and blockers
@@ -67,6 +77,7 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Home Office Setup
 
 ### Equipment Provided
+
 - Laptop (MacBook or equivalent)
 - External monitor (upon request)
 - Keyboard and mouse
@@ -76,12 +87,14 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 - Docking station (if needed)
 
 ### Stipends
+
 - **One-time setup**: $1,500 for desk, chair, lighting, etc.
 - **Monthly internet**: $75 reimbursement
 - **Monthly phone**: $50 reimbursement
 - **Ergonomic equipment**: Up to $500/year for additional needs
 
 ### Office Access
+
 - Remote employees can use any Odin office when visiting
 - Hot-desking available (book via office management system)
 - Conference rooms bookable for meetings
@@ -89,24 +102,28 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Communication & Collaboration
 
 ### Video Meetings
+
 - Default camera on for team meetings
 - Camera optional for large all-hands or external meetings
 - Use backgrounds if needed for privacy
 - Be mindful of time zones
 
 ### Asynchronous Communication
+
 - Document decisions and discussions in writing
 - Use Slack for quick questions, email for detailed communication
 - Record meetings when possible for those who can't attend
 - Maintain team documentation in Notion
 
 ### Working Hours
+
 - Communicate your working hours to your team
 - Block focus time on calendar
 - Use Slack status to indicate availability
 - Respect others' time zones and working hours
 
 ### Team Bonding
+
 - Attend virtual team events
 - Participate in social Slack channels
 - Join quarterly in-person team meetups (travel covered)
@@ -115,6 +132,7 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Managing Remote Teams
 
 ### For Managers
+
 - Set clear expectations and goals
 - Schedule regular 1:1s (weekly or bi-weekly)
 - Provide frequent feedback
@@ -124,6 +142,7 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 - Over-communicate important decisions
 
 ### For Individual Contributors
+
 - Proactively communicate your work and blockers
 - Ask questions when unclear
 - Update your status regularly
@@ -133,11 +152,13 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Time Zones
 
 ### Overlap Requirements
+
 - Minimum 4 hours overlap with your direct team
 - Attend team sync meetings (scheduled during overlap hours)
 - Flexible on specific hours if overlap is maintained
 
 ### Meetings
+
 - Schedule meetings during team overlap hours when possible
 - Record meetings for those who can't attend live
 - Rotate meeting times for global teams to share timezone burden
@@ -146,12 +167,14 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## International Remote Work
 
 ### Short-term (<90 days/year)
+
 - Use Work From Anywhere policy
 - Must notify manager and People team
 - No tax or legal implications in most cases
 - Maintain work eligibility in home country
 
 ### Long-term (Relocation)
+
 - Must be to an approved country
 - Requires People team approval (30 days advance notice)
 - May impact compensation based on location
@@ -161,12 +184,14 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Performance & Accountability
 
 ### Expectations
+
 - Same performance standards apply to remote and office workers
 - Regular goal-setting and progress reviews
 - Transparent communication about work progress
 - Active participation in team activities
 
 ### Measurement
+
 - Focus on outcomes and impact, not hours worked
 - Regular 1:1s and performance reviews
 - Peer feedback and collaboration metrics
@@ -175,12 +200,14 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Office Visits
 
 ### Remote Employee Office Visits
+
 - Encouraged to visit office quarterly
 - Travel and accommodation covered by company
 - Coordinate with team for maximum overlap
 - Use for team bonding, planning sessions, collaboration
 
 ### Team Meetups
+
 - Each team meets in-person at least once per quarter
 - Fully paid by company
 - Usually 2-3 days of working sessions and team building
@@ -189,11 +216,13 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Ending Remote Work
 
 ### Company-Initiated
+
 - 60 days notice for significant policy changes
 - Support provided for transition
 - Relocation assistance if returning to office
 
 ### Employee-Initiated
+
 - Can request to change arrangement anytime
 - Discuss with manager and formalize through HR
 - Equipment return/exchange as needed
@@ -201,6 +230,7 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Health & Wellbeing
 
 ### Preventing Burnout
+
 - Maintain clear boundaries between work and personal time
 - Take regular breaks
 - Use your vacation days
@@ -208,12 +238,14 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 - Speak up if workload is unsustainable
 
 ### Staying Connected
+
 - Virtual coffee chats with colleagues
 - Join employee resource groups
 - Attend company events (virtual and in-person)
 - Use wellness benefits (therapy, gym, etc.)
 
 ### Ergonomics
+
 - Use provided ergonomic equipment
 - Take movement breaks
 - Follow 20-20-20 rule (every 20 min, look 20 feet away for 20 sec)
@@ -222,17 +254,20 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 ## Tools We Use
 
 ### Communication
+
 - **Slack**: Primary communication
 - **Zoom**: Video conferencing
 - **Email**: Formal communication and external contacts
 
 ### Collaboration
+
 - **Notion**: Documentation and knowledge base
 - **GitHub**: Code and technical documentation
 - **Figma**: Design collaboration
 - **Miro**: Virtual whiteboarding
 
 ### Productivity
+
 - **Asana**: Project management
 - **Google Workspace**: Docs, Sheets, Calendar
 - **Loom**: Async video messages
@@ -243,4 +278,5 @@ Some roles require regular office presence due to nature of work (e.g., faciliti
 Contact your manager or people@odinlearn.com
 
 ---
-*Last updated: January 2025*
+
+_Last updated: January 2025_

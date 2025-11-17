@@ -2,62 +2,61 @@
 
 name: Fly Deploy
 on:
-  push:
-    branches:
-      - main
-      - node-ftw
+    push:
+        branches:
+            - main
+            - node-ftw
 jobs:
-  changes:
-    name: Detect changes
-    runs-on: ubuntu-latest
-    outputs:
-      api: ${{ steps.filter.outputs.api }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      memo-processing: ${{ steps.filter.outputs.memo-processing }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            api:
-              - 'backend/src/**'
-              - 'backend/Dockerfile'
-              - 'backend/package.json'
-              - 'backend/pnpm-lock.yaml'
-              - 'backend/tsconfig.json'
-              - 'backend/express.fly.toml'
-            memo-processing:
-              - 'backend/src/**'
-              - 'backend/Dockerfile'
-              - 'backend/package.json'
-              - 'backend/pnpm-lock.yaml'
-              - 'backend/tsconfig.json'
-              - 'backend/memo-processing-server.fly.toml'
+    changes:
+        name: Detect changes
+        runs-on: ubuntu-latest
+        outputs:
+            api: ${{ steps.filter.outputs.api }}
+            frontend: ${{ steps.filter.outputs.frontend }}
+            memo-processing: ${{ steps.filter.outputs.memo-processing }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      api:
+                        - 'backend/src/**'
+                        - 'backend/Dockerfile'
+                        - 'backend/package.json'
+                        - 'backend/pnpm-lock.yaml'
+                        - 'backend/tsconfig.json'
+                        - 'backend/express.fly.toml'
+                      memo-processing:
+                        - 'backend/src/**'
+                        - 'backend/Dockerfile'
+                        - 'backend/package.json'
+                        - 'backend/pnpm-lock.yaml'
+                        - 'backend/tsconfig.json'
+                        - 'backend/memo-processing-server.fly.toml'
 
-  deploy-api:
-    name: Deploy API
-    needs: changes
-    if: needs.changes.outputs.api == 'true'
-    runs-on: ubuntu-latest
-    concurrency: deploy-api
-    steps:
-      - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd backend && flyctl deploy -c express.fly.toml -a skald-api-server --remote-only 
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    deploy-api:
+        name: Deploy API
+        needs: changes
+        if: needs.changes.outputs.api == 'true'
+        runs-on: ubuntu-latest
+        concurrency: deploy-api
+        steps:
+            - uses: actions/checkout@v4
+            - uses: superfly/flyctl-actions/setup-flyctl@master
+            - run: cd backend && flyctl deploy -c express.fly.toml -a skald-api-server --remote-only
+              env:
+                  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-
-  deploy-memo-processing:
-    name: Deploy Memo Processing Server
-    needs: changes
-    if: needs.changes.outputs.memo-processing == 'true'
-    runs-on: ubuntu-latest
-    concurrency: deploy-memo-processing
-    steps:
-      - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: cd backend && flyctl deploy -c memo-processing-server.toml -a skald-memo-processing-worker --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    deploy-memo-processing:
+        name: Deploy Memo Processing Server
+        needs: changes
+        if: needs.changes.outputs.memo-processing == 'true'
+        runs-on: ubuntu-latest
+        concurrency: deploy-memo-processing
+        steps:
+            - uses: actions/checkout@v4
+            - uses: superfly/flyctl-actions/setup-flyctl@master
+            - run: cd backend && flyctl deploy -c memo-processing-server.toml -a skald-memo-processing-worker --remote-only
+              env:
+                  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
