@@ -67,6 +67,9 @@ class UsageTrackingService {
      * Increment chat queries counter for current billing period
      */
     async incrementChatQueries(organization: Organization): Promise<void> {
+        if (IS_SELF_HOSTED_DEPLOY) {
+            return
+        }
         const usageRecord = await this.getOrCreateCurrentUsage(organization)
 
         await this.em.nativeUpdate(
