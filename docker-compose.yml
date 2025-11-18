@@ -133,7 +133,7 @@ services:
         ports:
             - '8001:8000'
         profiles:
-            - local-embedding
+            - local
         restart: unless-stopped
 
     docling-serve:
