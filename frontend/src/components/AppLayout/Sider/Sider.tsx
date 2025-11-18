@@ -1,17 +1,7 @@
 import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
 import { TalkToFounderModal } from '@/components/AppLayout/Sider/TalkToFounderModal'
 import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
-import { useTheme } from '@/components/ThemeProvider'
-
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { UserMenu } from '@/components/AppLayout/Sider/UserMenu'
 
 import {
     Sidebar,
@@ -23,26 +13,21 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    useSidebar,
 } from '@/components/ui/sidebar'
 import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
 import { useProjectStore } from '@/stores/projectStore'
 import {
     BookOpen,
-    ChevronsUpDown,
     CreditCard,
     Files,
     FlaskConical,
     GlobeLock,
     Hotel,
     List,
-    LogOut,
     MessageSquare,
-    Moon,
     Rocket,
     Settings,
-    Sun,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -61,22 +46,8 @@ export const Sider = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const user = useAuthStore((state) => state.user)
-    const logout = useAuthStore((state) => state.logout)
-    const { theme, toggleTheme } = useTheme()
     const currentProject = useProjectStore((state) => state.currentProject)
     const [talkToFounderModalOpen, setTalkToFounderModalOpen] = useState(false)
-
-    const { isMobile } = useSidebar()
-
-    const getUserName = () => {
-        const name = user?.name?.trim()
-        return name || 'User'
-    }
-
-    const getUserEmail = () => {
-        const email = user?.email?.trim()
-        return email || 'user@example.com'
-    }
 
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
@@ -269,49 +240,7 @@ export const Sider = () => {
                                     </SidebarMenuItem>
                                 ))}
 
-                            {/* Icon buttons row */}
-                            <SidebarMenuItem>
-                                <DropdownMenu modal={false}>
-                                    <DropdownMenuTrigger className="flex items-center gap-2 justify-between w-full my-2 px-2 hover:bg-sidebar-accent rounded-md py-2">
-                                        <div className="grid flex-1 text-left text-sm leading-tight">
-                                            <span className="truncate font-medium">{getUserName()}</span>
-                                            <span className="truncate text-xs">{getUserEmail()}</span>
-                                        </div>
-                                        <ChevronsUpDown className="ml-auto size-4" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                        className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                                        side={isMobile ? 'bottom' : 'right'}
-                                        align="end"
-                                        sideOffset={4}
-                                    >
-                                        <DropdownMenuLabel className="p-0 font-normal">
-                                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                                    <span className="truncate font-medium">{getUserName()}</span>
-                                                    <span className="truncate text-xs">{getUserEmail()}</span>
-                                                </div>
-                                            </div>
-                                        </DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuGroup>
-                                            <DropdownMenuItem onSelect={toggleTheme} className="gap-x-1">
-                                                {theme === 'dark' ? (
-                                                    <Sun className="size-4" />
-                                                ) : (
-                                                    <Moon className="size-4" />
-                                                )}
-                                                Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode
-                                            </DropdownMenuItem>
-                                        </DropdownMenuGroup>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onSelect={logout} className="gap-x-1">
-                                            <LogOut className="size-4" />
-                                            Log out
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </SidebarMenuItem>
+                            <UserMenu />
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
