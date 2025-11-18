@@ -54,7 +54,7 @@ export const useChatStore = create<ChatState>()(
             isStreaming: false,
             currentStreamingMessageId: null,
             systemPrompt: '',
-            llmProvider: 'openai',
+            llmProvider: '',
             ragConfig: {
                 queryRewriteEnabled: false,
                 rerankingEnabled: true,

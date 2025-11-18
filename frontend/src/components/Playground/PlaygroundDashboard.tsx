@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChatMessagesList } from './ChatMessagesList'
 import { ChatInput } from './ChatInput'
 import { useProjectStore } from '@/stores/projectStore'
 import { useChatStore } from '@/stores/chatStore'
+import { useLLMConfigStore } from '@/stores/llmConfigStore'
 import { Info, Settings, Cpu } from 'lucide-react'
 import { PageHeader } from '@/components/AppLayout/PageHeader'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,18 +12,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { RagConfigForm } from './RagConfigForm'
 import './Playground.scss'
-import { isSelfHostedDeploy } from '@/config'
-
-const LLM_PROVIDERS = [
-    { value: 'openai', label: 'OpenAI' },
-    { value: 'anthropic', label: 'Anthropic' },
-    { value: 'groq', label: 'Groq' },
-]
 
 export const PlaygroundDashboard = () => {
     const { currentProject } = useProjectStore()
     const { systemPrompt, setSystemPrompt, llmProvider, setLlmProvider, ragConfig, setRagConfig } = useChatStore()
+    const { availableProviders, fetchProviders } = useLLMConfigStore()
     const [isConfigOpen, setIsConfigOpen] = useState(false)
+
+    useEffect(() => {
+        fetchProviders()
+    }, [fetchProviders])
+
+    // Set default provider when providers are loaded
+    useEffect(() => {
+        if (availableProviders.length > 0 && !llmProvider) {
+            setLlmProvider(availableProviders[0].provider)
+        }
+    }, [availableProviders, llmProvider, setLlmProvider])
 
     if (!currentProject) {
         return (
@@ -54,7 +60,7 @@ export const PlaygroundDashboard = () => {
                     <div className="space-y-6 p-8">
                         <h3 className="text-lg font-semibold">Settings</h3>
 
-                        {!isSelfHostedDeploy ? (
+                        {availableProviders.length > 0 && (
                             <div className="llm-provider-selector">
                                 <label htmlFor="llm-provider" className="block text-sm font-medium mb-2">
                                     LLM Provider
@@ -73,15 +79,15 @@ export const PlaygroundDashboard = () => {
                                         </div>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {LLM_PROVIDERS.map((provider) => (
-                                            <SelectItem key={provider.value} value={provider.value}>
-                                                {provider.label}
+                                        {availableProviders.map((provider) => (
+                                            <SelectItem key={provider.provider} value={provider.provider}>
+                                                {provider.label} ({provider.model})
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-                        ) : null}
+                        )}
 
                         <div className="system-prompt-container">
                             <label htmlFor="system-prompt" className="block text-sm font-medium mb-2">
