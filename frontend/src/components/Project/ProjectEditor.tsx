@@ -77,7 +77,7 @@ export const ProjectEditor = ({ project }: ProjectNameEditorProps) => {
                 ) : (
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-lg font-medium">{project.name}</p>
+                            <p className="text-sm font-medium">{project.name}</p>
                         </div>
                         <Button onClick={handleStartEdit} variant="outline" size="sm">
                             <Pencil className="mr-2 h-4 w-4" />
@@ -85,7 +85,13 @@ export const ProjectEditor = ({ project }: ProjectNameEditorProps) => {
                         </Button>
                     </div>
                 )}
-                <div className="flex items-center justify-between mt-4">
+                <div className="mt-6 flex justify-between gap-4 items-center">
+                    <div>
+                        <p className="text-sm font-medium leading-tight">Query Rewrite</p>
+                        <p className="text-sm text-muted-foreground">
+                            Improves retrieval by letting the agent rephrase user questions before searching your memos.
+                        </p>
+                    </div>
                     <Switch
                         id="query-rewrite"
                         checked={project.query_rewrite_enabled}
