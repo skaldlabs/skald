@@ -4,7 +4,7 @@ import { PostHog } from 'posthog-node'
 export const posthog = new PostHog(POSTHOG_API_KEY, { host: POSTHOG_HOST })
 
 export function posthogCapture(event_name: string, distinct_id: string, properties: Record<string, unknown>): void {
-    if (IS_SELF_HOSTED_DEPLOY && !['organization_created'].includes(event_name)) {
+    if (IS_SELF_HOSTED_DEPLOY && !['organization_created', 'user_details_completed'].includes(event_name)) {
         return
     }
     if (TEST) {
