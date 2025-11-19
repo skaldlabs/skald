@@ -40,7 +40,7 @@ Our solid defaults will work for most use cases, but you can tune every part of 
 Ship, configure, and evaluate performance directly inside Skald.
 
 <a href="https://join.slack.com/t/skaldcommunity/shared_invite/zt-3he986lub-UWKTZneOAUeTFa4LDXpFEg">
-    <img height='40' src="/readme-assets/join-slack.svg" alt="skald-cli">
+    <img height='40' src="/readme-assets/join-slack.svg" alt="join-slack">
 </a>
 
 ## [Node SDK](https://github.com/skaldlabs/skald-node) example
