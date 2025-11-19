@@ -4,6 +4,8 @@ import '@/settings'
 import { startExpressServer } from '@/expressServer'
 import { startMemoProcessingServer } from '@/memoProcessingServer'
 import { logger } from '@/lib/logger'
+import { canConnectToPostgres } from '@/lib/postgresClient'
+import { canConnectToRedis } from '@/lib/redisClient'
 
 const getModeFromArgs = (): string | null => {
     const args = process.argv.slice(2)
@@ -23,13 +25,18 @@ const getModeFromArgs = (): string | null => {
     return 'express-server'
 }
 
-const mode = getModeFromArgs()
+;(async () => {
+    await canConnectToPostgres()
 
-if (mode === 'express-server') {
-    startExpressServer()
-} else if (mode === 'memo-processing-server') {
-    startMemoProcessingServer()
-} else {
-    logger.error({ mode }, 'Invalid mode')
-    process.exit(1)
-}
+    const mode = getModeFromArgs()
+
+    if (mode === 'express-server') {
+        await canConnectToRedis()
+        startExpressServer()
+    } else if (mode === 'memo-processing-server') {
+        startMemoProcessingServer()
+    } else {
+        logger.error({ mode }, 'Invalid mode')
+        process.exit(1)
+    }
+})()
