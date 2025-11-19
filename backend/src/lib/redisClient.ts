@@ -35,6 +35,22 @@ const withRedisClient = async <T>(
     }
 }
 
+export const canConnectToRedis = async (): Promise<void> => {
+    // not required for skald to work
+    if (!REDIS_URL) return
+
+    const client = createClient({ url: REDIS_URL })
+
+    try {
+        await client.connect()
+        await client.ping()
+        await client.quit()
+    } catch {
+        logger.fatal('Failed to connect to Redis despite REDIS_URL being set.')
+        process.exit(1)
+    }
+}
+
 export const redisGet = async (key: string): Promise<string | null> => {
     const result = await withRedisClient<string | null>((client) => client.get(key), 'GET')
     return result
