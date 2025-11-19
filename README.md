@@ -42,18 +42,20 @@ With Skald you don't need to implement RAG ever again. Push context to our API, 
 ## [Node SDK](https://github.com/skaldlabs/skald-node) example
 
 ```js
-import { Skald } from '@skald-labs/skald-node'
+import { Skald } from '@skald-labs/skald-node';
 
-const skald = new Skald('your-api-key-here')
+const skald = new Skald('your-api-key-here');
 
-const result = await skald.createMemo({
-    title: 'Meeting Notes',
-    content: 'Full content of the memo...',
-})
+await skald.createMemo({
+  title: 'Meeting Notes',
+  content: 'Full content of the memo...'
+});
 
-const result = await skald.chat({
-    query: 'What were the main points discussed in the Q1 meeting?',
-})
+const chatRes = await skald.chat({
+  query: 'What were the main points discussed in the Q1 meeting?'
+});
+
+console.log(chatRes.response);
 ```
 
 <small>[Python](https://docs.useskald.com/docs/sdks/python#usage) - [Ruby](https://docs.useskald.com/docs/sdks/ruby#usage) - [Go](https://docs.useskald.com/docs/sdks/go#usage) - [PHP](https://docs.useskald.com/docs/sdks/php#quick-start) - [C#](https://github.com/skaldlabs/skald-csharp) - [MCP](https://docs.useskald.com/docs/sdks/mcp) - [CLI](https://docs.useskald.com/docs/sdks/cli)</small>
