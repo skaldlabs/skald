@@ -26,12 +26,12 @@ const getModeFromArgs = (): string | null => {
 }
 
 ;(async () => {
-    await canConnectToRedis()
     await canConnectToPostgres()
 
     const mode = getModeFromArgs()
 
     if (mode === 'express-server') {
+        await canConnectToRedis()
         startExpressServer()
     } else if (mode === 'memo-processing-server') {
         startMemoProcessingServer()
