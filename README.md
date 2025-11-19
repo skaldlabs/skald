@@ -6,19 +6,19 @@
 
 <p align="center">
     <a href="https://pypi.org/project/skald-sdk/">
-        <img src="https://img.shields.io/badge/pypi-v.0.3.1-blue" alt="skald-sdk Python">
+        <img src="https://img.shields.io/badge/pypi-v.0.4.1-blue" alt="skald-sdk Python">
     </a>
     <a href="https://www.npmjs.com/package/@skald-labs/skald-node">
-        <img src="https://img.shields.io/badge/npm-v.0.3.0-blue" alt="skald-node">
+        <img src="https://img.shields.io/badge/npm-v.0.4.0-blue" alt="skald-node">
+    </a>
+        <a href="https://github.com/skaldlabs/skald-go">
+        <img src="https://img.shields.io/badge/go-v.0.3.0-blue" alt="skald-go">
     </a>
     <a href="https://rubygems.org/gems/skald">
         <img src="https://img.shields.io/badge/gem-v.0.1.0-blue" alt="Skald Ruby">
     </a>
     <a href="https://packagist.org/packages/skald/skald-php">
         <img src="https://img.shields.io/badge/composer-v.1.0.2-blue" alt="skald/skald-php">
-    </a>
-    <a href="https://github.com/skaldlabs/skald-go">
-        <img src="https://img.shields.io/badge/go-v.0.2.0-blue" alt="skald-go">
     </a>
     <a href="https://github.com/skaldlabs/skald-csharp">
         <img src="https://img.shields.io/badge/csharp-v.0.1.0-blue" alt="skald-csharp">
@@ -31,11 +31,13 @@
     </a>
 </p>
 
-# Skald: The open-source RAG API
+# Skald: The open-source RAG platform
 
-With Skald you don't need to implement RAG ever again. Push context to our API, and get chat, search, and more out of the box.
+Skald gives you a production-ready RAG in minutes through a plug-and-play API, and then let's you configure your RAG engine exactly to your needs.
 
-Get up-and-running in minutes, then configure everything just how you want it and evaluate performance with our built-in evaluation tools.
+Our solid defaults will work for most use cases, but you can tune every part of your RAG to better suit your needs. That means configurable vector search params, reranking, models, query rewriting, chunking (soon), and more. 
+
+Ship, configure, and evaluate performance directly inside Skald.
 
 <a href="https://join.slack.com/t/skaldcommunity/shared_invite/zt-3he986lub-UWKTZneOAUeTFa4LDXpFEg">
     <img height='40' src="/readme-assets/join-slack.svg" alt="skald-cli">
@@ -80,7 +82,7 @@ For a production self-hosted deploy, check out our [self-hosting docs](https://d
 </summary>
 <br>
 
-You can deploy Skald without **any** third-party dependencies (including OpenAI), but that will require hosting your own LLM inference server and using a local embeddings service (we've provided one for you in the `local-embedding` docker compose profile). This is advanced usage and is classed as experimental, check out our [docs](https://docs.useskald.com) for more details.
+You can deploy Skald without **any** third-party dependencies (including OpenAI), but that will require hosting your own LLM inference server and using a local embeddings service (we've provided one for you in the `local` docker compose profile). This is advanced usage and is classed as experimental, check out our [docs](https://docs.useskald.com) for more details.
 
 </details>
 
