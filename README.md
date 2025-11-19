@@ -1,7 +1,7 @@
 ![Skald banner](./readme-assets/skald-banner.png)
 
 <p align="center">
-  <a href="https://docs.useskald.com/">Docs</a> - <a href="https://useskald.com">Website</a> 
+  <a href="https://docs.useskald.com/">Docs</a> - <a href="https://useskald.com">Website</a>  - <a href="https://www.loom.com/share/f9ac358792284d6a9bc9807e9f48587e">Demo video</a> - <a href="https://www.loom.com/share/236148c9e8be482f95961a19d9e455ea">Self-hosted deploy</a>
 </p>
 
 <p align="center">
@@ -35,6 +35,8 @@
 
 With Skald you don't need to implement RAG ever again. Push context to our API, and get chat, search, and more out of the box.
 
+Get up-and-running in minutes, then configure everything just how you want it and evaluate performance with our built-in evaluation tools.
+
 <a href="https://join.slack.com/t/skaldcommunity/shared_invite/zt-3he986lub-UWKTZneOAUeTFa4LDXpFEg">
     <img height='40' src="/readme-assets/join-slack.svg" alt="skald-cli">
 </a>
@@ -52,7 +54,8 @@ await skald.createMemo({
 });
 
 const chatRes = await skald.chat({
-  query: 'What were the main points discussed in the Q1 meeting?'
+  query: 'What were the main points discussed in the Q1 meeting?',
+  rag_config: { reranking: { enabled: true } }
 });
 
 console.log(chatRes.response);
