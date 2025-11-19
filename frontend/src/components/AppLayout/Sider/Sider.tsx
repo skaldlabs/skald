@@ -1,38 +1,36 @@
-import {
-    MessageSquare,
-    Files,
-    LogOut,
-    Hotel,
-    Rocket,
-    Sun,
-    Moon,
-    Settings,
-    CreditCard,
-    BookOpen,
-    GlobeLock,
-    FlaskConical,
-    List,
-} from 'lucide-react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useState } from 'react'
-import { useAuthStore, UserDetails } from '@/stores/authStore'
+import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
+import { TalkToFounderModal } from '@/components/AppLayout/Sider/TalkToFounderModal'
+import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
+import { UserMenu } from '@/components/AppLayout/Sider/UserMenu'
+
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
+    SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarHeader,
 } from '@/components/ui/sidebar'
-import { useTheme } from '@/components/ThemeProvider'
-import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
-import { useProjectStore } from '@/stores/projectStore'
-import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
-import { TalkToFounderModal } from '@/components/AppLayout/Sider/TalkToFounderModal'
 import { isSelfHostedDeploy } from '@/config'
+import { useAuthStore, UserDetails } from '@/stores/authStore'
+import { useProjectStore } from '@/stores/projectStore'
+import {
+    BookOpen,
+    CreditCard,
+    Files,
+    FlaskConical,
+    GlobeLock,
+    Hotel,
+    List,
+    MessageSquare,
+    Rocket,
+    Settings,
+} from 'lucide-react'
+import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 interface MenuItem {
     key: string
@@ -48,8 +46,6 @@ export const Sider = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const user = useAuthStore((state) => state.user)
-    const logout = useAuthStore((state) => state.logout)
-    const { theme, toggleTheme } = useTheme()
     const currentProject = useProjectStore((state) => state.currentProject)
     const [talkToFounderModalOpen, setTalkToFounderModalOpen] = useState(false)
 
@@ -244,23 +240,7 @@ export const Sider = () => {
                                     </SidebarMenuItem>
                                 ))}
 
-                            {/* Icon buttons row */}
-                            <div className="flex justify-center gap-2 px-2 py-1 mt-1">
-                                <SidebarMenuButton
-                                    onClick={toggleTheme}
-                                    className="h-8 w-8 p-0 cursor-pointer flex items-center justify-center"
-                                    title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                                >
-                                    {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                                </SidebarMenuButton>
-                                <SidebarMenuButton
-                                    onClick={logout}
-                                    className="h-8 w-8 p-0 cursor-pointer flex items-center justify-center"
-                                    title="Logout"
-                                >
-                                    <LogOut className="h-4 w-4" />
-                                </SidebarMenuButton>
-                            </div>
+                            <UserMenu />
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>

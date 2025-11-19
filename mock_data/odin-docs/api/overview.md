@@ -29,12 +29,12 @@ All responses are returned in JSON format with the following structure:
 
 ```json
 {
-  "success": true,
-  "data": {},
-  "metadata": {
-    "timestamp": "2025-10-10T12:00:00Z",
-    "request_id": "req_123456"
-  }
+    "success": true,
+    "data": {},
+    "metadata": {
+        "timestamp": "2025-10-10T12:00:00Z",
+        "request_id": "req_123456"
+    }
 }
 ```
 
@@ -53,12 +53,12 @@ Error response format:
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "INVALID_PARAMETER",
-    "message": "The deity parameter is invalid",
-    "details": {}
-  }
+    "success": false,
+    "error": {
+        "code": "INVALID_PARAMETER",
+        "message": "The deity parameter is invalid",
+        "details": {}
+    }
 }
 ```
 

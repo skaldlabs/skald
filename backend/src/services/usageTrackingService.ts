@@ -10,6 +10,7 @@ import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { EntityManager } from '@mikro-orm/core'
 import { logger } from '@/lib/logger'
 import { CachedQueries } from '@/queries/cachedQueries'
+import { IS_SELF_HOSTED_DEPLOY } from '@/settings'
 
 interface UsageData {
     billing_period_start: string
@@ -38,6 +39,9 @@ class UsageTrackingService {
      * Increment memo operations counter for current billing period
      */
     async incrementMemoOperations(organization: Organization, incrementBy: number = 1): Promise<void> {
+        if (IS_SELF_HOSTED_DEPLOY) {
+            return
+        }
         const usageRecord = await this.getOrCreateCurrentUsage(organization)
 
         await this.em.nativeUpdate(
@@ -63,6 +67,9 @@ class UsageTrackingService {
      * Increment chat queries counter for current billing period
      */
     async incrementChatQueries(organization: Organization): Promise<void> {
+        if (IS_SELF_HOSTED_DEPLOY) {
+            return
+        }
         const usageRecord = await this.getOrCreateCurrentUsage(organization)
 
         await this.em.nativeUpdate(

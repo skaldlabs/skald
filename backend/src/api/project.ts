@@ -15,6 +15,7 @@ import { posthogCapture } from '@/lib/posthogUtils'
 import { ChatMessage } from '@/entities/ChatMessage'
 import { Chat } from '@/entities/Chat'
 import { UsageTrackingService } from '@/services/usageTrackingService'
+import { IS_CLOUD } from '@/settings'
 
 export const projectRouter = express.Router({ mergeParams: true })
 
@@ -158,15 +159,18 @@ const create = async (req: Request, res: Response) => {
         return res.status(403).json({ error: 'You are not a member of this organization' })
     }
 
-    const service = new UsageTrackingService(DI.em)
-    const { withinLimit, limit } = await service.checkLimit(organization, 'projects')
+    if (IS_CLOUD) {
+        const service = new UsageTrackingService(DI.em)
+        const { withinLimit, limit } = await service.checkLimit(organization, 'projects')
 
-    if (!withinLimit) {
-        // Limit exceeded - return 403 error
-        return res.status(403).json({
-            error: `You've reached your plan limit of ${limit} projects. Upgrade your plan to create more projects.`,
-        })
+        if (!withinLimit) {
+            // Limit exceeded - return 403 error
+            return res.status(403).json({
+                error: `You've reached your plan limit of ${limit} projects. Upgrade your plan to create more projects.`,
+            })
+        }
     }
+
     const project = DI.projects.create({
         uuid: randomUUID(),
         name,

@@ -7,14 +7,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api, getProjectPath } from '@/lib/api'
 import { RagConfigForm, type RagConfig } from '@/components/Playground/RagConfigForm'
+import { useLLMConfigStore } from '@/stores/llmConfigStore'
 import { Cpu } from 'lucide-react'
-import { isSelfHostedDeploy } from '@/config'
-
-const LLM_PROVIDERS = [
-    { value: 'openai', label: 'OpenAI' },
-    { value: 'anthropic', label: 'Anthropic' },
-    { value: 'groq', label: 'Groq' },
-]
 
 interface EvaluationDataset {
     uuid: string
@@ -29,6 +23,7 @@ interface CreateExperimentDialogProps {
 }
 
 export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated }: CreateExperimentDialogProps) => {
+    const { availableProviders, fetchProviders } = useLLMConfigStore()
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [selectedDatasetUuid, setSelectedDatasetUuid] = useState<string>('')
@@ -36,7 +31,7 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [systemPrompt, setSystemPrompt] = useState('')
-    const [llmProvider, setLlmProvider] = useState('openai')
+    const [llmProvider, setLlmProvider] = useState('')
     const [ragConfig, setRagConfig] = useState<RagConfig>({
         queryRewriteEnabled: false,
         rerankingEnabled: true,
@@ -49,8 +44,15 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
     useEffect(() => {
         if (open) {
             fetchDatasets()
+            fetchProviders()
         }
     }, [open])
+
+    useEffect(() => {
+        if (availableProviders.length > 0 && !llmProvider) {
+            setLlmProvider(availableProviders[0].provider)
+        }
+    }, [availableProviders, llmProvider])
 
     const fetchDatasets = async () => {
         try {
@@ -185,7 +187,7 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
                         <h4 className="text-md font-semibold mb-4">Configuration</h4>
 
                         <div className="space-y-4 mb-6">
-                            {!isSelfHostedDeploy && (
+                            {availableProviders.length > 0 && (
                                 <div className="space-y-2">
                                     <Label htmlFor="llm-provider">LLM Provider</Label>
                                     <Select value={llmProvider} onValueChange={setLlmProvider}>
@@ -196,9 +198,9 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
                                             </div>
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {LLM_PROVIDERS.map((provider) => (
-                                                <SelectItem key={provider.value} value={provider.value}>
-                                                    {provider.label}
+                                            {availableProviders.map((provider) => (
+                                                <SelectItem key={provider.provider} value={provider.provider}>
+                                                    {provider.label} ({provider.model})
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

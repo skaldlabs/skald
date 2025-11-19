@@ -73,12 +73,16 @@ export const ExperimentsTab = () => {
                                 <TableCell>{experiment.evaluation_dataset_name}</TableCell>
                                 <TableCell>
                                     {experiment.statistics.average_total_answer_time_ms !== null
-                                        ? Math.round(experiment.statistics.average_total_answer_time_ms).toLocaleString()
+                                        ? Math.round(
+                                              experiment.statistics.average_total_answer_time_ms
+                                          ).toLocaleString()
                                         : '-'}
                                 </TableCell>
                                 <TableCell>
                                     {experiment.statistics.average_time_to_first_token_ms !== null
-                                        ? Math.round(experiment.statistics.average_time_to_first_token_ms).toLocaleString()
+                                        ? Math.round(
+                                              experiment.statistics.average_time_to_first_token_ms
+                                          ).toLocaleString()
                                         : '-'}
                                 </TableCell>
                                 <TableCell>

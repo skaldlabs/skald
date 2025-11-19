@@ -42,9 +42,7 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
 
             try {
                 const projectPath = getProjectPath()
-                const response = await api.get<DatasetDetail>(
-                    `${projectPath}/evaluation-datasets/${datasetUuid}`
-                )
+                const response = await api.get<DatasetDetail>(`${projectPath}/evaluation-datasets/${datasetUuid}`)
                 if (response.data) {
                     setDataset(response.data)
                 }
@@ -89,9 +87,7 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
                 // Update the dataset in state with the new question data
                 setDataset({
                     ...dataset,
-                    questions: dataset.questions.map((q) =>
-                        q.uuid === questionUuid ? response.data! : q
-                    ),
+                    questions: dataset.questions.map((q) => (q.uuid === questionUuid ? response.data! : q)),
                 })
                 setEditingQuestionUuid(null)
                 setEditedQuestion('')
@@ -185,11 +181,7 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
                                                 </Button>
                                             </>
                                         ) : (
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={() => handleEditClick(question)}
-                                            >
+                                            <Button size="sm" variant="ghost" onClick={() => handleEditClick(question)}>
                                                 <Edit2 className="h-4 w-4" />
                                             </Button>
                                         )}

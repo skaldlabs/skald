@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
 import { llmJudgeAgent } from '@/agents/llmJudgeAgent'
 import { UsageTrackingService } from '@/services/usageTrackingService'
+import { LLM_PROVIDER } from '@/settings'
 
 export const experimentRouter = express.Router({ mergeParams: true })
 
@@ -357,7 +358,13 @@ const run = async (req: Request, res: Response) => {
 
         const totalTime = Date.now() - startTime
 
-        const llmJudgeResult = await llmJudgeAgent.judge(question.question, fullResponse, question.answer)
+        let llmJudgeResult: { score: number | null } = {
+            score: null,
+        }
+
+        if (['openai', 'anthropic'].includes(LLM_PROVIDER)) {
+            llmJudgeResult = await llmJudgeAgent.judge(question.question, fullResponse, question.answer)
+        }
 
         // Create the experiment result
         const experimentResult = DI.em.create(ExperimentResult, {

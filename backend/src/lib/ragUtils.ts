@@ -1,5 +1,6 @@
-import { CLOUD_LLM_PROVIDERS, RAGConfig } from '@/agents/chatAgent/ragGraph'
-import { LLM_PROVIDER, IS_CLOUD, SUPPORTED_LLM_PROVIDERS } from '@/settings'
+import { RAGConfig } from '@/agents/chatAgent/ragGraph'
+import { LLM_PROVIDER } from '@/settings'
+import { AVAILABLE_LLM_PROVIDERS } from '@/api/config'
 
 export function parseRagConfig(ragConfig: Record<string, any>): {
     parsedRagConfig: RAGConfig | null
@@ -17,11 +18,10 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
     // Parse and validate llmProvider (snake_case only)
     const llmProvider = ragConfig.llm_provider || ragConfig.llmProvider || LLM_PROVIDER
 
-    const supportedLLMProviders = IS_CLOUD ? CLOUD_LLM_PROVIDERS : SUPPORTED_LLM_PROVIDERS
-    if (!supportedLLMProviders.includes(llmProvider)) {
+    if (!AVAILABLE_LLM_PROVIDERS.map((provider) => provider.provider).includes(llmProvider)) {
         return {
             parsedRagConfig: null,
-            error: `Invalid LLM provider: ${llmProvider}. Supported providers: ${supportedLLMProviders.join(', ')}`,
+            error: `Invalid LLM provider: ${llmProvider}. Supported providers: ${AVAILABLE_LLM_PROVIDERS.map((provider) => provider.provider).join(', ')}`,
         }
     }
 

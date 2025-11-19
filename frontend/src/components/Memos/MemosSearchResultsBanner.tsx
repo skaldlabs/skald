@@ -31,7 +31,9 @@ export const MemosSearchResultsBanner = ({
 
     return (
         <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900 flex items-center py-3">
-            <Search className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+            <div className="mr-3">
+                <Search size={16} className=" text-blue-600 dark:text-blue-400 shrink-0" />
+            </div>
             <AlertDescription className="flex items-center justify-between flex-1 m-0 py-0">
                 <div className="flex items-center gap-2 flex-1 flex-wrap">
                     <span className="text-blue-900 dark:text-blue-100 font-medium">

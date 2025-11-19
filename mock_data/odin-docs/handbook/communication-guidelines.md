@@ -7,24 +7,28 @@ Effective communication is the foundation of our remote-friendly, international 
 ## Core Principles
 
 ### 1. Default to Transparency
+
 - Share information openly unless there's a specific reason not to
 - Make decisions visible and well-documented
 - Use public channels instead of DMs when appropriate
 - Document "why" behind decisions
 
 ### 2. Asynchronous First
+
 - Respect time zones and working hours
 - Write clear, complete messages
 - Don't expect immediate responses
 - Use synchronous communication when truly needed
 
 ### 3. Be Considerate
+
 - Assume positive intent
 - Think before you send
 - Re-read your messages from the recipient's perspective
 - Be mindful of cultural and language differences
 
 ### 4. Clarity Over Cleverness
+
 - Be direct and specific
 - Provide context
 - Use simple language
@@ -35,12 +39,14 @@ Effective communication is the foundation of our remote-friendly, international 
 ### Slack
 
 **Primary uses:**
+
 - Day-to-day communication
 - Quick questions and updates
 - Team coordination
 - Social connection
 
 **Channel Structure:**
+
 - `#general`: Company-wide announcements
 - `#engineering`, `#design`, `#content`, etc.: Department channels
 - `#help-*`: Get help from specific teams
@@ -51,6 +57,7 @@ Effective communication is the foundation of our remote-friendly, international 
 **Best Practices:**
 
 ✅ **Do:**
+
 - Use threads to keep conversations organized
 - Use @channel and @here sparingly (only for urgent, everyone needs to know)
 - Update your status to show availability
@@ -60,6 +67,7 @@ Effective communication is the foundation of our remote-friendly, international 
 - Set reminders for follow-ups
 
 ❌ **Don't:**
+
 - Send "hi" and wait for response—include your question
 - DM when a channel would be more appropriate
 - Use @everyone (restricted to admins)
@@ -68,12 +76,14 @@ Effective communication is the foundation of our remote-friendly, international 
 - Have important discussions in DMs (document in public channels)
 
 **Response Time Expectations:**
+
 - Urgent (with @mention during working hours): Within 2 hours
 - Normal messages: Within 24 hours
 - Non-urgent: 48 hours
 - Outside working hours: No expectation
 
 **Status Guide:**
+
 - 🟢 Available
 - 🟡 In a meeting (will respond later)
 - 🔴 Do not disturb
@@ -84,6 +94,7 @@ Effective communication is the foundation of our remote-friendly, international 
 ### Email
 
 **When to use:**
+
 - Formal communication
 - External communication
 - Detailed information requiring documentation
@@ -91,6 +102,7 @@ Effective communication is the foundation of our remote-friendly, international 
 - Communication with non-technical stakeholders
 
 **Best Practices:**
+
 - Clear, specific subject lines
 - Key information in first paragraph
 - Use bullet points for clarity
@@ -99,6 +111,7 @@ Effective communication is the foundation of our remote-friendly, international 
 - Response time: 24-48 hours
 
 **Email Etiquette:**
+
 ```
 Subject: [Clear, specific subject] - [Action needed/FYI]
 
@@ -119,6 +132,7 @@ Best,
 ### Zoom/Video Calls
 
 **When to use:**
+
 - Complex discussions needing back-and-forth
 - Sensitive topics
 - Brainstorming sessions
@@ -129,12 +143,14 @@ Best,
 **Meeting Best Practices:**
 
 **Before:**
+
 - Send agenda 24 hours in advance
 - Share relevant documents
 - Start/end times clear with timezone
 - Check if meeting is really needed (could it be async?)
 
 **During:**
+
 - Start on time
 - Camera on for team meetings (optional for large all-hands)
 - Mute when not speaking
@@ -144,11 +160,13 @@ Best,
 - End on time
 
 **After:**
+
 - Send summary with action items within 24 hours
 - Share recording if applicable
 - Follow up on action items
 
 **No-Meeting Blocks:**
+
 - Wednesdays: No recurring meetings (focus time)
 - Fridays after 3pm: No meetings
 - Respect individual's blocked calendar time
@@ -156,6 +174,7 @@ Best,
 ### Notion
 
 **When to use:**
+
 - Long-form documentation
 - Persistent knowledge
 - Process documentation
@@ -164,6 +183,7 @@ Best,
 - Company handbook
 
 **Organization:**
+
 - Each team has workspace
 - Use templates for consistency
 - Link related documents
@@ -173,12 +193,14 @@ Best,
 ### Asana
 
 **When to use:**
+
 - Project management
 - Task tracking
 - Sprint planning
 - Roadmap planning
 
 **Best Practices:**
+
 - Clear, actionable task titles
 - Assign owner and due date
 - Add context in description
@@ -188,6 +210,7 @@ Best,
 ### GitHub
 
 **When to use:**
+
 - Code reviews
 - Technical discussions
 - Bug reports
@@ -195,6 +218,7 @@ Best,
 - Documentation (technical)
 
 **Best Practices:**
+
 - Use issue templates
 - Reference relevant issues/PRs
 - Tag appropriately
@@ -206,6 +230,7 @@ Best,
 ### Types of Meetings
 
 **1:1s (Weekly or Bi-weekly)**
+
 - Career development
 - Feedback and coaching
 - Personal check-ins
@@ -213,6 +238,7 @@ Best,
 - Duration: 30-45 minutes
 
 **Team Syncs (Weekly)**
+
 - Updates and blockers
 - Coordination
 - Quick decisions
@@ -220,6 +246,7 @@ Best,
 - Duration: 30 minutes
 
 **All-Hands (Monthly)**
+
 - Company updates
 - Strategy and vision
 - Celebrations
@@ -227,12 +254,14 @@ Best,
 - Duration: 60 minutes
 
 **Retrospectives (After projects/sprints)**
+
 - What went well
 - What could improve
 - Action items for next time
 - Duration: 60 minutes
 
 **Planning Meetings (Sprint/Quarter start)**
+
 - Roadmap review
 - Prioritization
 - Goal setting
@@ -241,16 +270,19 @@ Best,
 ### Meeting Roles
 
 **Facilitator:**
+
 - Keeps meeting on track
 - Ensures everyone participates
 - Manages time
 
 **Notetaker:**
+
 - Documents key points
 - Captures action items
 - Shares summary after
 
 **Timekeeper:**
+
 - Watches clock
 - Alerts when time is running short
 
@@ -269,18 +301,21 @@ Best,
 ### General Writing
 
 **Be Clear:**
+
 - One main point per message
 - Use simple, direct language
 - Break long messages into sections
 - Use formatting (bold, bullets) for scannability
 
 **Be Complete:**
+
 - Provide context
 - Include links to relevant resources
 - Anticipate questions
 - Specify next steps
 
 **Be Concise:**
+
 - Respect people's time
 - Edit before sending
 - Remove unnecessary words
@@ -289,9 +324,11 @@ Best,
 **Examples:**
 
 ❌ **Unclear:**
+
 > "Hey, just checking in on the thing we talked about. Any updates?"
 
 ✅ **Clear:**
+
 > "Hi @Sarah, following up on the Norwegian language course redesign we discussed on Monday. Could you share an update on the prototype by Friday? This will help us stay on track for the Feb 15 launch."
 
 ### Technical Writing
@@ -306,6 +343,7 @@ Best,
 ### Announcements
 
 **Structure:**
+
 ```
 ## What's Changing
 [Clear description of the change]
@@ -329,6 +367,7 @@ Best,
 ## Giving Feedback
 
 ### Principles
+
 - Be timely (feedback within a week)
 - Be specific with examples
 - Focus on behavior, not person
@@ -344,6 +383,7 @@ Best,
 **Impact:** Explain the impact it had
 
 Example:
+
 > "In yesterday's team meeting (Situation), when you interrupted Sarah multiple times while she was presenting the roadmap (Behavior), it made it difficult for her to complete her thoughts and may have discouraged her from sharing ideas (Impact). In future meetings, I'd suggest waiting for natural pauses to ask questions."
 
 ### Receiving Feedback
@@ -387,6 +427,7 @@ Example:
 ### Sharing Updates
 
 **Project Updates:**
+
 - What was accomplished
 - What's next
 - Blockers or concerns
@@ -394,6 +435,7 @@ Example:
 - Timeline status
 
 **Personal Updates:**
+
 - Use Slack status for availability
 - Update team if unexpectedly unavailable
 - Share OOO plans in advance
@@ -402,11 +444,13 @@ Example:
 ### Asking Questions
 
 **Before asking:**
+
 - Search documentation
 - Search Slack history
 - Check if answer exists
 
 **When asking:**
+
 - Provide context
 - Show what you've tried
 - Be specific
@@ -414,6 +458,7 @@ Example:
 - Share solution when found (help others)
 
 **Good question format:**
+
 ```
 I'm working on [context]. I'm trying to [goal].
 
@@ -443,6 +488,7 @@ Actual: [what is happening]
 ### Escalation
 
 **When to escalate:**
+
 - Repeated issues despite addressing
 - Urgent issues requiring leadership
 - Conflicts you can't resolve
@@ -450,6 +496,7 @@ Actual: [what is happening]
 - Security concerns
 
 **How to escalate:**
+
 1. Try to resolve directly first
 2. Document the issue and attempts to resolve
 3. Reach out to manager or appropriate person
@@ -458,24 +505,26 @@ Actual: [what is happening]
 
 ## Communication Tools Summary
 
-| Tool | Use For | Response Time | Format |
-|------|---------|---------------|---------|
-| Slack | Quick questions, coordination, social | 2-24 hours | Informal |
-| Email | Formal, external, detailed | 24-48 hours | Formal |
-| Zoom | Complex discussions, sensitive topics | Scheduled | Synchronous |
-| Notion | Documentation, persistent knowledge | N/A (reference) | Structured |
-| Asana | Project management, task tracking | 24 hours | Structured |
-| GitHub | Code review, technical discussion | 24-48 hours | Technical |
+| Tool   | Use For                               | Response Time   | Format      |
+| ------ | ------------------------------------- | --------------- | ----------- |
+| Slack  | Quick questions, coordination, social | 2-24 hours      | Informal    |
+| Email  | Formal, external, detailed            | 24-48 hours     | Formal      |
+| Zoom   | Complex discussions, sensitive topics | Scheduled       | Synchronous |
+| Notion | Documentation, persistent knowledge   | N/A (reference) | Structured  |
+| Asana  | Project management, task tracking     | 24 hours        | Structured  |
+| GitHub | Code review, technical discussion     | 24-48 hours     | Technical   |
 
 ## Emergency Communication
 
 **Critical Issues (System down, security breach, data loss):**
+
 1. Post in #incidents Slack channel
 2. Page on-call engineer (PagerDuty)
 3. Email leadership: incidents@odinlearn.com
 4. Follow incident response runbook
 
 **Personal Emergencies:**
+
 1. Notify your manager immediately
 2. Update Slack status
 3. Set OOO if needed
@@ -484,24 +533,28 @@ Actual: [what is happening]
 ## Tips for Remote Communication
 
 ### Overcommunicate
+
 - Share more context than you think you need
 - Update status proactively
 - Make your work visible
 - Share progress regularly
 
 ### Build Relationships
+
 - Join virtual coffee chats
 - Participate in social channels
 - Attend team events
 - Show your personality
 
 ### Be Present
+
 - Minimize distractions in meetings
 - Engage actively
 - Acknowledge messages
 - Follow through on commitments
 
 ### Set Boundaries
+
 - Communicate working hours
 - Use DND on Slack
 - Take breaks
@@ -510,12 +563,14 @@ Actual: [what is happening]
 ## Improving Communication Skills
 
 ### Resources
+
 - Company writing workshop (quarterly)
 - Toastmasters (public speaking)
 - "Crucial Conversations" book
 - Communication coaching available
 
 ### Practice
+
 - Ask for feedback on communication
 - Review your own messages
 - Learn from good communicators
@@ -529,4 +584,5 @@ Actual: [what is happening]
 - **General communication**: Ask your manager
 
 ---
-*Last updated: January 2025*
+
+_Last updated: January 2025_

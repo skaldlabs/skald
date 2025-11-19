@@ -1,7 +1,7 @@
 ![Skald banner](./readme-assets/skald-banner.png)
 
 <p align="center">
-  <a href="https://docs.useskald.com/">Docs</a> - <a href="https://useskald.com">Website</a> 
+  <a href="https://docs.useskald.com/">Docs</a> - <a href="https://useskald.com">Website</a>  - <a href="https://www.loom.com/share/f9ac358792284d6a9bc9807e9f48587e">Demo video</a> - <a href="https://www.loom.com/share/236148c9e8be482f95961a19d9e455ea">Self-hosted deploy</a>
 </p>
 
 <p align="center">
@@ -35,6 +35,8 @@
 
 With Skald you don't need to implement RAG ever again. Push context to our API, and get chat, search, and more out of the box.
 
+Get up-and-running in minutes, then configure everything just how you want it and evaluate performance with our built-in evaluation tools.
+
 <a href="https://join.slack.com/t/skaldcommunity/shared_invite/zt-3he986lub-UWKTZneOAUeTFa4LDXpFEg">
     <img height='40' src="/readme-assets/join-slack.svg" alt="skald-cli">
 </a>
@@ -46,18 +48,20 @@ import { Skald } from '@skald-labs/skald-node';
 
 const skald = new Skald('your-api-key-here');
 
-const result = await skald.createMemo({
+await skald.createMemo({
   title: 'Meeting Notes',
   content: 'Full content of the memo...'
 });
 
-const result = await skald.chat({
-  query: 'What were the main points discussed in the Q1 meeting?'
+const chatRes = await skald.chat({
+  query: 'What were the main points discussed in the Q1 meeting?',
+  rag_config: { reranking: { enabled: true } }
 });
+
+console.log(chatRes.response);
 ```
 
 <small>[Python](https://docs.useskald.com/docs/sdks/python#usage) - [Ruby](https://docs.useskald.com/docs/sdks/ruby#usage) - [Go](https://docs.useskald.com/docs/sdks/go#usage) - [PHP](https://docs.useskald.com/docs/sdks/php#quick-start) - [C#](https://github.com/skaldlabs/skald-csharp) - [MCP](https://docs.useskald.com/docs/sdks/mcp) - [CLI](https://docs.useskald.com/docs/sdks/cli)</small>
-
 
 ## ⚡ Try it
 
@@ -82,17 +86,19 @@ You can deploy Skald without **any** third-party dependencies (including OpenAI)
 
 ## ✨ Features:
 
-* **Chat:** Chat with your knowledge in Skald with just one API call.
-* **Search:** Use semantic search to find relevant context based on user queries.
-* **Generate:** Generate content from your knowledge like documentation and reports.
-* **Powerful filtering**: Speed up and improve responses by filtering the accessible knowledge in every query.
-* **Amazing DX, no bullsh*t:** Implement in minutes with SDKs for every major language. Don't see yours? open an issue and we'll build it!
-* **Truly open-source:** Our open source version is fully-featured, easy to deploy, and can even run with no third-party dependencies.
+* **Chat:** Chat with your knowledge in Skald with just one API call
+* **Search:** Use semantic search to find relevant context based on user queries
+* **Turnkey configuration:** Get started in minutes with great defaults and then configure your RAG engine exactly how you want it.
+* **Evaluate:** Evaluate the performance of your custom RAG engine with our built-in evaluation tools.
+* **Powerful filtering:** Speed up and improve responses by filtering the accessible knowledge in every query.
+* **Amazing DX, no bullsh*t:** Implement in minutes with SDKs for every major language. Don't see yours? Open [an issue](https://github.com/skaldlabs/skald/issues/new) and we'll build it!
+* **Truly open-source:** Our open source version is fully-featured, easy to deploy, and can even run with [no third-party dependencies](https://docs.useskald.com/docs/self-host/full-local).
+
 
 ## 🚀 Get started
 
-* [Cloud](https://useskald.com): free tier with no credit card required
-* [Self-hosted](https://docs.useskald.com/docs/self-host/intro): get a fully-featured production deploy with SSL live in less than an hour
+- [Cloud](https://useskald.com): free tier with no credit card required
+- [Self-hosted](https://docs.useskald.com/docs/self-host/intro): get a fully-featured production deploy with SSL live in less than an hour
 
 ## 🗒️ License
 
@@ -116,4 +122,6 @@ List of people who have contributed to any of our repos.
     <a href="https://github.com/Kastango"><img src="https://github.com/Kastango.png" width="60px" alt="Kastango"/></a> 
     <a href="https://github.com/jonchurch"><img src="https://github.com/jonchurch.png" width="60px" alt="jonchurch"/></a> 
     <a href="https://github.com/estebandalelr"><img src="https://github.com/estebandalelr.png" width="60px" alt="estebandalelr"/></a> 
+    <a href="https://github.com/drainpixie"><img src="https://github.com/drainpixie.png" width="60px" alt="drainpixie"/></a> 
+    <a href="https://github.com/yeasin2002"><img src="https://github.com/yeasin2002.png" width="60px" alt="yeasin2002"/></a>
 </p>

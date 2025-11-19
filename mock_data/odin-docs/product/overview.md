@@ -11,6 +11,7 @@ Our mission is to make Nordic heritage accessible, engaging, and educational for
 ## Core Features
 
 ### Mythology Learning
+
 - Interactive mythological stories and sagas
 - Character profiles of gods, giants, and heroes
 - Exploration of cosmology (Nine Realms)
@@ -18,6 +19,7 @@ Our mission is to make Nordic heritage accessible, engaging, and educational for
 - Symbolism and cultural significance
 
 ### Nordic Countries
+
 - Comprehensive guides to Denmark, Finland, Iceland, Norway, and Sweden
 - Historical timelines and cultural evolution
 - Geography and natural wonders
@@ -25,6 +27,7 @@ Our mission is to make Nordic heritage accessible, engaging, and educational for
 - Travel guides and regional insights
 
 ### Language Learning
+
 - Courses in Danish, Finnish, Icelandic, Norwegian, and Swedish
 - Progressive learning paths from beginner to advanced
 - Interactive exercises and quizzes
@@ -50,6 +53,7 @@ Our mission is to make Nordic heritage accessible, engaging, and educational for
 ## Platform Availability
 
 Odin is available across multiple platforms:
+
 - Web application (desktop and mobile browsers)
 - iOS and Android native apps
 - Offline mode for content downloaded to devices
@@ -58,6 +62,7 @@ Odin is available across multiple platforms:
 ## Content Library
 
 Our continuously growing library includes:
+
 - 500+ mythological stories and sagas
 - 5 complete language courses
 - 200+ cultural articles and guides
@@ -68,6 +73,7 @@ Our continuously growing library includes:
 ## Learning Philosophy
 
 Odin embraces a holistic approach to learning:
+
 - **Context-Rich**: Every lesson is embedded in cultural context
 - **Multi-Sensory**: Combining text, audio, images, and interactive elements
 - **Progressive**: Building knowledge step-by-step with clear learning paths
@@ -77,6 +83,7 @@ Odin embraces a holistic approach to learning:
 ## Getting Started
 
 New users can begin their journey in three ways:
+
 1. **Guided Onboarding**: Take our quiz to receive personalized recommendations
 2. **Browse by Interest**: Explore mythology, countries, or languages at your own pace
 3. **Structured Courses**: Enroll in curated learning paths

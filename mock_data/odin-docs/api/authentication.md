@@ -20,24 +20,28 @@ curl -X GET "https://api.odin.io/v1/mythology/deities" \
 Odin offers different API key tiers:
 
 ### Free Tier
+
 - **Rate Limit**: 100 requests/hour
 - **Features**: Access to all basic endpoints
 - **Support**: Community support
 - **Cost**: Free
 
 ### Basic Tier
+
 - **Rate Limit**: 1,000 requests/hour
 - **Features**: All free tier features plus batch operations
 - **Support**: Email support
 - **Cost**: $19/month
 
 ### Pro Tier
+
 - **Rate Limit**: 10,000 requests/hour
 - **Features**: All basic tier features plus webhooks, priority processing
 - **Support**: Priority email support
 - **Cost**: $99/month
 
 ### Enterprise Tier
+
 - **Rate Limit**: Custom (unlimited available)
 - **Features**: All features, custom integrations, SLA guarantees
 - **Support**: Dedicated support engineer
@@ -58,16 +62,16 @@ Odin offers different API key tiers:
 
 You can create API keys with specific permissions:
 
-| Permission | Description |
-|------------|-------------|
-| `read:mythology` | Read access to mythology endpoints |
-| `read:language` | Read access to language endpoints |
-| `read:culture` | Read access to culture endpoints |
-| `read:runes` | Read access to runes endpoints |
-| `read:sagas` | Read access to sagas endpoints |
-| `read:geography` | Read access to geography endpoints |
+| Permission        | Description                                                   |
+| ----------------- | ------------------------------------------------------------- |
+| `read:mythology`  | Read access to mythology endpoints                            |
+| `read:language`   | Read access to language endpoints                             |
+| `read:culture`    | Read access to culture endpoints                              |
+| `read:runes`      | Read access to runes endpoints                                |
+| `read:sagas`      | Read access to sagas endpoints                                |
+| `read:geography`  | Read access to geography endpoints                            |
 | `write:user_data` | Write access to user-specific data (saved lessons, bookmarks) |
-| `read:analytics` | Read access to usage analytics |
+| `read:analytics`  | Read access to usage analytics                                |
 
 Example key creation request:
 
@@ -116,6 +120,7 @@ Enterprise customers can use OAuth 2.0 for user-based authentication:
 ### Authorization Code Flow
 
 1. **Authorization Request**
+
 ```
 GET https://auth.odin.io/oauth/authorize?
   response_type=code&
@@ -126,6 +131,7 @@ GET https://auth.odin.io/oauth/authorize?
 ```
 
 2. **Token Exchange**
+
 ```bash
 curl -X POST "https://auth.odin.io/oauth/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
@@ -137,13 +143,14 @@ curl -X POST "https://auth.odin.io/oauth/token" \
 ```
 
 3. **Response**
+
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "Bearer",
-  "expires_in": 3600,
-  "refresh_token": "def50200...",
-  "scope": "read:all write:user_data"
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "refresh_token": "def50200...",
+    "scope": "read:all write:user_data"
 }
 ```
 
@@ -168,30 +175,30 @@ curl -X POST "https://auth.odin.io/oauth/token" \
 ## Security Best Practices
 
 1. **Never expose API keys in client-side code**
-   - Keep keys on the server
-   - Use environment variables
-   - Never commit keys to version control
+    - Keep keys on the server
+    - Use environment variables
+    - Never commit keys to version control
 
 2. **Use HTTPS only**
-   - The API only accepts HTTPS connections
-   - HTTP requests will be rejected
+    - The API only accepts HTTPS connections
+    - HTTP requests will be rejected
 
 3. **Implement key rotation**
-   - Rotate keys every 90 days
-   - Use multiple keys for different environments
+    - Rotate keys every 90 days
+    - Use multiple keys for different environments
 
 4. **Monitor API usage**
-   - Check the dashboard for unusual activity
-   - Set up alerts for rate limit approaches
+    - Check the dashboard for unusual activity
+    - Set up alerts for rate limit approaches
 
 5. **Use minimal permissions**
-   - Create keys with only required permissions
-   - Use separate keys for different services
+    - Create keys with only required permissions
+    - Use separate keys for different services
 
 6. **Store keys securely**
-   - Use secrets management systems (AWS Secrets Manager, HashiCorp Vault, etc.)
-   - Encrypt keys at rest
-   - Restrict access to keys
+    - Use secrets management systems (AWS Secrets Manager, HashiCorp Vault, etc.)
+    - Encrypt keys at rest
+    - Restrict access to keys
 
 ## Rate Limiting
 
@@ -207,15 +214,15 @@ When rate limited, you'll receive a `429 Too Many Requests` response:
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Rate limit exceeded. Please try again later.",
-    "details": {
-      "limit": 1000,
-      "reset_at": "2025-10-10T13:00:00Z"
+    "success": false,
+    "error": {
+        "code": "RATE_LIMIT_EXCEEDED",
+        "message": "Rate limit exceeded. Please try again later.",
+        "details": {
+            "limit": 1000,
+            "reset_at": "2025-10-10T13:00:00Z"
+        }
     }
-  }
 }
 ```
 
@@ -232,16 +239,16 @@ Successful response:
 
 ```json
 {
-  "success": true,
-  "data": {
-    "key_id": "key_abc123",
-    "tier": "pro",
-    "permissions": ["read:all", "write:user_data"],
-    "rate_limit": {
-      "limit": 10000,
-      "remaining": 9847,
-      "reset_at": "2025-10-10T13:00:00Z"
+    "success": true,
+    "data": {
+        "key_id": "key_abc123",
+        "tier": "pro",
+        "permissions": ["read:all", "write:user_data"],
+        "rate_limit": {
+            "limit": 10000,
+            "remaining": 9847,
+            "reset_at": "2025-10-10T13:00:00Z"
+        }
     }
-  }
 }
 ```

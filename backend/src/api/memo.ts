@@ -14,7 +14,14 @@ import { MemoChunk } from '@/entities/MemoChunk'
 import { Memo } from '@/entities/Memo'
 import { logger } from '@/lib/logger'
 import { deleteFileFromS3 } from '@/lib/s3Utils'
-import { DATALAB_API_KEY, IS_CLOUD, TEST, DOCUMENT_EXTRACTION_PROVIDER, DOCLING_SERVICE_URL } from '@/settings'
+import {
+    DATALAB_API_KEY,
+    IS_CLOUD,
+    TEST,
+    DOCUMENT_EXTRACTION_PROVIDER,
+    DOCLING_SERVICE_URL,
+    S3_BUCKET_NAME,
+} from '@/settings'
 import * as Sentry from '@sentry/node'
 import { Organization } from '@/entities/Organization'
 import { UsageTrackingService } from '@/services/usageTrackingService'
@@ -478,6 +485,11 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
         if (req.file) {
             // Check if the required provider configuration is available
             if (!TEST) {
+                if (!S3_BUCKET_NAME) {
+                    return res.status(500).json({
+                        error: 'S3 configuration is required to use document extraction features',
+                    })
+                }
                 if (DOCUMENT_EXTRACTION_PROVIDER === 'datalab' && !DATALAB_API_KEY) {
                     return res.status(500).json({
                         error: 'DATALAB_API_KEY is required when DOCUMENT_EXTRACTION_PROVIDER is set to "datalab"',

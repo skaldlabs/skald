@@ -36,18 +36,27 @@ export class LLMService {
         }
 
         if (provider === 'openai') {
+            if (!OPENAI_API_KEY) {
+                throw new Error('OpenAI provider is not configured. Please set OPENAI_API_KEY.')
+            }
             return new ChatOpenAI({
                 model: OPENAI_MODEL,
                 apiKey: OPENAI_API_KEY,
                 temperature,
             })
         } else if (provider === 'anthropic') {
+            if (!ANTHROPIC_API_KEY) {
+                throw new Error('Anthropic provider is not configured. Please set ANTHROPIC_API_KEY.')
+            }
             return new ChatAnthropic({
                 model: ANTHROPIC_MODEL,
                 apiKey: ANTHROPIC_API_KEY,
                 temperature,
             })
         } else if (provider === 'local') {
+            if (!LOCAL_LLM_BASE_URL) {
+                throw new Error('Local LLM provider is not configured. Please set LOCAL_LLM_BASE_URL.')
+            }
             // Local LLM with OpenAI-compatible API
             // Works with: Ollama, LM Studio, vLLM, LocalAI, etc.
             return new ChatOpenAI({
@@ -59,6 +68,9 @@ export class LLMService {
                 temperature,
             })
         } else if (provider === 'groq') {
+            if (!GROQ_API_KEY) {
+                throw new Error('Groq provider is not configured. Please set GROQ_API_KEY.')
+            }
             return new ChatOpenAI({
                 model: GROQ_MODEL,
                 apiKey: GROQ_API_KEY,

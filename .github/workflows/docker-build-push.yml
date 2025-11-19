@@ -1,54 +1,53 @@
 name: Build and Push Docker Images
 
 on:
-  push:
-    branches:
-      - main
-      - update-self-hosted-deploy
-    tags:
-      - 'v*'
-  workflow_dispatch:
+    push:
+        branches:
+            - main
+            - update-self-hosted-deploy
+        tags:
+            - 'v*'
+    workflow_dispatch:
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    build-and-push:
+        runs-on: ubuntu-latest
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Extract metadata for tags
-        id: meta
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-            echo "IMAGE_TAG=${VERSION}" >> $GITHUB_ENV
-          else
-            VERSION=${GITHUB_SHA::8}
-            echo "IMAGE_TAG=${VERSION}" >> $GITHUB_ENV
-          fi
-          echo "DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}" >> $GITHUB_ENV
+            - name: Login to DockerHub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build image with Docker Compose
-        env:
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
-          DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
-        run: docker compose -f docker-compose.selfhosted.yml build api
+            - name: Extract metadata for tags
+              id: meta
+              run: |
+                  if [[ $GITHUB_REF == refs/tags/* ]]; then
+                    VERSION=${GITHUB_REF#refs/tags/}
+                    echo "IMAGE_TAG=${VERSION}" >> $GITHUB_ENV
+                  else
+                    VERSION=${GITHUB_SHA::8}
+                    echo "IMAGE_TAG=${VERSION}" >> $GITHUB_ENV
+                  fi
+                  echo "DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}" >> $GITHUB_ENV
 
-      - name: Push versioned image to DockerHub
-        env:
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
-          DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
-        run: docker compose -f docker-compose.selfhosted.yml push api
+            - name: Build image with Docker Compose
+              env:
+                  IMAGE_TAG: ${{ env.IMAGE_TAG }}
+                  DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
+              run: docker compose -f docker-compose.selfhosted.yml build api
 
-      - name: Tag and push latest
-        run: |
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:${{ env.IMAGE_TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:latest
+            - name: Push versioned image to DockerHub
+              env:
+                  IMAGE_TAG: ${{ env.IMAGE_TAG }}
+                  DOCKER_REGISTRY: ${{ env.DOCKER_REGISTRY }}
+              run: docker compose -f docker-compose.selfhosted.yml push api
 
+            - name: Tag and push latest
+              run: |
+                  docker tag ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:${{ env.IMAGE_TAG }} ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:latest
+                  docker push ${{ secrets.DOCKERHUB_USERNAME }}/skald-backend:latest
