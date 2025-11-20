@@ -72,6 +72,16 @@ func main() {
     })
 }`
 
+export const dotnetCreateMemoSnippet = `using Skald;
+
+var client = new SkaldClient("{apiKey}"${baseUrlSnippetDoubleQuotes});
+
+await client.CreateMemoAsync(new MemoData
+{
+    Title = "{title}",
+    Content = "{content}",
+});`
+
 export const cliCreateMemoSnippet = `# Authenticate with your API key -- Currently Cloud-only
 skald auth --api-key {apiKey}
 

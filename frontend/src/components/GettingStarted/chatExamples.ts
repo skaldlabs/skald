@@ -5,6 +5,7 @@ import {
     phpChatSnippet,
     rubyChatSnippet,
     goChatSnippet,
+    dotnetChatSnippet,
     cliChatSnippet,
 } from './chatCodeSnippets'
 
@@ -51,6 +52,11 @@ export const getChatExample = (language: string, params: ChatExampleParams): Cod
         go: () => ({
             code: goChatSnippet.replace('{apiKey}', apiKeyDisplay).replace('{query}', query),
             language: 'go',
+        }),
+
+        dotnet: () => ({
+            code: dotnetChatSnippet.replace('{apiKey}', apiKeyDisplay).replace('{query}', query),
+            language: 'csharp',
         }),
 
         cli: () => ({

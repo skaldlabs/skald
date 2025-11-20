@@ -5,6 +5,7 @@ import {
     phpCreateMemoSnippet,
     rubyCreateMemoSnippet,
     goCreateMemoSnippet,
+    dotnetCreateMemoSnippet,
     cliCreateMemoSnippet,
 } from './createMemoCodeSnippets'
 
@@ -70,6 +71,14 @@ export const getCreateMemoExample = (language: string, params: CreateMemoParams)
                 .replace('{title}', title)
                 .replace('{content}', content),
             language: 'go',
+        }),
+
+        dotnet: () => ({
+            code: dotnetCreateMemoSnippet
+                .replace('{apiKey}', apiKeyDisplay)
+                .replace('{title}', title)
+                .replace('{content}', content),
+            language: 'csharp',
         }),
 
         cli: () => ({

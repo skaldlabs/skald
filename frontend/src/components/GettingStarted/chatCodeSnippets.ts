@@ -89,5 +89,16 @@ func main() {
     }
 }`
 
+export const dotnetChatSnippet = `using Skald;
+
+var client = new SkaldClient("{apiKey}"${baseUrlSnippetDoubleQuotes});
+
+var result = await client.ChatAsync(new ChatRequest
+{
+    Query = "{query}"
+});
+
+Console.WriteLine(result.Response);`
+
 export const cliChatSnippet = `# Ask a question to your knowledge base -- Currently Cloud-only
 skald chat ask "{query}"`
