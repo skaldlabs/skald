@@ -28,7 +28,7 @@ import { UsageTrackingService } from '@/services/usageTrackingService'
 import { calculateMemoWritesUsage } from '@/lib/usageTrackingUtils'
 import { CachedQueries } from '@/queries/cachedQueries'
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx']
+const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx', '.xls', '.xlsx']
 
 // configure multer for file uploads (store in memory)
 const upload = multer({

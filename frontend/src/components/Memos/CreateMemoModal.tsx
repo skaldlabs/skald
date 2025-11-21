@@ -13,7 +13,7 @@ import { X, Loader2, Upload, FileText } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { toast } from 'sonner'
 
-const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx']
+const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx', '.xls', '.xlsx']
 const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 
 const memoFormSchema = z.object({
