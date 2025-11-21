@@ -11,10 +11,11 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { X, Loader2, Upload, FileText } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
+import { useSubscriptionStore } from '@/stores/subscriptionStore'
+import { isSelfHostedDeploy } from '@/config'
 import { toast } from 'sonner'
 
 const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx', '.xls', '.xlsx']
-const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
 
 const memoFormSchema = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
@@ -52,6 +53,12 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
     const createMemo = useMemoStore((state) => state.createMemo)
     const createFileMemo = useMemoStore((state) => state.createFileMemo)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const currentSubscription = useSubscriptionStore((state) => state.currentSubscription)
+
+    // Calculate max file size: 5MB for free plan (non-self-hosted), 100MB otherwise
+    const isFreePlan = currentSubscription?.plan.slug === 'free'
+    const maxFileSize = isFreePlan && !isSelfHostedDeploy ? 5 * 1024 * 1024 : 100 * 1024 * 1024 // 5MB or 100MB
+    const maxFileSizeMB = isFreePlan && !isSelfHostedDeploy ? 5 : 100
 
     const textForm = useForm<MemoFormValues>({
         resolver: zodResolver(memoFormSchema),
@@ -105,8 +112,8 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
         }
 
         // Validate file size
-        if (file.size > MAX_FILE_SIZE) {
-            toast.error('File size exceeds 100MB limit')
+        if (file.size > maxFileSize) {
+            toast.error(`File size exceeds ${maxFileSizeMB}MB limit`)
             return
         }
 
@@ -406,8 +413,8 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                                             </div>
                                         </FormControl>
                                         <FormDescription>
-                                            Upload a PDF, Word, or PowerPoint document (max 100MB). Allowed formats:{' '}
-                                            {ALLOWED_FILE_TYPES.join(', ')}
+                                            Upload a PDF, Word, or PowerPoint document (max {maxFileSizeMB}MB). Allowed
+                                            formats: {ALLOWED_FILE_TYPES.join(', ')}
                                         </FormDescription>
                                     </FormItem>
                                 </div>
