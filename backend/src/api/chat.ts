@@ -190,6 +190,7 @@ export const _generateStreamingResponse = async ({
             }
         }
     } catch (error) {
+        Sentry.captureException(error)
         logger.error({ err: error }, 'Streaming chat agent error')
         const errorMsg =
             IS_DEVELOPMENT && error instanceof Error ? `${error.message}\n${error.stack}` : 'An error occurred'
