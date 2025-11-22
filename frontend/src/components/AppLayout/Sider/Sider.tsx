@@ -17,18 +17,7 @@ import {
 import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
 import { useProjectStore } from '@/stores/projectStore'
-import {
-    BookOpen,
-    CreditCard,
-    Files,
-    FlaskConical,
-    GlobeLock,
-    Hotel,
-    List,
-    MessageSquare,
-    Rocket,
-    Settings,
-} from 'lucide-react'
+import { BookOpen, Files, FlaskConical, List, MessageSquare, Rocket, Settings } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -102,48 +91,15 @@ export const Sider = () => {
                 label: 'Settings',
                 hasAccess: () => true,
             },
+            {
+                key: 'https://docs.useskald.com',
+                icon: <BookOpen className="h-4 w-4" />,
+                label: 'Documentation ↗',
+                hasAccess: () => true,
+                onClick: () => window.open('https://docs.useskald.com', '_blank', 'noopener,noreferrer'),
+            },
         ],
     }
-
-    const defaultConfigMenuItems: MenuItem[] = [
-        {
-            key: '/organization',
-            icon: <Hotel className="h-4 w-4" />,
-            label: 'Organization',
-            hasAccess: () => true,
-        },
-        {
-            key: 'https://docs.useskald.com',
-            icon: <BookOpen className="h-4 w-4" />,
-            label: 'Documentation ↗',
-            hasAccess: () => true,
-            onClick: () => window.open('https://docs.useskald.com', '_blank', 'noopener,noreferrer'),
-        },
-    ]
-
-    const cloudConfigMenuItems: MenuItem[] = [
-        {
-            key: '/organization/subscription',
-            icon: <CreditCard className="h-4 w-4" />,
-            label: 'Plan & Billing',
-            hasAccess: () => true,
-        },
-    ]
-
-    const adminConfigMenuItems: MenuItem[] = isSelfHostedDeploy
-        ? []
-        : [
-              {
-                  key: '/admin',
-                  icon: <GlobeLock className="h-4 w-4" />,
-                  label: 'Admin Area',
-                  hasAccess: (user) => user?.is_superuser || false,
-              },
-          ]
-
-    const configMenuItems: MenuItem[] = isSelfHostedDeploy
-        ? defaultConfigMenuItems
-        : [...defaultConfigMenuItems, ...cloudConfigMenuItems, ...adminConfigMenuItems]
 
     const handleMenuClick = (key: string, onClick?: () => void) => {
         if (onClick) {
@@ -188,7 +144,7 @@ export const Sider = () => {
                                                     {item.children
                                                         .filter((child) => child.hasAccess(user))
                                                         .map((child) => (
-                                                            <SidebarMenuItem key={child.key}>
+                                                            <SidebarMenuItem key={child.key} className="ml-2">
                                                                 <SidebarMenuButton
                                                                     isActive={location.pathname === child.key}
                                                                     onClick={() =>
@@ -225,21 +181,6 @@ export const Sider = () => {
                         <div className="mb-3">{!isSelfHostedDeploy && <UsageTracker />}</div>
 
                         <SidebarMenu>
-                            {configMenuItems
-                                .filter((item) => item.hasAccess(user))
-                                .map((item) => (
-                                    <SidebarMenuItem key={item.key}>
-                                        <SidebarMenuButton
-                                            isActive={location.pathname === item.key}
-                                            onClick={() => handleMenuClick(item.key, item.onClick)}
-                                            className="w-full justify-start cursor-pointer"
-                                        >
-                                            {item.icon}
-                                            <span className="ml-2">{item.label}</span>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-
                             <UserMenu />
                         </SidebarMenu>
                     </SidebarGroupContent>

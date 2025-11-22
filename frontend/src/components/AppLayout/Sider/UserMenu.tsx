@@ -9,14 +9,38 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
+import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore } from '@/stores/authStore'
-import { ChevronsUpDown, LogOut, Moon, Sun } from 'lucide-react'
+import { ChevronsUpDown, CreditCard, Hotel, GlobeLock, LogOut, Moon, Sun } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export const UserMenu = () => {
     const user = useAuthStore((state) => state.user)
     const logout = useAuthStore((state) => state.logout)
     const { theme, toggleTheme } = useTheme()
     const { isMobile } = useSidebar()
+
+    const navigate = useNavigate()
+    const userMenuItems: { key: string; icon: React.ReactNode; label: string; hasAccess: () => boolean }[] = [
+        {
+            key: '/organization/subscription',
+            icon: <CreditCard className="size-4" />,
+            label: 'Plan & Billing',
+            hasAccess: () => !isSelfHostedDeploy,
+        },
+        {
+            key: '/organization',
+            icon: <Hotel className="size-4" />,
+            label: 'Organization',
+            hasAccess: () => true,
+        },
+        {
+            key: '/admin',
+            icon: <GlobeLock className="size-4" />,
+            label: 'Admin Area',
+            hasAccess: () => user?.is_superuser || false,
+        },
+    ]
 
     return (
         <SidebarMenuItem>
@@ -42,15 +66,25 @@ export const UserMenu = () => {
                             </div>
                         </div>
                     </DropdownMenuLabel>
+                    <DropdownMenuGroup>
+                        {userMenuItems
+                            .filter((item) => item.hasAccess())
+                            .map((item) => (
+                                <DropdownMenuItem className="gap-x-2" key={item.key} onClick={() => navigate(item.key)}>
+                                    <span>{item.icon}</span>
+                                    {item.label}
+                                </DropdownMenuItem>
+                            ))}
+                    </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
-                        <DropdownMenuItem onSelect={toggleTheme} className="gap-x-1">
+                        <DropdownMenuItem onSelect={toggleTheme} className="gap-x-2">
                             {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
                             Toggle theme
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={logout} className="gap-x-1">
+                    <DropdownMenuItem onSelect={logout} className="gap-x-2">
                         <LogOut className="size-4" />
                         Log out
                     </DropdownMenuItem>
