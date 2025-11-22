@@ -57,7 +57,6 @@ from a snippet.
   - [5](url) - markdown links
   - [[Result 5]](url) - brackets with URLs
   - 【 】 - curved brackets
-  - { } - curly brackets
   - Any other bracket/link combinations
 - CORRECT format: [[5]] or [[42]] - just the number in double brackets, nothing else.
 - For multiple sources, cite separately: [[1]][[2]][[3]], NOT [[1-3]] or 【Results 1-3】.
