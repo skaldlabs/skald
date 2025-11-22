@@ -11,11 +11,23 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { RagConfigForm } from './RagConfigForm'
+import { FilterBuilder } from './FilterBuilder'
 import './Playground.scss'
 
 export const PlaygroundDashboard = () => {
     const { currentProject } = useProjectStore()
-    const { systemPrompt, setSystemPrompt, llmProvider, setLlmProvider, ragConfig, setRagConfig } = useChatStore()
+    const {
+        systemPrompt,
+        setSystemPrompt,
+        llmProvider,
+        setLlmProvider,
+        ragConfig,
+        setRagConfig,
+        filters,
+        addFilter,
+        updateFilter,
+        removeFilter,
+    } = useChatStore()
     const { availableProviders, fetchProviders } = useLLMConfigStore()
     const [isConfigOpen, setIsConfigOpen] = useState(false)
 
@@ -99,6 +111,15 @@ export const PlaygroundDashboard = () => {
                                 value={systemPrompt}
                                 onChange={(e) => setSystemPrompt(e.target.value)}
                                 className="min-h-[120px]"
+                            />
+                        </div>
+
+                        <div className="border-t pt-6">
+                            <FilterBuilder
+                                filters={filters}
+                                onAddFilter={addFilter}
+                                onUpdateFilter={updateFilter}
+                                onRemoveFilter={removeFilter}
                             />
                         </div>
 

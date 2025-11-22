@@ -102,3 +102,16 @@ export interface DetailedChat {
     created_at: string
     messages: ChatMessage[]
 }
+
+// Keep this in sync with backend/src/lib/filterUtils.ts
+export type FilterOperator = 'eq' | 'neq' | 'contains' | 'startswith' | 'endswith' | 'in' | 'not_in'
+export type FilterType = 'native_field' | 'custom_metadata'
+export type NativeField = 'title' | 'source' | 'client_reference_id' | 'tags'
+
+export interface MemoFilter {
+    id: string // Frontend-only for UI key management
+    field: string
+    operator: FilterOperator
+    value: string | string[]
+    filter_type: FilterType
+}

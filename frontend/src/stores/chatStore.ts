@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { api } from '@/lib/api'
 import { useProjectStore } from '@/stores/projectStore'
 import { toast } from 'sonner'
-import type { ApiStreamData, ApiErrorData } from '@/lib/types'
+import type { ApiStreamData, ApiErrorData, MemoFilter } from '@/lib/types'
 
 export interface ChatMessage {
     id: string
@@ -31,10 +31,15 @@ interface ChatState {
     systemPrompt: string
     llmProvider: string
     ragConfig: RagConfig
+    filters: MemoFilter[]
     chatSessionId: string | null
     setSystemPrompt: (prompt: string) => void
     setLlmProvider: (provider: string) => void
     setRagConfig: (config: Partial<RagConfig>) => void
+    setFilters: (filters: MemoFilter[]) => void
+    addFilter: (filter: Omit<MemoFilter, 'id'>) => void
+    updateFilter: (id: string, filter: Partial<Omit<MemoFilter, 'id'>>) => void
+    removeFilter: (id: string) => void
     sendMessage: (query: string) => Promise<void>
     clearMessages: () => void
     addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }) => void
@@ -63,6 +68,7 @@ export const useChatStore = create<ChatState>()(
                 rerankingTopK: 50,
                 referencesEnabled: false,
             },
+            filters: [],
             chatSessionId: null,
 
             setSystemPrompt: (prompt: string) => {
@@ -76,6 +82,32 @@ export const useChatStore = create<ChatState>()(
             setRagConfig: (config: Partial<RagConfig>) => {
                 set((state) => ({
                     ragConfig: { ...state.ragConfig, ...config },
+                }))
+            },
+
+            setFilters: (filters: MemoFilter[]) => {
+                set({ filters })
+            },
+
+            addFilter: (filter: Omit<MemoFilter, 'id'>) => {
+                const newFilter: MemoFilter = {
+                    ...filter,
+                    id: crypto.randomUUID(),
+                }
+                set((state) => ({
+                    filters: [...state.filters, newFilter],
+                }))
+            },
+
+            updateFilter: (id: string, filter: Partial<Omit<MemoFilter, 'id'>>) => {
+                set((state) => ({
+                    filters: state.filters.map((f) => (f.id === id ? { ...f, ...filter } : f)),
+                }))
+            },
+
+            removeFilter: (id: string) => {
+                set((state) => ({
+                    filters: state.filters.filter((f) => f.id !== id),
                 }))
             },
 
@@ -170,6 +202,17 @@ export const useChatStore = create<ChatState>()(
                     references: { enabled: ragConfig.referencesEnabled },
                 }
 
+                // Include filters (strip frontend-only id field)
+                const filters = get().filters
+                if (filters.length > 0) {
+                    payload.filters = filters.map(({ field, operator, value, filter_type }) => ({
+                        field,
+                        operator,
+                        value,
+                        filter_type,
+                    }))
+                }
+
                 api.stream(
                     '/v1/chat/',
                     payload,
@@ -224,6 +267,7 @@ export const useChatStore = create<ChatState>()(
                 systemPrompt: state.systemPrompt,
                 llmProvider: state.llmProvider,
                 ragConfig: state.ragConfig,
+                filters: state.filters,
             }),
         }
     )
