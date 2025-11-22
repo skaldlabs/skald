@@ -1,4 +1,4 @@
-import { ChatMessage as ChatMessageType } from '@/stores/chatStore'
+import { ChatMessage as ChatMessageType, useChatStore } from '@/stores/chatStore'
 import { User, Bot } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { ReferenceLink } from './ReferenceLink'
@@ -82,9 +82,12 @@ const parseContentWithReferences = (
 }
 
 export const ChatMessage = ({ message }: ChatMessageProps) => {
+    const referencesEnabled = useChatStore((state) => state.ragConfig.referencesEnabled)
     const isUser = message.role === 'user'
     const isAssistant = message.role === 'assistant'
     const isSystem = message.role === 'system'
+
+    const shouldShowReferences = isAssistant && referencesEnabled && message.references
 
     return (
         <div className={`chat-message ${message.role}`}>
@@ -94,7 +97,7 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
                 {isSystem && <div className="system-icon">!</div>}
             </div>
             <div className="message-content react-markdown">
-                {isAssistant && message.references ? (
+                {shouldShowReferences ? (
                     parseContentWithReferences(message.content, message.references)
                 ) : (
                     <ReactMarkdown>{message.content}</ReactMarkdown>
