@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ChevronLeft, Edit2, Save, X } from 'lucide-react'
+import { ChevronLeft, Download, Edit2, Save, X } from 'lucide-react'
 import { api, getProjectPath } from '@/lib/api'
 
 interface Question {
@@ -101,6 +101,33 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
         }
     }
 
+    const handleExport = async () => {
+        if (!dataset) return
+
+        try {
+            const projectPath = getProjectPath()
+            const response = await api.get<{ question: string; answer: string }[]>(
+                `${projectPath}/evaluation-datasets/${datasetUuid}/export`
+            )
+
+            if (response.data) {
+                const json = JSON.stringify(response.data, null, 2)
+                const blob = new Blob([json], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `${dataset.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+            }
+        } catch (err) {
+            console.error('Failed to export dataset:', err)
+            alert('Failed to export dataset. Please try again.')
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="p-4">
@@ -129,14 +156,22 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
             </Button>
 
             <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-2">{dataset.name}</h2>
-                <p className="text-muted-foreground mb-2">{dataset.description}</p>
-                <p className="text-sm text-muted-foreground">
-                    Created: {new Date(dataset.created_at).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                    {dataset.questions.length} question{dataset.questions.length !== 1 ? 's' : ''}
-                </p>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold mb-2">{dataset.name}</h2>
+                        <p className="text-muted-foreground mb-2">{dataset.description}</p>
+                        <p className="text-sm text-muted-foreground">
+                            Created: {new Date(dataset.created_at).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {dataset.questions.length} question{dataset.questions.length !== 1 ? 's' : ''}
+                        </p>
+                    </div>
+                    <Button variant="outline" onClick={handleExport}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export JSON
+                    </Button>
+                </div>
             </div>
 
             <div className="space-y-4">

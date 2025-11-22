@@ -266,7 +266,57 @@ const updateQuestion = async (req: Request, res: Response) => {
     })
 }
 
+interface ExportQuestionResponse {
+    question: string
+    answer: string
+}
+
+const exportDataset = async (req: Request, res: Response) => {
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const projectUuid = req.params.uuid
+    const datasetUuid = req.params.datasetUuid
+
+    if (!projectUuid || !datasetUuid) {
+        return res.status(400).json({ error: 'Project UUID and Dataset UUID are required' })
+    }
+
+    const project = await DI.projects.findOne({ uuid: projectUuid })
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    const membership = await DI.organizationMemberships.findOne({
+        user: user,
+        organization: project.organization,
+    })
+    if (!membership) {
+        return res.status(403).json({ error: 'You do not have access to this project' })
+    }
+
+    const dataset = await DI.evaluationDatasets.findOne({ uuid: datasetUuid, project: project })
+    if (!dataset) {
+        return res.status(404).json({ error: 'Dataset not found' })
+    }
+
+    const questions = await DI.evaluationDatasetQuestions.find(
+        { evaluationDataset: dataset },
+        { orderBy: { created_at: 'ASC' } }
+    )
+
+    const response: ExportQuestionResponse[] = questions.map((q) => ({
+        question: q.question,
+        answer: q.answer,
+    }))
+
+    res.status(200).json(response)
+}
+
 evaluationDatasetRouter.get('/', list)
 evaluationDatasetRouter.get('/:datasetUuid', getDataset)
+evaluationDatasetRouter.get('/:datasetUuid/export', exportDataset)
 evaluationDatasetRouter.post('/', create)
 evaluationDatasetRouter.patch('/:datasetUuid/questions/:questionUuid', updateQuestion)

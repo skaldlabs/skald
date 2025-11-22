@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Upload } from 'lucide-react'
 import { api, getProjectPath } from '@/lib/api'
 
 interface Question {
@@ -32,6 +32,8 @@ export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: Cr
     const [questions, setQuestions] = useState<Question[]>([{ id: crypto.randomUUID(), question: '', answer: '' }])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [importMode, setImportMode] = useState(false)
+    const [jsonInput, setJsonInput] = useState('')
 
     const handleAddQuestion = () => {
         setQuestions([...questions, { id: crypto.randomUUID(), question: '', answer: '' }])
@@ -47,6 +49,26 @@ export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: Cr
         setQuestions(questions.map((q) => (q.id === id ? { ...q, [field]: value } : q)))
     }
 
+    const parseJsonInput = (): { question: string; answer: string }[] | null => {
+        try {
+            const parsed = JSON.parse(jsonInput)
+            if (!Array.isArray(parsed)) {
+                setError('JSON must be an array of objects')
+                return null
+            }
+            for (const item of parsed) {
+                if (typeof item.question !== 'string' || typeof item.answer !== 'string') {
+                    setError('Each item must have "question" and "answer" string fields')
+                    return null
+                }
+            }
+            return parsed
+        } catch {
+            setError('Invalid JSON format')
+            return null
+        }
+    }
+
     const handleSubmit = async () => {
         setError(null)
 
@@ -60,10 +82,29 @@ export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: Cr
             return
         }
 
-        const validQuestions = questions.filter((q) => q.question.trim() && q.answer.trim())
-        if (validQuestions.length === 0) {
-            setError('Please add at least one question with both question and answer filled')
-            return
+        let questionsToSubmit: { question: string; answer: string }[]
+
+        if (importMode) {
+            const parsed = parseJsonInput()
+            if (!parsed) return
+            if (parsed.length === 0) {
+                setError('JSON array must contain at least one question')
+                return
+            }
+            questionsToSubmit = parsed.map((q) => ({
+                question: q.question.trim(),
+                answer: q.answer.trim(),
+            }))
+        } else {
+            const validQuestions = questions.filter((q) => q.question.trim() && q.answer.trim())
+            if (validQuestions.length === 0) {
+                setError('Please add at least one question with both question and answer filled')
+                return
+            }
+            questionsToSubmit = validQuestions.map((q) => ({
+                question: q.question.trim(),
+                answer: q.answer.trim(),
+            }))
         }
 
         setIsSubmitting(true)
@@ -73,10 +114,7 @@ export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: Cr
             const response = await api.post(`${projectPath}/evaluation-datasets`, {
                 name: name.trim(),
                 description: description.trim(),
-                questions: validQuestions.map((q) => ({
-                    question: q.question.trim(),
-                    answer: q.answer.trim(),
-                })),
+                questions: questionsToSubmit,
             })
 
             if (response.error) {
@@ -85,6 +123,8 @@ export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: Cr
                 setName('')
                 setDescription('')
                 setQuestions([{ id: crypto.randomUUID(), question: '', answer: '' }])
+                setJsonInput('')
+                setImportMode(false)
                 onDatasetCreated()
             }
         } catch {
@@ -129,51 +169,91 @@ export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: Cr
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
                             <Label>Questions & Answers</Label>
-                            <Button type="button" variant="outline" size="sm" onClick={handleAddQuestion}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Question
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant={importMode ? 'outline' : 'default'}
+                                    size="sm"
+                                    onClick={() => setImportMode(false)}
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Manual
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={importMode ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setImportMode(true)}
+                                >
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Import JSON
+                                </Button>
+                            </div>
                         </div>
 
-                        <div className="space-y-4">
-                            {questions.map((q, index) => (
-                                <div key={q.id} className="border rounded-lg p-4 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm font-medium">Question {index + 1}</span>
-                                        {questions.length > 1 && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleRemoveQuestion(q.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`question-${q.id}`}>Question</Label>
-                                        <Textarea
-                                            id={`question-${q.id}`}
-                                            placeholder="Enter the question..."
-                                            value={q.question}
-                                            onChange={(e) => handleQuestionChange(q.id, 'question', e.target.value)}
-                                            className="min-h-[60px]"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`answer-${q.id}`}>Expected Answer</Label>
-                                        <Textarea
-                                            id={`answer-${q.id}`}
-                                            placeholder="Enter the expected answer..."
-                                            value={q.answer}
-                                            onChange={(e) => handleQuestionChange(q.id, 'answer', e.target.value)}
-                                            className="min-h-[60px]"
-                                        />
-                                    </div>
+                        {importMode ? (
+                            <div className="space-y-2">
+                                <Textarea
+                                    placeholder='[{"question": "...", "answer": "..."}]'
+                                    value={jsonInput}
+                                    onChange={(e) => setJsonInput(e.target.value)}
+                                    className="min-h-[200px] font-mono text-sm"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Paste JSON array with objects containing "question" and "answer" fields
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="space-y-4">
+                                    {questions.map((q, index) => (
+                                        <div key={q.id} className="border rounded-lg p-4 space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-medium">Question {index + 1}</span>
+                                                {questions.length > 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleRemoveQuestion(q.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`question-${q.id}`}>Question</Label>
+                                                <Textarea
+                                                    id={`question-${q.id}`}
+                                                    placeholder="Enter the question..."
+                                                    value={q.question}
+                                                    onChange={(e) =>
+                                                        handleQuestionChange(q.id, 'question', e.target.value)
+                                                    }
+                                                    className="min-h-[60px]"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`answer-${q.id}`}>Expected Answer</Label>
+                                                <Textarea
+                                                    id={`answer-${q.id}`}
+                                                    placeholder="Enter the expected answer..."
+                                                    value={q.answer}
+                                                    onChange={(e) =>
+                                                        handleQuestionChange(q.id, 'answer', e.target.value)
+                                                    }
+                                                    className="min-h-[60px]"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                                <Button type="button" variant="outline" size="sm" onClick={handleAddQuestion}>
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Question
+                                </Button>
+                            </>
+                        )}
                     </div>
 
                     {error && <div className="text-sm text-red-500">{error}</div>}
