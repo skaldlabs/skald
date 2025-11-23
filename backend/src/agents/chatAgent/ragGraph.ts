@@ -198,7 +198,10 @@ function buildLLMInputsNode(state: typeof RAGState.State) {
     ]
 
     if (clientSystemPrompt) {
-        prompts.push(['system', clientSystemPrompt || ''])
+        // Escape curly braces in clientSystemPrompt so they're treated as literal text
+        // LangChain uses {{ and }} to escape braces
+        const escapedPrompt = (clientSystemPrompt || '').replace(/{/g, '{{').replace(/}/g, '}}')
+        prompts.push(['system', escapedPrompt])
     }
 
     prompts.push(...(conversationHistory || []))
