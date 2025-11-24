@@ -44,7 +44,7 @@ export class Memo {
     @Property({ default: 'received' })
     processing_status!: MemoProcessingStatus
 
-    @Property({ nullable: true })
+    @Property({ nullable: true, type: 'text' })
     processing_error?: string
 
     @Property({ nullable: true })
