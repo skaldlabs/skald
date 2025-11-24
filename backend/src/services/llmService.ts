@@ -1,6 +1,7 @@
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { ChatOpenAI } from '@langchain/openai'
 import { ChatAnthropic } from '@langchain/anthropic'
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
 import {
     LLM_PROVIDER,
     OPENAI_MODEL,
@@ -12,6 +13,8 @@ import {
     LOCAL_LLM_API_KEY,
     GROQ_API_KEY,
     GROQ_MODEL,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
 } from '../settings'
 /**
  * LLM Service for creating LLM instances based on configuration
@@ -28,7 +31,7 @@ export class LLMService {
      */
     static getLLM(
         temperature: number = 0,
-        providerOverride?: 'openai' | 'anthropic' | 'local' | 'groq'
+        providerOverride?: 'openai' | 'anthropic' | 'local' | 'groq' | 'gemini'
     ): BaseChatModel {
         let provider = this.provider
         if (providerOverride) {
@@ -79,9 +82,18 @@ export class LLMService {
                 },
                 temperature,
             })
+        } else if (provider === 'gemini') {
+            if (!GEMINI_API_KEY) {
+                throw new Error('Gemini provider is not configured. Please set GEMINI_API_KEY.')
+            }
+            return new ChatGoogleGenerativeAI({
+                model: GEMINI_MODEL,
+                apiKey: GEMINI_API_KEY,
+                temperature,
+            })
         } else {
             throw new Error(
-                `Unsupported LLM provider: ${provider}. Supported providers: openai, anthropic, local, groq`
+                `Unsupported LLM provider: ${provider}. Supported providers: openai, anthropic, local, groq, gemini`
             )
         }
     }
