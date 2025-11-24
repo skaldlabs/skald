@@ -31,6 +31,7 @@
         "@chonkiejs/core": "^0.0.5",
         "@langchain/anthropic": "^0.3.0",
         "@langchain/core": "^0.3.78",
+        "@langchain/google-genai": "^1.0.3",
         "@langchain/langgraph": "^0.4.9",
         "@langchain/openai": "^0.6.14",
         "@mikro-orm/cli": "^6.5.9",

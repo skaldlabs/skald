@@ -20,7 +20,7 @@ interface RerankResult {
 }
 
 export interface RAGConfig {
-    llmProvider: 'openai' | 'anthropic' | 'local' | 'groq'
+    llmProvider: 'openai' | 'anthropic' | 'local' | 'groq' | 'gemini'
     references: {
         enabled: boolean
     }
@@ -54,7 +54,7 @@ const RAGState = Annotation.Root({
     contextStr: Annotation<string | null>,
 })
 
-export const CLOUD_LLM_PROVIDERS = ['openai', 'anthropic', 'groq']
+export const CLOUD_LLM_PROVIDERS = ['openai', 'anthropic', 'groq', 'gemini']
 
 async function getChatHistoryNode(state: typeof RAGState.State) {
     const { chatId, project } = state

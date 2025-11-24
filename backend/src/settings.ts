@@ -8,13 +8,13 @@ const logger = pino({
     transport:
         process.env.NODE_ENV === 'development'
             ? {
-                  target: 'pino-pretty',
-                  options: {
-                      colorize: true,
-                      translateTime: 'HH:MM:ss Z',
-                      ignore: 'pid,hostname',
-                  },
-              }
+                target: 'pino-pretty',
+                options: {
+                    colorize: true,
+                    translateTime: 'HH:MM:ss Z',
+                    ignore: 'pid,hostname',
+                },
+            }
             : undefined,
 })
 
@@ -111,6 +111,10 @@ export const LOCAL_LLM_API_KEY = process.env.LOCAL_LLM_API_KEY || 'not-needed'
 export const GROQ_API_KEY = process.env.GROQ_API_KEY
 export const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant'
 
+// Gemini
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+
 // ---- Embedding Provider Configuration ----
 export const EMBEDDING_PROVIDER = process.env.EMBEDDING_PROVIDER || 'voyage'
 
@@ -130,7 +134,7 @@ export const VECTOR_SEARCH_TOP_K = parseInt(process.env.VECTOR_SEARCH_TOP_K || '
 export const POST_RERANK_TOP_K = parseInt(process.env.POST_RERANK_TOP_K || '50')
 
 // Validation of LLM and embedding provider configuration on startup
-export const SUPPORTED_LLM_PROVIDERS = ['openai', 'anthropic', 'local', 'groq']
+export const SUPPORTED_LLM_PROVIDERS = ['openai', 'anthropic', 'local', 'groq', 'gemini']
 if (!SUPPORTED_LLM_PROVIDERS.includes(LLM_PROVIDER)) {
     throw new Error(`Invalid LLM_PROVIDER: ${LLM_PROVIDER}. Supported: ${SUPPORTED_LLM_PROVIDERS.join(', ')}`)
 }
@@ -151,6 +155,8 @@ if (!IS_DEVELOPMENT && LLM_PROVIDER === 'openai' && !OPENAI_API_KEY) {
     logger.warn('LOCAL_LLM_BASE_URL not set for local provider')
 } else if (!IS_DEVELOPMENT && LLM_PROVIDER === 'groq' && !GROQ_API_KEY) {
     logger.warn('GROQ_API_KEY not set in production')
+} else if (!IS_DEVELOPMENT && LLM_PROVIDER === 'gemini' && !GEMINI_API_KEY) {
+    logger.warn('GEMINI_API_KEY not set in production')
 }
 
 // Warn if embedding provider API keys are missing

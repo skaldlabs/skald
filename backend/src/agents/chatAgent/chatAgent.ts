@@ -24,7 +24,7 @@ export async function* streamChatAgent({
     contextStr: string
     rerankResults: RerankResult[]
     enableReferences: boolean
-    llmProvider: 'openai' | 'anthropic' | 'local' | 'groq'
+    llmProvider: 'openai' | 'anthropic' | 'local' | 'groq' | 'gemini'
 }): AsyncGenerator<StreamChunk> {
     const llm = LLMService.getLLM(0, llmProvider)
     const chain = prompt.pipe(llm)
