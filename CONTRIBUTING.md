@@ -13,6 +13,7 @@ You can develop locally using the Docker Compose setup shown on the README, but 
 - Have a running Postgres databse with `pgvector` installed
 - Have a running Redis server
 - Have an OpenAI API key (at the very least)
+- Or an Anthropic/Gemini API key if you prefer those providers
 
 ### Database setup
 
@@ -55,13 +56,16 @@ DATABASE_URL=<url_of_local_postgres_db>
 
 
 # -------- llm config --------
-LLM_PROVIDER=<openai|anthropic>
+LLM_PROVIDER=<openai|anthropic|gemini>
 
 # if LLM_PROVIDER=openai
 OPENAI_API_KEY=<your_openai_key>
 
 # if LLM_PROVIDER=anthropic
 ANTHROPIC_API_KEY=<your_anthropic_key>
+
+# if LLM_PROVIDER=gemini
+GEMINI_API_KEY=<your_gemini_key>
 
 
 # -------- embeddings config --------
