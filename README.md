@@ -126,4 +126,5 @@ List of people who have contributed to any of our repos.
     <a href="https://github.com/estebandalelr"><img src="https://github.com/estebandalelr.png" width="60px" alt="estebandalelr"/></a> 
     <a href="https://github.com/drainpixie"><img src="https://github.com/drainpixie.png" width="60px" alt="drainpixie"/></a> 
     <a href="https://github.com/yeasin2002"><img src="https://github.com/yeasin2002.png" width="60px" alt="yeasin2002"/></a>
+    <a href="https://github.com/p-tirth"><img src="https://github.com/p-tirth.png" width="60px" alt="p-tirth"/></a>
 </p>
