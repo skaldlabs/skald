@@ -8,10 +8,12 @@ import {
     ANTHROPIC_MODEL,
     GROQ_MODEL,
     LOCAL_LLM_MODEL,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
 } from '@/settings'
 
 interface LLMProvider {
-    provider: 'openai' | 'anthropic' | 'groq' | 'local'
+    provider: 'openai' | 'anthropic' | 'groq' | 'local' | 'gemini'
     label: string
     model: string
 }
@@ -28,6 +30,9 @@ if (GROQ_API_KEY) {
 }
 if (LOCAL_LLM_BASE_URL) {
     AVAILABLE_LLM_PROVIDERS.push({ provider: 'local', label: 'Local', model: LOCAL_LLM_MODEL })
+}
+if (GEMINI_API_KEY) {
+    AVAILABLE_LLM_PROVIDERS.push({ provider: 'gemini', label: 'Gemini', model: GEMINI_MODEL })
 }
 
 export const getAvailableLLMProviders = async (req: Request, res: Response) => {
