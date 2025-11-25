@@ -5,7 +5,10 @@ import { MemoFilter } from '@/lib/filterUtils'
 import { EmbeddingService } from '@/services/embeddingService'
 import { memoChunkVectorSearch } from '@/embeddings/vectorSearch'
 import { getTitleAndSummaryAndContentForMemoList } from '@/queries/memo'
-
+import { DI } from '@/di'
+import { SearchRequest } from '@/entities/SearchRequest'
+import { randomUUID } from 'crypto'
+import * as Sentry from '@sentry/node'
 interface SearchResult {
     chunk_uuid: string
     memo_title: string
@@ -34,7 +37,7 @@ export const search = async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Limit must be less than or equal to 50' })
     }
 
-    const memoFilters = []
+    const memoFilters: MemoFilter[] = []
     for (const filter of filters) {
         const { filter: memoFilter, error } = parseFilter(filter)
         if (memoFilter && !error) {
@@ -44,7 +47,29 @@ export const search = async (req: Request, res: Response) => {
         }
     }
 
-    const results: SearchResult[] = await _chunkVectorSearch(project, query, limit, filters)
+    const results: SearchResult[] = await _chunkVectorSearch(project, query, limit, memoFilters)
+
+    const createSearchRequest = async () => {
+        try {
+            const searchRequest = DI.em.create(SearchRequest, {
+                uuid: randomUUID(),
+                project,
+                query,
+                filters,
+                results: results.map((result) => ({
+                    chunk_uuid: result.chunk_uuid,
+                    memo_title: result.memo_title,
+                    distance: result.distance,
+                })),
+                created_at: new Date(),
+            })
+            await DI.em.persistAndFlush(searchRequest)
+        } catch (error) {
+            Sentry.captureException(error)
+        }
+    }
+
+    void createSearchRequest()
 
     return res.status(200).json({ results })
 }
