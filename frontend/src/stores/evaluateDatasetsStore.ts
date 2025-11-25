@@ -34,6 +34,11 @@ interface UpdateQuestionPayload extends Record<string, unknown> {
     answer: string
 }
 
+interface CreateQuestionPayload extends Record<string, unknown> {
+    question: string
+    answer: string
+}
+
 interface EvaluateDatasetsState {
     datasets: EvaluationDataset[]
     currentDataset: EvaluationDatasetDetail | null
@@ -42,7 +47,9 @@ interface EvaluateDatasetsState {
     fetchDatasets: () => Promise<void>
     fetchDataset: (datasetUuid: string) => Promise<void>
     createDataset: (payload: CreateDatasetPayload) => Promise<boolean>
+    createQuestion: (datasetUuid: string, payload: CreateQuestionPayload) => Promise<boolean>
     updateQuestion: (datasetUuid: string, questionUuid: string, payload: UpdateQuestionPayload) => Promise<boolean>
+    deleteQuestion: (datasetUuid: string, questionUuid: string) => Promise<boolean>
     clearCurrentDataset: () => void
 }
 
@@ -122,6 +129,33 @@ export const useEvaluateDatasetsStore = create<EvaluateDatasetsState>((set, get)
         }
     },
 
+    createQuestion: async (datasetUuid: string, payload: CreateQuestionPayload) => {
+        try {
+            const projectPath = getProjectPath()
+            const response = await api.post<EvaluationDatasetQuestion>(
+                `${projectPath}/evaluation-datasets/${datasetUuid}/questions`,
+                payload
+            )
+
+            if (response.error) {
+                toast.error(`Failed to add question: ${response.error}`)
+                return false
+            }
+
+            // Refresh current dataset if it matches
+            if (get().currentDataset?.uuid === datasetUuid) {
+                await get().fetchDataset(datasetUuid)
+            }
+
+            toast.success('Question added successfully')
+            return true
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Failed to add question'
+            toast.error(`Failed to add question: ${errorMsg}`)
+            return false
+        }
+    },
+
     updateQuestion: async (datasetUuid: string, questionUuid: string, payload: UpdateQuestionPayload) => {
         try {
             const projectPath = getProjectPath()
@@ -145,6 +179,32 @@ export const useEvaluateDatasetsStore = create<EvaluateDatasetsState>((set, get)
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : 'Failed to update question'
             toast.error(`Failed to update question: ${errorMsg}`)
+            return false
+        }
+    },
+
+    deleteQuestion: async (datasetUuid: string, questionUuid: string) => {
+        try {
+            const projectPath = getProjectPath()
+            const response = await api.delete(
+                `${projectPath}/evaluation-datasets/${datasetUuid}/questions/${questionUuid}`
+            )
+
+            if (response.error) {
+                toast.error(`Failed to delete question: ${response.error}`)
+                return false
+            }
+
+            // Refresh current dataset if it matches
+            if (get().currentDataset?.uuid === datasetUuid) {
+                await get().fetchDataset(datasetUuid)
+            }
+
+            toast.success('Question deleted successfully')
+            return true
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Failed to delete question'
+            toast.error(`Failed to delete question: ${errorMsg}`)
             return false
         }
     },
