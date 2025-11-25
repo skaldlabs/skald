@@ -193,16 +193,17 @@ function buildLLMInputsNode(state: typeof RAGState.State) {
         contextStr += `Result ${i + 1}: ${rerankedResults[i].document}\n\n`
     }
 
-    const prompts: [string, string][] = [
-        ['system', ragConfig.references.enabled ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS],
-    ]
+    let systemPrompt = ragConfig.references.enabled ? CHAT_AGENT_INSTRUCTIONS_WITH_SOURCES : CHAT_AGENT_INSTRUCTIONS
 
     if (clientSystemPrompt) {
-        // Escape curly braces in clientSystemPrompt so they're treated as literal text
-        // LangChain uses {{ and }} to escape braces
+        // escape curly braces in clientSystemPrompt so they're treated as literal text
+        // langchain uses {{ and }} to escape braces
         const escapedPrompt = (clientSystemPrompt || '').replace(/{/g, '{{').replace(/}/g, '}}')
-        prompts.push(['system', escapedPrompt])
+        // append to main system prompt since multiple system messages are not allowed with gemini our claude
+        systemPrompt += `\n\nAdditional instructions: ${escapedPrompt}`
     }
+
+    const prompts: [string, string][] = [['system', systemPrompt]]
 
     prompts.push(...(conversationHistory || []))
     prompts.push(['human', '{input}'])
