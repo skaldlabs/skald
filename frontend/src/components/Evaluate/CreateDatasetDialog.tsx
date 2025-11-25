@@ -176,8 +176,7 @@ export const CreateDatasetDialog = ({ open, onOpenChange, onDatasetCreated }: Cr
                                     size="sm"
                                     onClick={() => setImportMode(false)}
                                 >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Manual
+                                    Manual definition
                                 </Button>
                                 <Button
                                     type="button"
