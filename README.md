@@ -31,7 +31,7 @@
     </a>
 </p>
 
-# Skald: The open-source RAG platform
+# Skald: Production RAG in your own infrastructure
 
 Skald gives you a production-ready RAG in minutes through a plug-and-play API, and then let's you configure your RAG engine exactly to your needs.
 
