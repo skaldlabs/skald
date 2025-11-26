@@ -198,6 +198,8 @@ services:
         profiles:
             - local
         restart: unless-stopped
+        networks:
+            - backend
 volumes:
     postgres_data:
     rabbitmq_data:
