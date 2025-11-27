@@ -95,8 +95,7 @@ async def embed(request: EmbedRequest):
         EmbedResponse with the embedding vector and its dimension
     """
     try:
-        model = get_embedding_model()
-        embedding = model.encode(request.content).tolist()
+        embedding = embedding_model.encode(request.content).tolist()
 
         if request.normalize:
             embedding = normalize_embedding(embedding)
@@ -123,7 +122,6 @@ async def rerank(request: RerankRequest):
         if not request.documents:
             return RerankResponse(results=[])
 
-        model = get_rerank_model()
 
         def get_document_text(doc):
             if isinstance(doc, str):
@@ -136,7 +134,7 @@ async def rerank(request: RerankRequest):
 
         pairs = [[request.query, get_document_text(doc)] for doc in request.documents]
 
-        scores = model.predict(pairs)
+        scores = rerank_model.predict(pairs)
 
         normalized_scores = 1 / (1 + np.exp(-np.array(scores)))
 
