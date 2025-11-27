@@ -3,6 +3,8 @@ import { Request, Response } from 'express'
 import { DI } from '@/di'
 import { EvaluationDataset } from '@/entities/EvaluationDataset'
 import { EvaluationDatasetQuestion } from '@/entities/EvaluationDatasetQuestion'
+import { ExperimentResult } from '@/entities/ExperimentResult'
+import { Experiment } from '@/entities/Experiment'
 import { randomUUID } from 'crypto'
 
 export const evaluationDatasetRouter = express.Router({ mergeParams: true })
@@ -315,8 +317,62 @@ const exportDataset = async (req: Request, res: Response) => {
     res.status(200).json(response)
 }
 
+const deleteDataset = async (req: Request, res: Response) => {
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const projectUuid = req.params.uuid
+    const datasetUuid = req.params.datasetUuid
+
+    if (!projectUuid || !datasetUuid) {
+        return res.status(400).json({ error: 'Project UUID and Dataset UUID are required' })
+    }
+
+    const project = await DI.projects.findOne({ uuid: projectUuid })
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    const membership = await DI.organizationMemberships.findOne({
+        user: user,
+        organization: project.organization,
+    })
+    if (!membership) {
+        return res.status(403).json({ error: 'You do not have access to this project' })
+    }
+
+    const dataset = await DI.evaluationDatasets.findOne({ uuid: datasetUuid, project: project })
+    if (!dataset) {
+        return res.status(404).json({ error: 'Dataset not found' })
+    }
+
+    await DI.em.transactional(async (em) => {
+        // Get all experiments associated with this dataset
+        const experiments = await em.find(Experiment, { evaluationDataset: dataset })
+
+        // Delete experiment results for all associated experiments
+        for (const experiment of experiments) {
+            await em.nativeDelete(ExperimentResult, { experiment })
+        }
+
+        // Delete all associated experiments
+        await em.nativeDelete(Experiment, { evaluationDataset: dataset })
+
+        // Delete all questions in this dataset
+        await em.nativeDelete(EvaluationDatasetQuestion, { evaluationDataset: dataset })
+
+        // Delete the dataset itself
+        await em.nativeDelete(EvaluationDataset, { uuid: datasetUuid })
+    })
+
+    res.status(204).send()
+}
+
 evaluationDatasetRouter.get('/', list)
 evaluationDatasetRouter.get('/:datasetUuid', getDataset)
 evaluationDatasetRouter.get('/:datasetUuid/export', exportDataset)
 evaluationDatasetRouter.post('/', create)
 evaluationDatasetRouter.patch('/:datasetUuid/questions/:questionUuid', updateQuestion)
+evaluationDatasetRouter.delete('/:datasetUuid', deleteDataset)
