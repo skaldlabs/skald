@@ -31,7 +31,7 @@
     </a>
 </p>
 
-# Skald: Production RAG in your own infrastructure
+# Skald: Production RAG in your infrastructure
 
 Skald gives you a production-ready RAG in minutes through a plug-and-play API, and then let's you configure your RAG engine exactly to your needs.
 
