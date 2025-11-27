@@ -96,6 +96,10 @@ services:
             - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
             - DOCUMENT_EXTRACTION_PROVIDER=${DOCUMENT_EXTRACTION_PROVIDER:-docling}
             - DOCLING_SERVICE_URL=http://docling-serve:5001
+            - LANGSMITH_TRACING=${LANGSMITH_TRACING:-false}
+            - LANGSMITH_ENDPOINT=${LANGSMITH_ENDPOINT:-}
+            - LANGSMITH_API_KEY=${LANGSMITH_API_KEY:-}
+            - LANGSMITH_PROJECT=${LANGSMITH_PROJECT:-}
         depends_on:
             db:
                 condition: service_healthy
@@ -144,6 +148,10 @@ services:
             - EMBEDDING_SERVICE_URL=http://embedding-service:8000 # this only applies if EMBEDDING_PROVIDER=local
             - DOCUMENT_EXTRACTION_PROVIDER=${DOCUMENT_EXTRACTION_PROVIDER:-docling}
             - DOCLING_SERVICE_URL=http://docling-serve:5001
+            - LANGSMITH_TRACING=${LANGSMITH_TRACING:-false}
+            - LANGSMITH_ENDPOINT=${LANGSMITH_ENDPOINT:-}
+            - LANGSMITH_API_KEY=${LANGSMITH_API_KEY:-}
+            - LANGSMITH_PROJECT=${LANGSMITH_PROJECT:-}
         depends_on:
             db:
                 condition: service_healthy

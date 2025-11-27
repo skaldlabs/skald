@@ -14,23 +14,13 @@ RERANK_MODEL = os.getenv("RERANK_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 TARGET_DIMENSION = int(os.getenv("TARGET_DIMENSION", "2048"))
 
 # Initialize models lazily
-_embedding_model = None
-_rerank_model = None
+embedding_model = SentenceTransformer(EMBEDDING_MODEL)
+rerank_model = CrossEncoder(RERANK_MODEL)
 
 
-def get_embedding_model() -> SentenceTransformer:
-    global _embedding_model
-    if _embedding_model is None:
-        _embedding_model = SentenceTransformer(EMBEDDING_MODEL)
-    return _embedding_model
-
-
-def get_rerank_model() -> CrossEncoder:
-    global _rerank_model
-    if _rerank_model is None:
-        _rerank_model = CrossEncoder(RERANK_MODEL)
-    return _rerank_model
-
+print(f"Using embedding model: {EMBEDDING_MODEL}")
+print(f"Using rerank model: {RERANK_MODEL}")
+print(f"Using target dimension: {TARGET_DIMENSION}")
 
 def normalize_embedding(embedding: list[float]) -> list[float]:
     """Pad or validate embedding to match TARGET_DIMENSION"""
