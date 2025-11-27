@@ -1,10 +1,22 @@
+import logging
 import os
+import time
 from typing import Literal
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from sentence_transformers import CrossEncoder, SentenceTransformer
+
+logger = logging.getLogger(__name__)
+
+# Configure logging level from environment variable
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
 app = FastAPI(title="Embedding Service", version="1.0.0")
 
@@ -118,10 +130,15 @@ async def rerank(request: RerankRequest):
     Returns:
         RerankResponse with reranked documents sorted by relevance score
     """
+    start_time = time.perf_counter()
+    logger.debug(f"Rerank request received: query length={len(request.query)}, documents count={len(request.documents)}, top_k={request.top_k}")
+    
     try:
+        check_start = time.perf_counter()
         if not request.documents:
+            logger.debug(f"Empty documents list, returning empty results (took {time.perf_counter() - check_start:.6f}s)")
             return RerankResponse(results=[])
-
+        logger.debug(f"Documents check completed (took {time.perf_counter() - check_start:.6f}s)")
 
         def get_document_text(doc):
             if isinstance(doc, str):
@@ -132,12 +149,19 @@ async def rerank(request: RerankRequest):
                         return doc[field]
             return str(doc)
 
+        pairs_start = time.perf_counter()
         pairs = [[request.query, get_document_text(doc)] for doc in request.documents]
+        logger.debug(f"Created {len(pairs)} query-document pairs (took {time.perf_counter() - pairs_start:.6f}s)")
 
+        predict_start = time.perf_counter()
         scores = rerank_model.predict(pairs)
+        logger.debug(f"Model prediction completed for {len(scores)} documents (took {time.perf_counter() - predict_start:.6f}s)")
 
+        normalize_start = time.perf_counter()
         normalized_scores = 1 / (1 + np.exp(-np.array(scores)))
+        logger.debug(f"Score normalization completed (took {time.perf_counter() - normalize_start:.6f}s)")
 
+        build_start = time.perf_counter()
         reranked = []
         for idx, (doc, score) in enumerate(zip(request.documents, normalized_scores)):
             reranked.append(
@@ -147,14 +171,25 @@ async def rerank(request: RerankRequest):
                     relevance_score=float(f"{score:.6f}"),
                 )
             )
+        logger.debug(f"Built {len(reranked)} reranked results (took {time.perf_counter() - build_start:.6f}s)")
 
+        sort_start = time.perf_counter()
         reranked.sort(key=lambda r: r.relevance_score, reverse=True)
+        logger.debug(f"Sorted reranked results (took {time.perf_counter() - sort_start:.6f}s)")
 
+        filter_start = time.perf_counter()
         if isinstance(request.top_k, int) and request.top_k > 0:
             reranked = reranked[: request.top_k]
+            logger.debug(f"Filtered to top_k={request.top_k} results (took {time.perf_counter() - filter_start:.6f}s)")
+        else:
+            logger.debug(f"No top_k filtering applied (took {time.perf_counter() - filter_start:.6f}s)")
 
+        total_time = time.perf_counter() - start_time
+        logger.debug(f"Rerank completed successfully: returning {len(reranked)} results (total time: {total_time:.6f}s)")
         return RerankResponse(results=reranked)
     except Exception as e:
+        total_time = time.perf_counter() - start_time
+        logger.debug(f"Rerank failed after {total_time:.6f}s: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Reranking failed: {str(e)}")
 
 
