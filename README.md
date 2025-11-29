@@ -31,7 +31,7 @@
     </a>
 </p>
 
-# Skald: Production RAG in your own infrastructure
+# Skald: Open-Source Production RAG in your infrastructure
 
 Skald gives you a production-ready RAG in minutes through a plug-and-play API, and then let's you configure your RAG engine exactly to your needs.
 
@@ -82,7 +82,7 @@ For a production self-hosted deploy, check out our [self-hosting docs](https://d
 </summary>
 <br>
 
-You can deploy Skald without **any** third-party dependencies (including OpenAI), but that will require hosting your own LLM inference server and using a local embeddings service (we've provided one for you in the `local` docker compose profile). This is advanced usage and is classed as experimental, check out our [docs](https://docs.useskald.com) for more details.
+You can deploy Skald without **any** third-party dependencies (including OpenAI), but that will require hosting your own LLM inference server and using a local embeddings service (we've provided one for you in the `local` docker compose profile). This is advanced usage and you should check out our [docs](https://docs.useskald.com) for more details. You can also ask us questions on [Slack](https://join.slack.com/t/skaldcommunity/shared_invite/zt-3he986lub-UWKTZneOAUeTFa4LDXpFEg).
 
 </details>
 
