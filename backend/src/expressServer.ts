@@ -119,7 +119,7 @@ export const startExpressServer = async () => {
         res.json({ error: 'Service unavailable', sentry_error_id: res.sentry })
     })
 
-    const HOST = 'localhost'
+    const HOST = '0.0.0.0'
     DI.server = app.listen(EXPRESS_SERVER_PORT, HOST, async (err) => {
         if (err) {
             logger.error({ error: err }, `Could not start Express server on http://${HOST}:${EXPRESS_SERVER_PORT}`)
