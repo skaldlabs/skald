@@ -5,7 +5,7 @@
         "description": "API Documentation for Skald",
         "version": "1.0.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost:3000",
     "basePath": "/",
     "schemes": ["http"],
     "paths": {
@@ -80,6 +80,17 @@
                     },
                     "404": {
                         "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api-spec": {
+            "get": {
+                "description": "",
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }

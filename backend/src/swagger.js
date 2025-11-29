@@ -5,7 +5,7 @@ const doc = {
         title: 'Skald API',
         description: 'API Documentation for Skald',
     },
-    host: 'localhost:8080',
+    host: 'localhost:3000',
     schemes: ['http'],
 }
 
