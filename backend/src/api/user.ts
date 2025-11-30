@@ -18,6 +18,7 @@ interface UserResponse {
     name?: string | null
     is_superuser: boolean
     oauth_provider?: string | null
+    profile_picture?: string | null
     role?: string | null
 }
 
@@ -66,6 +67,8 @@ export const login = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        profile_picture: user.profilePicture,
+        oauth_provider: user.authProvider,
     }
 
     res.json({ user: userResponse })
@@ -138,6 +141,8 @@ const createUser = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        profile_picture: user.profilePicture,
+        oauth_provider: user.authProvider,
     }
 
     res.status(201).json({ user: userResponse })
@@ -191,6 +196,7 @@ const getUserDetails = async (req: Request, res: Response) => {
         name: _fullName(user),
         is_superuser: user.is_superuser,
         oauth_provider: user.authProvider,
+        profile_picture: user.profilePicture,
         role: user.role,
     }
 
@@ -241,6 +247,8 @@ const setCurrentProject = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        profile_picture: user.profilePicture,
+        oauth_provider: user.authProvider,
     }
 
     res.status(200).json(userResponse)
@@ -299,6 +307,8 @@ const updateUserDetails = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        profile_picture: user.profilePicture,
+        oauth_provider: user.authProvider,
     }
 
     res.status(200).json(userResponse)
