@@ -73,9 +73,11 @@ export const DeleteProjectDialog = ({ project, open, onOpenChange, onConfirmDele
                     </ul>
 
                     <div className="space-y-2 mb-2">
-                        <label htmlFor="confirm-text" className="text-sm font-medium">
-                            Type <span className="font-mono text-destructive">{expectedText}</span> to confirm:
-                        </label>
+                        <div>
+                            <label htmlFor="confirm-text" className="text-sm font-medium">
+                                Type <span className="font-mono text-destructive">{expectedText}</span> to confirm:
+                            </label>
+                        </div>
                         <Input
                             id="confirm-text"
                             value={confirmText}

@@ -16,6 +16,10 @@ import { ChatMessage } from '@/entities/ChatMessage'
 import { Chat } from '@/entities/Chat'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { IS_CLOUD } from '@/settings'
+import { EvaluationDatasetQuestion } from '@/entities/EvaluationDatasetQuestion'
+import { EvaluationDataset } from '@/entities/EvaluationDataset'
+import { Experiment } from '@/entities/Experiment'
+import { ExperimentResult } from '@/entities/ExperimentResult'
 
 export const projectRouter = express.Router({ mergeParams: true })
 
@@ -303,6 +307,14 @@ const destroy = async (req: Request, res: Response) => {
         // Delete project chat history
         await em.nativeDelete(ChatMessage, { project: project })
         await em.nativeDelete(Chat, { project: project })
+
+        // delete all datasets, experiment results, and experiments
+        const datasets = await em.find(EvaluationDataset, { project: project })
+        const experiments = await em.find(Experiment, { project: project })
+        await em.nativeDelete(EvaluationDatasetQuestion, { evaluationDataset: { $in: datasets.map((d) => d.uuid) } })
+        await em.nativeDelete(ExperimentResult, { experiment: { $in: experiments.map((e) => e.uuid) } })
+        await em.nativeDelete(EvaluationDataset, { project: project })
+        await em.nativeDelete(Experiment, { project: project })
 
         // Delete the project itself
         await em.nativeDelete(Project, { uuid: project.uuid })
