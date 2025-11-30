@@ -7,6 +7,11 @@ import crypto from 'crypto'
  * @returns {boolean}
  */
 export function checkPassword(password: string, hash: string): boolean {
+    // Handle empty hash (OAuth users without password)
+    if (!hash || hash === '') {
+        return false
+    }
+
     const [algorithm, iterationsStr, salt, expectedHash] = hash.split('$')
     if (algorithm !== 'pbkdf2_sha256') {
         throw new Error(`Unsupported algorithm: ${algorithm}`)

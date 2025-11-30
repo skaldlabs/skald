@@ -29,6 +29,9 @@ interface UserDetailsResponse {
     role?: string
     referral_source?: string
     referral_details?: string
+    oauth_provider?: string
+    profile_picture?: string
+    google_id?: string
 }
 
 export interface UserDetails extends UserDetailsResponse {
@@ -41,6 +44,7 @@ interface AuthState {
     user: UserDetails | null
     login: (email: string, password: string) => Promise<boolean>
     signup: (email: string, password: string) => Promise<boolean>
+    loginWithGoogle: () => void
     logout: () => void
     initializeAuth: () => Promise<void>
 }
@@ -83,7 +87,9 @@ export const useAuthStore = create<AuthState>((set) => {
 
                 // Initialize projects after successful auth
                 // This ensures currentProject is available on page refresh
-                await useProjectStore.getState().fetchProjects()
+                if (user.default_organization) {
+                    await useProjectStore.getState().fetchProjects()
+                }
             } else {
                 set({ isAuthenticated: false, user: null })
             }
@@ -142,6 +148,10 @@ export const useAuthStore = create<AuthState>((set) => {
             })
 
             return true
+        },
+        loginWithGoogle: () => {
+            const apiHost = import.meta.env.VITE_API_HOST || 'http://localhost:3000'
+            window.location.href = `${apiHost}/api/auth/google`
         },
         logout: () => {
             set({ isAuthenticated: false, user: null })

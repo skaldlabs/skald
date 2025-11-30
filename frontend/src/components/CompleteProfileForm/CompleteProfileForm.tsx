@@ -46,12 +46,13 @@ const REFERRAL_OPTIONS = [
 export const CompleteProfileForm = () => {
     const [loading, setLoading] = useState(false)
     const initializeAuth = useAuthStore((state) => state.initializeAuth)
+    const user = useAuthStore((state) => state.user)
     const navigate = useNavigate()
 
     const form = useForm<CompleteProfileFormData>({
         defaultValues: {
-            first_name: '',
-            last_name: '',
+            first_name: user?.name?.split(' ')[0] || '',
+            last_name: user?.name?.split(' ')[1] || '',
             role: '',
             referral_source: '',
             referral_details: '',

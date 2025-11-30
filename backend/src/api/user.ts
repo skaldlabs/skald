@@ -17,6 +17,8 @@ interface UserResponse {
     organization_name?: string | null
     name?: string | null
     is_superuser: boolean
+    oauth_provider?: string | null
+    role?: string | null
 }
 
 export const login = async (req: Request, res: Response) => {
@@ -31,7 +33,15 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const user = await DI.users.findOne({ email })
-    if (!user || !checkPassword(password, user.password)) {
+    if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' })
+    }
+
+    if (!user.password || user.password === '') {
+        return res.status(401).json({ error: 'This account uses Google Sign-In. Please sign in with Google.' })
+    }
+
+    if (!checkPassword(password, user.password)) {
         return res.status(401).json({ error: 'Invalid credentials' })
     }
 
@@ -180,6 +190,8 @@ const getUserDetails = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        oauth_provider: user.authProvider,
+        role: user.role,
     }
 
     res.status(200).json(userResponse)
