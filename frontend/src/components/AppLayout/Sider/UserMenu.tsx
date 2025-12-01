@@ -12,7 +12,7 @@ import { SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore } from '@/stores/authStore'
-import { ChevronsUpDown, CreditCard, Hotel, GlobeLock, LogOut, Moon, Sun } from 'lucide-react'
+import { CreditCard, Hotel, GlobeLock, LogOut, Moon, Sun, EllipsisVertical } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export const UserMenu = () => {
@@ -60,16 +60,16 @@ export const UserMenu = () => {
     return (
         <SidebarMenuItem>
             <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="flex items-center gap-2 justify-between w-full my-2 px-2 hover:bg-sidebar-accent rounded-md py-2">
+                <DropdownMenuTrigger className="flex items-center gap-2 justify-between w-full px-2 hover:bg-sidebar-accent rounded-md py-2">
                     <Avatar className="h-8 w-8 rounded-lg">
                         <AvatarImage src={user?.profile_picture || ''} alt={user?.name || user?.email || ''} />
                         <AvatarFallback className="rounded-lg">{getUserInitials()}</AvatarFallback>
                     </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
+                    <div className="flex flex-col gap-1 text-left text-sm leading-tight">
                         {user?.name && <span className="truncate font-medium">{user.name}</span>}
-                        {user?.email && <span className="truncate text-xs">{user.email}</span>}
+                        {user?.email && <span className="truncate text-xs text-muted-foreground">{user.email}</span>}
                     </div>
-                    <ChevronsUpDown className="ml-auto size-4" />
+                    <EllipsisVertical className="ml-auto size-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                     className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
@@ -84,12 +84,15 @@ export const UserMenu = () => {
                                 <AvatarFallback className="rounded-lg">{getUserInitials()}</AvatarFallback>
                             </Avatar>
 
-                            <div className="grid flex-1 text-left text-sm leading-tight">
+                            <div className="flex flex-col gap-0.5 text-left text-sm leading-tight px-1">
                                 {user?.name && <span className="truncate font-medium">{user.name}</span>}
-                                {user?.email && <span className="truncate text-xs">{user.email}</span>}
+                                {user?.email && (
+                                    <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                                )}
                             </div>
                         </div>
                     </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                         {userMenuItems
                             .filter((item) => item.hasAccess())
