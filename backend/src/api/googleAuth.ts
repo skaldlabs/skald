@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express'
 import { DI } from '@/di'
-import { GoogleOAuthService } from '@/lib/googleOAuth'
+import { getGoogleAuthUrl, verifyGoogleIdToken } from '@/lib/googleOAuthUtils'
 import { generateAccessToken } from '@/lib/tokenUtils'
 import { ENABLE_SECURITY_SETTINGS, FRONTEND_URL } from '@/settings'
 import { posthogCapture } from '@/lib/posthogUtils'
@@ -10,8 +10,6 @@ export const googleAuthRouter = express.Router({ mergeParams: true })
 
 const initiateGoogleOAuth = async (req: Request, res: Response) => {
     try {
-        const googleOAuth = new GoogleOAuthService()
-
         const state = crypto.randomBytes(32).toString('hex')
 
         res.cookie('oauth_state', state, {
@@ -22,7 +20,7 @@ const initiateGoogleOAuth = async (req: Request, res: Response) => {
             path: '/',
         })
 
-        const authUrl = googleOAuth.getAuthUrl(state)
+        const authUrl = getGoogleAuthUrl(state)
         res.redirect(authUrl)
     } catch (error) {
         console.error('Error initiating Google OAuth:', error)
@@ -49,8 +47,7 @@ const handleGoogleCallback = async (req: Request, res: Response) => {
 
         res.clearCookie('oauth_state')
 
-        const googleOAuth = new GoogleOAuthService()
-        const googleUser = await googleOAuth.verifyIdToken(code)
+        const googleUser = await verifyGoogleIdToken(code)
 
         if (!googleUser.email_verified) {
             return res.redirect(`${FRONTEND_URL}/login?error=email_not_verified`)
