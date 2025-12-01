@@ -1,5 +1,4 @@
 import { ProjectSwitcher } from '@/components/AppLayout/Sider/ProjectSwitcher'
-import { TalkToFounderModal } from '@/components/AppLayout/Sider/TalkToFounderModal'
 import { UsageTracker } from '@/components/AppLayout/Sider/UsageTracker'
 import { UserMenu } from '@/components/AppLayout/Sider/UserMenu'
 
@@ -21,7 +20,6 @@ import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { BookOpen, Files, FlaskConical, List, MessageSquare, Rocket, Settings } from 'lucide-react'
-import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 interface MenuItem {
@@ -39,7 +37,6 @@ export const Sider = () => {
     const location = useLocation()
     const user = useAuthStore((state) => state.user)
     const currentProject = useProjectStore((state) => state.currentProject)
-    const [talkToFounderModalOpen, setTalkToFounderModalOpen] = useState(false)
 
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
@@ -171,12 +168,10 @@ export const Sider = () => {
             </SidebarContent>
 
             <div className="px-4 py-2 text-xs text-muted-foreground text-center">
-                <button onClick={() => setTalkToFounderModalOpen(true)} className="hover:underline cursor-pointer">
+                <a href="https://pedrique.useskald.com" target="_blank" className="hover:underline cursor-pointer">
                     Talk to a founder
-                </button>
+                </a>
             </div>
-
-            <TalkToFounderModal open={talkToFounderModalOpen} onOpenChange={setTalkToFounderModalOpen} />
 
             <SidebarFooter className="border-t p-0">
                 <SidebarGroup>

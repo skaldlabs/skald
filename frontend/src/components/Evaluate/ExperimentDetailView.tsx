@@ -68,7 +68,7 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
         setRunError(null)
         setProgress({ completed: 0, total: currentDataset.questions.length })
 
-        const BATCH_SIZE = 5
+        const BATCH_SIZE = 1
 
         try {
             for (let i = 0; i < currentDataset.questions.length; i += BATCH_SIZE) {
