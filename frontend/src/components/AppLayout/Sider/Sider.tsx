@@ -13,6 +13,9 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
 import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
@@ -115,7 +118,7 @@ export const Sider = () => {
             <SidebarHeader className="border-b p-2">
                 <ProjectSwitcher />
             </SidebarHeader>
-            <SidebarContent className="px-3 py-2">
+            <SidebarContent className="px-2 py-2">
                 {Object.entries(mainMenuItems).map(([groupName, items]) => {
                     const accessibleItems = items.filter((item) => item.hasAccess(user))
 
@@ -140,23 +143,23 @@ export const Sider = () => {
                                                 </SidebarMenuButton>
                                             </SidebarMenuItem>
                                             {item.children && (
-                                                <div className="bg-muted/30">
+                                                <SidebarMenuSub>
                                                     {item.children
                                                         .filter((child) => child.hasAccess(user))
                                                         .map((child) => (
-                                                            <SidebarMenuItem key={child.key} className="ml-2">
-                                                                <SidebarMenuButton
+                                                            <SidebarMenuSubItem key={child.key} className="ml-1.75">
+                                                                <SidebarMenuSubButton
                                                                     isActive={location.pathname === child.key}
                                                                     onClick={() =>
                                                                         handleMenuClick(child.key, child.onClick)
                                                                     }
-                                                                    className="w-full justify-start cursor-pointer pl-8"
+                                                                    className="w-full justify-start cursor-pointer"
                                                                 >
                                                                     {child.label}
-                                                                </SidebarMenuButton>
-                                                            </SidebarMenuItem>
+                                                                </SidebarMenuSubButton>
+                                                            </SidebarMenuSubItem>
                                                         ))}
-                                                </div>
+                                                </SidebarMenuSub>
                                             )}
                                         </div>
                                     ))}
@@ -175,10 +178,14 @@ export const Sider = () => {
 
             <TalkToFounderModal open={talkToFounderModalOpen} onOpenChange={setTalkToFounderModalOpen} />
 
-            <SidebarFooter className="border-t px-3 py-2">
+            <SidebarFooter className="border-t p-0">
                 <SidebarGroup>
-                    <SidebarGroupContent>
-                        <div className="mb-3">{!isSelfHostedDeploy && <UsageTracker />}</div>
+                    <SidebarGroupContent className="flex flex-col gap-2">
+                        {!isSelfHostedDeploy && (
+                            <div className="p-2">
+                                <UsageTracker />
+                            </div>
+                        )}
 
                         <SidebarMenu>
                             <UserMenu />
