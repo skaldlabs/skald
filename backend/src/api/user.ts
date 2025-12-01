@@ -17,6 +17,9 @@ interface UserResponse {
     organization_name?: string | null
     name?: string | null
     is_superuser: boolean
+    oauth_provider?: string | null
+    profile_picture?: string | null
+    role?: string | null
 }
 
 export const login = async (req: Request, res: Response) => {
@@ -31,7 +34,15 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const user = await DI.users.findOne({ email })
-    if (!user || !checkPassword(password, user.password)) {
+    if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' })
+    }
+
+    if (!user.password || user.password === '') {
+        return res.status(401).json({ error: 'This account uses Google Sign-In. Please sign in with Google.' })
+    }
+
+    if (!checkPassword(password, user.password)) {
         return res.status(401).json({ error: 'Invalid credentials' })
     }
 
@@ -56,6 +67,8 @@ export const login = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        profile_picture: user.profilePicture,
+        oauth_provider: user.authProvider,
     }
 
     res.json({ user: userResponse })
@@ -118,6 +131,7 @@ const createUser = async (req: Request, res: Response) => {
 
     posthogCapture('user_signed_up', user.email, {
         user_email: user.email,
+        auth_method: 'password',
     })
 
     const userResponse: UserResponse = {
@@ -128,6 +142,8 @@ const createUser = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        profile_picture: user.profilePicture,
+        oauth_provider: user.authProvider,
     }
 
     res.status(201).json({ user: userResponse })
@@ -180,6 +196,9 @@ const getUserDetails = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        oauth_provider: user.authProvider,
+        profile_picture: user.profilePicture,
+        role: user.role,
     }
 
     res.status(200).json(userResponse)
@@ -229,6 +248,8 @@ const setCurrentProject = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        profile_picture: user.profilePicture,
+        oauth_provider: user.authProvider,
     }
 
     res.status(200).json(userResponse)
@@ -287,6 +308,8 @@ const updateUserDetails = async (req: Request, res: Response) => {
         organization_name: user.defaultOrganization?.name,
         name: _fullName(user),
         is_superuser: user.is_superuser,
+        profile_picture: user.profilePicture,
+        oauth_provider: user.authProvider,
     }
 
     res.status(200).json(userResponse)

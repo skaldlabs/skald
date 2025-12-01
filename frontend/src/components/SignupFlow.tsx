@@ -38,14 +38,14 @@ const signupSteps = [
         path: '/complete-profile',
         component: <CompleteProfilePage />,
         userShouldCompleteStep: (isAuthenticated: boolean, user: UserDetails) =>
-            isAuthenticated && user?.email_verified && !user?.name,
+            isAuthenticated && user?.email_verified && !user?.role,
     },
     {
         step: SignupFlowStep.CreateOrganization,
         path: '/create-organization',
         component: <CreateOrganizationPage />,
         userShouldCompleteStep: (isAuthenticated: boolean, user: UserDetails) =>
-            isAuthenticated && user?.email_verified && user?.name && !user?.default_organization,
+            isAuthenticated && user?.email_verified && user?.role && !user?.default_organization,
     },
     {
         step: SignupFlowStep.Complete,
@@ -66,7 +66,6 @@ export const SignupFlow = ({ currentStep }: SignupFlowProps) => {
             navigate('/signup')
             return
         }
-
         for (const step of signupSteps) {
             if (step.userShouldCompleteStep(isAuthenticated, user)) {
                 navigate(step.path)

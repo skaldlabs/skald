@@ -28,6 +28,7 @@ import { adminRouter } from '@/api/admin'
 import { evaluationDatasetRouter } from '@/api/evaluationDataset'
 import { experimentRouter } from '@/api/experiment'
 import { configRouter } from '@/api/config'
+import { authRouter } from '@/api/auth'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
@@ -77,6 +78,7 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use(requireAuth())
 
     app.get('/api/health', health)
+    app.use('/api/auth', authRateLimiter, authRouter)
     app.use('/api/user', authRateLimiter, userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)
     privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
