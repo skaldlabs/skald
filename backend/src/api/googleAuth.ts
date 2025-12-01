@@ -75,9 +75,9 @@ const handleGoogleCallback = async (req: Request, res: Response) => {
 
             await DI.em.persistAndFlush(user)
 
-            posthogCapture('user_signed_up_google', user.email, {
+            posthogCapture('user_signed_up', user.email, {
                 user_email: user.email,
-                oauth_provider: 'google',
+                auth_method: 'google',
             })
         } else {
             if (!user.googleId) {

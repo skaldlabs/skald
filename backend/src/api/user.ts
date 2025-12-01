@@ -131,6 +131,7 @@ const createUser = async (req: Request, res: Response) => {
 
     posthogCapture('user_signed_up', user.email, {
         user_email: user.email,
+        auth_method: 'password',
     })
 
     const userResponse: UserResponse = {
