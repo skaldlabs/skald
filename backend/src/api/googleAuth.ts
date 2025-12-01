@@ -119,5 +119,5 @@ const handleGoogleCallback = async (req: Request, res: Response) => {
     }
 }
 
-googleAuthRouter.get('/google', initiateGoogleOAuth)
-googleAuthRouter.get('/google/callback', handleGoogleCallback)
+googleAuthRouter.get('/', initiateGoogleOAuth)
+googleAuthRouter.get('/callback', handleGoogleCallback)
