@@ -51,6 +51,15 @@ export class User {
     @Property({ nullable: true })
     referral_details?: string
 
+    @Property({ nullable: true, unique: 'skald_user_google_id_key' })
+    googleId?: string
+
+    @Property({ nullable: true, length: 500 })
+    profilePicture?: string
+
+    @Property({ nullable: true, length: 20 })
+    authProvider?: string
+
     @ManyToOne({
         entity: () => Organization,
         fieldName: 'default_organization_id',

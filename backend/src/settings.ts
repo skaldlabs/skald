@@ -221,6 +221,12 @@ export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 export const EXPRESS_SERVER_PORT = parseInt(process.env.EXPRESS_SERVER_PORT || '3000')
 
+// ---- Google OAuth Configuration ----
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+export const GOOGLE_OAUTH_REDIRECT_URI =
+    process.env.GOOGLE_OAUTH_REDIRECT_URI || `http://localhost:${EXPRESS_SERVER_PORT}/api/auth/google/callback`
+
 // ---- Stripe Configuration ----
 export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
