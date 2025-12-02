@@ -49,13 +49,13 @@ export const Sider = () => {
             {
                 key: `/projects/${currentProject?.uuid}/memos`,
                 icon: <Files className="h-4 w-4" />,
-                label: 'Memos',
+                label: 'Ingestion',
                 hasAccess: () => true,
             },
             {
                 key: `/projects/${currentProject?.uuid}/playground`,
                 icon: <MessageSquare className="h-4 w-4" />,
-                label: 'Playground',
+                label: 'Retrieval',
                 hasAccess: () => true,
             },
             {

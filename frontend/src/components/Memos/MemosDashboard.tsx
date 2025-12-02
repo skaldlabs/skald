@@ -4,7 +4,7 @@ import { useProjectStore } from '@/stores/projectStore'
 import { useMemoStore } from '@/stores/memoStore'
 import type { Memo, DetailedMemo } from '@/lib/types'
 import { Button } from '@/components/ui/button'
-import { RefreshCw, Plus } from 'lucide-react'
+import { RefreshCw, Plus, FileSearch, Scissors, Database, Sparkles, Tags, ChevronDown, ChevronUp } from 'lucide-react'
 import { MemosSearchBar } from './MemosSearchBar'
 import { MemosSearchResultsBanner } from './MemosSearchResultsBanner'
 import { MemosTable } from './MemosTable'
@@ -15,10 +15,40 @@ import { CreateMemoModal } from './CreateMemoModal'
 import { PageHeader } from '@/components/AppLayout/PageHeader'
 import { toast } from 'sonner'
 
+const pipelineSteps = [
+    {
+        icon: FileSearch,
+        title: 'Data Type Detection',
+        description: 'Automatically identifies document formats and structures',
+    },
+    {
+        icon: Scissors,
+        title: 'Smart Chunking',
+        description: 'Determines optimal chunk strategy based on content type',
+    },
+    {
+        icon: Database,
+        title: 'Vector Embedding',
+        description: 'Creates embeddings and stores them in vector database',
+    },
+    {
+        icon: Sparkles,
+        title: 'Summary Generation',
+        description: 'Generates concise summaries for quick understanding',
+    },
+    {
+        icon: Tags,
+        title: 'Auto-Tagging',
+        description: 'Extracts and assigns relevant tags automatically',
+    },
+]
+
 export const MemosDashboard = () => {
     const { uuid: projectUuid, memoUuid } = useParams<{ uuid: string; memoUuid?: string }>()
     const navigate = useNavigate()
     const currentProject = useProjectStore((state) => state.currentProject)
+    const [showPipelineInfo, setShowPipelineInfo] = useState(false)
+    const [hasInitializedPipelineInfo, setHasInitializedPipelineInfo] = useState(false)
 
     const memos = useMemoStore((state) => state.memos)
     const loading = useMemoStore((state) => state.loading)
@@ -130,6 +160,14 @@ export const MemosDashboard = () => {
         }
     }, [currentProject, fetchMemos])
 
+    // Auto-expand pipeline info if no memos exist
+    useEffect(() => {
+        if (!loading && !hasInitializedPipelineInfo && memos.length === 0) {
+            setShowPipelineInfo(true)
+            setHasInitializedPipelineInfo(true)
+        }
+    }, [loading, memos.length, hasInitializedPipelineInfo])
+
     useEffect(() => {
         const loadMemoFromUrl = async () => {
             if (memoUuid && currentProject) {
@@ -169,7 +207,7 @@ export const MemosDashboard = () => {
 
     return (
         <div className="container mx-auto py-6 space-y-6">
-            <PageHeader title="Memos">
+            <PageHeader title="Ingestion">
                 <div className="flex gap-2">
                     <Button onClick={() => setCreateModalOpen(true)} size="sm">
                         <Plus className="h-4 w-4 mr-2" />
@@ -181,6 +219,50 @@ export const MemosDashboard = () => {
                     </Button>
                 </div>
             </PageHeader>
+
+            {/* Pipeline Explanation Section */}
+            <div className="rounded-lg border bg-card p-4">
+                <button
+                    onClick={() => setShowPipelineInfo(!showPipelineInfo)}
+                    className="w-full flex items-center justify-between text-left"
+                >
+                    <div>
+                        <h3 className="text-sm font-medium text-foreground">What is a Memo?</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                            A <span className="font-medium text-foreground">Memo</span> is a piece of knowledge in
+                            Skald. This pipeline processes your data end-to-end, preparing it for intelligent retrieval.
+                        </p>
+                    </div>
+                    {showPipelineInfo ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-4" />
+                    ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-4" />
+                    )}
+                </button>
+
+                {showPipelineInfo && (
+                    <div className="mt-4 pt-4 border-t">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            {pipelineSteps.map((step, index) => (
+                                <div
+                                    key={step.title}
+                                    className="relative flex flex-col items-center text-center p-3 rounded-md bg-muted/50"
+                                >
+                                    {index < pipelineSteps.length - 1 && (
+                                        <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 w-3 h-0.5 bg-border" />
+                                    )}
+                                    <div className="p-2 rounded-full bg-primary/10 text-primary mb-2">
+                                        <step.icon className="h-4 w-4" />
+                                    </div>
+                                    <h4 className="text-xs font-medium text-foreground">{step.title}</h4>
+                                    <p className="text-xs text-muted-foreground mt-1">{step.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             <MemosSearchBar
                 searchQuery={searchQuery}
                 searchMethod={searchMethod}
@@ -204,6 +286,7 @@ export const MemosDashboard = () => {
                 searchMethod={searchMethod}
                 onViewMemo={handleViewMemo}
                 onDeleteMemo={setMemoToDelete}
+                onCreateMemo={() => setCreateModalOpen(true)}
             />
 
             <MemosPagination

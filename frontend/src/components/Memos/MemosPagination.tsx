@@ -11,6 +11,10 @@ interface MemosPaginationProps {
 export const MemosPagination = ({ currentPage, pageSize, totalCount, loading, onPageChange }: MemosPaginationProps) => {
     const totalPages = Math.ceil(totalCount / pageSize)
 
+    if (totalPages <= 1) {
+        return null
+    }
+
     return (
         <div className="flex items-center justify-between px-4 py-4 border-t">
             <p className="text-sm text-muted-foreground">
