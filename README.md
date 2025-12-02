@@ -31,7 +31,7 @@
     </a>
 </p>
 
-# Skald: Open-Source Production RAG in your infrastructure
+# Skald: Open Source Production RAG in your infrastructure
 
 Skald gives you a production-ready RAG in minutes through a plug-and-play API, and then let's you configure your RAG engine exactly to your needs.
 
@@ -96,7 +96,7 @@ You can deploy Skald without **any** third-party dependencies (including OpenAI)
 - **Evaluate:** Evaluate the performance of your custom RAG engine with our built-in evaluation tools.
 - **Powerful filtering:** Speed up and improve responses by filtering the accessible knowledge in every query.
 - **Amazing DX, no bullsh\*t:** Implement in minutes with SDKs for every major language. Don't see yours? Open [an issue](https://github.com/skaldlabs/skald/issues/new) and we'll build it!
-- **Truly open-source:** Our open source version is fully-featured, easy to deploy, and can even run with [no third-party dependencies](https://docs.useskald.com/docs/self-host/full-local).
+- **Truly open source:** Our open source version is fully-featured, easy to deploy, and can even run with [no third-party dependencies](https://docs.useskald.com/docs/self-host/full-local).
 
 ## 🚀 Get started
 
