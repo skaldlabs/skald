@@ -1,0 +1,378 @@
+openapi: 3.0.3
+info:
+  title: Skald Chat API
+  description: |
+    The Skald Chat API provides intelligent conversational AI capabilities powered by your memo knowledge base.
+    It combines retrieval-augmented generation (RAG) with conversation history to deliver context-aware responses.
+  version: 1.0.0
+  contact:
+    name: Skald Labs
+    url: https://skald.com
+
+servers:
+  - url: https://api.skald.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/v1/chat:
+    post:
+      summary: Send a chat message
+      description: |
+        Send a chat message and receive an AI-generated response based on your memo knowledge base.
+        Supports both streaming (Server-Sent Events) and non-streaming responses.
+
+        **Free Tier Limit:** 100 chat queries per month
+        **Paid Plans:** Usage-based billing
+
+        The chat agent performs vector search across your memos to find relevant context,
+        then generates a response using an LLM with that context.
+      operationId: chat
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: The user's chat message or question
+                  example: "How do I authenticate users in my application?"
+                stream:
+                  type: boolean
+                  description: Enable streaming response via Server-Sent Events (SSE)
+                  default: false
+                  example: false
+                filters:
+                  type: array
+                  description: Optional filters to scope the knowledge base search
+                  items:
+                    $ref: '#/components/schemas/MemoFilter'
+                chat_id:
+                  type: string
+                  format: uuid
+                  description: |
+                    Optional conversation ID for maintaining chat history.
+                    Include this to continue a previous conversation.
+                    Omit to start a new conversation.
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                system_prompt:
+                  type: string
+                  nullable: true
+                  description: |
+                    Optional custom system prompt to override the default.
+                    Set to null to use the default system prompt.
+                  example: "You are a helpful technical assistant specializing in API development."
+                llm_provider:
+                  type: string
+                  enum:
+                    - openai
+                    - anthropic
+                    - groq
+                  description: |
+                    Experimental: Choose the LLM provider.
+                    If not specified, uses the project's default LLM provider from settings.
+                  example: "anthropic"
+            examples:
+              simpleChat:
+                summary: Simple chat message
+                value:
+                  query: "What are the authentication methods available?"
+              streamingChat:
+                summary: Streaming chat with history
+                value:
+                  query: "Can you provide a code example?"
+                  stream: true
+                  chat_id: "550e8400-e29b-41d4-a716-446655440000"
+              chatWithFilters:
+                summary: Chat with filtered knowledge base
+                value:
+                  query: "Explain the database schema"
+                  filters:
+                    - field: "tags"
+                      operator: "contains"
+                      value: "database"
+                      filter_type: "native_field"
+              customSystemPrompt:
+                summary: Chat with custom system prompt
+                value:
+                  query: "How do webhooks work?"
+                  system_prompt: "You are an expert in webhook architectures and event-driven systems."
+                  llm_provider: "anthropic"
+      responses:
+        '200':
+          description: Successful chat response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              examples:
+                chatResponse:
+                  summary: Non-streaming chat response
+                  value:
+                    ok: true
+                    chat_id: "550e8400-e29b-41d4-a716-446655440000"
+                    response: "To authenticate users in your application, you can use JWT (JSON Web Tokens) with refresh token rotation. This approach provides a good balance between security and user experience. Here's how it works:\n\n1. User logs in with credentials\n2. Server validates and issues an access token (short-lived) and refresh token (long-lived)\n3. Client includes access token in API requests\n4. When access token expires, use refresh token to get a new one\n\nFor implementation details, refer to the Authentication Guide memo in your knowledge base."
+                    intermediate_steps: []
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/ChatStreamEvent'
+              examples:
+                streamingResponse:
+                  summary: Server-Sent Events stream
+                  value: |
+                    data: {"type": "chunk", "content": "To authenticate"}
+
+                    data: {"type": "chunk", "content": " users"}
+
+                    data: {"type": "chunk", "content": " in your"}
+
+                    data: {"type": "chunk", "content": " application,"}
+
+                    data: {"type": "chunk", "content": " you can use JWT"}
+
+                    data: {"type": "done", "chat_id": "550e8400-e29b-41d4-a716-446655440000"}
+
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingQuery:
+                  summary: Missing query parameter
+                  value:
+                    error: "Query is required"
+                invalidFilters:
+                  summary: Invalid filters format
+                  value:
+                    error: "Filters must be a list"
+                invalidProvider:
+                  summary: Invalid LLM provider
+                  value:
+                    error: "Invalid LLM provider: invalid_provider"
+                invalidFilter:
+                  summary: Invalid filter configuration
+                  value:
+                    error: "Invalid filter: operator 'invalid_op' is not supported"
+        '401':
+          description: Unauthorized - missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Missing authentication
+                  value:
+                    error: "Unauthorized"
+        '403':
+          description: Forbidden - quota exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                quotaExceeded:
+                  summary: Free tier limit reached
+                  value:
+                    error: "You've reached your plan limit of 100 chat queries per month. Please upgrade your plan to continue using this feature."
+        '404':
+          description: Not found - project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                projectNotFound:
+                  summary: Project not found
+                  value:
+                    error: "Project not found"
+        '503':
+          description: Service unavailable - chat agent error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                serviceUnavailable:
+                  summary: Chat service unavailable
+                  value:
+                    error: "Chat agent unavailable"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Project API Key
+      description: |
+        Use your Skald Project API Key with the format: sk_proj_<40_hex_chars>
+        Include it in the Authorization header as: Authorization: Bearer sk_proj_...
+
+  schemas:
+    MemoFilter:
+      type: object
+      description: Filter to apply to knowledge base search
+      required:
+        - field
+        - operator
+        - value
+        - filter_type
+      properties:
+        field:
+          type: string
+          description: |
+            The field name to filter on.
+            For native_field type: 'title', 'source', 'client_reference_id', 'tags'
+            For custom_metadata type: any custom metadata field name
+          example: "tags"
+        operator:
+          type: string
+          enum:
+            - eq
+            - neq
+            - contains
+            - startswith
+            - endswith
+            - in
+            - not_in
+          description: The comparison operator to use
+          example: "contains"
+        value:
+          description: |
+            The value to compare against. Type depends on the operator:
+            - eq, neq, contains, startswith, endswith: string
+            - in, not_in: array of strings
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+              items:
+                type: string
+          example: "authentication"
+        filter_type:
+          type: string
+          enum:
+            - native_field
+            - custom_metadata
+          description: |
+            Whether to filter on a native memo field or custom metadata.
+            Native fields: title, source, client_reference_id, tags
+            Custom metadata: any field in the memo's metadata object
+          example: "native_field"
+
+    ChatResponse:
+      type: object
+      description: Non-streaming chat response
+      required:
+        - ok
+        - chat_id
+        - response
+        - intermediate_steps
+      properties:
+        ok:
+          type: boolean
+          description: Indicates successful response
+          example: true
+        chat_id:
+          type: string
+          format: uuid
+          description: |
+            Conversation ID for maintaining chat history.
+            Use this ID in subsequent requests to continue the conversation.
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        response:
+          type: string
+          description: The AI-generated response text
+          example: "To authenticate users, you can use JWT tokens with refresh token rotation..."
+        intermediate_steps:
+          type: array
+          description: Internal processing steps (for debugging)
+          items:
+            type: object
+
+    ChatStreamEvent:
+      description: |
+        Server-Sent Events (SSE) stream format for streaming responses.
+        Each event is sent as: data: {json}\n\n
+
+        Event types:
+        - chunk: Incremental content chunk
+        - done: Stream completed successfully
+        - error: An error occurred
+      oneOf:
+        - type: object
+          description: Content chunk event
+          required:
+            - type
+            - content
+          properties:
+            type:
+              type: string
+              enum: [chunk]
+              example: "chunk"
+            content:
+              type: string
+              description: Incremental text content
+              example: "To authenticate"
+        - type: object
+          description: Stream completion event
+          required:
+            - type
+            - chat_id
+          properties:
+            type:
+              type: string
+              enum: [done]
+              example: "done"
+            chat_id:
+              type: string
+              format: uuid
+              description: Conversation ID for this chat
+              example: "550e8400-e29b-41d4-a716-446655440000"
+        - type: object
+          description: Error event
+          required:
+            - type
+            - content
+          properties:
+            type:
+              type: string
+              enum: [error]
+              example: "error"
+            content:
+              type: string
+              description: Error message
+              example: "An error occurred while processing your request"
+
+    Error:
+      type: object
+      description: Error response object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Query is required"
+
+tags:
+  - name: Chat
+    description: |
+      Conversational AI operations powered by RAG (Retrieval-Augmented Generation).
+      Combines vector search with LLM capabilities to provide intelligent responses
+      based on your memo knowledge base.
