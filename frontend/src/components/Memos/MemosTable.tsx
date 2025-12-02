@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Share, CheckCircle, AlertCircle, Loader2, FileUp } from 'lucide-react'
+import { Trash2, Share, CheckCircle, AlertCircle, Loader2, Plus } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -114,13 +114,6 @@ export const MemosTable = ({
 
         return (
             <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
-                    <div className="relative p-6 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-                        <FileUp className="h-12 w-12 text-primary" />
-                    </div>
-                </div>
-
                 <h3 className="text-xl font-semibold text-foreground mb-2">Create your first Memo</h3>
                 <p className="text-muted-foreground text-center max-w-md mb-6">
                     Memos are the foundation of your knowledge base. Upload documents, paste text, or add content to
@@ -129,7 +122,7 @@ export const MemosTable = ({
 
                 <div className="flex flex-col sm:flex-row gap-3 mb-8">
                     <Button onClick={onCreateMemo} size="lg" className="gap-2">
-                        <FileUp className="h-4 w-4" />
+                        <Plus className="h-4 w-4" />
                         Create Memo
                     </Button>
                 </div>
