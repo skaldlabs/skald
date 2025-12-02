@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { ChatMessagesList } from './ChatMessagesList'
 import { ChatInput } from './ChatInput'
 import { useProjectStore } from '@/stores/projectStore'
@@ -18,6 +19,7 @@ import {
     Layers,
     History,
     Quote,
+    FileUp,
 } from 'lucide-react'
 import { PageHeader } from '@/components/AppLayout/PageHeader'
 import { Textarea } from '@/components/ui/textarea'
@@ -186,6 +188,28 @@ export const PlaygroundDashboard = () => {
                     </div>
                 )}
             </div>
+
+            {/* No memos alert */}
+            {!memosLoading && memos.length === 0 && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                        <FileUp className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="text-sm font-medium text-foreground">No data ingested yet</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                To start using Retrieval, you need to ingest some data first. Head over to the{' '}
+                                <Link
+                                    to={`/projects/${currentProject.uuid}/memos`}
+                                    className="font-medium text-primary hover:underline"
+                                >
+                                    Ingestion page
+                                </Link>{' '}
+                                to create your first memo.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="chat-container">
                 <ChatMessagesList />
