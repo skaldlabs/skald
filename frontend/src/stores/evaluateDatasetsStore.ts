@@ -43,6 +43,7 @@ interface EvaluateDatasetsState {
     fetchDataset: (datasetUuid: string) => Promise<void>
     createDataset: (payload: CreateDatasetPayload) => Promise<boolean>
     updateQuestion: (datasetUuid: string, questionUuid: string, payload: UpdateQuestionPayload) => Promise<boolean>
+    deleteDataset: (datasetUuid: string) => Promise<boolean>
     clearCurrentDataset: () => void
 }
 
@@ -145,6 +146,26 @@ export const useEvaluateDatasetsStore = create<EvaluateDatasetsState>((set, get)
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : 'Failed to update question'
             toast.error(`Failed to update question: ${errorMsg}`)
+            return false
+        }
+    },
+
+    deleteDataset: async (datasetUuid: string) => {
+        try {
+            const projectPath = getProjectPath()
+            const response = await api.delete(`${projectPath}/evaluation-datasets/${datasetUuid}`)
+
+            if (response.error) {
+                toast.error(`Failed to delete dataset: ${response.error}`)
+                return false
+            }
+
+            await get().fetchDatasets()
+            toast.success('Dataset deleted successfully')
+            return true
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Failed to delete dataset'
+            toast.error(`Failed to delete dataset: ${errorMsg}`)
             return false
         }
     },
