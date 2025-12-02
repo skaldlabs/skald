@@ -263,21 +263,25 @@ export const MemosDashboard = () => {
                 )}
             </div>
 
-            <MemosSearchBar
-                searchQuery={searchQuery}
-                searchMethod={searchMethod}
-                loading={loading}
-                onSearchQueryChange={setSearchQuery}
-                onSearch={handleSearch}
-                onClear={handleClearSearch}
-            />
+            {memos.length > 0 && (
+                <>
+                    <MemosSearchBar
+                        searchQuery={searchQuery}
+                        searchMethod={searchMethod}
+                        loading={loading}
+                        onSearchQueryChange={setSearchQuery}
+                        onSearch={handleSearch}
+                        onClear={handleClearSearch}
+                    />
 
-            <MemosSearchResultsBanner
-                searchQuery={searchQuery}
-                searchMethod={searchMethod}
-                totalCount={totalCount}
-                onClear={handleClearSearch}
-            />
+                    <MemosSearchResultsBanner
+                        searchQuery={searchQuery}
+                        searchMethod={searchMethod}
+                        totalCount={totalCount}
+                        onClear={handleClearSearch}
+                    />
+                </>
+            )}
 
             <MemosTable
                 memos={memos}
