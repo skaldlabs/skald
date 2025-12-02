@@ -49,12 +49,12 @@ const retrievalSteps = [
     {
         icon: Layers,
         title: 'Context Assembly',
-        description: 'Combines the best chunks into coherent context',
+        description: 'Compose coherent context using summaries, tags, chunks, and metadata',
     },
     {
         icon: Brain,
-        title: 'LLM Interaction',
-        description: 'Generates response using assembled context',
+        title: 'LLM Generation',
+        description: 'Generates response using assembled context with support for various frontier models',
     },
     {
         icon: History,
@@ -147,12 +147,12 @@ export const PlaygroundDashboard = () => {
                     className="w-full flex items-center justify-between text-left"
                 >
                     <div>
-                        <h3 className="text-sm font-medium text-foreground">What is Retrieval?</h3>
+                        <h3 className="text-sm font-medium text-foreground">About Skald's retrieval API</h3>
                         <p className="text-sm text-muted-foreground mt-0.5">
-                            Test your knowledge base with{' '}
-                            <span className="font-medium text-foreground">RAG-powered</span> conversations. Ask
-                            questions and get answers grounded in your ingested data.
+                            This UI sandbox let's you ask questions from your memos to simulate using our retrieval API.
+                            Click <b>Configure</b> to customize the retrieval pipeline to your exact needs.
                         </p>
+                        <p className="text-sm text-muted-foreground mt-0.5"></p>
                     </div>
                     {showRetrievalInfo ? (
                         <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-4" />

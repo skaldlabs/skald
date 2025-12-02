@@ -34,12 +34,12 @@ const pipelineSteps = [
     {
         icon: Sparkles,
         title: 'Summary Generation',
-        description: 'Generates concise summaries for quick understanding',
+        description: 'Generates concise summaries to improve retrieval',
     },
     {
         icon: Tags,
         title: 'Auto-Tagging',
-        description: 'Extracts and assigns relevant tags automatically',
+        description: 'Extracts relevant tags automatically to speed up and improve retrieval performance',
     },
 ]
 
@@ -227,10 +227,11 @@ export const MemosDashboard = () => {
                     className="w-full flex items-center justify-between text-left"
                 >
                     <div>
-                        <h3 className="text-sm font-medium text-foreground">What is a Memo?</h3>
+                        <h3 className="text-sm font-medium text-foreground">What's a memo?</h3>
                         <p className="text-sm text-muted-foreground mt-0.5">
-                            A <span className="font-medium text-foreground">Memo</span> is a piece of knowledge in
-                            Skald. This pipeline processes your data end-to-end, preparing it for intelligent retrieval.
+                            <span className="font-medium text-foreground">Memos</span> are the unit of knowledge in
+                            Skald. They can be anything from a document, an email, a note, some code, or any other piece
+                            of information.
                         </p>
                     </div>
                     {showPipelineInfo ? (
@@ -242,6 +243,11 @@ export const MemosDashboard = () => {
 
                 {showPipelineInfo && (
                     <div className="mt-4 pt-4 border-t">
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Our pipeline does extensive pre-processing of memos, preparing them for intelligent
+                            retrieval.
+                        </p>
+                        <br />
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                             {pipelineSteps.map((step, index) => (
                                 <div
