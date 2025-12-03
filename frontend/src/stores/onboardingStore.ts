@@ -365,7 +365,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
 
         try {
             const response = await api.get<{ suggestions: string[] }>(
-                `/v1/chat/suggestions?memo_uuid=${memoUuid}&project_id=${currentProject.uuid}`
+                `/onboarding/suggestions?memo_uuid=${memoUuid}&project_id=${currentProject.uuid}`
             )
 
             if (response.error) {
