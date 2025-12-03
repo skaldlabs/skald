@@ -1,22 +1,11 @@
 import { Request, Response } from 'express'
 import { parseFilter } from '@/lib/filterUtils'
-import { Project } from '@/entities/Project'
 import { MemoFilter } from '@/lib/filterUtils'
-import { EmbeddingService } from '@/services/embeddingService'
-import { memoChunkVectorSearch } from '@/embeddings/vectorSearch'
-import { getTitleAndSummaryAndContentForMemoList } from '@/queries/memo'
 import { DI } from '@/di'
 import { SearchRequest } from '@/entities/SearchRequest'
 import { randomUUID } from 'crypto'
 import * as Sentry from '@sentry/node'
-interface SearchResult {
-    chunk_uuid: string
-    memo_title: string
-    memo_summary: string
-    content_snippet: string
-    chunk_content: string
-    distance: number
-}
+import { searchGraph, SearchResult } from '../lib/searchGraph'
 
 export const search = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -47,7 +36,19 @@ export const search = async (req: Request, res: Response) => {
         }
     }
 
-    const results: SearchResult[] = await _chunkVectorSearch(project, query, limit, memoFilters)
+    const initialState = {
+        project,
+        query,
+        limit,
+        filters: memoFilters,
+        chunkResults: null,
+        memoPropertiesMap: null,
+        rerankedResults: [],
+        results: [],
+    }
+
+    const finalState = await searchGraph.invoke(initialState)
+    const results: SearchResult[] = finalState.results
 
     const createSearchRequest = async () => {
         try {
@@ -72,30 +73,4 @@ export const search = async (req: Request, res: Response) => {
     void createSearchRequest()
 
     return res.status(200).json({ results })
-}
-
-const _chunkVectorSearch = async (
-    project: Project,
-    query: string,
-    limit: number,
-    filters: MemoFilter[]
-): Promise<SearchResult[]> => {
-    const embeddingVector = await EmbeddingService.generateEmbedding(query, 'search')
-    const chunkResults = await memoChunkVectorSearch(project, embeddingVector, limit, 0.75, filters)
-
-    const memoPropertiesMap = await getTitleAndSummaryAndContentForMemoList(
-        project.uuid,
-        Array.from(new Set(chunkResults.map((c) => c.chunk.memo_uuid)))
-    )
-
-    const results = chunkResults.map((result) => ({
-        memo_uuid: result.chunk.memo_uuid,
-        chunk_uuid: result.chunk.uuid,
-        memo_title: memoPropertiesMap.get(result.chunk.memo_uuid)?.title || '',
-        memo_summary: memoPropertiesMap.get(result.chunk.memo_uuid)?.summary || '',
-        content_snippet: memoPropertiesMap.get(result.chunk.memo_uuid)?.content.slice(0, 100) || '',
-        chunk_content: result.chunk.chunk_content || '',
-        distance: result.distance,
-    }))
-    return results
 }
