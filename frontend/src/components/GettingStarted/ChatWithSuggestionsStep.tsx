@@ -36,10 +36,10 @@ export const ChatWithSuggestionsStep = () => {
     const completeOnboarding = useOnboardingStore((state) => state.completeOnboarding)
 
     const messages = useChatStore((state) => state.messages)
+    const isStreaming = useChatStore((state) => state.isStreaming)
     const clearMessages = useChatStore((state) => state.clearMessages)
 
-    // Show completion panel after receiving first AI response (at least 2 messages)
-    const hasReceivedResponse = messages.length >= 2
+    const hasReceivedResponse = messages.length >= 2 && !isStreaming
 
     const handleGoToDashboard = async () => {
         await completeOnboarding()
