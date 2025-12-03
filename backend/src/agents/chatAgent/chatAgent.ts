@@ -28,6 +28,7 @@ export async function* streamChatAgent({
 }): AsyncGenerator<StreamChunk> {
     const llm = LLMService.getLLM(0, llmProvider)
     const chain = prompt.pipe(llm)
+
     const stream = await chain.stream({
         input: query,
         context: contextStr,

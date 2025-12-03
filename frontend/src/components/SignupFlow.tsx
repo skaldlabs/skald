@@ -7,7 +7,7 @@ import { CompleteProfilePage } from '@/pages/CompleteProfilePage'
 import { CreateOrganizationPage } from '@/pages/CreateOrganizationPage'
 import { UserDetails } from '@/stores/authStore'
 import { SelfHostedWelcomePage } from '@/pages/SelfHostedWelcomePage'
-// import { isSelfHostedDeploy } from '@/config'
+import { isSelfHostedDeploy } from '@/config'
 
 interface SignupFlowProps {
     currentStep: SignupFlowStep
@@ -54,7 +54,7 @@ const signupSteps = [
         step: SignupFlowStep.SelfHostedWelcome,
         path: '/self-hosted-welcome',
         component: <SelfHostedWelcomePage />,
-        userShouldCompleteStep: () => true, // isSelfHostedDeploy,
+        userShouldCompleteStep: () => isSelfHostedDeploy,
     },
     {
         step: SignupFlowStep.Complete,
