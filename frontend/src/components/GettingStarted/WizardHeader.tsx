@@ -13,7 +13,7 @@ export const WizardHeader = ({ currentStep }: WizardHeaderProps) => {
 
     const skipToEnd = () => {
         if (currentProject) {
-            navigate(`/overview`)
+            navigate(`/projects/${currentProject.uuid}/memos`)
         }
     }
 
