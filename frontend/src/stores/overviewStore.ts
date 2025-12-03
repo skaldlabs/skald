@@ -15,20 +15,24 @@ interface OverviewResponse {
 interface OverviewState {
     stats: ProjectStats | null
     loading: boolean
-    fetchStats: () => Promise<void>
+    fetchStats: (projectUuid: string) => Promise<void>
 }
 
 export const useOverviewStore = create<OverviewState>((set) => ({
     stats: null,
     loading: false,
 
-    fetchStats: async () => {
-        const currentProject = useProjectStore.getState().currentProject
-        if (!currentProject) return
+    fetchStats: async (projectUuid: string) => {
+        if (!projectUuid) return
 
         set({ loading: true })
         try {
-            const response = await api.get<OverviewResponse>(`/project/${currentProject.uuid}/overview/`)
+            const response = await api.get<OverviewResponse>(`/project/${projectUuid}/overview/`)
+
+            const currentProject = useProjectStore.getState().currentProject
+            if (currentProject?.uuid !== projectUuid) {
+                return
+            }
 
             set({
                 stats: {
@@ -38,7 +42,10 @@ export const useOverviewStore = create<OverviewState>((set) => ({
                 loading: false,
             })
         } catch {
-            set({ stats: { memoCount: 0, chatCount: 0 }, loading: false })
+            const currentProject = useProjectStore.getState().currentProject
+            if (currentProject?.uuid === projectUuid) {
+                set({ stats: { memoCount: 0, chatCount: 0 }, loading: false })
+            }
         }
     },
 }))

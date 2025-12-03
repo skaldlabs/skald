@@ -14,8 +14,10 @@ export const Overview = () => {
     const { stats, loading, fetchStats } = useOverviewStore()
 
     useEffect(() => {
-        fetchStats()
-    }, [currentProject, fetchStats])
+        if (currentProject?.uuid) {
+            fetchStats(currentProject.uuid)
+        }
+    }, [currentProject?.uuid, fetchStats])
 
     if (!currentProject) {
         return (

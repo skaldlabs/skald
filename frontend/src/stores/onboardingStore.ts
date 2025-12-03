@@ -167,7 +167,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
             if (response.error) {
                 throw new Error(response.error)
             }
-            console.log(response.data)
+
             const memoUuid = response.data?.memo_uuid
 
             if (!memoUuid) {
