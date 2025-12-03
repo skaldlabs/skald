@@ -3,7 +3,6 @@ import { WizardHeader } from '@/components/GettingStarted/WizardHeader'
 import { MemoCreationStep } from '@/components/GettingStarted/MemoCreationStep'
 import { ProcessingExplanationStep } from '@/components/GettingStarted/ProcessingExplanationStep'
 import { ChatWithSuggestionsStep } from '@/components/GettingStarted/ChatWithSuggestionsStep'
-import { ApiInformationStep } from '@/components/GettingStarted/ApiInformationStep'
 import '@/components/GettingStarted/OnboardingWizard.scss'
 
 export const OnboardingWizard = () => {
@@ -17,7 +16,6 @@ export const OnboardingWizard = () => {
                 {currentStep === 1 && <MemoCreationStep />}
                 {currentStep === 2 && <ProcessingExplanationStep />}
                 {currentStep === 3 && <ChatWithSuggestionsStep />}
-                {currentStep === 4 && <ApiInformationStep />}
             </div>
         </div>
     )

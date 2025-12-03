@@ -20,7 +20,7 @@ export const WizardHeader = ({ currentStep }: WizardHeaderProps) => {
     return (
         <div className="wizard-header">
             <div className="step-dots">
-                {[1, 2, 3, 4].map((step) => (
+                {[1, 2, 3].map((step) => (
                     <div
                         key={step}
                         className={`dot ${step === currentStep ? 'active' : ''} ${step < currentStep ? 'complete' : ''}`}

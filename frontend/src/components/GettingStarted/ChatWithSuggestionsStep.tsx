@@ -13,7 +13,6 @@ import {
     Search,
     Brain,
     Layers,
-    ArrowRight,
     Lightbulb,
     PenLine,
     LayoutDashboard,
@@ -52,7 +51,6 @@ export const ChatWithSuggestionsStep = () => {
     const hasChatted = useOnboardingStore((state) => state.hasChatted)
     const setChatQuery = useOnboardingStore((state) => state.setChatQuery)
     const sendChatMessage = useOnboardingStore((state) => state.sendChatMessage)
-    const nextStep = useOnboardingStore((state) => state.nextStep)
     const reset = useOnboardingStore((state) => state.reset)
 
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -205,10 +203,6 @@ export const ChatWithSuggestionsStep = () => {
 
             {hasChatted && (
                 <div className="continue-section">
-                    <Button onClick={nextStep} size="lg" className="continue-button primary">
-                        Continue to API Setup
-                        <ArrowRight className="h-4 w-4" />
-                    </Button>
                     <Button
                         onClick={handleGoToDashboard}
                         size="lg"
