@@ -80,4 +80,7 @@ export class User {
         index: 'skald_user_current_project_id_ed8d14d2',
     })
     current_project?: Project
+
+    @Property({ default: false })
+    onboarding_completed!: boolean & Opt
 }

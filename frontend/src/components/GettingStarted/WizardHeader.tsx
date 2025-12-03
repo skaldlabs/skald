@@ -1,0 +1,39 @@
+import { Button } from '@/components/ui/button'
+import { X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useProjectStore } from '@/stores/projectStore'
+import { useOnboardingStore } from '@/stores/onboardingStore'
+
+interface WizardHeaderProps {
+    currentStep: number
+}
+
+export const WizardHeader = ({ currentStep }: WizardHeaderProps) => {
+    const navigate = useNavigate()
+    const currentProject = useProjectStore((state) => state.currentProject)
+    const completeOnboarding = useOnboardingStore((state) => state.completeOnboarding)
+
+    const skipToEnd = async () => {
+        await completeOnboarding()
+        if (currentProject) {
+            navigate(`/projects/${currentProject.uuid}/memos`)
+        }
+    }
+
+    return (
+        <div className="wizard-header">
+            <div className="step-dots">
+                {[1, 2, 3].map((step) => (
+                    <div
+                        key={step}
+                        className={`dot ${step === currentStep ? 'active' : ''} ${step < currentStep ? 'complete' : ''}`}
+                    />
+                ))}
+            </div>
+
+            <Button variant="ghost" size="sm" onClick={skipToEnd} className="skip-button">
+                Skip <X className="ml-1 h-4 w-4" />
+            </Button>
+        </div>
+    )
+}

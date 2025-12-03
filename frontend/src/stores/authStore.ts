@@ -32,6 +32,7 @@ interface UserDetailsResponse {
     oauth_provider?: string
     profile_picture?: string
     google_id?: string
+    onboarding_completed?: boolean
 }
 
 export interface UserDetails extends UserDetailsResponse {

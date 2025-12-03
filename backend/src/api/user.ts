@@ -20,6 +20,7 @@ interface UserResponse {
     oauth_provider?: string | null
     profile_picture?: string | null
     role?: string | null
+    onboarding_completed?: boolean
 }
 
 export const login = async (req: Request, res: Response) => {
@@ -73,6 +74,7 @@ export const login = async (req: Request, res: Response) => {
         is_superuser: user.is_superuser,
         profile_picture: user.profilePicture,
         oauth_provider: user.authProvider,
+        onboarding_completed: user.onboarding_completed,
     }
 
     res.json({ user: userResponse })
@@ -152,6 +154,7 @@ const createUser = async (req: Request, res: Response) => {
         is_superuser: user.is_superuser,
         profile_picture: user.profilePicture,
         oauth_provider: user.authProvider,
+        onboarding_completed: user.onboarding_completed,
     }
 
     res.status(201).json({ user: userResponse })
@@ -207,6 +210,7 @@ const getUserDetails = async (req: Request, res: Response) => {
         oauth_provider: user.authProvider,
         profile_picture: user.profilePicture,
         role: user.role,
+        onboarding_completed: user.onboarding_completed,
     }
 
     res.status(200).json(userResponse)
@@ -258,6 +262,7 @@ const setCurrentProject = async (req: Request, res: Response) => {
         is_superuser: user.is_superuser,
         profile_picture: user.profilePicture,
         oauth_provider: user.authProvider,
+        onboarding_completed: user.onboarding_completed,
     }
 
     res.status(200).json(userResponse)
@@ -326,6 +331,7 @@ const updateUserDetails = async (req: Request, res: Response) => {
         is_superuser: user.is_superuser,
         profile_picture: user.profilePicture,
         oauth_provider: user.authProvider,
+        onboarding_completed: user.onboarding_completed,
     }
 
     res.status(200).json(userResponse)
