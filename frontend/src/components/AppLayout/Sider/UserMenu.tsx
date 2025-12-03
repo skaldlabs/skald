@@ -38,7 +38,7 @@ export const UserMenu = () => {
     }
     const userMenuItems: { key: string; icon: React.ReactNode; label: string; hasAccess: () => boolean }[] = [
         {
-            key: '/projects/get-started',
+            key: '/onboarding',
             icon: <Rocket className="size-4" />,
             label: 'Onboarding',
             hasAccess: () => true,

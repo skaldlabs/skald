@@ -7,7 +7,7 @@ import { ExternalLink } from 'lucide-react'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import '@/components/GettingStarted/GettingStarted.scss'
 
-export const Onboarding = () => {
+export const APIGettingStarted = () => {
     const { apiKey, memoCreated, hasChatted } = useOnboardingStore()
 
     const getCurrentStep = () => {

@@ -11,15 +11,17 @@ import { DatasetsPage } from '@/pages/DatasetsPage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { isSelfHostedDeploy } from '@/config'
+import { OnboardingWizard } from './components/GettingStarted/OnboardingWizard'
 
 const RootRedirect = () => {
-    return <Navigate to="/projects/memos" />
+    return <Navigate to="/projects/get-started" />
 }
 
 const defaultRoutes = [
     { path: '/', component: RootRedirect },
     { path: '/projects/get-started', component: () => <GettingStartedPage /> },
     { path: '/projects/:uuid/get-started', component: () => <GettingStartedPage /> },
+    { path: '/onboarding', component: () => <OnboardingWizard /> },
     { path: '/organization', component: () => <OrganizationPage /> },
     { path: '/projects/:uuid/settings', component: () => <ProjectSettingsPage /> },
     { path: '/projects/:uuid/memos', component: () => <MemosPage /> },
