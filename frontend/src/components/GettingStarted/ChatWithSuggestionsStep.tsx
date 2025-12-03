@@ -5,17 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Chat } from '@/components/Playground/Chat'
-import {
-    Loader2,
-    Sparkles,
-    MessageCircle,
-    Search,
-    Brain,
-    Layers,
-    Lightbulb,
-    PenLine,
-    LayoutDashboard,
-} from 'lucide-react'
+import { MessageCircle, Search, Brain, Layers, PenLine, PartyPopper, CheckCircle2, ArrowRight } from 'lucide-react'
 
 const ragSteps = [
     {
@@ -42,16 +32,13 @@ const ragSteps = [
 
 export const ChatWithSuggestionsStep = () => {
     const navigate = useNavigate()
-    const chatSuggestions = useOnboardingStore((state) => state.chatSuggestions)
-    const isLoadingSuggestions = useOnboardingStore((state) => state.isLoadingSuggestions)
     const reset = useOnboardingStore((state) => state.reset)
 
     const messages = useChatStore((state) => state.messages)
-    const isStreaming = useChatStore((state) => state.isStreaming)
-    const sendMessage = useChatStore((state) => state.sendMessage)
     const clearMessages = useChatStore((state) => state.clearMessages)
 
-    const hasChatted = messages.length > 0
+    // Show completion panel after receiving first AI response (at least 2 messages)
+    const hasReceivedResponse = messages.length >= 2
 
     const handleGoToDashboard = () => {
         reset()
@@ -59,14 +46,8 @@ export const ChatWithSuggestionsStep = () => {
         navigate('/')
     }
 
-    const handleSuggestionClick = (suggestion: string) => {
-        if (!isStreaming) {
-            sendMessage(suggestion)
-        }
-    }
-
     return (
-        <div className={`chat-step-wrapper ${hasChatted ? 'has-chatted' : ''}`}>
+        <div className={`chat-step-wrapper ${hasReceivedResponse ? 'has-chatted' : ''}`}>
             <div className="chat-step-container">
                 <Card className="info-panel">
                     <CardContent className="info-panel-content">
@@ -106,56 +87,47 @@ export const ChatWithSuggestionsStep = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="suggestions-panel">
-                    <CardContent className="suggestions-panel-content">
-                        <Badge variant="secondary" className="suggestions-badge">
-                            <Lightbulb className="h-3.5 w-3.5" />
-                            Ideas
-                        </Badge>
+                {hasReceivedResponse && (
+                    <Card className="completion-panel">
+                        <CardContent className="completion-panel-content">
+                            <div className="completion-icon">
+                                <PartyPopper className="h-8 w-8" />
+                            </div>
 
-                        <h3>Need inspiration?</h3>
+                            <Badge variant="secondary" className="completion-badge">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Complete
+                            </Badge>
 
-                        {isLoadingSuggestions ? (
-                            <div className="suggestions-loading">
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                                <p>Generating example questions based on your memo...</p>
+                            <h3>You're all set!</h3>
+
+                            <p className="completion-description">
+                                You've successfully created your first memo and experienced RAG in action.
+                            </p>
+
+                            <div className="completion-checklist">
+                                <div className="checklist-item">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    <span>Content indexed</span>
+                                </div>
+                                <div className="checklist-item">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    <span>Embeddings generated</span>
+                                </div>
+                                <div className="checklist-item">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    <span>AI chat working</span>
+                                </div>
                             </div>
-                        ) : chatSuggestions.length > 0 ? (
-                            <div className="suggestions-list">
-                                {chatSuggestions.map((suggestion, index) => (
-                                    <button
-                                        key={index}
-                                        className="suggestion-item"
-                                        onClick={() => handleSuggestionClick(suggestion)}
-                                        disabled={isStreaming}
-                                    >
-                                        <Sparkles className="h-4 w-4" />
-                                        <span>{suggestion}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="suggestions-empty">
-                                <p>No suggestions available. Try asking your own question!</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+
+                            <Button onClick={handleGoToDashboard} size="lg" className="dashboard-button">
+                                Go to Dashboard
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
-
-            {hasChatted && (
-                <div className="continue-section">
-                    <Button
-                        onClick={handleGoToDashboard}
-                        size="lg"
-                        variant="outline"
-                        className="continue-button secondary"
-                    >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Go to Dashboard
-                    </Button>
-                </div>
-            )}
         </div>
     )
 }

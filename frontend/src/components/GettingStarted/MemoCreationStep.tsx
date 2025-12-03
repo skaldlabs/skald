@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { useOnboardingStore } from '@/stores/onboardingStore'
-import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,7 +19,6 @@ import {
     ArrowRight,
     PenLine,
 } from 'lucide-react'
-import { isSelfHostedDeploy } from '@/config'
 import { toast } from 'sonner'
 
 const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx', '.xls', '.xlsx']
@@ -48,16 +46,13 @@ export const MemoCreationStep = () => {
     const createMemo = useOnboardingStore((state) => state.createMemo)
     const uploadFileMemo = useOnboardingStore((state) => state.uploadFileMemo)
     const generateExampleMemo = useOnboardingStore((state) => state.generateExampleMemo)
-    const currentSubscription = useSubscriptionStore((state) => state.currentSubscription)
 
     const [creationMode, setCreationMode] = useState<CreationMode | null>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    // Calculate max file size: 5MB for free plan (non-self-hosted), 100MB otherwise
-    const isFreePlan = currentSubscription?.plan.slug === 'free'
-    const maxFileSize = isFreePlan && !isSelfHostedDeploy ? 5 * 1024 * 1024 : 100 * 1024 * 1024
-    const maxFileSizeMB = isFreePlan && !isSelfHostedDeploy ? 5 : 100
+    const maxFileSize = 5 * 1024 * 1024 // 5MB
+    const maxFileSizeMB = 5
 
     // Auto-focus textarea when text mode is selected
     useEffect(() => {
@@ -248,12 +243,12 @@ export const MemoCreationStep = () => {
                                 {isGeneratingExample ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin" />
-                                        Generating...
+                                        Filling...
                                     </>
                                 ) : (
                                     <>
                                         <Wand2 className="h-4 w-4" />
-                                        Generate example with AI
+                                        Fill with example content
                                     </>
                                 )}
                             </Button>
