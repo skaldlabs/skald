@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useProjectStore } from '@/stores/projectStore'
+import { useOnboardingStore } from '@/stores/onboardingStore'
 
 interface WizardHeaderProps {
     currentStep: number
@@ -10,8 +11,10 @@ interface WizardHeaderProps {
 export const WizardHeader = ({ currentStep }: WizardHeaderProps) => {
     const navigate = useNavigate()
     const currentProject = useProjectStore((state) => state.currentProject)
+    const completeOnboarding = useOnboardingStore((state) => state.completeOnboarding)
 
-    const skipToEnd = () => {
+    const skipToEnd = async () => {
+        await completeOnboarding()
         if (currentProject) {
             navigate(`/projects/${currentProject.uuid}/memos`)
         }

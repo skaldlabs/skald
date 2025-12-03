@@ -1,4 +1,6 @@
 import express, { Request, Response } from 'express'
+import { DI } from '@/di'
+
 export const generateExampleMemo = async (req: Request, res: Response) => {
     return res.status(200).json({
         title: 'San Francisco - A City of Surprises',
@@ -7,5 +9,18 @@ export const generateExampleMemo = async (req: Request, res: Response) => {
     })
 }
 
+export const completeOnboarding = async (req: Request, res: Response) => {
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Not authenticated' })
+    }
+
+    user.onboarding_completed = true
+    await DI.em.persistAndFlush(user)
+
+    return res.status(200).json({ success: true })
+}
+
 export const onboardingRouter = express.Router({ mergeParams: true })
 onboardingRouter.get('/generate-example-memo', generateExampleMemo)
+onboardingRouter.post('/complete', completeOnboarding)

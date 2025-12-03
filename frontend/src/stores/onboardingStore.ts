@@ -74,6 +74,7 @@ interface OnboardingState {
     fetchChatSuggestions: (memoUuid: string) => Promise<void>
     setSearchQuery: (query: string) => void
     searchMemos: () => Promise<void>
+    completeOnboarding: () => Promise<void>
     reset: () => void
 }
 
@@ -522,6 +523,21 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
             toast.error('Failed to search memos')
             console.error(error)
             set({ isSearching: false })
+        }
+    },
+
+    completeOnboarding: async () => {
+        try {
+            const response = await api.post<{ success: boolean }>('/onboarding/complete')
+            if (response.error) {
+                console.error('Failed to mark onboarding complete:', response.error)
+            } else {
+                // Refresh auth state to update onboarding_completed flag
+                const { useAuthStore } = await import('@/stores/authStore')
+                await useAuthStore.getState().initializeAuth()
+            }
+        } catch (error) {
+            console.error('Failed to mark onboarding complete:', error)
         }
     },
 

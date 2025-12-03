@@ -33,6 +33,7 @@ const ragSteps = [
 export const ChatWithSuggestionsStep = () => {
     const navigate = useNavigate()
     const reset = useOnboardingStore((state) => state.reset)
+    const completeOnboarding = useOnboardingStore((state) => state.completeOnboarding)
 
     const messages = useChatStore((state) => state.messages)
     const clearMessages = useChatStore((state) => state.clearMessages)
@@ -40,7 +41,8 @@ export const ChatWithSuggestionsStep = () => {
     // Show completion panel after receiving first AI response (at least 2 messages)
     const hasReceivedResponse = messages.length >= 2
 
-    const handleGoToDashboard = () => {
+    const handleGoToDashboard = async () => {
+        await completeOnboarding()
         reset()
         clearMessages()
         navigate('/')
