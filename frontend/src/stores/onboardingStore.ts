@@ -19,6 +19,9 @@ interface ChatMessage {
 }
 
 interface OnboardingState {
+    // Wizard state
+    currentStep: 1 | 2 | 3 | 4
+
     // API Key state
     apiKey: string | null
     isGeneratingApiKey: boolean
@@ -28,12 +31,17 @@ interface OnboardingState {
     memoContent: string
     isCreatingMemo: boolean
     memoCreated: boolean
+    memoUuid: string | null
+    isProcessing: boolean
+    processingStage: 'idle' | 'chunking' | 'embedding' | 'indexing' | 'complete' | 'error'
 
     // Chat state
     chatQuery: string
     chatMessages: ChatMessage[]
     isChatting: boolean
     hasChatted: boolean
+    chatSuggestions: string[]
+    isLoadingSuggestions: boolean
 
     // Search state
     searchQuery: string
@@ -42,34 +50,60 @@ interface OnboardingState {
     hasSearched: boolean
 
     // Actions
+    setCurrentStep: (step: 1 | 2 | 3 | 4) => void
+    nextStep: () => void
     generateApiKey: () => Promise<void>
     setApiKey: (apiKey: string) => void
     setMemoTitle: (title: string) => void
     setMemoContent: (content: string) => void
     createMemo: () => Promise<void>
+    pollMemoProcessing: (memoUuid: string) => void
+    stopPolling: () => void
     setChatQuery: (query: string) => void
     sendChatMessage: () => Promise<void>
+    fetchChatSuggestions: (memoUuid: string) => Promise<void>
     setSearchQuery: (query: string) => void
     searchMemos: () => Promise<void>
     reset: () => void
 }
 
+const FALLBACK_SUGGESTIONS = ['What are the main features?', 'How does this work?', 'Tell me more about this']
+
+let pollingInterval: NodeJS.Timeout | null = null
+
 export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     // Initial state
+    currentStep: 1,
     apiKey: null,
     isGeneratingApiKey: false,
     memoTitle: '',
     memoContent: '',
     isCreatingMemo: false,
     memoCreated: false,
+    memoUuid: null,
+    isProcessing: false,
+    processingStage: 'idle',
     chatQuery: '',
     chatMessages: [],
     isChatting: false,
     hasChatted: false,
+    chatSuggestions: [],
+    isLoadingSuggestions: false,
     searchQuery: '',
     searchResults: [],
     isSearching: false,
     hasSearched: false,
+
+    setCurrentStep: (step: 1 | 2 | 3 | 4) => {
+        set({ currentStep: step })
+    },
+
+    nextStep: () => {
+        const { currentStep } = get()
+        if (currentStep < 4) {
+            set({ currentStep: (currentStep + 1) as 1 | 2 | 3 | 4 })
+        }
+    },
 
     generateApiKey: async () => {
         const { currentProject, generateApiKey } = useProjectStore.getState()
@@ -108,13 +142,8 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     },
 
     createMemo: async () => {
-        const { apiKey, memoTitle, memoContent } = get()
+        const { memoTitle, memoContent } = get()
         const { currentProject } = useProjectStore.getState()
-
-        if (!apiKey) {
-            toast.error('Please generate an API key first')
-            return
-        }
 
         if (!currentProject) {
             toast.error('No project selected')
@@ -129,7 +158,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         set({ isCreatingMemo: true })
 
         try {
-            const response = await api.post('/v1/memo/', {
+            const response = await api.post<{ memo_uuid: string }>('/v1/memo/', {
                 title: memoTitle,
                 content: memoContent,
                 project_id: currentProject.uuid,
@@ -138,16 +167,120 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
             if (response.error) {
                 throw new Error(response.error)
             }
+            console.log(response.data)
+            const memoUuid = response.data?.memo_uuid
+
+            if (!memoUuid) {
+                throw new Error('No memo UUID returned')
+            }
 
             toast.success('Memo created successfully!')
             set({
                 memoCreated: true,
                 isCreatingMemo: false,
+                memoUuid,
+                currentStep: 2,
+                isProcessing: true,
+                processingStage: 'chunking',
             })
+
+            // Start polling for processing status
+            get().pollMemoProcessing(memoUuid)
         } catch (error) {
             toast.error('Failed to create memo')
             console.error(error)
             set({ isCreatingMemo: false })
+        }
+    },
+
+    pollMemoProcessing: (memoUuid: string) => {
+        const { currentProject } = useProjectStore.getState()
+
+        if (!currentProject || pollingInterval) return
+
+        const checkProcessingStatus = async () => {
+            try {
+                const response = await api.get<{ processing_status: string }>(
+                    `/v1/memo/${memoUuid}/?project_id=${currentProject.uuid}`
+                )
+
+                if (response.error) {
+                    console.error('Error fetching memo status:', response.error)
+                    return
+                }
+
+                const status = response.data?.processing_status
+
+                if (status === 'processed') {
+                    set({
+                        processingStage: 'complete',
+                        isProcessing: false,
+                        currentStep: 3,
+                    })
+                    get().stopPolling()
+                    // Fetch chat suggestions
+                    get().fetchChatSuggestions(memoUuid)
+                } else if (status === 'error') {
+                    set({
+                        processingStage: 'error',
+                        isProcessing: false,
+                    })
+                    get().stopPolling()
+                    toast.error('Memo processing failed')
+                } else if (status === 'processing') {
+                    // Cycle through stages for visual effect
+                    const stages: Array<'chunking' | 'embedding' | 'indexing'> = ['chunking', 'embedding', 'indexing']
+                    const currentStageIndex = stages.indexOf(get().processingStage as any)
+                    const nextStageIndex = (currentStageIndex + 1) % stages.length
+                    set({ processingStage: stages[nextStageIndex] })
+                }
+            } catch (error) {
+                console.error('Error polling memo status:', error)
+            }
+        }
+
+        // Check immediately
+        checkProcessingStatus()
+
+        // Then poll every 2 seconds
+        pollingInterval = setInterval(checkProcessingStatus, 2000)
+    },
+
+    stopPolling: () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval)
+            pollingInterval = null
+        }
+    },
+
+    fetchChatSuggestions: async (memoUuid: string) => {
+        const { currentProject } = useProjectStore.getState()
+
+        if (!currentProject) return
+
+        set({ isLoadingSuggestions: true })
+
+        try {
+            const response = await api.get<{ suggestions: string[] }>(
+                `/v1/chat/suggestions?memo_uuid=${memoUuid}&project_id=${currentProject.uuid}`
+            )
+
+            if (response.error) {
+                throw new Error(response.error)
+            }
+
+            const suggestions = response.data?.suggestions || FALLBACK_SUGGESTIONS
+
+            set({
+                chatSuggestions: suggestions,
+                isLoadingSuggestions: false,
+            })
+        } catch (error) {
+            console.error('Error fetching chat suggestions:', error)
+            set({
+                chatSuggestions: FALLBACK_SUGGESTIONS,
+                isLoadingSuggestions: false,
+            })
         }
     },
 
@@ -290,17 +423,24 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     },
 
     reset: () => {
+        get().stopPolling()
         set({
+            currentStep: 1,
             apiKey: null,
             isGeneratingApiKey: false,
             memoTitle: '',
             memoContent: '',
             isCreatingMemo: false,
             memoCreated: false,
+            memoUuid: null,
+            isProcessing: false,
+            processingStage: 'idle',
             chatQuery: '',
             chatMessages: [],
             isChatting: false,
             hasChatted: false,
+            chatSuggestions: [],
+            isLoadingSuggestions: false,
             searchQuery: '',
             searchResults: [],
             isSearching: false,

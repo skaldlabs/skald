@@ -19,7 +19,7 @@ import {
 import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
 import { useProjectStore } from '@/stores/projectStore'
-import { BookOpen, Files, FlaskConical, List, MessageSquare, Rocket, Settings } from 'lucide-react'
+import { BookOpen, Files, FlaskConical, List, MessageSquare, Settings } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 interface MenuItem {
@@ -40,12 +40,6 @@ export const Sider = () => {
 
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
-            {
-                key: `/projects/${currentProject?.uuid}/get-started`,
-                icon: <Rocket className="h-4 w-4" />,
-                label: 'Get Started',
-                hasAccess: () => true,
-            },
             {
                 key: `/projects/${currentProject?.uuid}/memos`,
                 icon: <Files className="h-4 w-4" />,

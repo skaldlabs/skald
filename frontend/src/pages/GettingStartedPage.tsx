@@ -1,10 +1,5 @@
-import { AppLayout } from '@/components/AppLayout/AppLayout'
-import { Onboarding } from '@/components/GettingStarted/Onboarding'
+import { OnboardingWizard } from '@/components/GettingStarted/OnboardingWizard'
 
 export const GettingStartedPage = () => {
-    return (
-        <AppLayout>
-            <Onboarding />
-        </AppLayout>
-    )
+    return <OnboardingWizard />
 }

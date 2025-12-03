@@ -33,7 +33,7 @@ export const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps)
             resetOnboarding()
             onClose()
             setNewProjectName('')
-            navigate(`/projects/${newProject.uuid}/get-started`)
+            navigate(`/projects/${newProject.uuid}/memos`)
         }
     }
 

@@ -12,7 +12,7 @@ import { AdminPage } from '@/pages/AdminPage'
 import { isSelfHostedDeploy } from '@/config'
 
 const RootRedirect = () => {
-    return <Navigate to="/projects/get-started" />
+    return <Navigate to="/projects/memos" />
 }
 
 const defaultRoutes = [

@@ -18,7 +18,7 @@ export const ProjectDangerZone = ({ project }: ProjectDangerZoneProps) => {
 
     const handleDeleteProject = async () => {
         await deleteProject(project.uuid)
-        navigate('/projects/get-started')
+        navigate('/projects/memos')
     }
 
     return (

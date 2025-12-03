@@ -1,0 +1,541 @@
+.onboarding-wizard-fullpage {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--background);
+    overflow-y: auto;
+
+    .wizard-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--background);
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .step-dots {
+            display: flex;
+            gap: 0.5rem;
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--muted);
+                transition: all 0.3s ease;
+
+                &.active {
+                    background: var(--primary);
+                }
+
+                &.complete {
+                    background: hsl(142, 76%, 36%);
+                }
+            }
+        }
+
+        .skip-button {
+            opacity: 0.4;
+            font-size: 0.875rem;
+            transition: opacity 0.2s;
+
+            &:hover {
+                opacity: 0.7;
+            }
+        }
+    }
+
+    .wizard-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+        min-height: calc(100vh - 80px);
+
+        @media (max-width: 768px) {
+            padding: 2rem 1rem;
+        }
+    }
+}
+
+// Step 1: Memo Creation
+.memo-creation-step {
+    text-align: center;
+
+    h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--foreground);
+
+        @media (max-width: 768px) {
+            font-size: 2rem;
+        }
+    }
+
+    .explanation {
+        font-size: 1.125rem;
+        color: var(--muted-foreground);
+        margin-bottom: 3rem;
+        line-height: 1.6;
+    }
+
+    .template-editor {
+        text-align: left;
+        margin-bottom: 2rem;
+
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--foreground);
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .title-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            color: var(--foreground);
+            transition: border-color 0.2s;
+
+            &:focus {
+                outline: none;
+                border-color: var(--primary);
+            }
+        }
+
+        .content-textarea {
+            width: 100%;
+            min-height: 250px;
+            padding: 1rem;
+            font-size: 1rem;
+            line-height: 1.6;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--card);
+            resize: vertical;
+            font-family: inherit;
+
+            &:focus {
+                outline: none;
+                border-color: var(--primary);
+            }
+        }
+
+        .helper-text {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--muted);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            text-align: left;
+        }
+    }
+
+    .create-button {
+        min-width: 250px;
+        padding: 1.5rem 2rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+}
+
+// Step 2: Processing
+.processing-step {
+    text-align: center;
+
+    h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+
+        @media (max-width: 768px) {
+            font-size: 2rem;
+        }
+    }
+
+    .explanation {
+        font-size: 1.125rem;
+        color: var(--muted-foreground);
+        margin-bottom: 2rem;
+    }
+
+    .processing-visual {
+        margin: 3rem 0;
+        display: flex;
+        justify-content: center;
+
+        .pulse-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--primary);
+            opacity: 0.3;
+            animation: pulse 2s ease-in-out infinite;
+        }
+    }
+
+    .processing-stages {
+        max-width: 600px;
+        margin: 2rem auto;
+        display: grid;
+        gap: 1rem;
+
+        .stage-card {
+            padding: 1.5rem;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            text-align: left;
+            transition: all 0.3s ease;
+
+            &.active {
+                border-color: var(--primary);
+                background: hsl(var(--primary-hsl) / 0.05);
+            }
+
+            &.complete {
+                border-color: hsl(142, 76%, 36%);
+                background: hsl(142, 76%, 96%);
+            }
+
+            &.error {
+                border-color: hsl(0, 72%, 51%);
+                background: hsl(0, 72%, 96%);
+            }
+
+            .stage-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.5rem;
+            }
+
+            .stage-title {
+                font-size: 1.125rem;
+                font-weight: 600;
+            }
+
+            .stage-description {
+                font-size: 0.875rem;
+                color: var(--muted-foreground);
+                line-height: 1.5;
+            }
+        }
+    }
+
+    .error-container {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: hsl(0, 72%, 96%);
+        border: 2px solid hsl(0, 72%, 51%);
+        border-radius: 12px;
+
+        .error-message {
+            color: hsl(0, 72%, 40%);
+            margin-bottom: 1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+    }
+}
+
+// Step 3: Chat with Suggestions
+.chat-suggestions-step {
+    h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-align: center;
+
+        @media (max-width: 768px) {
+            font-size: 2rem;
+        }
+    }
+
+    .explanation {
+        font-size: 1.125rem;
+        color: var(--muted-foreground);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .suggestions-container {
+        margin: 2rem 0;
+
+        .suggestions-label {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: var(--foreground);
+        }
+
+        .suggestion-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+
+            .chip {
+                padding: 0.875rem 1.25rem;
+                background: var(--primary);
+                color: var(--primary-foreground);
+                border: none;
+                border-radius: 8px;
+                font-size: 0.9375rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+
+                &:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px hsl(var(--primary-hsl) / 0.25);
+                }
+
+                &:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+
+                @media (max-width: 768px) {
+                    width: 100%;
+                }
+            }
+
+            .loading-suggestions {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--muted-foreground);
+            }
+        }
+    }
+
+    .chat-interface {
+        background: var(--card);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+
+        .chat-messages {
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 1.5rem;
+
+            .chat-placeholder {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 300px;
+                color: var(--muted-foreground);
+            }
+
+            .chat-message {
+                margin-bottom: 1rem;
+                display: flex;
+
+                &.user {
+                    justify-content: flex-end;
+
+                    .message-content {
+                        background: var(--primary);
+                        color: var(--primary-foreground);
+                        border-radius: 12px 12px 0 12px;
+                    }
+                }
+
+                &.assistant {
+                    justify-content: flex-start;
+
+                    .message-content {
+                        background: var(--muted);
+                        color: var(--foreground);
+                        border-radius: 12px 12px 12px 0;
+                    }
+                }
+
+                .message-content {
+                    max-width: 70%;
+                    padding: 0.75rem 1rem;
+                    line-height: 1.5;
+
+                    .streaming-cursor {
+                        animation: blink 1s infinite;
+                        margin-left: 2px;
+                    }
+
+                    @media (max-width: 768px) {
+                        max-width: 85%;
+                    }
+                }
+            }
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            background: var(--background);
+
+            .chat-input {
+                flex: 1;
+            }
+        }
+    }
+
+    .rag-explainer {
+        margin: 1.5rem 0;
+        padding: 1.25rem;
+        background: var(--muted);
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+    }
+
+    .next-button {
+        display: block;
+        margin: 2rem auto 0;
+        min-width: 200px;
+    }
+}
+
+// Step 4: API Information
+.api-information-step {
+    .celebration-header {
+        text-align: center;
+        margin-bottom: 3rem;
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+
+            @media (max-width: 768px) {
+                font-size: 2rem;
+            }
+        }
+
+        .explanation {
+            font-size: 1.125rem;
+            color: var(--muted-foreground);
+            line-height: 1.6;
+        }
+    }
+
+    .api-key-section,
+    .code-examples-section,
+    .docs-link-section {
+        margin-bottom: 3rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .section-description {
+        color: var(--muted-foreground);
+        margin-bottom: 1rem;
+    }
+
+    .api-key-display {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        max-width: 600px;
+
+        .api-key-input {
+            flex: 1;
+            font-family: monospace;
+        }
+    }
+
+    .code-examples-section {
+        .example-group {
+            margin-bottom: 2rem;
+        }
+    }
+
+    .docs-link-section {
+        padding: 1.5rem;
+        background: var(--muted);
+        border-radius: 12px;
+        text-align: center;
+
+        h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: var(--muted-foreground);
+            margin-bottom: 1rem;
+        }
+
+        .docs-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .dashboard-button {
+        display: block;
+        margin: 2rem auto;
+        min-width: 200px;
+    }
+}
+
+// Animations
+@keyframes pulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.5;
+    }
+}
+
+@keyframes blink {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}
