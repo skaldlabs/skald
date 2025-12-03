@@ -75,9 +75,13 @@ const handleGoogleCallback = async (req: Request, res: Response) => {
 
             await DI.em.persistAndFlush(user)
 
-            posthogCapture('user_signed_up', user.email, {
-                user_email: user.email,
-                auth_method: 'google',
+            posthogCapture({
+                event: 'user_signed_up',
+                distinctId: user.email,
+                properties: {
+                    user_email: user.email,
+                    auth_method: 'google',
+                },
             })
         } else {
             if (!user.googleId) {
@@ -98,8 +102,12 @@ const handleGoogleCallback = async (req: Request, res: Response) => {
                 await DI.em.persistAndFlush(user)
             }
 
-            posthogCapture('user_logged_in_google', user.email, {
-                user_email: user.email,
+            posthogCapture({
+                event: 'user_logged_in_google',
+                distinctId: user.email,
+                properties: {
+                    user_email: user.email,
+                },
             })
         }
 

@@ -55,8 +55,12 @@ export const login = async (req: Request, res: Response) => {
         path: '/',
     })
 
-    posthogCapture('user_logged_in', user.email, {
-        user_email: user.email,
+    posthogCapture({
+        event: 'user_logged_in',
+        distinctId: user.email,
+        properties: {
+            user_email: user.email,
+        },
     })
 
     const userResponse: UserResponse = {
@@ -129,9 +133,13 @@ const createUser = async (req: Request, res: Response) => {
         path: '/',
     })
 
-    posthogCapture('user_signed_up', user.email, {
-        user_email: user.email,
-        auth_method: 'password',
+    posthogCapture({
+        event: 'user_signed_up',
+        distinctId: user.email,
+        properties: {
+            user_email: user.email,
+            auth_method: 'password',
+        },
     })
 
     const userResponse: UserResponse = {
@@ -292,12 +300,16 @@ const updateUserDetails = async (req: Request, res: Response) => {
 
     addContactToResend(user.email, user.first_name, user.last_name).catch(() => {})
 
-    posthogCapture('user_details_completed', user.email, {
-        user_email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        role: user.role,
-        referral_source: user.referral_source,
+    posthogCapture({
+        event: 'user_details_completed',
+        distinctId: user.email,
+        properties: {
+            user_email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            role: user.role,
+            referral_source: user.referral_source,
+        },
     })
 
     const userResponse: UserResponse = {
