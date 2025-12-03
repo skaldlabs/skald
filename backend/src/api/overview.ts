@@ -49,6 +49,14 @@ export const getOverview = async (req: Request, res: Response) => {
         return res.status(404).json({ error: 'Project not found' })
     }
 
+    const membership = await DI.organizationMemberships.findOne({
+        user: user,
+        organization: project.organization,
+    })
+    if (!membership) {
+        return res.status(403).json({ error: 'You do not have access to this project' })
+    }
+
     const stats = await getProjectOverviewStats(project.uuid)
 
     return res.status(200).json({
