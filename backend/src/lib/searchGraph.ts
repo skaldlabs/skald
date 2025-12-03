@@ -69,13 +69,7 @@ async function rerankNode(state: typeof SearchGraphState.State) {
     for (const chunkResult of chunkResults) {
         const chunk = chunkResult.chunk
 
-        let rerankSnippet = chunk.chunk_content
-        if (memoPropertiesMap) {
-            const memo = memoPropertiesMap.get(chunk.memo_uuid)
-            rerankSnippet = `Title: ${memo?.title}\n\nFull content summary: ${memo?.summary}\n\nChunk content: ${chunk.chunk_content}\n\n`
-        }
-
-        rerankData.push(rerankSnippet)
+        rerankData.push(chunk.chunk_content)
         rerankMetadata.push({
             memo_uuid: chunk.memo_uuid,
             memo_title: memoPropertiesMap?.get(chunk.memo_uuid)?.title || '',
