@@ -12,7 +12,7 @@ import { SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore } from '@/stores/authStore'
-import { CreditCard, Hotel, GlobeLock, LogOut, Moon, Sun, EllipsisVertical } from 'lucide-react'
+import { CreditCard, Hotel, GlobeLock, LogOut, Moon, Sun, EllipsisVertical, Rocket } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export const UserMenu = () => {
@@ -37,6 +37,12 @@ export const UserMenu = () => {
         return 'U'
     }
     const userMenuItems: { key: string; icon: React.ReactNode; label: string; hasAccess: () => boolean }[] = [
+        {
+            key: '/projects/get-started',
+            icon: <Rocket className="size-4" />,
+            label: 'Onboarding',
+            hasAccess: () => true,
+        },
         {
             key: '/organization/subscription',
             icon: <CreditCard className="size-4" />,
