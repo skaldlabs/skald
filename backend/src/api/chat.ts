@@ -13,6 +13,7 @@ import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { Project } from '@/entities/Project'
 import { chatRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { trackChatUsage } from '@/middleware/trackChatUsageMiddleware'
+import { posthogCapture } from '@/lib/posthogUtils'
 
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -77,6 +78,19 @@ export const chat = async (req: Request, res: Response) => {
     })
 
     const { query: finalQuery, contextStr, prompt, rerankedResults } = ragResultState
+
+    posthogCapture({
+        event: 'chat_api_call',
+        distinctId: req.context?.requestUser?.userInstance?.email || `project:${project.uuid}`,
+        groups: {
+            organization: project.organization.uuid,
+        },
+        properties: {
+            query: query,
+            filters: filters,
+            ragConfig: parsedRagConfig,
+        },
+    })
 
     try {
         if (stream) {

@@ -4,9 +4,7 @@ import { useProjectStore } from '@/stores/projectStore'
 import { useMemoStore } from '@/stores/memoStore'
 import type { Memo, DetailedMemo } from '@/lib/types'
 import { Button } from '@/components/ui/button'
-import { RefreshCw, Plus } from 'lucide-react'
-import { MemosSearchBar } from './MemosSearchBar'
-import { MemosSearchResultsBanner } from './MemosSearchResultsBanner'
+import { RefreshCw, Plus, FileSearch, Scissors, Database, Sparkles, Tags, ChevronDown, ChevronUp } from 'lucide-react'
 import { MemosTable } from './MemosTable'
 import { MemosPagination } from './MemosPagination'
 import { DeleteMemoDialog } from './DeleteMemoDialog'
@@ -15,25 +13,49 @@ import { CreateMemoModal } from './CreateMemoModal'
 import { PageHeader } from '@/components/AppLayout/PageHeader'
 import { toast } from 'sonner'
 
+const pipelineSteps = [
+    {
+        icon: FileSearch,
+        title: 'Data Type Detection',
+        description: 'Automatically identifies document formats and structures',
+    },
+    {
+        icon: Scissors,
+        title: 'Smart Chunking',
+        description: 'Determines optimal chunk strategy based on content type',
+    },
+    {
+        icon: Database,
+        title: 'Vector Embedding',
+        description: 'Creates embeddings and stores them in vector database',
+    },
+    {
+        icon: Sparkles,
+        title: 'Summary Generation',
+        description: 'Generates concise summaries to improve retrieval',
+    },
+    {
+        icon: Tags,
+        title: 'Auto-Tagging',
+        description: 'Extracts relevant tags automatically to speed up and improve retrieval performance',
+    },
+]
+
 export const MemosDashboard = () => {
     const { uuid: projectUuid, memoUuid } = useParams<{ uuid: string; memoUuid?: string }>()
     const navigate = useNavigate()
     const currentProject = useProjectStore((state) => state.currentProject)
+    const [showPipelineInfo, setShowPipelineInfo] = useState(false)
+    const [hasInitializedPipelineInfo, setHasInitializedPipelineInfo] = useState(false)
 
     const memos = useMemoStore((state) => state.memos)
     const loading = useMemoStore((state) => state.loading)
-    const searchQuery = useMemoStore((state) => state.searchQuery)
-    const searchMethod = useMemoStore((state) => state.searchMethod)
     const totalCount = useMemoStore((state) => state.totalCount)
     const currentPage = useMemoStore((state) => state.currentPage)
     const pageSize = useMemoStore((state) => state.pageSize)
     const fetchMemos = useMemoStore((state) => state.fetchMemos)
-    const searchMemos = useMemoStore((state) => state.searchMemos)
     const deleteMemo = useMemoStore((state) => state.deleteMemo)
     const getMemoDetails = useMemoStore((state) => state.getMemoDetails)
-    const setSearchQuery = useMemoStore((state) => state.setSearchQuery)
-    const clearSearch = useMemoStore((state) => state.clearSearch)
-    const isSearchMode = useMemoStore((state) => state.isSearchMode)
     const startPollingProcessingMemos = useMemoStore((state) => state.startPollingProcessingMemos)
     const stopAllPolling = useMemoStore((state) => state.stopAllPolling)
 
@@ -58,15 +80,8 @@ export const MemosDashboard = () => {
         }
     }
 
-    const handleSearch = async () => {
-        if (!currentProject) return
-        await searchMemos(searchQuery, searchMethod)
-    }
-
     const handlePageChange = async (page: number) => {
-        if (!isSearchMode) {
-            await fetchMemos(page, pageSize)
-        }
+        await fetchMemos(page, pageSize)
     }
 
     const handleDelete = async () => {
@@ -116,10 +131,6 @@ export const MemosDashboard = () => {
         handleCloseMemo()
     }
 
-    const handleClearSearch = () => {
-        clearSearch()
-    }
-
     const handleRefresh = () => {
         fetchMemos()
     }
@@ -129,6 +140,14 @@ export const MemosDashboard = () => {
             fetchMemos()
         }
     }, [currentProject, fetchMemos])
+
+    // Auto-expand pipeline info if no memos exist
+    useEffect(() => {
+        if (!loading && !hasInitializedPipelineInfo && memos.length === 0) {
+            setShowPipelineInfo(true)
+            setHasInitializedPipelineInfo(true)
+        }
+    }, [loading, memos.length, hasInitializedPipelineInfo])
 
     useEffect(() => {
         const loadMemoFromUrl = async () => {
@@ -169,7 +188,7 @@ export const MemosDashboard = () => {
 
     return (
         <div className="container mx-auto py-6 space-y-6">
-            <PageHeader title="Memos">
+            <PageHeader title="Ingestion">
                 <div className="flex gap-2">
                     <Button onClick={() => setCreateModalOpen(true)} size="sm">
                         <Plus className="h-4 w-4 mr-2" />
@@ -181,29 +200,64 @@ export const MemosDashboard = () => {
                     </Button>
                 </div>
             </PageHeader>
-            <MemosSearchBar
-                searchQuery={searchQuery}
-                searchMethod={searchMethod}
-                loading={loading}
-                onSearchQueryChange={setSearchQuery}
-                onSearch={handleSearch}
-                onClear={handleClearSearch}
-            />
 
-            <MemosSearchResultsBanner
-                searchQuery={searchQuery}
-                searchMethod={searchMethod}
-                totalCount={totalCount}
-                onClear={handleClearSearch}
-            />
+            {/* Pipeline Explanation Section */}
+            <div className="rounded-lg border bg-card p-4">
+                <button
+                    onClick={() => setShowPipelineInfo(!showPipelineInfo)}
+                    className="w-full flex items-center justify-between text-left"
+                >
+                    <div>
+                        <h3 className="text-sm font-medium text-foreground">What's a memo?</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                            <span className="font-medium text-foreground">Memos</span> are the unit of knowledge in
+                            Skald. They can be anything from a document, an email, a note, some code, or any other piece
+                            of information.
+                        </p>
+                    </div>
+                    {showPipelineInfo ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-4" />
+                    ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-4" />
+                    )}
+                </button>
+
+                {showPipelineInfo && (
+                    <div className="mt-4 pt-4 border-t">
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Our pipeline does extensive pre-processing of memos, preparing them for intelligent
+                            retrieval.
+                        </p>
+                        <br />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            {pipelineSteps.map((step, index) => (
+                                <div
+                                    key={step.title}
+                                    className="relative flex flex-col items-center text-center p-3 rounded-md bg-muted/50"
+                                >
+                                    {index < pipelineSteps.length - 1 && (
+                                        <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 w-3 h-0.5 bg-border" />
+                                    )}
+                                    <div className="p-2 rounded-full bg-primary/10 text-primary mb-2">
+                                        <step.icon className="h-4 w-4" />
+                                    </div>
+                                    <h4 className="text-xs font-medium text-foreground">{step.title}</h4>
+                                    <p className="text-xs text-muted-foreground mt-1">{step.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
 
             <MemosTable
                 memos={memos}
                 loading={loading}
-                searchQuery={searchQuery}
-                searchMethod={searchMethod}
+                searchQuery=""
+                searchMethod="chunk_vector_search"
                 onViewMemo={handleViewMemo}
                 onDeleteMemo={setMemoToDelete}
+                onCreateMemo={() => setCreateModalOpen(true)}
             />
 
             <MemosPagination

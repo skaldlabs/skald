@@ -4,7 +4,7 @@ import { ChatInput } from './ChatInput'
 import { useProjectStore } from '@/stores/projectStore'
 import { useChatStore } from '@/stores/chatStore'
 import { useLLMConfigStore } from '@/stores/llmConfigStore'
-import { Info, Settings, Cpu } from 'lucide-react'
+import { Settings, Cpu, Info } from 'lucide-react'
 import { PageHeader } from '@/components/AppLayout/PageHeader'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { RagConfigForm } from './RagConfigForm'
 import { FilterBuilder } from './FilterBuilder'
+import { RetrievalInfo } from './RetrievalInfo'
 import './Playground.scss'
 
-export const PlaygroundDashboard = () => {
+export const ChatDashboard = () => {
     const { currentProject } = useProjectStore()
     const {
         systemPrompt,
@@ -54,15 +55,20 @@ export const PlaygroundDashboard = () => {
     }
 
     return (
-        <div className="playground-dashboard">
-            <PageHeader title="Playground">
+        <div
+            className="playground-dashboard"
+            style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}
+        >
+            <PageHeader title="Chat">
                 <Button variant="outline" size="sm" onClick={() => setIsConfigOpen(true)}>
                     <Settings className="h-4 w-4 mr-2" />
                     Configure
                 </Button>
             </PageHeader>
 
-            <div className="chat-container">
+            <RetrievalInfo variant="chat" />
+
+            <div className="chat-container" style={{ flex: 1, minHeight: 500 }}>
                 <ChatMessagesList />
                 <ChatInput />
             </div>

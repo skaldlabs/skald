@@ -27,6 +27,9 @@ export class User {
     @Property({ length: 150 })
     last_name!: string
 
+    @Property({ nullable: true })
+    phone_number?: string | null
+
     @Property()
     is_staff!: boolean
 

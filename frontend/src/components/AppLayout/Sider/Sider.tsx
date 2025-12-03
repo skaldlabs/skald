@@ -19,7 +19,7 @@ import {
 import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
 import { useProjectStore } from '@/stores/projectStore'
-import { BookOpen, Files, FlaskConical, List, MessageSquare, Settings } from 'lucide-react'
+import { BookOpen, File, FlaskConical, List, MessageSquare, Search, Settings, Zap } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 interface MenuItem {
@@ -42,15 +42,30 @@ export const Sider = () => {
         Project: [
             {
                 key: `/projects/${currentProject?.uuid}/memos`,
-                icon: <Files className="h-4 w-4" />,
-                label: 'Memos',
+                icon: <File className="h-4 w-4" />,
+                label: 'Ingestion',
                 hasAccess: () => true,
             },
             {
-                key: `/projects/${currentProject?.uuid}/playground`,
-                icon: <MessageSquare className="h-4 w-4" />,
-                label: 'Playground',
+                key: 'retrieval',
+                icon: <Zap className="h-4 w-4" />,
+                label: 'Retrieval',
                 hasAccess: () => true,
+                isParent: true,
+                children: [
+                    {
+                        key: `/projects/${currentProject?.uuid}/playground/chat`,
+                        icon: <MessageSquare className="h-4 w-4" />,
+                        label: 'Chat',
+                        hasAccess: () => true,
+                    },
+                    {
+                        key: `/projects/${currentProject?.uuid}/playground/search`,
+                        icon: <Search className="h-4 w-4" />,
+                        label: 'Search',
+                        hasAccess: () => true,
+                    },
+                ],
             },
             {
                 key: 'evaluate',

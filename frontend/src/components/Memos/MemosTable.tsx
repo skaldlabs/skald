@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Share, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { Trash2, Share, CheckCircle, AlertCircle, Loader2, Plus } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -14,6 +14,7 @@ interface MemosTableProps {
     searchMethod: SearchMethod
     onViewMemo: (memo: Memo) => void
     onDeleteMemo: (memo: Memo) => void
+    onCreateMemo?: () => void
 }
 
 export const MemosTable = ({
@@ -23,6 +24,7 @@ export const MemosTable = ({
     searchMethod,
     onViewMemo,
     onDeleteMemo,
+    onCreateMemo,
 }: MemosTableProps) => {
     const { uuid: projectUuid } = useParams<{ uuid: string }>()
 
@@ -55,10 +57,10 @@ export const MemosTable = ({
 
     const formatRelevanceScore = (distance: number | null | undefined): string => {
         if (distance === null || distance === undefined) return 'N/A'
-        // Convert cosine distance to similarity percentage
-        // Distance ranges from 0 (identical) to 2 (opposite)
+        // Convert distance to similarity percentage
+        // With reranking, distance = 1 - relevance_score, so distance ranges from 0 (most relevant) to 1 (least relevant)
         // We want to show similarity as a percentage
-        const similarity = Math.max(0, Math.min(100, (1 - distance / 2) * 100))
+        const similarity = Math.max(0, Math.min(100, (1 - distance) * 100))
         return `${similarity.toFixed(1)}%`
     }
 
@@ -102,13 +104,28 @@ export const MemosTable = ({
     }
 
     if (memos.length === 0) {
+        if (searchQuery) {
+            return (
+                <div className="flex items-center justify-center h-64">
+                    <p className="text-muted-foreground">No memos found matching your search</p>
+                </div>
+            )
+        }
+
         return (
-            <div className="flex items-center justify-center h-64">
-                <p className="text-muted-foreground">
-                    {searchQuery
-                        ? 'No memos found matching your search'
-                        : 'No memos yet. Create your first memo to get started.'}
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+                <h3 className="text-xl font-semibold text-foreground mb-2">Create your first Memo</h3>
+                <p className="text-muted-foreground text-center max-w-md mb-6">
+                    Memos are the foundation of your knowledge base. Upload documents, paste text, or add content to
+                    start building your intelligent retrieval system.
                 </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 mb-8">
+                    <Button onClick={onCreateMemo} size="lg" className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Create Memo
+                    </Button>
+                </div>
             </div>
         )
     }
