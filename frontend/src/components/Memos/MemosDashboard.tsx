@@ -5,8 +5,6 @@ import { useMemoStore } from '@/stores/memoStore'
 import type { Memo, DetailedMemo } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, Plus, FileSearch, Scissors, Database, Sparkles, Tags, ChevronDown, ChevronUp } from 'lucide-react'
-import { MemosSearchBar } from './MemosSearchBar'
-import { MemosSearchResultsBanner } from './MemosSearchResultsBanner'
 import { MemosTable } from './MemosTable'
 import { MemosPagination } from './MemosPagination'
 import { DeleteMemoDialog } from './DeleteMemoDialog'
@@ -52,18 +50,12 @@ export const MemosDashboard = () => {
 
     const memos = useMemoStore((state) => state.memos)
     const loading = useMemoStore((state) => state.loading)
-    const searchQuery = useMemoStore((state) => state.searchQuery)
-    const searchMethod = useMemoStore((state) => state.searchMethod)
     const totalCount = useMemoStore((state) => state.totalCount)
     const currentPage = useMemoStore((state) => state.currentPage)
     const pageSize = useMemoStore((state) => state.pageSize)
     const fetchMemos = useMemoStore((state) => state.fetchMemos)
-    const searchMemos = useMemoStore((state) => state.searchMemos)
     const deleteMemo = useMemoStore((state) => state.deleteMemo)
     const getMemoDetails = useMemoStore((state) => state.getMemoDetails)
-    const setSearchQuery = useMemoStore((state) => state.setSearchQuery)
-    const clearSearch = useMemoStore((state) => state.clearSearch)
-    const isSearchMode = useMemoStore((state) => state.isSearchMode)
     const startPollingProcessingMemos = useMemoStore((state) => state.startPollingProcessingMemos)
     const stopAllPolling = useMemoStore((state) => state.stopAllPolling)
 
@@ -88,15 +80,8 @@ export const MemosDashboard = () => {
         }
     }
 
-    const handleSearch = async () => {
-        if (!currentProject) return
-        await searchMemos(searchQuery, searchMethod)
-    }
-
     const handlePageChange = async (page: number) => {
-        if (!isSearchMode) {
-            await fetchMemos(page, pageSize)
-        }
+        await fetchMemos(page, pageSize)
     }
 
     const handleDelete = async () => {
@@ -144,10 +129,6 @@ export const MemosDashboard = () => {
             processing_status: memo.processing_status,
         })
         handleCloseMemo()
-    }
-
-    const handleClearSearch = () => {
-        clearSearch()
     }
 
     const handleRefresh = () => {
@@ -269,31 +250,11 @@ export const MemosDashboard = () => {
                 )}
             </div>
 
-            {memos.length > 0 && (
-                <>
-                    <MemosSearchBar
-                        searchQuery={searchQuery}
-                        searchMethod={searchMethod}
-                        loading={loading}
-                        onSearchQueryChange={setSearchQuery}
-                        onSearch={handleSearch}
-                        onClear={handleClearSearch}
-                    />
-
-                    <MemosSearchResultsBanner
-                        searchQuery={searchQuery}
-                        searchMethod={searchMethod}
-                        totalCount={totalCount}
-                        onClear={handleClearSearch}
-                    />
-                </>
-            )}
-
             <MemosTable
                 memos={memos}
                 loading={loading}
-                searchQuery={searchQuery}
-                searchMethod={searchMethod}
+                searchQuery=""
+                searchMethod="chunk_vector_search"
                 onViewMemo={handleViewMemo}
                 onDeleteMemo={setMemoToDelete}
                 onCreateMemo={() => setCreateModalOpen(true)}

@@ -28,6 +28,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { RagConfigForm } from './RagConfigForm'
 import { FilterBuilder } from './FilterBuilder'
+import { SearchResultsTable } from './SearchResultsTable'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { MessageSquare } from 'lucide-react'
 import './Playground.scss'
 
 const retrievalSteps = [
@@ -132,7 +135,10 @@ export const PlaygroundDashboard = () => {
     }
 
     return (
-        <div className="playground-dashboard">
+        <div
+            className="playground-dashboard"
+            style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}
+        >
             <PageHeader title="Retrieval">
                 <Button variant="outline" size="sm" onClick={() => setIsConfigOpen(true)}>
                     <Settings className="h-4 w-4 mr-2" />
@@ -141,7 +147,7 @@ export const PlaygroundDashboard = () => {
             </PageHeader>
 
             {/* Retrieval Explanation Section */}
-            <div className="rounded-lg border bg-card p-4 mb-4">
+            <div className="rounded-lg border bg-card p-4 mb-4" style={{ flexShrink: 0 }}>
                 <button
                     onClick={() => setShowRetrievalInfo(!showRetrievalInfo)}
                     className="w-full flex items-center justify-between text-left"
@@ -191,7 +197,10 @@ export const PlaygroundDashboard = () => {
 
             {/* No memos alert */}
             {!memosLoading && memos.length === 0 && (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-4">
+                <div
+                    className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-4"
+                    style={{ flexShrink: 0 }}
+                >
                     <div className="flex items-start gap-3">
                         <FileUp className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                         <div>
@@ -211,10 +220,35 @@ export const PlaygroundDashboard = () => {
                 </div>
             )}
 
-            <div className="chat-container">
-                <ChatMessagesList />
-                <ChatInput />
-            </div>
+            <Tabs
+                defaultValue="chat"
+                className="w-full"
+                style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+            >
+                <TabsList className="mb-4" style={{ flexShrink: 0 }}>
+                    <TabsTrigger value="chat" className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Chat
+                    </TabsTrigger>
+                    <TabsTrigger value="search" className="flex items-center gap-2">
+                        <Search className="h-4 w-4" />
+                        Search
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent
+                    value="chat"
+                    className="mt-0"
+                    style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+                >
+                    <div className="chat-container" style={{ flex: 1, minHeight: 0 }}>
+                        <ChatMessagesList />
+                        <ChatInput />
+                    </div>
+                </TabsContent>
+                <TabsContent value="search" className="mt-0" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                    <SearchResultsTable />
+                </TabsContent>
+            </Tabs>
 
             <Sheet open={isConfigOpen} onOpenChange={setIsConfigOpen}>
                 <SheetContent side="right" className="w-[400px] sm:w-[500px] sm:max-w-none overflow-y-auto">

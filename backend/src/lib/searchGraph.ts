@@ -9,6 +9,7 @@ import { RerankService } from '@/services/rerankService'
 
 export interface SearchResult {
     chunk_uuid: string
+    memo_uuid: string
     memo_title: string
     memo_summary: string
     content_snippet: string
@@ -135,6 +136,7 @@ function buildResultsNode(state: typeof SearchGraphState.State) {
 
         return {
             chunk_uuid: originalChunk.chunk.uuid,
+            memo_uuid: originalChunk.chunk.memo_uuid,
             memo_title: memo?.title || '',
             memo_summary: memo?.summary || '',
             content_snippet: memo?.content.slice(0, 100) || '',
