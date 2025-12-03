@@ -1,4 +1,3 @@
-import { Navigate } from 'react-router-dom'
 import { OrganizationPage } from '@/pages/OrganizationPage'
 import { ProjectSettingsPage } from '@/pages/ProjectSettingsPage'
 import { GettingStartedPage } from '@/pages/GettingStartedPage'
@@ -10,14 +9,12 @@ import { ExperimentsPage } from '@/pages/ExperimentsPage'
 import { DatasetsPage } from '@/pages/DatasetsPage'
 import { SubscriptionPage } from '@/pages/SubscriptionPage'
 import { AdminPage } from '@/pages/AdminPage'
+import { OverviewPage } from '@/pages/OverviewPage'
 import { isSelfHostedDeploy } from '@/config'
 
-const RootRedirect = () => {
-    return <Navigate to="/projects/memos" />
-}
-
 const defaultRoutes = [
-    { path: '/', component: RootRedirect },
+    { path: '/', component: () => <OverviewPage /> },
+    { path: '/overview', component: () => <OverviewPage /> },
     { path: '/projects/get-started', component: () => <GettingStartedPage /> },
     { path: '/projects/:uuid/get-started', component: () => <GettingStartedPage /> },
     { path: '/organization', component: () => <OrganizationPage /> },
