@@ -9,7 +9,7 @@ import { sendEmail, isValidEmail } from '@/lib/emailUtils'
 import { SubscriptionService } from '@/services/subscriptionService'
 import { randomUUID } from 'crypto'
 import { validateUuidParams } from '@/middleware/validateUuidMiddleware'
-import { posthogCapture } from '@/lib/posthogUtils'
+import { posthogCapture, posthogGroupIdentify } from '@/lib/posthogUtils'
 
 export const organizationRouter = express.Router({ mergeParams: true })
 
@@ -108,11 +108,28 @@ const create = async (req: Request, res: Response) => {
 
     await DI.em.flush()
 
-    posthogCapture('organization_created', organization.owner.email, {
-        organization_name: organization.name,
-        organization_uuid: organization.uuid,
-        organization_owner_email: organization.owner.email,
-        is_self_hosted_deploy: IS_SELF_HOSTED_DEPLOY,
+    posthogGroupIdentify({
+        groupType: 'organization',
+        groupKey: organization.uuid,
+        properties: {
+            name: organization.name,
+            owner_email: organization.owner.email,
+            self_hosted: IS_SELF_HOSTED_DEPLOY,
+        },
+    })
+
+    posthogCapture({
+        event: 'organization_created',
+        distinctId: organization.owner.email,
+        properties: {
+            organization_name: organization.name,
+            organization_uuid: organization.uuid,
+            organization_owner_email: organization.owner.email,
+            self_hosted: IS_SELF_HOSTED_DEPLOY,
+        },
+        groups: {
+            organization: organization.uuid,
+        },
     })
 
     const organizationResponse: OrganizationResponse = {
@@ -266,11 +283,18 @@ const acceptInvite = async (req: Request, res: Response) => {
 
     await DI.em.flush()
 
-    posthogCapture('organization_invite_accepted', user.email, {
-        organization_name: organization.name,
-        organization_uuid: organization.uuid,
-        invited_email: invite.email,
-        invited_by_email: user.email,
+    posthogCapture({
+        event: 'organization_invite_accepted',
+        distinctId: user.email,
+        properties: {
+            organization_name: organization.name,
+            organization_uuid: organization.uuid,
+            invited_email: invite.email,
+            invited_by_email: user.email,
+        },
+        groups: {
+            organization: organization.uuid,
+        },
     })
 
     res.status(200).json({ detail: 'Invite accepted successfully' })
@@ -319,11 +343,18 @@ const removeMember = async (req: Request, res: Response) => {
         await DI.em.flush()
     }
 
-    posthogCapture('organization_member_removed', user.email, {
-        organization_name: organization.name,
-        organization_uuid: organization.uuid,
-        removed_user_email: email,
-        removed_by_email: user.email,
+    posthogCapture({
+        event: 'organization_member_removed',
+        distinctId: user.email,
+        properties: {
+            organization_name: organization.name,
+            organization_uuid: organization.uuid,
+            removed_user_email: email,
+            removed_by_email: user.email,
+        },
+        groups: {
+            organization: organization.uuid,
+        },
     })
 
     res.status(200).json({ detail: 'Member removed successfully' })
@@ -389,11 +420,18 @@ const cancelInvite = async (req: Request, res: Response) => {
 
     await DI.organizationMembershipInvites.nativeDelete({ id: invite.id })
 
-    posthogCapture('organization_invite_cancelled', user.email, {
-        organization_name: organization.name,
-        organization_uuid: organization.uuid,
-        cancelled_invite_id: inviteId,
-        cancelled_by_email: user.email,
+    posthogCapture({
+        event: 'organization_invite_cancelled',
+        distinctId: user.email,
+        properties: {
+            organization_name: organization.name,
+            organization_uuid: organization.uuid,
+            cancelled_invite_id: inviteId,
+            cancelled_by_email: user.email,
+        },
+        groups: {
+            organization: organization.uuid,
+        },
     })
 
     res.status(200).json({ detail: 'Invite cancelled successfully' })
@@ -430,11 +468,15 @@ const resendInvite = async (req: Request, res: Response) => {
         return res.status(503).json({ error: 'Failed to resend invitation' })
     }
 
-    posthogCapture('organization_invite_resent', user.email, {
-        organization_name: organization.name,
-        organization_uuid: organization.uuid,
-        resent_invite_id: inviteId,
-        resent_by_email: user.email,
+    posthogCapture({
+        event: 'organization_invite_resent',
+        distinctId: user.email,
+        properties: {
+            organization_name: organization.name,
+            organization_uuid: organization.uuid,
+            resent_invite_id: inviteId,
+            resent_by_email: user.email,
+        },
     })
 
     res.status(200).json({ detail: 'Invitation resent successfully' })

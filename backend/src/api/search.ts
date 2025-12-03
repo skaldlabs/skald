@@ -6,6 +6,7 @@ import { SearchRequest } from '@/entities/SearchRequest'
 import { randomUUID } from 'crypto'
 import * as Sentry from '@sentry/node'
 import { searchGraph, SearchResult } from '../lib/searchGraph'
+import { posthogCapture } from '@/lib/posthogUtils'
 
 export const search = async (req: Request, res: Response) => {
     const query = req.body.query
@@ -69,6 +70,19 @@ export const search = async (req: Request, res: Response) => {
             Sentry.captureException(error)
         }
     }
+
+    posthogCapture({
+        event: 'search_api_call',
+        distinctId: req.context?.requestUser?.userInstance?.email || `project:${project.uuid}`,
+        groups: {
+            organization: project.organization.uuid,
+        },
+        properties: {
+            query: query,
+            limit: limit,
+            filters: filters,
+        },
+    })
 
     void createSearchRequest()
 
