@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChatMessagesList } from './ChatMessagesList'
-import { ChatInput } from './ChatInput'
+import { Chat } from './Chat'
 import { useProjectStore } from '@/stores/projectStore'
 import { useChatStore } from '@/stores/chatStore'
 import { useLLMConfigStore } from '@/stores/llmConfigStore'
@@ -68,10 +67,7 @@ export const ChatDashboard = () => {
 
             <RetrievalInfo variant="chat" />
 
-            <div className="chat-container" style={{ flex: 1, minHeight: 500 }}>
-                <ChatMessagesList />
-                <ChatInput />
-            </div>
+            <Chat />
 
             <Sheet open={isConfigOpen} onOpenChange={setIsConfigOpen}>
                 <SheetContent side="right" className="w-[400px] sm:w-[500px] sm:max-w-none overflow-y-auto">

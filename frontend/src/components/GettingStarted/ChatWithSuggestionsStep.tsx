@@ -1,12 +1,11 @@
-import { useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useOnboardingStore } from '@/stores/onboardingStore'
+import { useChatStore } from '@/stores/chatStore'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Chat } from '@/components/Playground/Chat'
 import {
-    Send,
     Loader2,
     Sparkles,
     MessageCircle,
@@ -45,43 +44,24 @@ export const ChatWithSuggestionsStep = () => {
     const navigate = useNavigate()
     const chatSuggestions = useOnboardingStore((state) => state.chatSuggestions)
     const isLoadingSuggestions = useOnboardingStore((state) => state.isLoadingSuggestions)
-    const chatQuery = useOnboardingStore((state) => state.chatQuery)
-    const chatMessages = useOnboardingStore((state) => state.chatMessages)
-    const isChatting = useOnboardingStore((state) => state.isChatting)
-    const hasChatted = useOnboardingStore((state) => state.hasChatted)
-    const setChatQuery = useOnboardingStore((state) => state.setChatQuery)
-    const sendChatMessage = useOnboardingStore((state) => state.sendChatMessage)
     const reset = useOnboardingStore((state) => state.reset)
 
-    const messagesContainerRef = useRef<HTMLDivElement>(null)
+    const messages = useChatStore((state) => state.messages)
+    const isStreaming = useChatStore((state) => state.isStreaming)
+    const sendMessage = useChatStore((state) => state.sendMessage)
+    const clearMessages = useChatStore((state) => state.clearMessages)
+
+    const hasChatted = messages.length > 0
 
     const handleGoToDashboard = () => {
         reset()
+        clearMessages()
         navigate('/')
     }
 
-    useEffect(() => {
-        if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
-        }
-    }, [chatMessages])
-
     const handleSuggestionClick = (suggestion: string) => {
-        setChatQuery(suggestion)
-        setTimeout(() => {
-            sendChatMessage()
-        }, 100)
-    }
-
-    const handleSend = () => {
-        if (chatQuery.trim() && !isChatting) {
-            sendChatMessage()
-        }
-    }
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !isChatting) {
-            handleSend()
+        if (!isStreaming) {
+            sendMessage(suggestion)
         }
     }
 
@@ -122,45 +102,7 @@ export const ChatWithSuggestionsStep = () => {
 
                 <Card className="chat-panel">
                     <CardContent className="chat-panel-content">
-                        <div className="chat-messages" ref={messagesContainerRef}>
-                            {chatMessages.length === 0 ? (
-                                <div className="chat-empty">
-                                    <MessageCircle className="h-10 w-10" />
-                                    <span>Start a conversation</span>
-                                    <p>Ask a question about your memo to see AI-powered retrieval in action</p>
-                                </div>
-                            ) : (
-                                chatMessages.map((message) => (
-                                    <div key={message.id} className={`chat-message ${message.role}`}>
-                                        <div className="message-bubble">
-                                            {message.content}
-                                            {message.role === 'assistant' &&
-                                                isChatting &&
-                                                message.id === chatMessages[chatMessages.length - 1]?.id && (
-                                                    <span className="cursor">|</span>
-                                                )}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        <div className="chat-input-area">
-                            <Input
-                                value={chatQuery}
-                                onChange={(e) => setChatQuery(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Ask a question about your memo..."
-                                disabled={isChatting}
-                            />
-                            <Button onClick={handleSend} disabled={!chatQuery.trim() || isChatting} size="icon">
-                                {isChatting ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Send className="h-4 w-4" />
-                                )}
-                            </Button>
-                        </div>
+                        <Chat />
                     </CardContent>
                 </Card>
 
@@ -185,7 +127,7 @@ export const ChatWithSuggestionsStep = () => {
                                         key={index}
                                         className="suggestion-item"
                                         onClick={() => handleSuggestionClick(suggestion)}
-                                        disabled={isChatting}
+                                        disabled={isStreaming}
                                     >
                                         <Sparkles className="h-4 w-4" />
                                         <span>{suggestion}</span>
