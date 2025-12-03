@@ -21,11 +21,13 @@ import { search } from '../api/search'
 import * as embeddingService from '../services/embeddingService'
 import * as vectorSearch from '../embeddings/vectorSearch'
 import * as memoQuery from '../queries/memo'
+import * as rerankService from '../services/rerankService'
 
 // Mock external dependencies
 jest.mock('../services/embeddingService')
 jest.mock('../embeddings/vectorSearch')
 jest.mock('../queries/memo')
+jest.mock('../services/rerankService')
 
 describe('Search API', () => {
     let app: Express
@@ -87,9 +89,18 @@ describe('Search API', () => {
                 ],
             ])
 
+            const mockRerankResults = [
+                {
+                    index: 0,
+                    document: 'Test chunk content',
+                    relevance_score: 0.5,
+                },
+            ]
+
             ;(embeddingService.EmbeddingService.generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding)
             ;(vectorSearch.memoChunkVectorSearch as jest.Mock).mockResolvedValue(mockChunkResults)
             ;(memoQuery.getTitleAndSummaryAndContentForMemoList as jest.Mock).mockResolvedValue(mockMemoProps)
+            ;(rerankService.RerankService.rerank as jest.Mock).mockResolvedValue(mockRerankResults)
 
             const response = await request(app)
                 .post('/api/search')
@@ -174,6 +185,7 @@ describe('Search API', () => {
             ;(embeddingService.EmbeddingService.generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding)
             ;(vectorSearch.memoChunkVectorSearch as jest.Mock).mockResolvedValue([])
             ;(memoQuery.getTitleAndSummaryAndContentForMemoList as jest.Mock).mockResolvedValue(new Map())
+            ;(rerankService.RerankService.rerank as jest.Mock).mockResolvedValue([])
 
             await request(app)
                 .post('/api/search')
@@ -203,6 +215,7 @@ describe('Search API', () => {
             ;(embeddingService.EmbeddingService.generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding)
             ;(vectorSearch.memoChunkVectorSearch as jest.Mock).mockResolvedValue([])
             ;(memoQuery.getTitleAndSummaryAndContentForMemoList as jest.Mock).mockResolvedValue(new Map())
+            ;(rerankService.RerankService.rerank as jest.Mock).mockResolvedValue([])
 
             await request(app)
                 .post('/api/search')
@@ -254,6 +267,7 @@ describe('Search API', () => {
             ;(embeddingService.EmbeddingService.generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding)
             ;(vectorSearch.memoChunkVectorSearch as jest.Mock).mockResolvedValue([])
             ;(memoQuery.getTitleAndSummaryAndContentForMemoList as jest.Mock).mockResolvedValue(new Map())
+            ;(rerankService.RerankService.rerank as jest.Mock).mockResolvedValue([])
 
             const response = await request(app)
                 .post('/api/search')
@@ -330,9 +344,18 @@ describe('Search API', () => {
                 ],
             ])
 
+            const mockRerankResults = [
+                {
+                    index: 0,
+                    document: 'Test chunk',
+                    relevance_score: 0.8,
+                },
+            ]
+
             ;(embeddingService.EmbeddingService.generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding)
             ;(vectorSearch.memoChunkVectorSearch as jest.Mock).mockResolvedValue(mockChunkResults)
             ;(memoQuery.getTitleAndSummaryAndContentForMemoList as jest.Mock).mockResolvedValue(mockMemoProps)
+            ;(rerankService.RerankService.rerank as jest.Mock).mockResolvedValue(mockRerankResults)
 
             const response = await request(app)
                 .post('/api/search')

@@ -57,10 +57,10 @@ export const MemosTable = ({
 
     const formatRelevanceScore = (distance: number | null | undefined): string => {
         if (distance === null || distance === undefined) return 'N/A'
-        // Convert cosine distance to similarity percentage
-        // Distance ranges from 0 (identical) to 2 (opposite)
+        // Convert distance to similarity percentage
+        // With reranking, distance = 1 - relevance_score, so distance ranges from 0 (most relevant) to 1 (least relevant)
         // We want to show similarity as a percentage
-        const similarity = Math.max(0, Math.min(100, (1 - distance / 2) * 100))
+        const similarity = Math.max(0, Math.min(100, (1 - distance) * 100))
         return `${similarity.toFixed(1)}%`
     }
 
