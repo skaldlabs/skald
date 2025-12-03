@@ -269,7 +269,7 @@ const updateUserDetails = async (req: Request, res: Response) => {
         return res.status(401).json({ error: 'Not authenticated' })
     }
 
-    const { first_name, last_name, role, referral_source, referral_details } = req.body
+    const { first_name, last_name, role, phone_number, referral_source, referral_details } = req.body
 
     if (!first_name || !last_name) {
         return res.status(400).json({
@@ -287,6 +287,10 @@ const updateUserDetails = async (req: Request, res: Response) => {
     user.first_name = first_name.trim()
     user.last_name = last_name.trim()
     user.role = role
+
+    if (phone_number) {
+        user.phone_number = phone_number.trim()
+    }
 
     if (referral_source) {
         user.referral_source = referral_source
