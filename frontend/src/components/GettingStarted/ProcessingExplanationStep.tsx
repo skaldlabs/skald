@@ -1,7 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useOnboardingStore } from '@/stores/onboardingStore'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Loader2, MessageCircle, ArrowRight, CheckCircle2, AlertCircle, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 export const ProcessingExplanationStep = () => {
     const processingStage = useOnboardingStore((state) => state.processingStage)
@@ -10,16 +12,21 @@ export const ProcessingExplanationStep = () => {
     const stopPolling = useOnboardingStore((state) => state.stopPolling)
     const nextStep = useOnboardingStore((state) => state.nextStep)
 
-    // Start polling when component mounts
+    // Track if polling has been started to prevent duplicate calls
+    const pollingStartedRef = useRef(false)
+
+    // Start polling when component mounts - only once
     useEffect(() => {
-        if (memoUuid && processingStage !== 'complete' && processingStage !== 'error') {
+        if (memoUuid && !pollingStartedRef.current) {
+            pollingStartedRef.current = true
             pollMemoProcessing(memoUuid)
         }
 
         return () => {
             stopPolling()
+            pollingStartedRef.current = false
         }
-    }, [memoUuid, processingStage, pollMemoProcessing, stopPolling])
+    }, [memoUuid, pollMemoProcessing, stopPolling])
 
     const stages = [
         {
@@ -50,45 +57,129 @@ export const ProcessingExplanationStep = () => {
         return 'pending'
     }
 
-    return (
-        <div className="processing-step">
-            <h1>Processing your memo</h1>
-            <p className="explanation">
-                We're preparing your content to be searchable and ready for questions. Here's what's happening behind
-                the scenes:
-            </p>
-
-            <div className="processing-visual">
-                <div className="pulse-circle" />
-            </div>
-
-            <div className="processing-stages">
-                {stages.map((stage) => {
-                    const status = getStageStatus(stage.id)
-                    return (
-                        <div key={stage.id} className={`stage-card ${status}`}>
-                            <div className="stage-header">
-                                <h3 className="stage-title">{stage.title}</h3>
-                                {status === 'complete' && <Check className="h-5 w-5 text-green-600" />}
-                                {status === 'active' && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
-                            </div>
-                            <p className="stage-description">{stage.description}</p>
+    // Success state - show completion message
+    if (processingStage === 'complete') {
+        return (
+            <div className="processing-step success-state">
+                <Card className="success-card">
+                    <CardContent className="success-card-content">
+                        <div className="success-badge-container">
+                            <Badge variant="secondary" className="success-badge">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Processing complete
+                            </Badge>
                         </div>
-                    )
-                })}
-            </div>
 
-            {processingStage === 'error' && (
-                <div className="error-container">
-                    <p className="error-message">Something went wrong while processing your memo.</p>
-                    <div className="button-group">
-                        <Button onClick={() => memoUuid && pollMemoProcessing(memoUuid)} variant="outline">
-                            Retry
+                        <h1>Your memo is ready</h1>
+
+                        <p className="success-description">
+                            We've indexed your content and it's now searchable. Try asking a question to see how the AI
+                            uses your memo to generate accurate responses.
+                        </p>
+
+                        <div className="success-features">
+                            <div className="feature">
+                                <Check className="h-4 w-4" />
+                                <span>Content chunked & indexed</span>
+                            </div>
+                            <div className="feature">
+                                <Check className="h-4 w-4" />
+                                <span>Embeddings generated</span>
+                            </div>
+                            <div className="feature">
+                                <Check className="h-4 w-4" />
+                                <span>Ready for semantic search</span>
+                            </div>
+                        </div>
+
+                        <Button onClick={nextStep} size="lg" className="success-cta">
+                            <MessageCircle className="h-4 w-4" />
+                            Start chatting
+                            <ArrowRight className="h-4 w-4" />
                         </Button>
-                        <Button onClick={nextStep}>Skip and Continue</Button>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
+
+    // Error state
+    if (processingStage === 'error') {
+        return (
+            <div className="processing-step error-state">
+                <Card className="processing-card">
+                    <CardContent className="processing-card-content">
+                        <div className="processing-badge-container">
+                            <Badge variant="destructive" className="error-badge">
+                                <AlertCircle className="h-3.5 w-3.5" />
+                                Processing failed
+                            </Badge>
+                        </div>
+
+                        <h1>Something went wrong</h1>
+
+                        <p className="processing-description">
+                            We encountered an error while processing your memo. You can try again or skip this step and
+                            continue with the setup.
+                        </p>
+
+                        <div className="error-actions">
+                            <Button
+                                onClick={() => memoUuid && pollMemoProcessing(memoUuid)}
+                                variant="outline"
+                                className="retry-button"
+                            >
+                                Try again
+                            </Button>
+                            <Button onClick={nextStep} className="skip-button">
+                                Skip and continue
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
+
+    // Processing state
+    return (
+        <div className="processing-step processing-state">
+            <Card className="processing-card">
+                <CardContent className="processing-card-content">
+                    <div className="processing-badge-container">
+                        <Badge variant="secondary" className="processing-badge">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Processing
+                        </Badge>
                     </div>
-                </div>
-            )}
+
+                    <h1>Processing your memo</h1>
+
+                    <p className="processing-description">
+                        We're preparing your content to be searchable. This usually takes just a few seconds.
+                    </p>
+
+                    <div className="stages-list">
+                        {stages.map((stage) => {
+                            const status = getStageStatus(stage.id)
+                            return (
+                                <div key={stage.id} className={`stage-item ${status}`}>
+                                    <div className="stage-icon">
+                                        {status === 'complete' && <Check className="h-4 w-4" />}
+                                        {status === 'active' && <Loader2 className="h-4 w-4 animate-spin" />}
+                                        {status === 'pending' && <Circle className="h-4 w-4" />}
+                                    </div>
+                                    <div className="stage-content">
+                                        <span className="stage-title">{stage.title}</span>
+                                        <span className="stage-description">{stage.description}</span>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     )
 }

@@ -30,6 +30,7 @@ import { experimentRouter } from '@/api/experiment'
 import { configRouter } from '@/api/config'
 import { authRouter } from '@/api/auth'
 import { overviewRouter } from '@/api/overview'
+import { onboardingRouter } from '@/api/onboarding'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import { authRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { requireProjectAccess } from '@/middleware/authMiddleware'
@@ -93,6 +94,7 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use('/project/:uuid/evaluation-datasets', evaluationDatasetRouter)
     privateRoutesRouter.use('/project/:uuid/experiments', experimentRouter)
     privateRoutesRouter.use('/project/:uuid/overview', overviewRouter)
+    privateRoutesRouter.use('/onboarding', onboardingRouter)
     privateRoutesRouter.use('/v1/config', configRouter)
 
     app.use('/api', privateRoutesRouter)

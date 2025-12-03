@@ -35,6 +35,13 @@ interface OnboardingState {
     isProcessing: boolean
     processingStage: 'idle' | 'chunking' | 'embedding' | 'indexing' | 'complete' | 'error'
 
+    // File upload state
+    selectedFile: File | null
+    isUploadingFile: boolean
+
+    // Example generation state
+    isGeneratingExample: boolean
+
     // Chat state
     chatQuery: string
     chatMessages: ChatMessage[]
@@ -57,6 +64,9 @@ interface OnboardingState {
     setMemoTitle: (title: string) => void
     setMemoContent: (content: string) => void
     createMemo: () => Promise<void>
+    setSelectedFile: (file: File | null) => void
+    uploadFileMemo: () => Promise<void>
+    generateExampleMemo: () => Promise<void>
     pollMemoProcessing: (memoUuid: string) => void
     stopPolling: () => void
     setChatQuery: (query: string) => void
@@ -83,6 +93,9 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     memoUuid: null,
     isProcessing: false,
     processingStage: 'idle',
+    selectedFile: null,
+    isUploadingFile: false,
+    isGeneratingExample: false,
     chatQuery: '',
     chatMessages: [],
     isChatting: false,
@@ -193,6 +206,97 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
         }
     },
 
+    setSelectedFile: (file: File | null) => {
+        set({ selectedFile: file })
+    },
+
+    uploadFileMemo: async () => {
+        const { selectedFile } = get()
+        const { currentProject } = useProjectStore.getState()
+
+        if (!currentProject) {
+            toast.error('No project selected')
+            return
+        }
+
+        if (!selectedFile) {
+            toast.error('Please select a file')
+            return
+        }
+
+        set({ isUploadingFile: true })
+
+        try {
+            const formData = new FormData()
+            formData.append('file', selectedFile)
+
+            const response = await api.postFile<{ memo_uuid: string }>(
+                `/v1/memo/?project_id=${currentProject.uuid}`,
+                formData
+            )
+
+            if (response.error) {
+                throw new Error(response.error)
+            }
+
+            const memoUuid = response.data?.memo_uuid
+
+            if (!memoUuid) {
+                throw new Error('No memo UUID returned')
+            }
+
+            toast.success('File uploaded successfully!')
+            set({
+                memoCreated: true,
+                isUploadingFile: false,
+                memoUuid,
+                currentStep: 2,
+                isProcessing: true,
+                processingStage: 'chunking',
+            })
+
+            // Start polling for processing status
+            get().pollMemoProcessing(memoUuid)
+        } catch (error) {
+            toast.error('Failed to upload file')
+            console.error(error)
+            set({ isUploadingFile: false })
+        }
+    },
+
+    generateExampleMemo: async () => {
+        set({ isGeneratingExample: true })
+
+        try {
+            // Get organization name from auth store for context
+            const { useAuthStore } = await import('@/stores/authStore')
+            const organizationName = useAuthStore.getState().user?.organization_name
+
+            const response = await api.get<{ title: string; content: string }>(
+                `/onboarding/generate-example-memo?organization_name=${organizationName}`
+            )
+
+            if (response.error) {
+                throw new Error(response.error)
+            }
+
+            if (response.data?.title && response.data?.content) {
+                set({
+                    memoTitle: response.data.title,
+                    memoContent: response.data.content,
+                    isGeneratingExample: false,
+                })
+                toast.success('Example generated!')
+            } else {
+                throw new Error('Invalid response from server')
+            }
+        } catch (error) {
+            toast.error('Failed to generate example')
+            console.error(error)
+            set({ isGeneratingExample: false })
+        }
+    },
+
     pollMemoProcessing: (memoUuid: string) => {
         const { currentProject } = useProjectStore.getState()
 
@@ -215,10 +319,9 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
                     set({
                         processingStage: 'complete',
                         isProcessing: false,
-                        currentStep: 3,
                     })
                     get().stopPolling()
-                    // Fetch chat suggestions
+                    // Fetch chat suggestions in background
                     get().fetchChatSuggestions(memoUuid)
                 } else if (status === 'error') {
                     set({
@@ -435,6 +538,9 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
             memoUuid: null,
             isProcessing: false,
             processingStage: 'idle',
+            selectedFile: null,
+            isUploadingFile: false,
+            isGeneratingExample: false,
             chatQuery: '',
             chatMessages: [],
             isChatting: false,
