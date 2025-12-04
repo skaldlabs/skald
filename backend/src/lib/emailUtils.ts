@@ -94,7 +94,7 @@ export async function sendWelcomeEmail(email: string, firstName?: string): Promi
                     Just drop in your knowledge and get reliable answers back.
                 </p>
 
-                <p>Here are 3 tips to get started:</p>
+                <p>Here are 2 tips to get started:</p>
 
                 <ul>
                     <li><a href="https://platform.useskald.com/">Create your first Memo</a></li>
