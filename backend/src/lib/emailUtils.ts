@@ -71,3 +71,42 @@ export async function addContactToResend(email: string, firstName?: string, last
         console.error('Failed to add contact to Resend:', error)
     }
 }
+
+export async function sendWelcomeEmail(email: string, firstName?: string): Promise<void> {
+    if (!resend) {
+        return
+    }
+
+    try {
+        await resend.emails.send({
+            from: `pedrique@updates.${EMAIL_DOMAIN}`,
+            to: email,
+            subject: 'Welcome to Skald',
+            html: `
+                <p>Hey ${firstName ?? 'there'},</p>
+
+                <p>I'm Pedrique. I'm the co-founder at Skald.</p>
+
+                <p>
+                    We built Skald because teams deserved a cleaner way to make their data actually usable with AI.
+                    A simple, fast platform you can run inside your own infra.
+                    Just drop in your knowledge and get reliable answers back.
+                </p>
+
+                <p>Here are 3 tips to get started:</p>
+
+                <ul>
+                    <li><a href="https://platform.useskald.com/">Create your first Memo</a></li>
+                    <li><a href="https://docs.useskald.com">Explore the docs</a></li>
+                </ul>
+
+                <p><b>P.S. What made you sign up? I'm genuinely curious.</b></p>
+                <p>Just hit reply and tell me. I read and respond to every message.</p>
+
+                <p>Cheers,<br/>Pedrique</p>
+            `,
+        })
+    } catch (error) {
+        console.error('Failed to send welcome email:', error)
+    }
+}

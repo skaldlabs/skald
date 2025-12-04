@@ -4,7 +4,7 @@ import { checkPassword, makePassword } from '@/lib/passwordUtils'
 import { generateAccessToken } from '@/lib/tokenUtils'
 import { requireAuth } from '@/middleware/authMiddleware'
 import { EMAIL_VERIFICATION_ENABLED, ENABLE_SECURITY_SETTINGS } from '@/settings'
-import { addContactToResend, isValidEmail } from '@/lib/emailUtils'
+import { addContactToResend, isValidEmail, sendWelcomeEmail } from '@/lib/emailUtils'
 import { posthogCapture } from '@/lib/posthogUtils'
 import { User } from '@/entities/User'
 import { passwordResetRouter } from '@/api/passwordReset'
@@ -308,6 +308,7 @@ const updateUserDetails = async (req: Request, res: Response) => {
     await DI.em.persistAndFlush(user)
 
     addContactToResend(user.email, user.first_name, user.last_name).catch(() => {})
+    sendWelcomeEmail(user.email, user.first_name).catch(() => {})
 
     posthogCapture({
         event: 'user_details_completed',
