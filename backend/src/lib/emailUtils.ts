@@ -79,7 +79,7 @@ export async function sendWelcomeEmail(email: string, firstName?: string): Promi
 
     try {
         await resend.emails.send({
-            from: `pedrique@updates.${EMAIL_DOMAIN}`,
+            from: `Pedrique from Skald <pedrique@updates.${EMAIL_DOMAIN}>`,
             to: email,
             replyTo: `pedrique@${EMAIL_DOMAIN}`,
             subject: 'Welcome to Skald',
