@@ -79,6 +79,10 @@ function App() {
                     path="/create-organization"
                     element={<SignupFlow currentStep={SignupFlowStep.CreateOrganization} />}
                 />
+                <Route
+                    path="/self-hosted-welcome"
+                    element={<SignupFlow currentStep={SignupFlowStep.SelfHostedWelcome} />}
+                />
                 {privateRoutes.map((route) => (
                     <Route
                         key={route.path}

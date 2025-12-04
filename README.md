@@ -31,11 +31,13 @@
     </a>
 </p>
 
-# Skald: Open-Source Production RAG in your infrastructure
+# Skald: Open Source Production RAG in your infrastructure
 
 Skald gives you a production-ready RAG in minutes through a plug-and-play API, and then let's you configure your RAG engine exactly to your needs.
 
-Our solid defaults will work for most use cases, but you can tune every part of your RAG to better suit your needs. That means configurable vector search params, reranking, models, query rewriting, chunking (soon), and more. 
+In the ingestion phase, Skald takes care of document parsing, chunking strategy, summaries, tagging, embedding generation, and vector storage. In the retrieval phase, it handles query rewriting, vector search, LLM chat, chat history, and source references.
+
+Our solid defaults will work for most use cases, but you can tune every part of your RAG to better suit your needs. That means configurable vector search params, reranking, models, query rewriting, chunking (soon), and more.
 
 Ship, configure, and evaluate performance directly inside Skald.
 
@@ -46,21 +48,21 @@ Ship, configure, and evaluate performance directly inside Skald.
 ## [Node SDK](https://github.com/skaldlabs/skald-node) example
 
 ```js
-import { Skald } from '@skald-labs/skald-node';
+import { Skald } from '@skald-labs/skald-node'
 
-const skald = new Skald('your-api-key-here');
+const skald = new Skald('your-api-key-here')
 
 await skald.createMemo({
-  title: 'Meeting Notes',
-  content: 'Full content of the memo...'
-});
+    title: 'Meeting Notes',
+    content: 'Full content of the memo...',
+})
 
 const chatRes = await skald.chat({
-  query: 'What were the main points discussed in the Q1 meeting?',
-  rag_config: { reranking: { enabled: true } }
-});
+    query: 'What were the main points discussed in the Q1 meeting?',
+    rag_config: { reranking: { enabled: true } },
+})
 
-console.log(chatRes.response);
+console.log(chatRes.response)
 ```
 
 <small>[Python](https://docs.useskald.com/docs/sdks/python#usage) - [Ruby](https://docs.useskald.com/docs/sdks/ruby#usage) - [Go](https://docs.useskald.com/docs/sdks/go#usage) - [PHP](https://docs.useskald.com/docs/sdks/php#quick-start) - [C#](https://github.com/skaldlabs/skald-csharp) - [MCP](https://docs.useskald.com/docs/sdks/mcp) - [CLI](https://docs.useskald.com/docs/sdks/cli)</small>
@@ -88,14 +90,13 @@ You can deploy Skald without **any** third-party dependencies (including OpenAI)
 
 ## ✨ Features:
 
-* **Chat:** Chat with your knowledge in Skald with just one API call
-* **Search:** Use semantic search to find relevant context based on user queries
-* **Turnkey configuration:** Get started in minutes with great defaults and then configure your RAG engine exactly how you want it.
-* **Evaluate:** Evaluate the performance of your custom RAG engine with our built-in evaluation tools.
-* **Powerful filtering:** Speed up and improve responses by filtering the accessible knowledge in every query.
-* **Amazing DX, no bullsh*t:** Implement in minutes with SDKs for every major language. Don't see yours? Open [an issue](https://github.com/skaldlabs/skald/issues/new) and we'll build it!
-* **Truly open-source:** Our open source version is fully-featured, easy to deploy, and can even run with [no third-party dependencies](https://docs.useskald.com/docs/self-host/full-local).
-
+- **Chat:** Chat with your knowledge in Skald with just one API call
+- **Search:** Use semantic search to find relevant context based on user queries
+- **Turnkey configuration:** Get started in minutes with great defaults and then configure your RAG engine exactly how you want it.
+- **Evaluate:** Evaluate the performance of your custom RAG engine with our built-in evaluation tools.
+- **Powerful filtering:** Speed up and improve responses by filtering the accessible knowledge in every query.
+- **Amazing DX, no bullsh\*t:** Implement in minutes with SDKs for every major language. Don't see yours? Open [an issue](https://github.com/skaldlabs/skald/issues/new) and we'll build it!
+- **Truly open source:** Our open source version is fully-featured, easy to deploy, and can even run with [no third-party dependencies](https://docs.useskald.com/docs/self-host/full-local).
 
 ## 🚀 Get started
 

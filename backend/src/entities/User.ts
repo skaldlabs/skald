@@ -27,6 +27,9 @@ export class User {
     @Property({ length: 150 })
     last_name!: string
 
+    @Property({ nullable: true })
+    phone_number?: string | null
+
     @Property()
     is_staff!: boolean
 
@@ -51,6 +54,15 @@ export class User {
     @Property({ nullable: true })
     referral_details?: string
 
+    @Property({ nullable: true, unique: 'skald_user_google_id_key' })
+    googleId?: string
+
+    @Property({ nullable: true, length: 500 })
+    profilePicture?: string
+
+    @Property({ nullable: true, length: 20 })
+    authProvider?: string
+
     @ManyToOne({
         entity: () => Organization,
         fieldName: 'default_organization_id',
@@ -68,4 +80,7 @@ export class User {
         index: 'skald_user_current_project_id_ed8d14d2',
     })
     current_project?: Project
+
+    @Property({ default: false })
+    onboarding_completed!: boolean & Opt
 }

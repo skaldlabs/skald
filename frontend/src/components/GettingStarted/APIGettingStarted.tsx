@@ -7,7 +7,7 @@ import { ExternalLink } from 'lucide-react'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import '@/components/GettingStarted/GettingStarted.scss'
 
-export const Onboarding = () => {
+export const APIGettingStarted = () => {
     const { apiKey, memoCreated, hasChatted } = useOnboardingStore()
 
     const getCurrentStep = () => {
@@ -30,8 +30,8 @@ export const Onboarding = () => {
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="md:hidden" />
                     <div>
-                        <h1>Get started with Skald</h1>
-                        <p>Learn how to use Skald in just 3 simple steps</p>
+                        <h1>Get started with Skald API</h1>
+                        <p>Learn how to use Skald API in just 3 simple steps</p>
                     </div>
                 </div>
             </div>

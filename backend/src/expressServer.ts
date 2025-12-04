@@ -2,6 +2,7 @@ import fs from 'fs/promises'
 import swaggerUi from 'swagger-ui-express'
 
 import { adminRouter } from '@/api/admin'
+import { authRouter } from '@/api/auth'
 import { chatRouter } from '@/api/chat'
 import { configRouter } from '@/api/config'
 import { emailVerificationRouter } from '@/api/emailVerification'
@@ -9,6 +10,7 @@ import { evaluationDatasetRouter } from '@/api/evaluationDataset'
 import { experimentRouter } from '@/api/experiment'
 import { health } from '@/api/health'
 import { memoRouter } from '@/api/memo'
+import { onboardingRouter } from '@/api/onboarding'
 import { organizationRouter } from '@/api/organization'
 import { planRouter } from '@/api/plan'
 import { projectRouter } from '@/api/project'
@@ -79,6 +81,7 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use(requireAuth())
 
     app.get('/api/health', health)
+    app.use('/api/auth', authRateLimiter, authRouter)
     app.use('/api/user', authRateLimiter, userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)
     privateRoutesRouter.use('/v1/memo', [requireProjectAccess()], memoRouter)
@@ -91,6 +94,7 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use('/admin', adminRouter)
     privateRoutesRouter.use('/project/:uuid/evaluation-datasets', evaluationDatasetRouter)
     privateRoutesRouter.use('/project/:uuid/experiments', experimentRouter)
+    privateRoutesRouter.use('/onboarding', onboardingRouter)
     privateRoutesRouter.use('/v1/config', configRouter)
 
     app.use('/api', privateRoutesRouter)

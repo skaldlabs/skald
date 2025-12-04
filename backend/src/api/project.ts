@@ -16,6 +16,10 @@ import { ChatMessage } from '@/entities/ChatMessage'
 import { Chat } from '@/entities/Chat'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { IS_CLOUD } from '@/settings'
+import { EvaluationDatasetQuestion } from '@/entities/EvaluationDatasetQuestion'
+import { EvaluationDataset } from '@/entities/EvaluationDataset'
+import { Experiment } from '@/entities/Experiment'
+import { ExperimentResult } from '@/entities/ExperimentResult'
 
 export const projectRouter = express.Router({ mergeParams: true })
 
@@ -183,11 +187,18 @@ const create = async (req: Request, res: Response) => {
 
     await DI.em.flush()
 
-    posthogCapture('project_created', user.email, {
-        organization_name: organization.name,
-        organization_uuid: organization.uuid,
-        project_name: project.name,
-        project_uuid: project.uuid,
+    posthogCapture({
+        event: 'project_created',
+        distinctId: user.email,
+        properties: {
+            organization_name: organization.name,
+            organization_uuid: organization.uuid,
+            project_name: project.name,
+            project_uuid: project.uuid,
+        },
+        groups: {
+            organization: organization.uuid,
+        },
     })
 
     const projectResponse = await formatProjectResponse(project)
@@ -239,11 +250,18 @@ const update = async (req: Request, res: Response) => {
 
     await DI.em.flush()
 
-    posthogCapture('project_updated', user.email, {
-        organization_name: organization.name,
-        organization_uuid: organization.uuid,
-        project_name: project.name,
-        project_uuid: project.uuid,
+    posthogCapture({
+        event: 'project_updated',
+        distinctId: user.email,
+        properties: {
+            organization_name: organization.name,
+            organization_uuid: organization.uuid,
+            project_name: project.name,
+            project_uuid: project.uuid,
+        },
+        groups: {
+            organization: organization.uuid,
+        },
     })
 
     const projectResponse = await formatProjectResponse(project)
@@ -304,15 +322,30 @@ const destroy = async (req: Request, res: Response) => {
         await em.nativeDelete(ChatMessage, { project: project })
         await em.nativeDelete(Chat, { project: project })
 
+        // delete all datasets, experiment results, and experiments
+        const datasets = await em.find(EvaluationDataset, { project: project })
+        const experiments = await em.find(Experiment, { project: project })
+        await em.nativeDelete(EvaluationDatasetQuestion, { evaluationDataset: { $in: datasets.map((d) => d.uuid) } })
+        await em.nativeDelete(ExperimentResult, { experiment: { $in: experiments.map((e) => e.uuid) } })
+        await em.nativeDelete(EvaluationDataset, { project: project })
+        await em.nativeDelete(Experiment, { project: project })
+
         // Delete the project itself
         await em.nativeDelete(Project, { uuid: project.uuid })
     })
 
-    posthogCapture('project_deleted', user.email, {
-        organization_name: organization.name,
-        organization_uuid: organization.uuid,
-        project_name: project.name,
-        project_uuid: project.uuid,
+    posthogCapture({
+        event: 'project_deleted',
+        distinctId: user.email,
+        properties: {
+            organization_name: organization.name,
+            organization_uuid: organization.uuid,
+            project_name: project.name,
+            project_uuid: project.uuid,
+        },
+        groups: {
+            organization: organization.uuid,
+        },
     })
 
     res.status(204).send()
