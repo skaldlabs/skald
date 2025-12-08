@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Eye, EyeOff, MoreVertical } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -106,20 +106,7 @@ export const SignupForm = () => {
                                     <FormItem>
                                         <FormLabel className="text-black dark:text-foreground">Email</FormLabel>
                                         <FormControl>
-                                            <div className="relative">
-                                                <Input
-                                                    {...field}
-                                                    type="email"
-                                                    placeholder="Enter your email"
-                                                    className="pr-20"
-                                                />
-                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                                                    <div className="w-3 h-3 bg-red-500 rounded-sm flex items-center justify-center">
-                                                        <MoreVertical className="h-2.5 w-2.5 text-white" />
-                                                    </div>
-                                                    <Eye className="h-4 w-4 text-gray-400" />
-                                                </div>
-                                            </div>
+                                            <Input {...field} type="email" placeholder="Enter your email" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -145,25 +132,20 @@ export const SignupForm = () => {
                                                     {...field}
                                                     type={showPassword ? 'text' : 'password'}
                                                     placeholder="Enter your password"
-                                                    className="pr-20"
+                                                    className="pr-10"
                                                 />
-                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                                                    <div className="w-2 h-2 bg-red-500 rounded-sm flex items-center justify-center">
-                                                        <MoreVertical className="h-2 w-2 text-white" />
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                        className="text-gray-400 hover:text-gray-600"
-                                                        tabIndex={-1}
-                                                    >
-                                                        {showPassword ? (
-                                                            <EyeOff className="h-4 w-4" />
-                                                        ) : (
-                                                            <Eye className="h-4 w-4" />
-                                                        )}
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                    tabIndex={-1}
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
                                             </div>
                                         </FormControl>
                                         <FormMessage />
@@ -192,25 +174,20 @@ export const SignupForm = () => {
                                                     {...field}
                                                     type={showConfirmPassword ? 'text' : 'password'}
                                                     placeholder="Confirm your password"
-                                                    className="pr-20"
+                                                    className="pr-10"
                                                 />
-                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                                                    <div className="w-2 h-2 bg-red-500 rounded-sm flex items-center justify-center">
-                                                        <MoreVertical className="h-2 w-2 text-white" />
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                        className="text-gray-400 hover:text-gray-600"
-                                                        tabIndex={-1}
-                                                    >
-                                                        {showConfirmPassword ? (
-                                                            <EyeOff className="h-4 w-4" />
-                                                        ) : (
-                                                            <Eye className="h-4 w-4" />
-                                                        )}
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                    tabIndex={-1}
+                                                >
+                                                    {showConfirmPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
                                             </div>
                                         </FormControl>
                                         <FormMessage />
