@@ -9,7 +9,7 @@ import { initDI } from '@/di'
 import { Request, Response, NextFunction } from 'express'
 
 export type ExtraRoute = [string, RequestHandler[], Router]
-export type PublicRoute = [string, RequestHandler[], RequestHandler]
+export type PublicRoute = [string, 'GET' | 'POST', RequestHandler[], RequestHandler]
 import { search } from '@/api/search'
 import { organizationRouter } from '@/api/organization'
 import { projectRouter } from '@/api/project'
@@ -84,8 +84,12 @@ export const startExpressServer = async (extraRoutes: ExtraRoute[] = [], publicR
     app.get('/api/health', health)
 
     // Register public routes (e.g., enterprise public endpoints)
-    for (const [route, middleware, handler] of publicRoutes) {
-        app.get(route, ...middleware, handler)
+    for (const [route, method, middleware, handler] of publicRoutes) {
+        if (method === 'GET') {
+            app.get(route, ...middleware, handler)
+        } else if (method === 'POST') {
+            app.post(route, ...middleware, handler)
+        }
     }
 
     app.use('/api/auth', authRateLimiter, authRouter)

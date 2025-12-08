@@ -8,6 +8,8 @@ import { SignupFlow, SignupFlowStep } from '@/components/SignupFlow'
 import { privateRoutes } from '@/routes'
 import { UpgradePromptDialog } from '@/components/Subscription/UpgradePromptDialog'
 import { useUpgradePromptStore } from '@/stores/upgradePromptStore'
+import { isLicensedDeploy } from '@/config'
+import { PublicChatPage } from '@/pages/PublicChatPage'
 import '@/index.css'
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -83,6 +85,7 @@ function App() {
                     path="/self-hosted-welcome"
                     element={<SignupFlow currentStep={SignupFlowStep.SelfHostedWelcome} />}
                 />
+                {isLicensedDeploy && <Route path="/public_chat/:slug" element={<PublicChatPage />} />}
                 {privateRoutes.map((route) => (
                     <Route
                         key={route.path}
