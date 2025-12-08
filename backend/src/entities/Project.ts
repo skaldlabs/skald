@@ -36,8 +36,8 @@ export class Project {
     chat_ui_enabled!: boolean
 
     @Property({ type: 'jsonb', nullable: true })
-    chat_ui_rag_config?: RAGConfig
+    chat_ui_rag_config?: RAGConfig | null
 
     @Property({ nullable: true })
-    chat_ui_slug?: string
+    chat_ui_slug?: string | null
 }

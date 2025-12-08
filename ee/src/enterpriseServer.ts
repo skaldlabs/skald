@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { startExpressServer } from '@mit/expressServer'
+import { chatUiConfigRouter } from './chatUiConfig'
 
 const helloRouter = Router()
 helloRouter.get('/', (req: Request, res: Response) => {
@@ -7,5 +8,7 @@ helloRouter.get('/', (req: Request, res: Response) => {
 })
 
 export const startEnterpriseExpressServer = async () => {
-    await startExpressServer([['/hello', [], helloRouter]])
+    await startExpressServer([
+        ['/organizations/:organization_uuid/projects/:uuid/chat-ui-config', [], chatUiConfigRouter],
+    ])
 }
