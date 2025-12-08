@@ -1,12 +1,6 @@
-import { Router, Request, Response } from 'express'
 import { startExpressServer } from '@mit/expressServer'
 import { chatUiConfigRouter } from '@ee/api/chatUiConfig'
 import { chat, checkAvailability, getConfig } from '@ee/api/publicChat'
-
-const helloRouter = Router()
-helloRouter.get('/', (req: Request, res: Response) => {
-    res.json({ message: 'Hello from Enterprise!' })
-})
 
 export const startEnterpriseExpressServer = async () => {
     await startExpressServer(
