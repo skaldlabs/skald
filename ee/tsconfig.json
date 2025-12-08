@@ -1,0 +1,28 @@
+{
+    "ts-node": {
+        "require": ["tsconfig-paths/register"],
+        "files": true
+    },
+    "files": ["../backend/src/global.d.ts"],
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "commonjs",
+        "lib": ["ES2022"],
+        "outDir": "./dist",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "resolveJsonModule": true,
+        "baseUrl": ".",
+        "paths": {
+            "@ee/*": ["./src/*"],
+            "@mit/*": ["../backend/src/*"],
+            "@/*": ["../backend/src/*"]
+        }
+    },
+    "include": ["src/**/*", "../backend/src/**/*"],
+    "exclude": ["node_modules"]
+}

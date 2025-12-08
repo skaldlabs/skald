@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Router, RequestHandler } from 'express'
 import cors from 'cors'
 import { RequestContext } from '@mikro-orm/postgresql'
 import { userMiddleware } from '@/middleware/userMiddleware'
@@ -7,6 +7,8 @@ import { health } from '@/api/health'
 import { requireAuth } from '@/middleware/authMiddleware'
 import { initDI } from '@/di'
 import { Request, Response, NextFunction } from 'express'
+
+export type ExtraRoute = [string, RequestHandler[], Router]
 import { search } from '@/api/search'
 import { organizationRouter } from '@/api/organization'
 import { projectRouter } from '@/api/project'
@@ -37,7 +39,7 @@ import { logger } from '@/lib/logger'
 import { posthog } from '@/lib/posthogUtils'
 import * as Sentry from '@sentry/node'
 
-export const startExpressServer = async () => {
+export const startExpressServer = async (extraRoutes: ExtraRoute[] = []) => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
     // because it's the established patter used by mikro-orm, and we want to be able to easily find information
     // about our setup online. see e.g. https://github.com/mikro-orm/express-ts-example-app/blob/master/app/server.ts
@@ -94,6 +96,11 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use('/project/:uuid/experiments', experimentRouter)
     privateRoutesRouter.use('/onboarding', onboardingRouter)
     privateRoutesRouter.use('/v1/config', configRouter)
+
+    // Register extra routes (e.g., enterprise features)
+    for (const [route, middleware, router] of extraRoutes) {
+        privateRoutesRouter.use(route, ...middleware, router)
+    }
 
     app.use('/api', privateRoutesRouter)
 
