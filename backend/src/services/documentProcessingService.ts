@@ -22,7 +22,7 @@ interface MarkerResultResponse {
 
 export class DocumentProcessingService {
     private static readonly MARKER_API_URL = 'https://www.datalab.to/api/v1/marker'
-    private static readonly MAX_POLL_ATTEMPTS = 60 // 5 minutes with 5 second intervals
+    private static readonly MAX_POLL_ATTEMPTS = 120 // 10 minutes with 5 second intervals
     private static readonly POLL_INTERVAL_MS = 5000 // 5 seconds
     private static readonly PRESIGNED_URL_EXPIRATION = 1200 // 20 minutes
 
