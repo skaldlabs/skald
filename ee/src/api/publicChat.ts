@@ -8,13 +8,31 @@ import { ChatPromptTemplate } from '@langchain/core/prompts'
 import { DI } from '@mit/di'
 import { LLM_PROVIDER } from '@mit/settings'
 
+export const checkAvailability = async (req: Request, res: Response) => {
+    const slug = req.params.slug
+
+    if (!slug) {
+        return res.status(400).json({ error: 'Slug is required' })
+    }
+
+    const project = await DI.projects.findOne({ chat_ui_slug: slug })
+
+    if (!project) {
+        return res.status(200).json({ available: false })
+    }
+
+    const available = project.chat_ui_enabled === true
+
+    return res.status(200).json({ available })
+}
+
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
 
     // TODO: double check this in a public context
     const chatId = req.body.chat_id
     const clientSystemPrompt = req.body.system_prompt || null
-    const projectSlug = req.body.project_slug
+    const projectSlug = req.params.slug
 
     if (!query) {
         return res.status(400).json({ error: 'Query is required' })

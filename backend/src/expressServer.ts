@@ -9,6 +9,7 @@ import { initDI } from '@/di'
 import { Request, Response, NextFunction } from 'express'
 
 export type ExtraRoute = [string, RequestHandler[], Router]
+export type PublicRoute = [string, RequestHandler[], RequestHandler]
 import { search } from '@/api/search'
 import { organizationRouter } from '@/api/organization'
 import { projectRouter } from '@/api/project'
@@ -39,7 +40,7 @@ import { logger } from '@/lib/logger'
 import { posthog } from '@/lib/posthogUtils'
 import * as Sentry from '@sentry/node'
 
-export const startExpressServer = async (extraRoutes: ExtraRoute[] = []) => {
+export const startExpressServer = async (extraRoutes: ExtraRoute[] = [], publicRoutes: PublicRoute[] = []) => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
     // because it's the established patter used by mikro-orm, and we want to be able to easily find information
     // about our setup online. see e.g. https://github.com/mikro-orm/express-ts-example-app/blob/master/app/server.ts
@@ -81,6 +82,12 @@ export const startExpressServer = async (extraRoutes: ExtraRoute[] = []) => {
     privateRoutesRouter.use(requireAuth())
 
     app.get('/api/health', health)
+
+    // Register public routes (e.g., enterprise public endpoints)
+    for (const [route, middleware, handler] of publicRoutes) {
+        app.get(route, ...middleware, handler)
+    }
+
     app.use('/api/auth', authRateLimiter, authRouter)
     app.use('/api/user', authRateLimiter, userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)

@@ -150,7 +150,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     ) => {
         set({ loading: true, error: null })
 
-        const response = await api.put(`${getOrgPath()}/projects/${uuid}/chat-ui-config`, updates)
+        const response = await api.put(`${getOrgPath()}/projects/${uuid}/chat_ui_config`, updates)
 
         if (response.error) {
             set({
