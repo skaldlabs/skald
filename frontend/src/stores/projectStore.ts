@@ -6,6 +6,24 @@ import type { Project } from '@/lib/types'
 
 const CURRENT_PROJECT_KEY = 'skald_current_project_uuid'
 
+interface RAGConfig {
+    llmProvider: 'openai' | 'anthropic' | 'local' | 'groq' | 'gemini'
+    references: {
+        enabled: boolean
+    }
+    queryRewrite: {
+        enabled: boolean
+    }
+    vectorSearch: {
+        topK: number
+        similarityThreshold: number
+    }
+    reranking: {
+        enabled: boolean
+        topK: number
+    }
+}
+
 interface ProjectState {
     projects: Project[]
     currentProject: Project | null
@@ -14,6 +32,14 @@ interface ProjectState {
     fetchProjects: () => Promise<void>
     createProject: (name: string) => Promise<Project | null>
     updateProject: (uuid: string, updates: { name?: string }) => Promise<void>
+    updateChatUiConfig: (
+        uuid: string,
+        updates: {
+            chat_ui_enabled?: boolean
+            chat_ui_rag_config?: RAGConfig | null
+            chat_ui_slug?: string | null
+        }
+    ) => Promise<void>
     deleteProject: (uuid: string) => Promise<void>
     setCurrentProject: (project: Project | null) => Promise<void>
     initializeCurrentProject: () => Promise<void>
@@ -112,6 +138,33 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         }))
 
         toast.success('Project updated successfully')
+    },
+
+    updateChatUiConfig: async (
+        uuid: string,
+        updates: {
+            chat_ui_enabled?: boolean
+            chat_ui_rag_config?: RAGConfig | null
+            chat_ui_slug?: string | null
+        }
+    ) => {
+        set({ loading: true, error: null })
+
+        const response = await api.put(`${getOrgPath()}/projects/${uuid}/chat-ui-config`, updates)
+
+        if (response.error) {
+            set({
+                loading: false,
+                error: response.error,
+            })
+            toast.error(`Failed to update chat UI config: ${response.error}`)
+            return
+        }
+
+        // Refresh projects to get updated data
+        await get().fetchProjects()
+
+        toast.success('Chat UI configuration updated successfully')
     },
 
     deleteProject: async (uuid: string) => {

@@ -38,6 +38,10 @@ export class Project {
     @Property({ type: 'jsonb', nullable: true })
     chat_ui_rag_config?: RAGConfig | null
 
-    @Property({ nullable: true })
+    @Property({
+        nullable: true,
+        unique: 'skald_project_chat_ui_slug_key',
+        index: 'skald_project_chat_ui_slug_idx',
+    })
     chat_ui_slug?: string | null
 }
