@@ -12,6 +12,7 @@
     "author": "",
     "license": "SEE LICENSE IN LICENSE",
     "dependencies": {
+        "@langchain/core": "^0.3.79",
         "express": "^5.1.0"
     },
     "devDependencies": {

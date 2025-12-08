@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { startExpressServer } from '@mit/expressServer'
-import { chatUiConfigRouter } from './chatUiConfig'
+import { chatUiConfigRouter } from '@ee/api/chatUiConfig'
 
 const helloRouter = Router()
 helloRouter.get('/', (req: Request, res: Response) => {
