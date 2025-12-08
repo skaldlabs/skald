@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useProjectStore } from '@/stores/projectStore'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
+import { api, getOrgPath } from '@/lib/api'
 import type { Project } from '@/lib/types'
 
 interface RAGConfig {
@@ -27,45 +28,87 @@ interface RAGConfig {
     }
 }
 
+interface ChatUiConfigResponse {
+    uuid: string
+    chat_ui_enabled: boolean
+    chat_ui_rag_config: RAGConfig | null
+    chat_ui_slug: string | null
+    chat_ui_logo_url: string | null
+    chat_ui_title: string | null
+}
+
 interface ChatUiConfigProps {
-    project: Project & {
-        chat_ui_enabled?: boolean
-        chat_ui_rag_config?: RAGConfig | null
-        chat_ui_slug?: string | null
-    }
+    project: Project
+}
+
+const DEFAULT_RAG_CONFIG: RAGConfig = {
+    llmProvider: 'openai',
+    references: { enabled: true },
+    queryRewrite: { enabled: true },
+    vectorSearch: { topK: 10, similarityThreshold: 0.7 },
+    reranking: { enabled: true, topK: 5 },
 }
 
 export const ChatUiConfig = ({ project }: ChatUiConfigProps) => {
     const updateChatUiConfig = useProjectStore((state) => state.updateChatUiConfig)
     const loading = useProjectStore((state) => state.loading)
 
-    const [chatUiEnabled, setChatUiEnabled] = useState(project.chat_ui_enabled ?? false)
-    const [slug, setSlug] = useState(project.chat_ui_slug ?? '')
-    const [ragConfig, setRagConfig] = useState<RAGConfig>(
-        project.chat_ui_rag_config ?? {
-            llmProvider: 'openai',
-            references: { enabled: true },
-            queryRewrite: { enabled: true },
-            vectorSearch: { topK: 10, similarityThreshold: 0.7 },
-            reranking: { enabled: true, topK: 5 },
-        }
-    )
+    const [isLoadingConfig, setIsLoadingConfig] = useState(true)
+    const [chatUiEnabled, setChatUiEnabled] = useState(false)
+    const [slug, setSlug] = useState('')
+    const [logoUrl, setLogoUrl] = useState('')
+    const [title, setTitle] = useState('')
+    const [ragConfig, setRagConfig] = useState<RAGConfig>(DEFAULT_RAG_CONFIG)
 
     const [lastSavedState, setLastSavedState] = useState({
-        chat_ui_enabled: project.chat_ui_enabled ?? false,
-        chat_ui_slug: project.chat_ui_slug ?? '',
-        chat_ui_rag_config: project.chat_ui_rag_config,
+        chat_ui_enabled: false,
+        chat_ui_slug: '',
+        chat_ui_logo_url: '',
+        chat_ui_title: '',
+        chat_ui_rag_config: null as RAGConfig | null,
     })
+
+    useEffect(() => {
+        const fetchConfig = async () => {
+            setIsLoadingConfig(true)
+            const response = await api.get<ChatUiConfigResponse>(
+                `${getOrgPath()}/projects/${project.uuid}/chat_ui_config`
+            )
+
+            if (response.data) {
+                const config = response.data
+                setChatUiEnabled(config.chat_ui_enabled)
+                setSlug(config.chat_ui_slug ?? '')
+                setLogoUrl(config.chat_ui_logo_url ?? '')
+                setTitle(config.chat_ui_title ?? '')
+                setRagConfig(config.chat_ui_rag_config ?? DEFAULT_RAG_CONFIG)
+                setLastSavedState({
+                    chat_ui_enabled: config.chat_ui_enabled,
+                    chat_ui_slug: config.chat_ui_slug ?? '',
+                    chat_ui_logo_url: config.chat_ui_logo_url ?? '',
+                    chat_ui_title: config.chat_ui_title ?? '',
+                    chat_ui_rag_config: config.chat_ui_rag_config,
+                })
+            }
+            setIsLoadingConfig(false)
+        }
+
+        fetchConfig()
+    }, [project.uuid])
 
     const hasChanges =
         chatUiEnabled !== lastSavedState.chat_ui_enabled ||
         slug !== lastSavedState.chat_ui_slug ||
+        logoUrl !== lastSavedState.chat_ui_logo_url ||
+        title !== lastSavedState.chat_ui_title ||
         JSON.stringify(ragConfig) !== JSON.stringify(lastSavedState.chat_ui_rag_config)
 
     const handleSave = async () => {
         const savedConfig = {
             chat_ui_enabled: chatUiEnabled,
             chat_ui_slug: slug.trim() || null,
+            chat_ui_logo_url: logoUrl.trim() || null,
+            chat_ui_title: title.trim() || null,
             chat_ui_rag_config: chatUiEnabled ? ragConfig : null,
         }
         await updateChatUiConfig(project.uuid, savedConfig)
@@ -73,6 +116,8 @@ export const ChatUiConfig = ({ project }: ChatUiConfigProps) => {
         setLastSavedState({
             chat_ui_enabled: savedConfig.chat_ui_enabled,
             chat_ui_slug: savedConfig.chat_ui_slug ?? '',
+            chat_ui_logo_url: savedConfig.chat_ui_logo_url ?? '',
+            chat_ui_title: savedConfig.chat_ui_title ?? '',
             chat_ui_rag_config: savedConfig.chat_ui_rag_config,
         })
     }
@@ -80,6 +125,8 @@ export const ChatUiConfig = ({ project }: ChatUiConfigProps) => {
     const handleReset = () => {
         const resetEnabled = lastSavedState.chat_ui_enabled
         const resetSlug = lastSavedState.chat_ui_slug
+        const resetLogoUrl = lastSavedState.chat_ui_logo_url
+        const resetTitle = lastSavedState.chat_ui_title
         const resetRagConfig = lastSavedState.chat_ui_rag_config ?? {
             llmProvider: 'openai',
             references: { enabled: true },
@@ -89,7 +136,23 @@ export const ChatUiConfig = ({ project }: ChatUiConfigProps) => {
         }
         setChatUiEnabled(resetEnabled)
         setSlug(resetSlug)
+        setLogoUrl(resetLogoUrl)
+        setTitle(resetTitle)
         setRagConfig(resetRagConfig)
+    }
+
+    if (isLoadingConfig) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Chat UI Configuration</CardTitle>
+                    <CardDescription>Configure the public chat UI for this project</CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                </CardContent>
+            </Card>
+        )
     }
 
     return (
@@ -128,6 +191,34 @@ export const ChatUiConfig = ({ project }: ChatUiConfigProps) => {
                                 disabled={loading}
                             />
                             <p className="text-xs text-muted-foreground">Optional custom slug for the chat UI URL</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="chat-ui-logo-url">Logo URL</Label>
+                            <Input
+                                id="chat-ui-logo-url"
+                                value={logoUrl}
+                                onChange={(e) => setLogoUrl(e.target.value)}
+                                placeholder="https://example.com/logo.png"
+                                disabled={loading}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Optional logo to display in the chat UI header
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="chat-ui-title">Title</Label>
+                            <Input
+                                id="chat-ui-title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="My Chat Assistant"
+                                disabled={loading}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Optional title to display in the chat UI header
+                            </p>
                         </div>
 
                         <div className="space-y-4 border-t pt-4">

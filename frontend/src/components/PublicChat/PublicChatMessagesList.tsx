@@ -34,17 +34,16 @@ export const PublicChatMessagesList = () => {
 
     if (messages.length === 0) {
         return (
-            <div className="chat-empty-state">
-                <div className="empty-state-content">
-                    <h3>Start a conversation</h3>
-                    <p>Ask questions and get intelligent responses</p>
+            <div className="public-chat-empty-state">
+                <div className="public-empty-state-content">
+                    <h3>How can I help you?</h3>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="chat-messages-list" ref={messagesContainerRef}>
+        <div className="public-chat-messages-list" ref={messagesContainerRef}>
             {messages.map((message) => (
                 <PublicChatMessage key={message.id} message={message} referencesEnabled={true} />
             ))}

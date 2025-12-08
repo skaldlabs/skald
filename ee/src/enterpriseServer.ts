@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { startExpressServer } from '@mit/expressServer'
 import { chatUiConfigRouter } from '@ee/api/chatUiConfig'
-import { chat, checkAvailability } from '@ee/api/publicChat'
+import { chat, checkAvailability, getConfig } from '@ee/api/publicChat'
 
 const helloRouter = Router()
 helloRouter.get('/', (req: Request, res: Response) => {
@@ -14,6 +14,7 @@ export const startEnterpriseExpressServer = async () => {
         [
             ['/api/public_chat/:slug', 'POST', [], chat],
             ['/api/public_chat/:slug/available', 'GET', [], checkAvailability],
+            ['/api/public_chat/:slug/config', 'GET', [], getConfig],
         ]
     )
 }

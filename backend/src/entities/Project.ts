@@ -35,6 +35,12 @@ export class Project {
     @Property({ default: false })
     chat_ui_enabled!: boolean
 
+    @Property({ nullable: true })
+    chat_ui_logo_url?: string | null
+
+    @Property({ nullable: true })
+    chat_ui_title?: string | null
+
     @Property({ type: 'jsonb', nullable: true })
     chat_ui_rag_config?: RAGConfig | null
 

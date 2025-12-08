@@ -26,6 +26,25 @@ export const checkAvailability = async (req: Request, res: Response) => {
     return res.status(200).json({ available })
 }
 
+export const getConfig = async (req: Request, res: Response) => {
+    const slug = req.params.slug
+
+    if (!slug) {
+        return res.status(400).json({ error: 'Slug is required' })
+    }
+
+    const project = await DI.projects.findOne({ chat_ui_slug: slug })
+
+    if (!project || !project.chat_ui_enabled) {
+        return res.status(404).json({ error: 'Not found' })
+    }
+
+    return res.status(200).json({
+        logo_url: project.chat_ui_logo_url || null,
+        title: project.chat_ui_title || null,
+    })
+}
+
 export const chat = async (req: Request, res: Response) => {
     const query = req.body.query
 

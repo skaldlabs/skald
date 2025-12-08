@@ -38,6 +38,8 @@ interface ProjectState {
             chat_ui_enabled?: boolean
             chat_ui_rag_config?: RAGConfig | null
             chat_ui_slug?: string | null
+            chat_ui_logo_url?: string | null
+            chat_ui_title?: string | null
         }
     ) => Promise<void>
     deleteProject: (uuid: string) => Promise<void>
@@ -146,6 +148,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
             chat_ui_enabled?: boolean
             chat_ui_rag_config?: RAGConfig | null
             chat_ui_slug?: string | null
+            chat_ui_logo_url?: string | null
+            chat_ui_title?: string | null
         }
     ) => {
         set({ loading: true, error: null })

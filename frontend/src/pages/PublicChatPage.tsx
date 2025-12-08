@@ -4,12 +4,17 @@ import { Loader2 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { PublicChat } from '@/components/PublicChat/PublicChat'
 import { usePublicChatStore } from '@/stores/publicChatStore'
-import '@/components/Playground/Playground.scss'
+
+interface PublicChatConfig {
+    logo_url: string | null
+    title: string | null
+}
 
 export const PublicChatPage = () => {
     const { slug } = useParams<{ slug: string }>()
     const [isChecking, setIsChecking] = useState(true)
     const [isAvailable, setIsAvailable] = useState(false)
+    const [config, setConfig] = useState<PublicChatConfig | null>(null)
     const clearMessages = usePublicChatStore((state) => state.clearMessages)
 
     useEffect(() => {
@@ -24,11 +29,18 @@ export const PublicChatPage = () => {
             return
         }
 
-        const checkAvailability = async () => {
+        const checkAvailabilityAndLoadConfig = async () => {
             try {
-                const response = await api.get<{ available: boolean }>(`/public_chat/${slug}/available`)
-                if (response.data) {
-                    setIsAvailable(response.data.available)
+                const [availabilityResponse, configResponse] = await Promise.all([
+                    api.get<{ available: boolean }>(`/public_chat/${slug}/available`),
+                    api.get<PublicChatConfig>(`/public_chat/${slug}/config`).catch(() => null),
+                ])
+
+                if (availabilityResponse.data?.available) {
+                    setIsAvailable(true)
+                    if (configResponse?.data) {
+                        setConfig(configResponse.data)
+                    }
                 } else {
                     setIsAvailable(false)
                 }
@@ -40,7 +52,7 @@ export const PublicChatPage = () => {
             }
         }
 
-        checkAvailability()
+        checkAvailabilityAndLoadConfig()
     }, [slug])
 
     if (!slug) {
@@ -60,10 +72,8 @@ export const PublicChatPage = () => {
     }
 
     return (
-        <div className="flex flex-col h-screen">
-            <div className="flex-1 overflow-hidden">
-                <PublicChat slug={slug} />
-            </div>
+        <div className="flex flex-col h-screen overflow-hidden">
+            <PublicChat slug={slug} logoUrl={config?.logo_url} title={config?.title} />
         </div>
     )
 }

@@ -10,6 +10,51 @@ interface UpdateChatUiConfigRequest {
     chat_ui_enabled?: boolean
     chat_ui_rag_config?: RAGConfig | null
     chat_ui_slug?: string | null
+    chat_ui_logo_url?: string | null
+    chat_ui_title?: string | null
+}
+
+const getChatUiConfig = async (req: Request, res: Response) => {
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const organizationUuid = req.params.organization_uuid
+    const projectUuid = req.params.uuid
+    if (!organizationUuid || !projectUuid) {
+        return res.status(400).json({ error: 'Organization UUID and Project UUID are required' })
+    }
+
+    const organization = await DI.organizations.findOne({ uuid: organizationUuid })
+    if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' })
+    }
+
+    const membership = await DI.organizationMemberships.findOne({
+        user: user,
+        organization: organization,
+    })
+    if (!membership) {
+        return res.status(403).json({ error: 'You are not a member of this organization' })
+    }
+
+    const project = await DI.projects.findOne(
+        { uuid: projectUuid, organization: organization },
+        { populate: ['organization', 'owner'] }
+    )
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    res.status(200).json({
+        uuid: project.uuid,
+        chat_ui_enabled: project.chat_ui_enabled,
+        chat_ui_rag_config: project.chat_ui_rag_config,
+        chat_ui_slug: project.chat_ui_slug,
+        chat_ui_logo_url: project.chat_ui_logo_url,
+        chat_ui_title: project.chat_ui_title,
+    })
 }
 
 const updateChatUiConfig = async (req: Request, res: Response) => {
@@ -52,6 +97,7 @@ const updateChatUiConfig = async (req: Request, res: Response) => {
         project.updated_at = new Date()
     }
 
+    // TODO: think about how references should work
     if (body.chat_ui_rag_config !== undefined) {
         project.chat_ui_rag_config = body.chat_ui_rag_config
         project.updated_at = new Date()
@@ -74,6 +120,16 @@ const updateChatUiConfig = async (req: Request, res: Response) => {
         project.updated_at = new Date()
     }
 
+    if (body.chat_ui_logo_url !== undefined) {
+        project.chat_ui_logo_url = body.chat_ui_logo_url?.trim() || null
+        project.updated_at = new Date()
+    }
+
+    if (body.chat_ui_title !== undefined) {
+        project.chat_ui_title = body.chat_ui_title?.trim() || null
+        project.updated_at = new Date()
+    }
+
     try {
         await DI.em.flush()
     } catch (error: any) {
@@ -89,7 +145,10 @@ const updateChatUiConfig = async (req: Request, res: Response) => {
         chat_ui_enabled: project.chat_ui_enabled,
         chat_ui_rag_config: project.chat_ui_rag_config,
         chat_ui_slug: project.chat_ui_slug,
+        chat_ui_logo_url: project.chat_ui_logo_url,
+        chat_ui_title: project.chat_ui_title,
     })
 }
 
+chatUiConfigRouter.get('/', validateUuidParams('organization_uuid', 'uuid'), getChatUiConfig)
 chatUiConfigRouter.put('/', validateUuidParams('organization_uuid', 'uuid'), updateChatUiConfig)
