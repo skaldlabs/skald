@@ -96,7 +96,6 @@ const create = async (req: Request, res: Response) => {
         owner: user,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        query_rewrite_enabled: false,
     })
 
     user.current_project = project

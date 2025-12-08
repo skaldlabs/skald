@@ -13,7 +13,7 @@ interface ProjectState {
     error: string | null
     fetchProjects: () => Promise<void>
     createProject: (name: string) => Promise<Project | null>
-    updateProject: (uuid: string, updates: { name?: string; query_rewrite_enabled?: boolean }) => Promise<void>
+    updateProject: (uuid: string, updates: { name?: string }) => Promise<void>
     deleteProject: (uuid: string) => Promise<void>
     setCurrentProject: (project: Project | null) => Promise<void>
     initializeCurrentProject: () => Promise<void>
@@ -89,7 +89,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         return newProject
     },
 
-    updateProject: async (uuid: string, updates: { name?: string; query_rewrite_enabled?: boolean }) => {
+    updateProject: async (uuid: string, updates: { name?: string }) => {
         set({ loading: true, error: null })
 
         const response = await api.put(`${getOrgPath()}/projects/${uuid}/`, updates)

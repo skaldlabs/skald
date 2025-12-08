@@ -115,8 +115,7 @@ export const createTestProject = async (
     orm: MikroORM,
     name: string,
     organization: Organization,
-    owner: User,
-    queryRewriteEnabled: boolean = false
+    owner: User
 ): Promise<Project> => {
     const em = orm.em.fork()
     const project = em.create(Project, {
@@ -126,7 +125,6 @@ export const createTestProject = async (
         owner,
         created_at: new Date(),
         updated_at: new Date(),
-        query_rewrite_enabled: queryRewriteEnabled,
     })
     await em.persistAndFlush(project)
     return project

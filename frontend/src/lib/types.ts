@@ -19,7 +19,6 @@ export interface Project {
     updated_at: string
     has_api_key?: boolean
     api_key_first_12_digits?: string | null
-    query_rewrite_enabled: boolean
 }
 
 // Keep this in sync with backend/api/memo.ts
