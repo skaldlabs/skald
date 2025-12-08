@@ -125,6 +125,9 @@ export const createTestProject = async (
         owner,
         created_at: new Date(),
         updated_at: new Date(),
+        chat_ui_enabled: false,
+        chat_ui_rag_config: null,
+        chat_ui_slug: null,
     })
     await em.persistAndFlush(project)
     return project
