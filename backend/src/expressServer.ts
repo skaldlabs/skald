@@ -2,8 +2,6 @@ import express, { NextFunction, Router, RequestHandler, Request, Response } from
 import cors from 'cors'
 import { RequestContext } from '@mikro-orm/postgresql'
 import { userMiddleware } from '@/middleware/userMiddleware'
-import fs from 'fs/promises'
-import swaggerUi from 'swagger-ui-express'
 
 import { adminRouter } from '@/api/admin'
 import { authRouter } from '@/api/auth'
@@ -37,7 +35,6 @@ import {
 } from '@/settings'
 import * as Sentry from '@sentry/node'
 import cookieParser from 'cookie-parser'
-import path from 'path'
 
 export type ExtraRoute = [string, RequestHandler[], Router]
 export type PublicRoute = [string, 'GET' | 'POST', RequestHandler[], RequestHandler]
@@ -119,14 +116,6 @@ export const startExpressServer = async (
     }
 
     app.use('/api', privateRoutesRouter)
-
-    try {
-        const swaggerFile = path.join(__dirname, '..', 'public', 'openapi.json')
-        const swaggerDocument = await JSON.parse(await fs.readFile(swaggerFile, 'utf8'))
-        app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
-    } catch (error) {
-        console.warn("⚠️  OpenAPI spec not found. Run 'pnpm run swagger' to generate it.", error)
-    }
 
     app.use(route404)
     // the error handler must be registered before any other error middleware and after all controllers

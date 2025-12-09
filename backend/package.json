@@ -86,7 +86,6 @@
         "nodemon": "^3.1.10",
         "supertest": "^7.1.4",
         "swagger-autogen": "^2.23.7",
-        "swagger-ui-express": "^5.0.1",
         "ts-jest": "^29.4.5",
         "ts-node": "^10.9.2",
         "tsc-alias": "^1.8.16",
