@@ -16,11 +16,21 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { isSelfHostedDeploy } from '@/config'
 import { useAuthStore, UserDetails } from '@/stores/authStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { BookOpen, File, FlaskConical, List, MessageSquare, Search, Settings, Zap, GraduationCap } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 interface MenuItem {
     key: string
@@ -37,6 +47,7 @@ export const Sider = () => {
     const location = useLocation()
     const user = useAuthStore((state) => state.user)
     const currentProject = useProjectStore((state) => state.currentProject)
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
 
     const mainMenuItems: Record<string, MenuItem[]> = {
         Project: [
@@ -191,7 +202,18 @@ export const Sider = () => {
             <SidebarFooter className="border-t p-0">
                 <SidebarGroup>
                     <SidebarGroupContent className="flex flex-col gap-2">
-                        {!isSelfHostedDeploy && (
+                        {isSelfHostedDeploy ? (
+                            <div className="p-2">
+                                <Button
+                                    onClick={() => setIsUpgradeModalOpen(true)}
+                                    size="sm"
+                                    className="w-full"
+                                    variant="default"
+                                >
+                                    Upgrade
+                                </Button>
+                            </div>
+                        ) : (
                             <div className="p-2">
                                 <UsageTracker />
                             </div>
@@ -203,6 +225,31 @@ export const Sider = () => {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarFooter>
+
+            <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Upgrade to the Enterprise Edition</DialogTitle>
+                        <DialogDescription>
+                            You're currently running the MIT-licensed version of Skald. If you need advanced features or
+                            a more scalable deployment our Enterprise Edition plan might be a good fit for you.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsUpgradeModalOpen(false)}>
+                            Close
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setIsUpgradeModalOpen(false)
+                                window.open('https://useskald.com/pricing#on-prem', '_blank')
+                            }}
+                        >
+                            Read more
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Sidebar>
     )
 }

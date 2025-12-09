@@ -142,7 +142,6 @@ export const startExpressServer = async (
         }
 
         logger.info(`Express server started at http://${HOST}:${EXPRESS_SERVER_PORT}`)
-        console.log(`API Doc at http://${HOST}:${EXPRESS_SERVER_PORT}/api-docs`)
     })
 
     const closeServer = (): Promise<void> =>
