@@ -105,7 +105,7 @@ You can deploy Skald without **any** third-party dependencies (including OpenAI)
 
 ## 🗒️ License
 
-[MIT](https://github.com/skaldlabs/skald/blob/main/LICENSE) 🤸
+This repo is available under the [MIT license](https://github.com/skaldlabs/skald/blob/main/LICENSE), except for the `ee` directory (which has [its license here](https://github.com/skaldlabs/skald/blob/main/ee/LICENSE)) if applicable.
 
 ## 🤝 Contributing
 
