@@ -1,44 +1,46 @@
-import express, { Router, RequestHandler } from 'express'
+import express, { NextFunction, Router, RequestHandler, Request, Response } from 'express'
 import cors from 'cors'
 import { RequestContext } from '@mikro-orm/postgresql'
 import { userMiddleware } from '@/middleware/userMiddleware'
-import { chatRouter } from '@/api/chat'
-import { health } from '@/api/health'
-import { requireAuth } from '@/middleware/authMiddleware'
-import { initDI } from '@/di'
-import { Request, Response, NextFunction } from 'express'
+import fs from 'fs/promises'
+import swaggerUi from 'swagger-ui-express'
 
-export type ExtraRoute = [string, RequestHandler[], Router]
-export type PublicRoute = [string, 'GET' | 'POST', RequestHandler[], RequestHandler]
+import { adminRouter } from '@/api/admin'
+import { authRouter } from '@/api/auth'
+import { chatRouter } from '@/api/chat'
+import { configRouter } from '@/api/config'
+import { emailVerificationRouter } from '@/api/emailVerification'
+import { evaluationDatasetRouter } from '@/api/evaluationDataset'
+import { experimentRouter } from '@/api/experiment'
+import { health } from '@/api/health'
+import { requireAuth, requireProjectAccess } from '@/middleware/authMiddleware'
+import { initDI } from '@/di'
 import { search } from '@/api/search'
+import { memoRouter } from '@/api/memo'
+import { onboardingRouter } from '@/api/onboarding'
 import { organizationRouter } from '@/api/organization'
+import { planRouter } from '@/api/plan'
 import { projectRouter } from '@/api/project'
+import { stripeWebhook } from '@/api/stripe_webhook'
+import { subscriptionRouter } from '@/api/subscription'
 import { userRouter } from '@/api/user'
-import cookieParser from 'cookie-parser'
+import { logger } from '@/lib/logger'
+import { posthog } from '@/lib/posthogUtils'
+import { authRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
+import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
 import {
     CORS_ALLOWED_ORIGINS,
     CORS_ALLOW_CREDENTIALS,
-    IS_DEVELOPMENT,
     ENABLE_SECURITY_SETTINGS,
     EXPRESS_SERVER_PORT,
+    IS_DEVELOPMENT,
 } from '@/settings'
-import { emailVerificationRouter } from '@/api/emailVerification'
-import { memoRouter } from '@/api/memo'
-import { subscriptionRouter } from '@/api/subscription'
-import { planRouter } from '@/api/plan'
-import { stripeWebhook } from '@/api/stripe_webhook'
-import { adminRouter } from '@/api/admin'
-import { evaluationDatasetRouter } from '@/api/evaluationDataset'
-import { experimentRouter } from '@/api/experiment'
-import { configRouter } from '@/api/config'
-import { authRouter } from '@/api/auth'
-import { onboardingRouter } from '@/api/onboarding'
-import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
-import { authRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
-import { requireProjectAccess } from '@/middleware/authMiddleware'
-import { logger } from '@/lib/logger'
-import { posthog } from '@/lib/posthogUtils'
 import * as Sentry from '@sentry/node'
+import cookieParser from 'cookie-parser'
+import path from 'path'
+
+export type ExtraRoute = [string, RequestHandler[], Router]
+export type PublicRoute = [string, 'GET' | 'POST', RequestHandler[], RequestHandler]
 
 export const startExpressServer = async (
     extraPrivateRoutes: ExtraRoute[] = [],
@@ -118,8 +120,15 @@ export const startExpressServer = async (
 
     app.use('/api', privateRoutesRouter)
 
-    app.use(route404)
+    try {
+        const swaggerFile = path.join(__dirname, '..', 'public', 'openapi.json')
+        const swaggerDocument = await JSON.parse(await fs.readFile(swaggerFile, 'utf8'))
+        app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+    } catch (error) {
+        console.warn("⚠️  OpenAPI spec not found. Run 'pnpm run swagger' to generate it.", error)
+    }
 
+    app.use(route404)
     // the error handler must be registered before any other error middleware and after all controllers
     Sentry.setupExpressErrorHandler(app)
 
@@ -144,6 +153,7 @@ export const startExpressServer = async (
         }
 
         logger.info(`Express server started at http://${HOST}:${EXPRESS_SERVER_PORT}`)
+        console.log(`API Doc at http://${HOST}:${EXPRESS_SERVER_PORT}/api-docs`)
     })
 
     const closeServer = (): Promise<void> =>

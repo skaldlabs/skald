@@ -973,7 +973,7 @@
         overflow-y: auto;
         min-height: 0;
         animation: slideInFromRight 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        background: linear-gradient(135deg, hsl(142, 72%, 97%) 0%, hsl(142, 50%, 95%) 50%, var(--background) 100%);
+        background: linear-gradient(135deg, hsl(142, 72%, 97%) 0%, hsl(142, 50%, 95%) 100%);
 
         @media (max-width: 1100px) {
             animation: slideInFromBottom 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1030,14 +1030,14 @@
         h3 {
             font-size: 1.25rem;
             font-weight: 700;
-            color: var(--foreground);
+            color: hsl(142, 40%, 20%);
             margin-bottom: 0.5rem;
             animation: fadeInUp 0.5s ease-out 0.5s both;
         }
 
         .completion-description {
             font-size: 0.875rem;
-            color: var(--muted-foreground);
+            color: hsl(142, 20%, 35%);
             line-height: 1.5;
             margin-bottom: 1.5rem;
             max-width: 260px;

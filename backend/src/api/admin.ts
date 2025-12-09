@@ -1,8 +1,8 @@
-import express, { Request, Response } from 'express'
 import { DI } from '@/di'
-import { requireSuperuser } from '@/middleware/authMiddleware'
 import { generateAccessToken } from '@/lib/tokenUtils'
+import { requireSuperuser } from '@/middleware/authMiddleware'
 import { ENABLE_SECURITY_SETTINGS } from '@/settings'
+import express, { Request, Response } from 'express'
 
 interface UserListItem {
     id: string
@@ -14,6 +14,26 @@ interface UserListItem {
 }
 
 const listUsers = async (req: Request, res: Response) => {
+    /*
+        #swagger.tags = ['Admin']
+        #swagger.summary = 'List all users'
+        #swagger.description = 'Retrieve a list of all users. Requires superuser privileges.'
+        #swagger.responses[200] = {
+            description: 'List of users',
+            schema: {
+                users: [
+                    {
+                        id: '1',
+                        email: 'user@example.com',
+                        name: 'John Doe',
+                        is_superuser: false,
+                        is_active: true,
+                        date_joined: '2023-01-01T00:00:00.000Z'
+                    }
+                ]
+            }
+        }
+    */
     const users = await DI.users.findAll({
         orderBy: { date_joined: 'DESC' },
     })
@@ -31,6 +51,22 @@ const listUsers = async (req: Request, res: Response) => {
 }
 
 const impersonateUser = async (req: Request, res: Response) => {
+    /*
+        #swagger.tags = ['Admin']
+        #swagger.summary = 'Impersonate a user'
+        #swagger.description = 'Generate an access token for a specific user. Requires superuser privileges.'
+        #swagger.parameters['userId'] = {
+            description: 'ID of the user to impersonate',
+            required: true,
+            type: 'string'
+        }
+        #swagger.responses[200] = {
+            description: 'Impersonation successful',
+            schema: { message: 'Impersonation successful' }
+        }
+        #swagger.responses[400] = { description: 'User ID is required' }
+        #swagger.responses[404] = { description: 'User not found' }
+    */
     const { userId } = req.params
 
     if (!userId) {
