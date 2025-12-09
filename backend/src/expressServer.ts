@@ -40,7 +40,10 @@ import { logger } from '@/lib/logger'
 import { posthog } from '@/lib/posthogUtils'
 import * as Sentry from '@sentry/node'
 
-export const startExpressServer = async (extraRoutes: ExtraRoute[] = [], publicRoutes: PublicRoute[] = []) => {
+export const startExpressServer = async (
+    extraPrivateRoutes: ExtraRoute[] = [],
+    extraPublicRoutes: PublicRoute[] = []
+) => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
     // because it's the established patter used by mikro-orm, and we want to be able to easily find information
     // about our setup online. see e.g. https://github.com/mikro-orm/express-ts-example-app/blob/master/app/server.ts
@@ -83,8 +86,8 @@ export const startExpressServer = async (extraRoutes: ExtraRoute[] = [], publicR
 
     app.get('/api/health', health)
 
-    // Register public routes (e.g., enterprise public endpoints)
-    for (const [route, method, middleware, handler] of publicRoutes) {
+    // register public routes (e.g., enterprise public endpoints)
+    for (const [route, method, middleware, handler] of extraPublicRoutes) {
         if (method === 'GET') {
             app.get(route, ...middleware, handler)
         } else if (method === 'POST') {
@@ -108,8 +111,8 @@ export const startExpressServer = async (extraRoutes: ExtraRoute[] = [], publicR
     privateRoutesRouter.use('/onboarding', onboardingRouter)
     privateRoutesRouter.use('/v1/config', configRouter)
 
-    // Register extra routes (e.g., enterprise features)
-    for (const [route, middleware, router] of extraRoutes) {
+    // register extra private routes (e.g., enterprise features)
+    for (const [route, middleware, router] of extraPrivateRoutes) {
         privateRoutesRouter.use(route, ...middleware, router)
     }
 
