@@ -1,6 +1,7 @@
 import { DeferMode, Entity, ManyToOne, PrimaryKey, Property } from '@mikro-orm/core'
 import { Organization } from '@/entities/Organization'
 import { User } from '@/entities/User'
+import { RAGConfig } from '@/agents/chatAgent/ragGraph'
 
 @Entity({ tableName: 'skald_project' })
 export class Project {
@@ -32,5 +33,21 @@ export class Project {
     owner!: User
 
     @Property({ default: false })
-    query_rewrite_enabled!: boolean
+    chat_ui_enabled!: boolean
+
+    @Property({ nullable: true })
+    chat_ui_logo_url?: string | null
+
+    @Property({ nullable: true })
+    chat_ui_title?: string | null
+
+    @Property({ type: 'jsonb', nullable: true })
+    chat_ui_rag_config?: RAGConfig | null
+
+    @Property({
+        nullable: true,
+        unique: 'skald_project_chat_ui_slug_key',
+        index: 'skald_project_chat_ui_slug_idx',
+    })
+    chat_ui_slug?: string | null
 }

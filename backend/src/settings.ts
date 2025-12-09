@@ -92,7 +92,12 @@ export const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY
 export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME
 
 // ---- LLM Configuration ----
-export const LLM_PROVIDER = process.env.LLM_PROVIDER || 'openai'
+export const LLM_PROVIDER = (process.env.LLM_PROVIDER || 'openai') as
+    | 'openai'
+    | 'anthropic'
+    | 'local'
+    | 'groq'
+    | 'gemini'
 
 // OpenAI
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY

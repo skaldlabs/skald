@@ -17,10 +17,8 @@ import { Project } from '../entities/Project'
 import { Organization } from '../entities/Organization'
 import { OrganizationMembership } from '../entities/OrganizationMembership'
 import cookieParser from 'cookie-parser'
-import { chat } from '../api/chat'
 import { chatRouter } from '../api/chat'
 import { requireProjectAccess } from '../middleware/authMiddleware'
-import * as chatAgentPreprocessing from '../agents/chatAgent/preprocessing'
 import * as chatAgent from '../agents/chatAgent/chatAgent'
 import { ChatMessage } from '@/entities/ChatMessage'
 import { Chat } from '@/entities/Chat'
@@ -329,6 +327,7 @@ describe('Chat API', () => {
             ;(ragGraphModule.ragGraph.invoke as jest.Mock).mockResolvedValue(mockRagState)
 
             async function* mockStreamGenerator() {
+                yield { type: 'token', content: 'This is the AI response' }
                 throw new Error('Chat agent error')
             }
             ;(chatAgent.streamChatAgent as jest.Mock).mockReturnValue(mockStreamGenerator())

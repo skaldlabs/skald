@@ -1,0 +1,39 @@
+name: Sync Skald FOSS
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    repo-sync:
+        name: Sync skald-foss with skald
+        runs-on: ubuntu-latest
+        steps:
+            - name: Sync repositories 1 to 1
+              uses: ungless/git-sync@master # tag syncing is not currently part of wei/git-sync
+              with:
+                  source_repo: 'https://${{ secrets.SYNC_GITHUB_TOKEN }}@github.com/skaldlabs/skald.git'
+                  source_branch: 'main'
+                  destination_repo: 'https://${{ secrets.SYNC_GITHUB_TOKEN }}@github.com/skaldlabs/skald-foss.git'
+                  destination_branch: 'main'
+            - name: Checkout skald-foss
+              uses: actions/checkout@v2
+              with:
+                  repository: 'skaldlabs/skald-foss'
+                  ref: main
+                  token: ${{ secrets.SYNC_GITHUB_TOKEN }} # SYNC_GITHUB_TOKEN is a PAT token with the workflows scope which is not in GITHUB_TOKEN
+            - name: Change LICENSE to pure MIT
+              run: |
+                  awk '/^Permission is hereby granted/,0' LICENSE > LICENSE.tmp
+                  echo -e "MIT License\n\nCopyright (c) 2025 Skald Labs, Inc.\n\n$(cat LICENSE.tmp)" > LICENSE
+                  rm LICENSE.tmp
+            - name: Commit "Sync and remove all non-FOSS parts"
+              uses: EndBug/add-and-commit@v7
+              with:
+                  author_name: Skald Bot
+                  author_email: dev@posthog.com
+                  message: 'Sync and remove all non-FOSS parts'
+                  remove: '["-r ee/", "-r .github/"]'
+              env:
+                  GITHUB_TOKEN: ${{ secrets.SYNC_GITHUB_TOKEN }}

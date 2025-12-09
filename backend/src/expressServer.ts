@@ -1,3 +1,7 @@
+import express, { NextFunction, Router, RequestHandler, Request, Response } from 'express'
+import cors from 'cors'
+import { RequestContext } from '@mikro-orm/postgresql'
+import { userMiddleware } from '@/middleware/userMiddleware'
 import fs from 'fs/promises'
 import swaggerUi from 'swagger-ui-express'
 
@@ -9,22 +13,21 @@ import { emailVerificationRouter } from '@/api/emailVerification'
 import { evaluationDatasetRouter } from '@/api/evaluationDataset'
 import { experimentRouter } from '@/api/experiment'
 import { health } from '@/api/health'
+import { requireAuth, requireProjectAccess } from '@/middleware/authMiddleware'
+import { initDI } from '@/di'
+import { search } from '@/api/search'
 import { memoRouter } from '@/api/memo'
 import { onboardingRouter } from '@/api/onboarding'
 import { organizationRouter } from '@/api/organization'
 import { planRouter } from '@/api/plan'
 import { projectRouter } from '@/api/project'
-import { search } from '@/api/search'
 import { stripeWebhook } from '@/api/stripe_webhook'
 import { subscriptionRouter } from '@/api/subscription'
 import { userRouter } from '@/api/user'
-import { initDI } from '@/di'
 import { logger } from '@/lib/logger'
 import { posthog } from '@/lib/posthogUtils'
-import { requireAuth, requireProjectAccess } from '@/middleware/authMiddleware'
 import { authRateLimiter, generalRateLimiter } from '@/middleware/rateLimitMiddleware'
 import { securityHeadersMiddleware } from '@/middleware/securityMiddleware'
-import { userMiddleware } from '@/middleware/userMiddleware'
 import {
     CORS_ALLOWED_ORIGINS,
     CORS_ALLOW_CREDENTIALS,
@@ -32,14 +35,17 @@ import {
     EXPRESS_SERVER_PORT,
     IS_DEVELOPMENT,
 } from '@/settings'
-import { RequestContext } from '@mikro-orm/postgresql'
 import * as Sentry from '@sentry/node'
 import cookieParser from 'cookie-parser'
-import cors from 'cors'
-import express, { NextFunction, Request, Response } from 'express'
 import path from 'path'
 
-export const startExpressServer = async () => {
+export type ExtraRoute = [string, RequestHandler[], Router]
+export type PublicRoute = [string, 'GET' | 'POST', RequestHandler[], RequestHandler]
+
+export const startExpressServer = async (
+    extraPrivateRoutes: ExtraRoute[] = [],
+    extraPublicRoutes: PublicRoute[] = []
+) => {
     // DI stands for Dependency Injection. the naming/acronym is a bit confusing, but we're using it
     // because it's the established patter used by mikro-orm, and we want to be able to easily find information
     // about our setup online. see e.g. https://github.com/mikro-orm/express-ts-example-app/blob/master/app/server.ts
@@ -81,6 +87,16 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use(requireAuth())
 
     app.get('/api/health', health)
+
+    // register public routes (e.g., enterprise public endpoints)
+    for (const [route, method, middleware, handler] of extraPublicRoutes) {
+        if (method === 'GET') {
+            app.get(route, ...middleware, handler)
+        } else if (method === 'POST') {
+            app.post(route, ...middleware, handler)
+        }
+    }
+
     app.use('/api/auth', authRateLimiter, authRouter)
     app.use('/api/user', authRateLimiter, userRouter)
     privateRoutesRouter.use('/email_verification', emailVerificationRouter)
@@ -96,6 +112,11 @@ export const startExpressServer = async () => {
     privateRoutesRouter.use('/project/:uuid/experiments', experimentRouter)
     privateRoutesRouter.use('/onboarding', onboardingRouter)
     privateRoutesRouter.use('/v1/config', configRouter)
+
+    // register extra private routes (e.g., enterprise features)
+    for (const [route, middleware, router] of extraPrivateRoutes) {
+        privateRoutesRouter.use(route, ...middleware, router)
+    }
 
     app.use('/api', privateRoutesRouter)
 

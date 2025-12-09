@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { Project } from '@/lib/types'
-import { Switch } from '@/components/ui/switch'
 
 interface ProjectNameEditorProps {
     project: Project
@@ -36,9 +35,6 @@ export const ProjectEditor = ({ project }: ProjectNameEditorProps) => {
         setEditedName('')
     }
 
-    const handleToggle = async (checked: boolean) => {
-        await updateProject(project.uuid, { query_rewrite_enabled: checked })
-    }
     return (
         <Card>
             <CardHeader>
@@ -85,20 +81,6 @@ export const ProjectEditor = ({ project }: ProjectNameEditorProps) => {
                         </Button>
                     </div>
                 )}
-                <div className="mt-6 flex justify-between gap-4 items-center">
-                    <div>
-                        <p className="text-sm font-medium leading-tight">Query Rewrite</p>
-                        <p className="text-sm text-muted-foreground">
-                            Improves retrieval by letting the agent rephrase user questions before searching your memos.
-                        </p>
-                    </div>
-                    <Switch
-                        id="query-rewrite"
-                        checked={project.query_rewrite_enabled}
-                        onCheckedChange={handleToggle}
-                        disabled={loading}
-                    />
-                </div>
             </CardContent>
         </Card>
     )

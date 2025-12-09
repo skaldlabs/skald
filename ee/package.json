@@ -1,0 +1,26 @@
+{
+    "name": "ee",
+    "version": "1.0.0",
+    "description": "Enterprise edition features for Skald",
+    "main": "dist/src/enterpriseServer.js",
+    "scripts": {
+        "dev": "NODE_ENV=development nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
+        "build": "tsc && tsc-alias",
+        "start": "node dist/src/enterpriseServer.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "SEE LICENSE IN LICENSE",
+    "dependencies": {
+        "@langchain/core": "^0.3.79",
+        "express": "^5.1.0"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.5",
+        "nodemon": "^3.1.10",
+        "ts-node": "^10.9.2",
+        "tsc-alias": "^1.8.16",
+        "tsconfig-paths": "^4.2.0",
+        "typescript": "^5.9.3"
+    }
+}
