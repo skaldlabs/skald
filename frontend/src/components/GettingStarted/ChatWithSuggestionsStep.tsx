@@ -104,7 +104,8 @@ export const ChatWithSuggestionsStep = () => {
                             <h3>You're all set!</h3>
 
                             <p className="completion-description">
-                                You've successfully created your first memo and experienced RAG in action.
+                                You've successfully created your first memo and experienced the Skald Context Layer in
+                                action.
                             </p>
 
                             <div className="completion-checklist">
