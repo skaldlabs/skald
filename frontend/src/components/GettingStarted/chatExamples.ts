@@ -6,7 +6,6 @@ import {
     rubyChatSnippet,
     goChatSnippet,
     dotnetChatSnippet,
-    cliChatSnippet,
 } from './chatCodeSnippets'
 
 interface ChatExampleParams {
@@ -57,11 +56,6 @@ export const getChatExample = (language: string, params: ChatExampleParams): Cod
         dotnet: () => ({
             code: dotnetChatSnippet.replace('{apiKey}', apiKeyDisplay).replace('{query}', query),
             language: 'csharp',
-        }),
-
-        cli: () => ({
-            code: cliChatSnippet.replace('{query}', query),
-            language: 'bash',
         }),
     }
 

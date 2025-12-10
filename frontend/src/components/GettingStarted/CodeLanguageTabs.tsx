@@ -13,7 +13,6 @@ const AVAILABLE_TABS = [
     { id: 'ruby', label: 'Ruby' },
     { id: 'go', label: 'Go' },
     { id: 'dotnet', label: '.NET' },
-    { id: 'cli', label: 'CLI' },
 ]
 
 export const CodeLanguageTabs = ({ activeTab, onTabChange }: CodeLanguageTabsProps) => {

@@ -99,6 +99,3 @@ var result = await client.ChatAsync(new ChatRequest
 });
 
 Console.WriteLine(result.Response);`
-
-export const cliChatSnippet = `# Ask a question to your knowledge base -- Currently Cloud-only
-skald chat ask "{query}"`

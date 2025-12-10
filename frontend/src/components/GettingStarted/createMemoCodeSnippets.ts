@@ -81,12 +81,3 @@ await client.CreateMemoAsync(new MemoData
     Title = "{title}",
     Content = "{content}",
 });`
-
-export const cliCreateMemoSnippet = `# Authenticate with your API key -- Currently Cloud-only
-skald auth --api-key {apiKey}
-
-# Create a memo by writing content to a file
-echo "{content}" > memo.txt
-
-# Add the memo
-skald memo add --title "{title}" --file-path memo.txt`

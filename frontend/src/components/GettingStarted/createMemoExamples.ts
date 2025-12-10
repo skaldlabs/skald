@@ -6,7 +6,6 @@ import {
     rubyCreateMemoSnippet,
     goCreateMemoSnippet,
     dotnetCreateMemoSnippet,
-    cliCreateMemoSnippet,
 } from './createMemoCodeSnippets'
 
 interface CreateMemoParams {
@@ -79,14 +78,6 @@ export const getCreateMemoExample = (language: string, params: CreateMemoParams)
                 .replace('{title}', title)
                 .replace('{content}', content),
             language: 'csharp',
-        }),
-
-        cli: () => ({
-            code: cliCreateMemoSnippet
-                .replace('{apiKey}', apiKeyDisplay)
-                .replace('{title}', title)
-                .replace('{content}', content),
-            language: 'bash',
         }),
     }
 
