@@ -63,7 +63,7 @@ Respond with ONLY a JSON object in this format:
  * @returns An agent that can summarize memo content
  */
 export function createLLMJudgeAgent() {
-    const llm = LLMService.getLLM()
+    const llm = LLMService.getLLM({ purpose: 'classification' })
 
     const structuredLlm = llm.withStructuredOutput(LLMJudgeOutputSchema, {
         name: 'LLMJudgeAgent',

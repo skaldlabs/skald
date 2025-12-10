@@ -19,7 +19,7 @@ You may also be given a list of tags that are already used to describe memos in 
  * @returns An agent that can extract tags from memo content
  */
 export function createMemoTagsAgent() {
-    const llm = LLMService.getLLM()
+    const llm = LLMService.getLLM({ purpose: 'classification' })
 
     const structuredLlm = llm.withStructuredOutput(MemoTagsOutputSchema, {
         name: 'MemoTagsAgent',

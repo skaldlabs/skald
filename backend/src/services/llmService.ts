@@ -4,18 +4,22 @@ import { ChatAnthropic } from '@langchain/anthropic'
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
 import {
     LLM_PROVIDER,
-    OPENAI_MODEL,
     OPENAI_API_KEY,
-    ANTHROPIC_MODEL,
     ANTHROPIC_API_KEY,
     LOCAL_LLM_MODEL,
     LOCAL_LLM_BASE_URL,
     LOCAL_LLM_API_KEY,
     GROQ_API_KEY,
-    GROQ_MODEL,
     GEMINI_API_KEY,
-    GEMINI_MODEL,
 } from '../settings'
+import { DEFAULT_LLM_MODELS } from '@/llmModels'
+
+interface GetLLMParams {
+    temperature?: number
+    providerOverride?: 'openai' | 'anthropic' | 'local' | 'groq' | 'gemini'
+    purpose?: 'chat' | 'classification'
+}
+
 /**
  * LLM Service for creating LLM instances based on configuration
  */
@@ -29,10 +33,7 @@ export class LLMService {
      * @param temperature - Temperature for the LLM (default: 0 for deterministic output)
      * @returns Configured LLM instance
      */
-    static getLLM(
-        temperature: number = 0,
-        providerOverride?: 'openai' | 'anthropic' | 'local' | 'groq' | 'gemini'
-    ): BaseChatModel {
+    static getLLM({ temperature = 0, providerOverride, purpose = 'chat' }: GetLLMParams): BaseChatModel {
         let provider = this.provider
         if (providerOverride) {
             provider = providerOverride
@@ -43,7 +44,10 @@ export class LLMService {
                 throw new Error('OpenAI provider is not configured. Please set OPENAI_API_KEY.')
             }
             return new ChatOpenAI({
-                model: OPENAI_MODEL,
+                model:
+                    purpose === 'chat'
+                        ? DEFAULT_LLM_MODELS.openai.defaultChatModel.slug
+                        : DEFAULT_LLM_MODELS.openai.defaultClassificationModel.slug,
                 apiKey: OPENAI_API_KEY,
                 temperature,
             })
@@ -52,7 +56,10 @@ export class LLMService {
                 throw new Error('Anthropic provider is not configured. Please set ANTHROPIC_API_KEY.')
             }
             return new ChatAnthropic({
-                model: ANTHROPIC_MODEL,
+                model:
+                    purpose === 'chat'
+                        ? DEFAULT_LLM_MODELS.anthropic.defaultChatModel.slug
+                        : DEFAULT_LLM_MODELS.anthropic.defaultClassificationModel.slug,
                 apiKey: ANTHROPIC_API_KEY,
                 temperature,
             })
@@ -75,7 +82,10 @@ export class LLMService {
                 throw new Error('Groq provider is not configured. Please set GROQ_API_KEY.')
             }
             return new ChatOpenAI({
-                model: GROQ_MODEL,
+                model:
+                    purpose === 'chat'
+                        ? DEFAULT_LLM_MODELS.groq.defaultChatModel.slug
+                        : DEFAULT_LLM_MODELS.groq.defaultClassificationModel.slug,
                 apiKey: GROQ_API_KEY,
                 configuration: {
                     baseURL: 'https://api.groq.com/openai/v1',
@@ -87,7 +97,10 @@ export class LLMService {
                 throw new Error('Gemini provider is not configured. Please set GEMINI_API_KEY.')
             }
             return new ChatGoogleGenerativeAI({
-                model: GEMINI_MODEL,
+                model:
+                    purpose === 'chat'
+                        ? DEFAULT_LLM_MODELS.gemini.defaultChatModel.slug
+                        : DEFAULT_LLM_MODELS.gemini.defaultClassificationModel.slug,
                 apiKey: GEMINI_API_KEY,
                 temperature,
             })
