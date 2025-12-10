@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useOnboardingStore } from '@/stores/onboardingStore'
-import { Check, Loader2, MessageCircle, ArrowRight, CheckCircle2, AlertCircle, Circle } from 'lucide-react'
+import { Check, Loader2, MessageCircle, ArrowRight, CheckCircle2, AlertCircle, Circle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export const ProcessingExplanationStep = () => {
     const processingStage = useOnboardingStore((state) => state.processingStage)
@@ -11,6 +12,7 @@ export const ProcessingExplanationStep = () => {
     const pollMemoProcessing = useOnboardingStore((state) => state.pollMemoProcessing)
     const stopPolling = useOnboardingStore((state) => state.stopPolling)
     const nextStep = useOnboardingStore((state) => state.nextStep)
+    const selectedFile = useOnboardingStore((state) => state.selectedFile)
 
     // Track if polling has been started to prevent duplicate calls
     const pollingStartedRef = useRef(false)
@@ -157,8 +159,19 @@ export const ProcessingExplanationStep = () => {
                     <h1>Processing your memo</h1>
 
                     <p className="processing-description">
-                        We're preparing your content to be searchable. This usually takes just a few seconds.
+                        We're preparing your content to be searchable. This usually takes just a few{' '}
+                        {selectedFile ? 'minutes' : 'seconds'}.
                     </p>
+
+                    {selectedFile && (
+                        <Alert className="file-processing-warning mb-4 bg-amber-500/10 border-amber-500/20">
+                            <Clock className="h-4 w-4" />
+                            <AlertDescription>
+                                Document processing can take several minutes depending on file size and complexity.
+                                Please keep this page open until processing completes.
+                            </AlertDescription>
+                        </Alert>
+                    )}
 
                     <div className="stages-list">
                         {stages.map((stage) => {
