@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Check, Send, Loader2 } from 'lucide-react'
+import { Check, Send } from 'lucide-react'
 import { CodeLanguageTabs } from './CodeLanguageTabs'
 import { InteractiveCodeBlock } from './InteractiveCodeBlock'
 import { getChatExample } from '@/components/GettingStarted/chatExamples'
@@ -20,10 +20,8 @@ export const ChatStep = () => {
     const sendChatMessage = useOnboardingStore((state) => state.sendChatMessage)
 
     const [activeTab, setActiveTab] = useState('curl')
-    const [isWaitingForChat, setIsWaitingForChat] = useState(false)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
     const codeBlockRef = useRef<HTMLDivElement | null>(null)
-    const waitingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const isMobile = useIsMobile()
     const user = useAuthStore((state) => state.user)
 
@@ -33,50 +31,6 @@ export const ChatStep = () => {
             messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
         }
     }, [chatMessages])
-
-    // Cleanup timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (waitingTimeoutRef.current) {
-                clearTimeout(waitingTimeoutRef.current)
-            }
-        }
-    }, [])
-
-    // Watch for hasChatted to become true and stop waiting
-    useEffect(() => {
-        if (hasChatted && isWaitingForChat) {
-            stopWaiting()
-        }
-    }, [hasChatted, isWaitingForChat])
-
-    const stopWaiting = () => {
-        if (waitingTimeoutRef.current) {
-            clearTimeout(waitingTimeoutRef.current)
-            waitingTimeoutRef.current = null
-        }
-        setIsWaitingForChat(false)
-    }
-
-    const startWaiting = () => {
-        // Don't start waiting if already waiting, on mobile, or if step is already complete
-        if (isWaitingForChat || isMobile || hasChatted) return
-
-        setIsWaitingForChat(true)
-
-        // Auto-complete after 30 seconds (giving user time to run the code)
-        waitingTimeoutRef.current = setTimeout(() => {
-            useOnboardingStore.setState({ hasChatted: true })
-            setIsWaitingForChat(false)
-        }, 30000)
-    }
-
-    const handleCodeCopy = () => {
-        // Only start waiting on desktop when code is copied
-        if (!isMobile) {
-            startWaiting()
-        }
-    }
 
     const getCodeExample = () => {
         return getChatExample(activeTab, {
@@ -101,7 +55,6 @@ export const ChatStep = () => {
                     <InteractiveCodeBlock
                         code={getCodeExample().code}
                         language={getCodeExample().language}
-                        onCopy={handleCodeCopy}
                         inputs={[]}
                     />
                 </div>
@@ -152,13 +105,6 @@ export const ChatStep = () => {
                                 On mobile? Test the chat right here. On desktop, we encourage using code!
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {isWaitingForChat && !isMobile && (
-                    <div className="waiting-indicator">
-                        <Loader2 className="spinner" size={20} />
-                        <span>Waiting for chat to be sent...</span>
                     </div>
                 )}
             </div>
