@@ -1171,7 +1171,7 @@ describe('Chat API', () => {
                 const query = 'how to auth users api'
                 const result = await rewrite(query, [])
 
-                expect(LLMService.getLLM).toHaveBeenCalledWith(0.3)
+                expect(LLMService.getLLM).toHaveBeenCalledWith({ purpose: 'classification', temperature: 0.3 })
                 expect(mockInvoke).toHaveBeenCalledWith([
                     { role: 'system', content: expect.any(String) },
                     { role: 'user', content: expect.stringContaining(query) },
