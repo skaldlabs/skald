@@ -133,7 +133,7 @@ export class RerankService {
         results: any[],
         metadata?: RerankMetadata[]
     ): Promise<RerankResult[]> {
-        const llm = LLMService.getLLM(0, 'openai')
+        const llm = LLMService.getLLM({ purpose: 'classification', providerOverride: 'openai' })
         const structuredLlm = llm.withStructuredOutput(RerankOutputSchema, {
             name: 'RerankAgent',
         })

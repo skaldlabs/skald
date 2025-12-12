@@ -20,7 +20,7 @@ export const rewrite = async (query: string, conversationHistory: ConversationMe
 
         const userPrompt = `${contextStr}\nQuery to enhance: "${query}"`
 
-        const llm = LLMService.getLLM(0.3)
+        const llm = LLMService.getLLM({ purpose: 'classification', temperature: 0.3 })
 
         const response = await llm.invoke([
             { role: 'system', content: QUERY_REWRITE_PROMPT },
