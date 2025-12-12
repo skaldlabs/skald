@@ -9,9 +9,9 @@ export function parseRagConfig(ragConfig: Record<string, any>): {
     const defaults = {
         queryRewriteEnabled: false,
         rerankingEnabled: true,
-        vectorSearchTopK: 100,
+        vectorSearchTopK: 50,
         similarityThreshold: 0.8,
-        rerankingTopK: 50,
+        rerankingTopK: 25,
         referencesEnabled: false,
     }
 

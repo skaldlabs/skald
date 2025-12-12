@@ -1,4 +1,4 @@
-import { createMemoChunks, extractTagsFromMemo, generateMemoSummary } from '@/memoProcessingServer/memoOperations'
+import { createMemoChunks, generateMemoSummary } from '@/memoProcessingServer/memoOperations'
 import { EntityManager } from '@mikro-orm/core'
 import { updateMemoStatus } from '@/lib/memoStatusUtils'
 import { logger } from '@/lib/logger'
@@ -73,7 +73,7 @@ const runMemoProcessingAgents = async (em: EntityManager, memoUuid: string) => {
     const promises = [createMemoChunks(em, row.memo_uuid, row.project_id, row.content)]
 
     if (['openai', 'anthropic', 'gemini'].includes(LLM_PROVIDER)) {
-        promises.push(extractTagsFromMemo(em, row.memo_uuid, row.content, row.project_id))
+        // promises.push(extractTagsFromMemo(em, row.memo_uuid, row.content, row.project_id))
         promises.push(generateMemoSummary(em, row.memo_uuid, row.content, row.project_id))
     }
 
