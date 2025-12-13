@@ -121,6 +121,14 @@ export const startExpressServer = async (
     // the error handler must be registered before any other error middleware and after all controllers
     Sentry.setupExpressErrorHandler(app)
 
+    // Handle JSON parsing errors from body-parser
+    app.use(function onJsonParseError(err: any, req: Request, res: Response, next: NextFunction) {
+        if (err instanceof SyntaxError && 'body' in err && err.status === 400) {
+            return res.status(400).json({ error: 'Invalid JSON in request body' })
+        }
+        next(err)
+    })
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     app.use(function onError(err: any, req: Request, res: Response, next: NextFunction) {
         if (IS_DEVELOPMENT) {
