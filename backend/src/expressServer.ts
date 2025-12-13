@@ -123,7 +123,7 @@ export const startExpressServer = async (
 
     // Handle JSON parsing errors from body-parser
     app.use(function onJsonParseError(err: any, req: Request, res: Response, next: NextFunction) {
-        if (err instanceof SyntaxError && 'body' in err && err.status === 400) {
+        if (err instanceof SyntaxError && 'body' in err) {
             return res.status(400).json({ error: 'Invalid JSON in request body' })
         }
         next(err)
