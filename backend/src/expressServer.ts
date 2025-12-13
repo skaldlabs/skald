@@ -127,6 +127,7 @@ export const startExpressServer = async (
             logger.error({ err })
             return res.status(500).json({ error: String(err) })
         }
+        logger.error({ err })
 
         res.statusCode = 503
         // res.sentry is the sentry error id and the client can use this when reporting the error to support.
