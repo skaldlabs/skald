@@ -45,7 +45,7 @@ const _summarizeOldMessages = async (messages: ChatHistoryMessage[]): Promise<st
     }
 
     try {
-        const llm = LLMService.getLLM(0)
+        const llm = LLMService.getLLM({ purpose: 'classification' })
         const conversationText = messages
             .map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
             .join('\n\n')

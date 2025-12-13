@@ -105,7 +105,7 @@ export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
 
 // Anthropic
 export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
-export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-7-sonnet-20250219'
+export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929'
 
 // Local LLM
 export const LOCAL_LLM_MODEL = process.env.LOCAL_LLM_MODEL || 'llama-3.1-8b-instruct'
