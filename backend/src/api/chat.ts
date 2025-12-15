@@ -50,7 +50,7 @@ export const chat = async (req: Request, res: Response) => {
                     error: "You've reached your plan limit of 100 chat queries. Upgrade your plan to continue using chat.",
                 })
             }
-            if (usage.memoWrites >= 1000) {
+            if (usage.memoWrites > 1000) {
                 return res.status(403).json({
                     error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue chat.",
                 })
