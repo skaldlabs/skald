@@ -1,4 +1,4 @@
-import { EMBEDDING_PROVIDER, VOYAGE_API_KEY, EMBEDDING_SERVICE_URL } from '@/settings'
+import { RERANKING_PROVIDER, VOYAGE_API_KEY, EMBEDDING_SERVICE_URL } from '@/settings'
 import { VoyageAIClient } from 'voyageai'
 import { z } from 'zod'
 import { LLMService } from '@/services/llmService'
@@ -73,18 +73,18 @@ export class RerankService {
      */
 
     static async rerank(query: string, results: any[], metadata?: RerankMetadata[]): Promise<RerankResult[]> {
-        if (EMBEDDING_PROVIDER === 'voyage') {
+        if (RERANKING_PROVIDER === 'voyage') {
             return this.rerankVoyage(query, results, metadata)
-        } else if (EMBEDDING_PROVIDER === 'openai') {
+        } else if (RERANKING_PROVIDER === 'openai') {
             return this.rerankOpenAI(query, results, metadata)
-        } else if (EMBEDDING_PROVIDER === 'local') {
+        } else if (RERANKING_PROVIDER === 'local') {
             // when EMBEDDING_PROVIDER=local, we use the so-called "local embedding service" to rerank the results
             // via its /rerank endpoint. this uses the sentence_transformers library and is meant for advanced usage
             // when those self-hosting don't want to send data to any third-party providers.
             return this.rerankLocal(query, results, metadata)
         }
 
-        throw new Error(`Unsupported embedding provider: ${EMBEDDING_PROVIDER}`)
+        throw new Error(`Unsupported reranking provider: ${RERANKING_PROVIDER}`)
     }
 
     private static async rerankVoyage(

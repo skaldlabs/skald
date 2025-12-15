@@ -49,6 +49,7 @@ services:
             - DB_NAME=${DB_NAME:-skald}
             - LLM_PROVIDER=${LLM_PROVIDER:-openai}
             - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
+            - RERANKING_PROVIDER=${RERANKING_PROVIDER:-local}
             - OPENAI_API_KEY=${OPENAI_API_KEY:-}
             - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
             - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
@@ -89,6 +90,7 @@ services:
             - DB_NAME=${DB_NAME:-skald}
             - LLM_PROVIDER=${LLM_PROVIDER:-openai}
             - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
+            - RERANKING_PROVIDER=${RERANKING_PROVIDER:-local}
             - OPENAI_API_KEY=${OPENAI_API_KEY:-}
             - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
             - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
@@ -132,8 +134,6 @@ services:
             - TARGET_DIMENSION=2048
         ports:
             - '8001:8000'
-        profiles:
-            - local
         restart: unless-stopped
 
     docling-serve:
@@ -149,6 +149,8 @@ services:
             timeout: 10s
             retries: 3
             start_period: 40s
+        profiles:
+            - local
 
 volumes:
     postgres_data:

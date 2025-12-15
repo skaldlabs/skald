@@ -123,6 +123,10 @@ export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 // ---- Embedding Provider Configuration ----
 export const EMBEDDING_PROVIDER = process.env.EMBEDDING_PROVIDER || 'voyage'
 
+// ---- Reranking Configuration ----
+const DEFAULT_RERANKING_PROVIDER = EMBEDDING_PROVIDER === 'voyage' ? 'voyage' : 'local'
+export const RERANKING_PROVIDER = process.env.RERANKING_PROVIDER || DEFAULT_RERANKING_PROVIDER
+
 // Voyage AI
 export const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY
 export const VOYAGE_EMBEDDING_MODEL = process.env.VOYAGE_EMBEDDING_MODEL || 'voyage-3-large'
