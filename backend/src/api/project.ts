@@ -20,6 +20,7 @@ import { EvaluationDatasetQuestion } from '@/entities/EvaluationDatasetQuestion'
 import { EvaluationDataset } from '@/entities/EvaluationDataset'
 import { Experiment } from '@/entities/Experiment'
 import { ExperimentResult } from '@/entities/ExperimentResult'
+import { SearchRequest } from '@/entities/SearchRequest'
 
 export const projectRouter = express.Router({ mergeParams: true })
 
@@ -324,6 +325,9 @@ const destroy = async (req: Request, res: Response) => {
         await em.nativeDelete(ExperimentResult, { experiment: { $in: experiments.map((e) => e.uuid) } })
         await em.nativeDelete(EvaluationDataset, { project: project })
         await em.nativeDelete(Experiment, { project: project })
+
+        // Delete search requests
+        await em.nativeDelete(SearchRequest, { project: project })
 
         // Delete the project itself
         await em.nativeDelete(Project, { uuid: project.uuid })
