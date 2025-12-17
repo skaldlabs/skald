@@ -118,7 +118,7 @@ export const Sider = () => {
                 hasAccess: () => true,
             },
             {
-                key: 'https://docs.useskald.com',
+                key: 'documentation',
                 icon: <BookOpen className="h-4 w-4" />,
                 label: 'Documentation ↗',
                 hasAccess: () => true,
