@@ -38,7 +38,7 @@ export const SearchResultsTable = () => {
             const response = await api.post<{ results: SearchResult[] }>('/v1/search/', {
                 query: searchQuery,
                 filters: [],
-                limit: 50,
+                limit: 25,
                 project_id: currentProject.uuid,
             })
 
