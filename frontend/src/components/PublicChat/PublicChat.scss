@@ -23,6 +23,11 @@
     &.dark-mode {
         background: #0f0f0f;
 
+        .public-chat-header {
+            background: #0f0f0f;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
         .public-chat-messages-wrapper {
             &::-webkit-scrollbar-thumb {
                 background: rgba(255, 255, 255, 0.2);
@@ -135,7 +140,9 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem;
-    background: transparent;
+    background: #ffffff;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .public-chat-header-left {
@@ -262,6 +269,7 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
+    padding-bottom: 100px;
     max-width: 768px;
     margin: 0 auto;
     width: 100%;
@@ -484,7 +492,7 @@
     display: flex;
     justify-content: center;
     position: absolute;
-    top: 50%;
+    top: calc(50% + 60px);
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10;
@@ -592,6 +600,10 @@
         padding-top: 1rem;
     }
 
+    .public-chat-empty-state {
+        padding-bottom: 180px;
+    }
+
     .public-chat-message {
         padding-left: 0.75rem;
         padding-right: 0.75rem;
@@ -604,6 +616,7 @@
 
     .public-chat-input-wrapper {
         padding: 0 0.75rem;
+        top: calc(50% + 50px);
     }
 
     .public-chat-input-container {
