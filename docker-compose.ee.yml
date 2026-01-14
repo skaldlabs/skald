@@ -155,6 +155,11 @@ services:
             - LANGSMITH_ENDPOINT=${LANGSMITH_ENDPOINT:-}
             - LANGSMITH_API_KEY=${LANGSMITH_API_KEY:-}
             - LANGSMITH_PROJECT=${LANGSMITH_PROJECT:-}
+            - DATALAB_API_KEY=${DATALAB_API_KEY:-}
+            - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+            - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+            - AWS_REGION=${AWS_REGION:-}
+            - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
         depends_on:
             db:
                 condition: service_healthy
