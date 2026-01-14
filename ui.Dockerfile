@@ -4,6 +4,7 @@ FROM node:20-alpine AS builder
 # Accept build args
 ARG VITE_API_HOST
 ARG VITE_IS_SELF_HOSTED_DEPLOY
+ARG VITE_IS_LICENSED_DEPLOY
 
 WORKDIR /app
 
