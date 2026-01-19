@@ -334,7 +334,6 @@ export const getChat = async (req: Request, res: Response) => {
         content: message.content,
         sent_by: message.sent_by,
         sent_at: message.sent_at,
-        skald_system_prompt: message.skald_system_prompt,
         client_system_prompt: message.client_system_prompt,
     }))
 

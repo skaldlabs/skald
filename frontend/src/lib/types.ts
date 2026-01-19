@@ -91,7 +91,6 @@ export interface ChatMessage {
     content: string
     sent_by: 'user' | 'model'
     sent_at: string
-    skald_system_prompt?: string
     client_system_prompt?: string
 }
 
