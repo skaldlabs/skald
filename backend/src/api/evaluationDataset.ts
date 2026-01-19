@@ -37,6 +37,11 @@ interface UpdateQuestionRequest {
     answer: string
 }
 
+interface CreateQuestionRequest {
+    question: string
+    answer: string
+}
+
 const list = async (req: Request, res: Response) => {
     const user = req.context?.requestUser?.userInstance
     if (!user) {
@@ -266,6 +271,106 @@ const updateQuestion = async (req: Request, res: Response) => {
     })
 }
 
+const createQuestion = async (req: Request, res: Response) => {
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const projectUuid = req.params.uuid
+    const datasetUuid = req.params.datasetUuid
+
+    if (!projectUuid || !datasetUuid) {
+        return res.status(400).json({ error: 'Project UUID and Dataset UUID are required' })
+    }
+
+    const { question, answer } = req.body as CreateQuestionRequest
+
+    if (!question || !answer) {
+        return res.status(400).json({ error: 'Question and answer are required' })
+    }
+
+    const project = await DI.projects.findOne({ uuid: projectUuid })
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    const membership = await DI.organizationMemberships.findOne({
+        user: user,
+        organization: project.organization,
+    })
+    if (!membership) {
+        return res.status(403).json({ error: 'You do not have access to this project' })
+    }
+
+    const dataset = await DI.evaluationDatasets.findOne({ uuid: datasetUuid, project: project })
+    if (!dataset) {
+        return res.status(404).json({ error: 'Dataset not found' })
+    }
+
+    const questionEntity = DI.em.create(EvaluationDatasetQuestion, {
+        uuid: randomUUID(),
+        question,
+        answer,
+        evaluationDataset: dataset,
+        created_at: new Date(),
+    })
+
+    await DI.em.persistAndFlush(questionEntity)
+
+    res.status(201).json({
+        uuid: questionEntity.uuid,
+        question: questionEntity.question,
+        answer: questionEntity.answer,
+        created_at: questionEntity.created_at,
+    })
+}
+
+const deleteQuestion = async (req: Request, res: Response) => {
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const projectUuid = req.params.uuid
+    const datasetUuid = req.params.datasetUuid
+    const questionUuid = req.params.questionUuid
+
+    if (!projectUuid || !datasetUuid || !questionUuid) {
+        return res.status(400).json({ error: 'Project UUID, Dataset UUID, and Question UUID are required' })
+    }
+
+    const project = await DI.projects.findOne({ uuid: projectUuid })
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    const membership = await DI.organizationMemberships.findOne({
+        user: user,
+        organization: project.organization,
+    })
+    if (!membership) {
+        return res.status(403).json({ error: 'You do not have access to this project' })
+    }
+
+    const dataset = await DI.evaluationDatasets.findOne({ uuid: datasetUuid, project: project })
+    if (!dataset) {
+        return res.status(404).json({ error: 'Dataset not found' })
+    }
+
+    const questionEntity = await DI.evaluationDatasetQuestions.findOne({
+        uuid: questionUuid,
+        evaluationDataset: dataset,
+    })
+    if (!questionEntity) {
+        return res.status(404).json({ error: 'Question not found' })
+    }
+
+    await DI.em.removeAndFlush(questionEntity)
+
+    res.status(204).send()
+}
+
 interface ExportQuestionResponse {
     question: string
     answer: string
@@ -319,4 +424,6 @@ evaluationDatasetRouter.get('/', list)
 evaluationDatasetRouter.get('/:datasetUuid', getDataset)
 evaluationDatasetRouter.get('/:datasetUuid/export', exportDataset)
 evaluationDatasetRouter.post('/', create)
+evaluationDatasetRouter.post('/:datasetUuid/questions', createQuestion)
 evaluationDatasetRouter.patch('/:datasetUuid/questions/:questionUuid', updateQuestion)
+evaluationDatasetRouter.delete('/:datasetUuid/questions/:questionUuid', deleteQuestion)
