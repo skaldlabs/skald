@@ -55,6 +55,7 @@ interface EvaluateExperimentsState {
     fetchExperimentResults: (experimentUuid: string) => Promise<void>
     createExperiment: (payload: CreateExperimentPayload) => Promise<boolean>
     runExperiment: (experimentUuid: string, payload: RunExperimentPayload) => Promise<boolean>
+    deleteExperiment: (experimentUuid: string) => Promise<boolean>
     clearCurrentExperiment: () => void
     clearResults: () => void
 }
@@ -175,6 +176,26 @@ export const useEvaluateExperimentsStore = create<EvaluateExperimentsState>((set
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : 'Failed to run experiment'
             toast.error(`Failed to run experiment: ${errorMsg}`)
+            return false
+        }
+    },
+
+    deleteExperiment: async (experimentUuid: string) => {
+        try {
+            const projectPath = getProjectPath()
+            const response = await api.delete(`${projectPath}/experiments/${experimentUuid}`)
+
+            if (response.error) {
+                toast.error(`Failed to delete experiment: ${response.error}`)
+                return false
+            }
+
+            await get().fetchExperiments()
+            toast.success('Experiment deleted successfully')
+            return true
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Failed to delete experiment'
+            toast.error(`Failed to delete experiment: ${errorMsg}`)
             return false
         }
     },
