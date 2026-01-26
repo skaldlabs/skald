@@ -1,7 +1,7 @@
 import { filterByOperator } from '@/embeddings/vectorSearch'
 
 export type Operator = 'eq' | 'neq' | 'contains' | 'startswith' | 'endswith' | 'in' | 'not_in'
-type FilterType = 'native_field' | 'custom_metadata'
+type FilterType = 'native_field' | 'custom_metadata' | 'scope'
 type NativeField = 'title' | 'source' | 'client_reference_id' | 'tags'
 
 const SUPPORTED_OPERATORS: Operator[] = ['eq', 'neq', 'contains', 'startswith', 'endswith', 'in', 'not_in']
@@ -57,10 +57,14 @@ export function parseFilter(filterDict: Record<string, any>): ParseFilterResult 
         }
     }
 
-    if (memoFilter.filter_type !== 'native_field' && memoFilter.filter_type !== 'custom_metadata') {
+    if (
+        memoFilter.filter_type !== 'native_field' &&
+        memoFilter.filter_type !== 'custom_metadata' &&
+        memoFilter.filter_type !== 'scope'
+    ) {
         return {
             filter: null,
-            error: 'Invalid filter type. Must be one of: native_field, custom_metadata',
+            error: 'Invalid filter type. Must be one of: native_field, custom_metadata, scope',
         }
     }
 
@@ -121,6 +125,9 @@ export function buildFilterConditions(filters?: MemoFilter[]): { whereConditions
         let fieldPath = `skald_memo.${filter.field}`
         if (filter.filter_type === 'custom_metadata') {
             fieldPath = `skald_memo.metadata->>?`
+            params.push(filter.field)
+        } else if (filter.filter_type === 'scope') {
+            fieldPath = `skald_memo.scopes->>?`
             params.push(filter.field)
         }
         whereConditions.push(filterByOperator[filter.operator].getWhereClause(fieldPath))

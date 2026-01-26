@@ -14,6 +14,7 @@ import {
     ExternalLink,
     Code,
     Database,
+    Shield,
 } from 'lucide-react'
 import { formatDate } from '@/components/utils/dateUtils'
 import { addMonths, isBefore } from 'date-fns'
@@ -236,6 +237,30 @@ export const DetailedMemoView = ({ memo }: DetailedMemoViewProps) => {
                                 <Badge key={tag.uuid} variant="secondary" className="flex items-center gap-1">
                                     <Tag className="h-3 w-3" />
                                     {tag.tag}
+                                </Badge>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Scopes Section */}
+            {memo.scopes && Object.keys(memo.scopes).length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Shield className="h-5 w-5" />
+                            Scopes ({Object.keys(memo.scopes).length})
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                            {Object.entries(memo.scopes).map(([key, value]) => (
+                                <Badge key={key} variant="outline" className="flex items-center gap-1">
+                                    <Shield className="h-3 w-3" />
+                                    <span className="font-medium">{key}</span>
+                                    <span className="text-muted-foreground">:</span>
+                                    <span>{value}</span>
                                 </Badge>
                             ))}
                         </div>

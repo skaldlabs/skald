@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { RagConfigForm } from './RagConfigForm'
 import { FilterBuilder } from './FilterBuilder'
+import { ScopesBuilder } from './ScopesBuilder'
 import { RetrievalInfo } from './RetrievalInfo'
 import './Playground.scss'
 
@@ -27,6 +28,10 @@ export const ChatDashboard = () => {
         addFilter,
         updateFilter,
         removeFilter,
+        scopes,
+        addScope,
+        updateScope,
+        removeScope,
     } = useChatStore()
     const { availableProviders, fetchProviders } = useLLMConfigStore()
     const [isConfigOpen, setIsConfigOpen] = useState(false)
@@ -113,6 +118,15 @@ export const ChatDashboard = () => {
                                 value={systemPrompt}
                                 onChange={(e) => setSystemPrompt(e.target.value)}
                                 className="min-h-[120px]"
+                            />
+                        </div>
+
+                        <div className="border-t pt-6">
+                            <ScopesBuilder
+                                scopes={scopes}
+                                onAddScope={addScope}
+                                onUpdateScope={updateScope}
+                                onRemoveScope={removeScope}
                             />
                         </div>
 

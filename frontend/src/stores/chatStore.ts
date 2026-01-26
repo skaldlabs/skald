@@ -23,6 +23,12 @@ export interface RagConfig {
     referencesEnabled: boolean
 }
 
+export interface ScopeEntry {
+    id: string
+    key: string
+    value: string
+}
+
 interface ChatState {
     messages: ChatMessage[]
     isLoading: boolean
@@ -32,6 +38,7 @@ interface ChatState {
     llmProvider: string
     ragConfig: RagConfig
     filters: MemoFilter[]
+    scopes: ScopeEntry[]
     chatSessionId: string | null
     setSystemPrompt: (prompt: string) => void
     setLlmProvider: (provider: string) => void
@@ -40,6 +47,10 @@ interface ChatState {
     addFilter: (filter: Omit<MemoFilter, 'id'>) => void
     updateFilter: (id: string, filter: Partial<Omit<MemoFilter, 'id'>>) => void
     removeFilter: (id: string) => void
+    setScopes: (scopes: ScopeEntry[]) => void
+    addScope: (key: string, value: string) => void
+    updateScope: (id: string, key: string, value: string) => void
+    removeScope: (id: string) => void
     sendMessage: (query: string) => Promise<void>
     clearMessages: () => void
     addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }) => void
@@ -69,6 +80,7 @@ export const useChatStore = create<ChatState>()(
                 referencesEnabled: false,
             },
             filters: [],
+            scopes: [],
             chatSessionId: null,
 
             setSystemPrompt: (prompt: string) => {
@@ -108,6 +120,33 @@ export const useChatStore = create<ChatState>()(
             removeFilter: (id: string) => {
                 set((state) => ({
                     filters: state.filters.filter((f) => f.id !== id),
+                }))
+            },
+
+            setScopes: (scopes: ScopeEntry[]) => {
+                set({ scopes })
+            },
+
+            addScope: (key: string, value: string) => {
+                const newScope: ScopeEntry = {
+                    id: crypto.randomUUID(),
+                    key,
+                    value,
+                }
+                set((state) => ({
+                    scopes: [...state.scopes, newScope],
+                }))
+            },
+
+            updateScope: (id: string, key: string, value: string) => {
+                set((state) => ({
+                    scopes: state.scopes.map((s) => (s.id === id ? { ...s, key, value } : s)),
+                }))
+            },
+
+            removeScope: (id: string) => {
+                set((state) => ({
+                    scopes: state.scopes.filter((s) => s.id !== id),
                 }))
             },
 
@@ -204,13 +243,28 @@ export const useChatStore = create<ChatState>()(
 
                 // Include filters (strip frontend-only id field)
                 const filters = get().filters
-                if (filters.length > 0) {
-                    payload.filters = filters.map(({ field, operator, value, filter_type }) => ({
+                const scopes = get().scopes
+
+                // Combine regular filters with scope filters
+                const allFilters = [
+                    ...filters.map(({ field, operator, value, filter_type }) => ({
                         field,
                         operator,
                         value,
                         filter_type,
-                    }))
+                    })),
+                    ...scopes
+                        .filter((s) => s.key.trim() && s.value.trim())
+                        .map((s) => ({
+                            field: s.key,
+                            operator: 'eq' as const,
+                            value: s.value,
+                            filter_type: 'scope' as const,
+                        })),
+                ]
+
+                if (allFilters.length > 0) {
+                    payload.filters = allFilters
                 }
 
                 api.stream(
@@ -268,6 +322,7 @@ export const useChatStore = create<ChatState>()(
                 llmProvider: state.llmProvider,
                 ragConfig: state.ragConfig,
                 filters: state.filters,
+                scopes: state.scopes,
             }),
         }
     )

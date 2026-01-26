@@ -10,6 +10,10 @@ export type MemoProcessingStatus = 'received' | 'processing' | 'processed' | 'er
     expression: 'CREATE INDEX skald_memo_metadat_9c96be_gin ON public.skald_memo USING gin (metadata);',
     name: 'skald_memo_metadat_9c96be_gin',
 })
+@Index({
+    expression: 'CREATE INDEX skald_memo_scopes_gin_idx ON public.skald_memo USING gin (scopes);',
+    name: 'skald_memo_scopes_gin_idx',
+})
 @Index({ name: 'skald_memo_processing_status_idx', properties: ['processing_status'] })
 export class Memo {
     @PrimaryKey({ type: 'uuid' })
@@ -34,6 +38,9 @@ export class Memo {
 
     @Property({ type: 'json' })
     metadata!: any
+
+    @Property({ nullable: true, type: 'jsonb' })
+    scopes?: Record<string, string>
 
     @Property({ nullable: true })
     expiration_date?: Date | null

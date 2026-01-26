@@ -35,6 +35,7 @@ export interface MemoData {
     source?: string | null
     expiration_date?: Date | null
     type: string
+    scopes?: Record<string, string> | null
 }
 
 export type MemoCreationData = Pick<
@@ -42,6 +43,7 @@ export type MemoCreationData = Pick<
     | 'uuid'
     | 'title'
     | 'metadata'
+    | 'scopes'
     | 'client_reference_id'
     | 'source'
     | 'expiration_date'
@@ -68,6 +70,7 @@ async function _createMemoObject(memoData: MemoData, project: Project): Promise<
             uuid: randomUUID(),
             title: memoData.title,
             metadata: memoData.metadata || {},
+            scopes: memoData.scopes ?? undefined,
             client_reference_id: memoData.reference_id,
             source: memoData.source,
             expiration_date: memoData.expiration_date,

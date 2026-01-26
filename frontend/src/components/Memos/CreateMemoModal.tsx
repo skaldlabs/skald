@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { X, Loader2, Upload, FileText } from 'lucide-react'
+import { X, Loader2, Upload, FileText, Plus } from 'lucide-react'
 import { useMemoStore } from '@/stores/memoStore'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { isSelfHostedDeploy } from '@/config'
@@ -50,6 +50,9 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
     const [tagInput, setTagInput] = useState('')
     const [tags, setTags] = useState<string[]>([])
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [scopes, setScopes] = useState<Record<string, string>>({})
+    const [scopeKey, setScopeKey] = useState('')
+    const [scopeValue, setScopeValue] = useState('')
     const createMemo = useMemoStore((state) => state.createMemo)
     const createFileMemo = useMemoStore((state) => state.createFileMemo)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -100,6 +103,27 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
         setTags(tags.filter((tag) => tag !== tagToRemove))
     }
 
+    const handleAddScope = () => {
+        if (scopeKey.trim() && scopeValue.trim()) {
+            setScopes({ ...scopes, [scopeKey.trim()]: scopeValue.trim() })
+            setScopeKey('')
+            setScopeValue('')
+        }
+    }
+
+    const handleScopeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            handleAddScope()
+        }
+    }
+
+    const handleRemoveScope = (keyToRemove: string) => {
+        const newScopes = { ...scopes }
+        delete newScopes[keyToRemove]
+        setScopes(newScopes)
+    }
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -130,12 +154,14 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                 type: data.type?.trim() || undefined,
                 client_reference_id: data.client_reference_id?.trim() || undefined,
                 expiration_date: data.expiration_date?.trim() || undefined,
+                scopes: Object.keys(scopes).length > 0 ? scopes : undefined,
             }
 
             const success = await createMemo(payload)
             if (success) {
                 textForm.reset()
                 setTags([])
+                setScopes({})
                 onOpenChange(false)
                 toast.success('Memo created successfully')
             }
@@ -163,12 +189,14 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                 expiration_date: data.expiration_date?.trim() || undefined,
                 tags: tags.length > 0 ? tags : undefined,
                 metadata: data.metadata,
+                scopes: Object.keys(scopes).length > 0 ? scopes : undefined,
             }
 
             const success = await createFileMemo(payload)
             if (success) {
                 fileForm.reset()
                 setTags([])
+                setScopes({})
                 setSelectedFile(null)
                 onOpenChange(false)
                 toast.success('Document uploaded successfully')
@@ -186,6 +214,9 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
             textForm.reset()
             fileForm.reset()
             setTags([])
+            setScopes({})
+            setScopeKey('')
+            setScopeValue('')
             setSelectedFile(null)
             setActiveTab('text')
             onOpenChange(false)
@@ -366,6 +397,54 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                                             </div>
                                         )}
                                     </FormItem>
+
+                                    <FormItem>
+                                        <FormLabel>Scopes</FormLabel>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                placeholder="Key"
+                                                value={scopeKey}
+                                                onChange={(e) => setScopeKey(e.target.value)}
+                                                onKeyDown={handleScopeKeyDown}
+                                                className="flex-1"
+                                            />
+                                            <Input
+                                                placeholder="Value"
+                                                value={scopeValue}
+                                                onChange={(e) => setScopeValue(e.target.value)}
+                                                onKeyDown={handleScopeKeyDown}
+                                                className="flex-1"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={handleAddScope}
+                                                disabled={!scopeKey.trim() || !scopeValue.trim()}
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <FormDescription>Add key-value pairs for access control scopes</FormDescription>
+                                        {Object.keys(scopes).length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {Object.entries(scopes).map(([key, value]) => (
+                                                    <Badge key={key} variant="secondary" className="gap-1">
+                                                        <span className="font-medium">{key}</span>
+                                                        <span className="text-muted-foreground">:</span>
+                                                        <span>{value}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveScope(key)}
+                                                            className="ml-1 hover:bg-muted rounded-full"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </FormItem>
                                 </div>
 
                                 {/* Actions */}
@@ -518,6 +597,54 @@ export const CreateMemoModal = ({ open, onOpenChange }: CreateMemoModalProps) =>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveTag(tag)}
+                                                            className="ml-1 hover:bg-muted rounded-full"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </FormItem>
+
+                                    <FormItem>
+                                        <FormLabel>Scopes</FormLabel>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                placeholder="Key"
+                                                value={scopeKey}
+                                                onChange={(e) => setScopeKey(e.target.value)}
+                                                onKeyDown={handleScopeKeyDown}
+                                                className="flex-1"
+                                            />
+                                            <Input
+                                                placeholder="Value"
+                                                value={scopeValue}
+                                                onChange={(e) => setScopeValue(e.target.value)}
+                                                onKeyDown={handleScopeKeyDown}
+                                                className="flex-1"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={handleAddScope}
+                                                disabled={!scopeKey.trim() || !scopeValue.trim()}
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <FormDescription>Add key-value pairs for access control scopes</FormDescription>
+                                        {Object.keys(scopes).length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {Object.entries(scopes).map(([key, value]) => (
+                                                    <Badge key={key} variant="secondary" className="gap-1">
+                                                        <span className="font-medium">{key}</span>
+                                                        <span className="text-muted-foreground">:</span>
+                                                        <span>{value}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveScope(key)}
                                                             className="ml-1 hover:bg-muted rounded-full"
                                                         >
                                                             <X className="h-3 w-3" />

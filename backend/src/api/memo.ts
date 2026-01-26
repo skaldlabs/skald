@@ -63,6 +63,7 @@ const CreatePlaintextMemoRequest = z.object({
         }),
     tags: z.array(z.string()).optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
+    scopes: z.record(z.string(), z.string()).optional(),
 })
 
 const UpdateMemoRequest = z.object({
@@ -72,6 +73,7 @@ const UpdateMemoRequest = z.object({
     source: z.string().max(255).optional().nullable(),
     expiration_date: z.coerce.date().optional().nullable(),
     content: z.string().optional().nullable(),
+    scopes: z.record(z.string(), z.string()).optional(),
 })
 
 const validateMemoOperationRequestMiddleware = () => {
@@ -111,6 +113,7 @@ const createFileMemo = async (req: Request, res: Response) => {
         const expiration_date = req.body.expiration_date ? new Date(req.body.expiration_date) : null
         const tags = req.body.tags ? JSON.parse(req.body.tags) : []
         const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {}
+        const scopes = req.body.scopes ? JSON.parse(req.body.scopes) : null
 
         const memoData = {
             title: title.substring(0, 255),
@@ -124,6 +127,7 @@ const createFileMemo = async (req: Request, res: Response) => {
                 mimetype: file.mimetype,
                 size: file.size,
             },
+            scopes,
             type: 'document',
         }
 
@@ -230,6 +234,7 @@ export const getMemo = async (req: Request, res: Response) => {
         content: memoContent?.content || null,
         summary: memoSummary?.summary || null,
         metadata: memo.metadata,
+        scopes: memo.scopes || null,
         client_reference_id: memo.client_reference_id,
         source: memo.source,
         type: memo.type,

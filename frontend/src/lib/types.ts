@@ -43,6 +43,7 @@ export interface DetailedMemo {
     content: string | null
     summary: string | null
     metadata: Record<string, unknown>
+    scopes: Record<string, string> | null
     client_reference_id: string | null
     source: string | null
     type: string | null
@@ -103,7 +104,7 @@ export interface DetailedChat {
 
 // Keep this in sync with backend/src/lib/filterUtils.ts
 export type FilterOperator = 'eq' | 'neq' | 'contains' | 'startswith' | 'endswith' | 'in' | 'not_in'
-export type FilterType = 'native_field' | 'custom_metadata'
+export type FilterType = 'native_field' | 'custom_metadata' | 'scope'
 export type NativeField = 'title' | 'source' | 'client_reference_id' | 'tags'
 
 export interface MemoFilter {

@@ -20,6 +20,7 @@ interface CreateMemoPayload {
     expiration_date?: string
     tags?: string[]
     metadata?: Record<string, unknown>
+    scopes?: Record<string, string>
 }
 
 interface CreateFileMemoPayload {
@@ -30,6 +31,7 @@ interface CreateFileMemoPayload {
     expiration_date?: string
     tags?: string[]
     metadata?: Record<string, unknown>
+    scopes?: Record<string, string>
 }
 
 interface MemoStatusResponse {
@@ -180,6 +182,7 @@ export const useMemoStore = create<MemoState>((set, get) => ({
                 expiration_date: payload.expiration_date,
                 tags: payload.tags,
                 metadata: payload.metadata,
+                scopes: payload.scopes,
             }
 
             const response = await api.post<{ ok: boolean }>(`/v1/memo/?project_id=${currentProject.uuid}`, apiPayload)
@@ -225,6 +228,9 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             }
             if (payload.metadata) {
                 formData.append('metadata', JSON.stringify(payload.metadata))
+            }
+            if (payload.scopes && Object.keys(payload.scopes).length > 0) {
+                formData.append('scopes', JSON.stringify(payload.scopes))
             }
 
             const response = await api.postFile<{ memo_uuid: string }>(
