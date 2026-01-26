@@ -15,7 +15,7 @@ import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { isSelfHostedDeploy } from '@/config'
 import { toast } from 'sonner'
 
-const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx', '.xls', '.xlsx']
+const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx']
 
 const memoFormSchema = z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),

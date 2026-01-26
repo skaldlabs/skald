@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx', '.xls', '.xlsx']
+const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.pptx']
 
 const pipelineSteps = [
     { icon: FileSearch, title: 'Data Type Detection' },
