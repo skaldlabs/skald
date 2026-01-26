@@ -41,7 +41,7 @@
         "date-fns": "^4.1.0",
         "lucide-react": "^0.545.0",
         "next-themes": "^0.4.6",
-        "posthog-js": "^1.275.1",
+        "posthog-js": "^1.335.2",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-hook-form": "^7.65.0",
