@@ -25,6 +25,7 @@ import { logger } from './logger'
 import { EntityData } from '@mikro-orm/core'
 import { generateS3Key, uploadFileToS3 } from './s3Utils'
 import { publishMessage } from '@/lib/sqsClient'
+import { sanitizeFilenameForS3Metadata } from '@/lib/filenameUtils'
 
 export interface MemoData {
     content?: string
@@ -204,10 +205,11 @@ export const createNewDocumentMemo = async (
     const memo = await _createMemoObject(memoData, project)
 
     const s3Key = generateS3Key(project.uuid, memo.uuid)
+    const sanitizedFilename = sanitizeFilenameForS3Metadata(file.originalname)
     await uploadFileToS3(file.buffer, s3Key, file.mimetype, {
         'memo-uuid': memo.uuid,
         'project-uuid': project.uuid,
-        'original-filename': file.originalname,
+        'original-filename': sanitizedFilename,
     })
 
     await sendMemoForAsyncProcessing(memo)
