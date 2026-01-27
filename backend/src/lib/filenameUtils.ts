@@ -48,7 +48,8 @@ export function sanitizeFilenameForTitle(filename: string, maxLength: number = 2
 
 /**
  * Sanitizes a filename for use in S3 metadata.
- * S3 metadata values must be valid HTTP header values (no newlines, limited special chars).
+ * S3 metadata values must be valid HTTP header values and properly encoded to avoid signature mismatches.
+ * Normalizes Unicode characters to ASCII to ensure consistent signature calculation.
  *
  * @param filename - The original filename
  * @param maxLength - Maximum length (default: 1024, S3 metadata value limit)
@@ -59,11 +60,18 @@ export function sanitizeFilenameForS3Metadata(filename: string, maxLength: numbe
         return ''
     }
 
-    // Remove newlines and carriage returns (not allowed in HTTP headers)
+    // Normalize Unicode characters (handles accents and special characters)
+    // NFD normalization decomposes characters (e.g., í -> i + ́)
+    // This ensures consistent encoding for AWS signature calculation
     let sanitized = filename
+        .normalize('NFD')
+        // Remove diacritical marks (accents) to convert to ASCII
+        .replace(/[\u0300-\u036f]/g, '')
+        // Remove newlines and carriage returns (not allowed in HTTP headers)
         .replace(/[\r\n]/g, '')
-        // Replace other problematic characters for HTTP headers
-        .replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '')
+        // Remove control characters and other problematic characters
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\x00-\x1f\x7f]/g, '')
 
     // Limit length
     if (sanitized.length > maxLength) {
