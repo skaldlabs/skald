@@ -1,6 +1,6 @@
 /**
  * Sanitizes a filename for use in titles and display purposes.
- * Removes or replaces special characters, handles accents, and limits length.
+ * Keeps only ASCII alphanumeric characters, underscores, hyphens, and parentheses.
  *
  * @param filename - The original filename
  * @param maxLength - Maximum length for the sanitized filename (default: 255)
@@ -11,33 +11,21 @@ export function sanitizeFilenameForTitle(filename: string, maxLength: number = 2
         return 'Untitled Document'
     }
 
-    // Extract file extension before sanitization
     const lastDotIndex = filename.lastIndexOf('.')
     const nameWithoutExt = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename
     const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : ''
 
-    // Normalize unicode characters (handles accents and special characters)
-    // NFD normalization decomposes characters (e.g., é -> e + ́)
     let sanitized = nameWithoutExt
-        .normalize('NFD')
-        // Remove diacritical marks (accents)
-        .replace(/[\u0300-\u036f]/g, '')
-        // Replace spaces with underscores
         .replace(/\s+/g, '_')
-        // Remove or replace problematic characters (including control characters)
-        // eslint-disable-next-line no-control-regex
-        .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
-        // Remove multiple consecutive underscores
+        // Keep only ASCII alphanumeric, underscores, hyphens, parentheses
+        .replace(/[^a-zA-Z0-9_\-()]/g, '')
         .replace(/_+/g, '_')
-        // Remove leading/trailing underscores
         .replace(/^_+|_+$/g, '')
 
-    // If after sanitization we have nothing, use a default name
     if (!sanitized) {
         sanitized = 'document'
     }
 
-    // Limit length (accounting for extension)
     const maxNameLength = maxLength - extension.length
     if (sanitized.length > maxNameLength) {
         sanitized = sanitized.substring(0, maxNameLength)
@@ -48,8 +36,7 @@ export function sanitizeFilenameForTitle(filename: string, maxLength: number = 2
 
 /**
  * Sanitizes a filename for use in S3 metadata.
- * S3 metadata values must be valid HTTP header values and properly encoded to avoid signature mismatches.
- * Normalizes Unicode characters to ASCII to ensure consistent signature calculation.
+ * Keeps only printable ASCII characters.
  *
  * @param filename - The original filename
  * @param maxLength - Maximum length (default: 1024, S3 metadata value limit)
@@ -60,20 +47,9 @@ export function sanitizeFilenameForS3Metadata(filename: string, maxLength: numbe
         return ''
     }
 
-    // Normalize Unicode characters (handles accents and special characters)
-    // NFD normalization decomposes characters (e.g., í -> i + ́)
-    // This ensures consistent encoding for AWS signature calculation
-    let sanitized = filename
-        .normalize('NFD')
-        // Remove diacritical marks (accents) to convert to ASCII
-        .replace(/[\u0300-\u036f]/g, '')
-        // Remove newlines and carriage returns (not allowed in HTTP headers)
-        .replace(/[\r\n]/g, '')
-        // Remove control characters and other problematic characters
-        // eslint-disable-next-line no-control-regex
-        .replace(/[\x00-\x1f\x7f]/g, '')
+    // Keep only printable ASCII (space through tilde)
+    let sanitized = filename.replace(/[^\x20-\x7e]/g, '')
 
-    // Limit length
     if (sanitized.length > maxLength) {
         sanitized = sanitized.substring(0, maxLength)
     }
