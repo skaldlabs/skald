@@ -131,6 +131,16 @@ export const MemosDashboard = () => {
         handleCloseMemo()
     }
 
+    const handleMemoUpdated = async () => {
+        if (selectedMemo) {
+            const updatedMemo = await getMemoDetails(selectedMemo.uuid)
+            if (updatedMemo) {
+                setSelectedMemo(updatedMemo)
+            }
+        }
+        fetchMemos(currentPage, pageSize)
+    }
+
     const handleRefresh = () => {
         fetchMemos()
     }
@@ -275,6 +285,7 @@ export const MemosDashboard = () => {
                 onClose={handleCloseMemo}
                 onShareMemo={handleShareDetailedMemo}
                 onDeleteMemo={handleDeleteFromDetail}
+                onMemoUpdated={handleMemoUpdated}
             />
 
             <DeleteMemoDialog

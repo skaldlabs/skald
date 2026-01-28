@@ -16,19 +16,22 @@ interface ViewMemoDialogProps {
     onClose: () => void
     onShareMemo?: (memo: DetailedMemo) => void | Promise<void>
     onDeleteMemo?: (memo: DetailedMemo) => void | Promise<void>
+    onMemoUpdated?: () => void
 }
 
-export const ViewMemoDialog = ({ memo, onClose, onShareMemo, onDeleteMemo }: ViewMemoDialogProps) => {
+export const ViewMemoDialog = ({ memo, onClose, onShareMemo, onDeleteMemo, onMemoUpdated }: ViewMemoDialogProps) => {
     return (
         <Dialog open={!!memo} onOpenChange={onClose}>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
                 <div className="sr-only">
                     <DialogHeader>
                         <DialogTitle>Memo Details</DialogTitle>
                         <DialogDescription>Complete information for this memo</DialogDescription>
                     </DialogHeader>
                 </div>
-                <div className="max-h-[70vh] overflow-y-auto">{memo && <DetailedMemoView memo={memo} />}</div>
+                <div className="max-h-[80vh] overflow-y-auto">
+                    {memo && <DetailedMemoView memo={memo} onMemoUpdated={onMemoUpdated} />}
+                </div>
                 <DialogFooter>
                     {(onShareMemo || onDeleteMemo) && (
                         <div className="flex items-center gap-2 pr-2">

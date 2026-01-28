@@ -34,6 +34,16 @@ interface CreateFileMemoPayload {
     scopes?: Record<string, string>
 }
 
+interface UpdateMemoPayload {
+    title?: string
+    content?: string
+    metadata?: Record<string, unknown>
+    scopes?: Record<string, string>
+    source?: string
+    client_reference_id?: string
+    expiration_date?: string
+}
+
 interface MemoStatusResponse {
     memo_uuid: string
     status: 'processing' | 'processed' | 'error'
@@ -59,6 +69,7 @@ interface MemoState {
     createFileMemo: (payload: CreateFileMemoPayload) => Promise<boolean>
     deleteMemo: (memoUuid: string) => Promise<boolean>
     getMemoDetails: (memoUuid: string) => Promise<DetailedMemo | null>
+    updateMemo: (memoUuid: string, payload: UpdateMemoPayload) => Promise<boolean>
     getMemoStatus: (memoUuid: string) => Promise<MemoStatusResponse | null>
     updateMemoStatus: (memoUuid: string, status: 'processing' | 'processed' | 'error') => void
     startPollingProcessingMemos: () => void
@@ -314,6 +325,31 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             const errorMsg = error instanceof Error ? error.message : 'Failed to fetch memo details'
             toast.error(`Failed to fetch memo details: ${errorMsg}`)
             return null
+        }
+    },
+
+    updateMemo: async (memoUuid: string, payload: UpdateMemoPayload) => {
+        const currentProject = useProjectStore.getState().currentProject
+        if (!currentProject) {
+            throw new Error('No project selected')
+        }
+
+        try {
+            const response = await api.patch<{ ok: boolean }>(
+                `/v1/memo/${memoUuid}/?project_id=${currentProject.uuid}`,
+                payload
+            )
+
+            if (response.error) {
+                toast.error(`Failed to update memo: ${response.error}`)
+                return false
+            }
+
+            return true
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Failed to update memo'
+            toast.error(`Failed to update memo: ${errorMsg}`)
+            return false
         }
     },
 
