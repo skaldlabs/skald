@@ -160,11 +160,7 @@ export const api = {
             ...config,
         })
     },
-    patch: async <T>(
-        path: string,
-        data: Record<string, unknown> = {},
-        config: ApiConfig = {}
-    ): Promise<ApiResponse<T>> => {
+    patch: async <T>(path: string, data: object = {}, config: ApiConfig = {}): Promise<ApiResponse<T>> => {
         return _makeRequest<T>({
             method: 'patch',
             url: `${baseUrl}${path}`,
