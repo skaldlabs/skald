@@ -27,6 +27,7 @@ import { Organization } from '@/entities/Organization'
 import { UsageTrackingService } from '@/services/usageTrackingService'
 import { calculateMemoWritesUsage } from '@/lib/usageTrackingUtils'
 import { CachedQueries } from '@/queries/cachedQueries'
+import { sanitizeFilenameForTitle, truncateFilename } from '@/lib/filenameUtils'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx']
 
@@ -107,7 +108,11 @@ const createFileMemo = async (req: Request, res: Response) => {
     }
 
     try {
-        const title = req.body.title || file.originalname
+        const rawTitle = req.body.title || file.originalname
+        const sanitizedTitle = req.body.title
+            ? truncateFilename(rawTitle, 255)
+            : sanitizeFilenameForTitle(file.originalname, 255)
+
         const source = req.body.source || null
         const reference_id = req.body.reference_id || null
         const expiration_date = req.body.expiration_date ? new Date(req.body.expiration_date) : null
@@ -115,15 +120,18 @@ const createFileMemo = async (req: Request, res: Response) => {
         const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {}
         const scopes = req.body.scopes ? JSON.parse(req.body.scopes) : null
 
+        // Store original filename safely (truncate if too long for JSON storage)
+        const safeOriginalFilename = truncateFilename(file.originalname, 200)
+
         const memoData = {
-            title: title.substring(0, 255),
+            title: sanitizedTitle,
             source,
             reference_id,
             expiration_date,
             tags,
             metadata: {
                 ...metadata,
-                original_filename: file.originalname,
+                original_filename: safeOriginalFilename,
                 mimetype: file.mimetype,
                 size: file.size,
             },
