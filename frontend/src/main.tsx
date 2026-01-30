@@ -17,7 +17,7 @@ if (!isLocalhost && !isSelfHostedDeploy) {
 }
 
 const posthogOptions = {
-    api_host: 'https://us.i.posthog.com',
+    api_host: 'https://y.useskald.com',
     autocapture: !isLocalhost && !isSelfHostedDeploy,
     disable_session_recording: isLocalhost || isSelfHostedDeploy,
     session_recording: {
