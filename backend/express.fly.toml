@@ -16,7 +16,7 @@ primary_region = 'dfw'
 
 [env]
   EXPRESS_SERVER_PORT = 8080
-  LANGSMITH_TRACING = 'true'
+  LANGSMITH_TRACING = 'false'
   FRONTEND_URL = 'https://platform.useskald.com'
   INTER_PROCESS_QUEUE = 'sqs'
   IS_CLOUD = 'true'
