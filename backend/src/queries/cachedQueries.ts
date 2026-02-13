@@ -96,14 +96,16 @@ export class CachedQueries {
 
         logger.debug('Cache miss (isBillingLimitExceeded). Key:', cacheKey)
         const status = await BillingLimitService.check(em, organizationUuid)
-        void redisSet(cacheKey, status.exceeded ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
+        // Await cache write so next request sees correct value. Essential when exceeded=true
+        // since we block and never increment
+        await redisSet(cacheKey, status.exceeded ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
         return status.exceeded
     }
 
     static async refreshBillingLimitCache(em: EntityManager, organizationUuid: string): Promise<void> {
         const status = await BillingLimitService.check(em, organizationUuid)
         const cacheKey = `billingLimitExceeded:${organizationUuid}`
-        void redisSet(cacheKey, status.exceeded ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
+        await redisSet(cacheKey, status.exceeded ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
     }
 
     static async clearBillingLimitCache(organizationUuid: string): Promise<void> {
