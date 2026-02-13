@@ -319,6 +319,15 @@ export const updateMemo = async (req: Request, res: Response) => {
 
         if (contentUpdated) {
             await sendMemoForAsyncProcessing(memo, 'memo_updated')
+
+            // document memos have usage tracked in processMemo after extraction
+            if (memo.type !== 'document') {
+                const writeOperationsUsed = calculateMemoWritesUsage(validatedData.data.content as string)
+                await new UsageTrackingService(DI.em).incrementMemoOperations(
+                    { uuid: project.organization.uuid } as Organization,
+                    writeOperationsUsed
+                )
+            }
         }
 
         await em.persistAndFlush(memo)
