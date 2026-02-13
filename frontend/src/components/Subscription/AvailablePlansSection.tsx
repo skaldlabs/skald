@@ -1,17 +1,5 @@
 import { PricingCard } from './PricingCard'
-
-interface Plan {
-    uuid: string
-    slug: string
-    name: string
-    monthly_price: string
-    memo_operations_limit: number | null
-    chat_queries_limit: number | null
-    projects_limit: number | null
-    features: Record<string, any>
-    stripe_price_id: string | null
-    is_default: boolean
-}
+import type { Plan } from '@/stores/subscriptionStore'
 
 interface AvailablePlansSectionProps {
     plans: Plan[]
@@ -22,7 +10,7 @@ interface AvailablePlansSectionProps {
     loading: boolean
 }
 
-const ENTERPRISE_PLAN = {
+const ENTERPRISE_PLAN: Plan = {
     slug: 'enterprise',
     name: 'Enterprise',
     monthly_price: '0.00',
@@ -33,6 +21,8 @@ const ENTERPRISE_PLAN = {
     stripe_price_id: null,
     is_default: false,
     uuid: 'enterprise',
+    memo_operation_overage_price: null,
+    chat_query_overage_price: null,
 }
 
 export const AvailablePlansSection = ({
