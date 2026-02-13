@@ -318,7 +318,7 @@ export const updateMemo = async (req: Request, res: Response) => {
         }
 
         if (contentUpdated) {
-            await sendMemoForAsyncProcessing(memo)
+            await sendMemoForAsyncProcessing(memo, 'memo_updated')
         }
 
         await em.persistAndFlush(memo)
