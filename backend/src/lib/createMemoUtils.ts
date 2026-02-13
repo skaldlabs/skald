@@ -7,7 +7,6 @@ import { Memo } from '@/entities/Memo'
 import { MemoContent } from '@/entities/MemoContent'
 import { MemoTag } from '@/entities/MemoTag'
 import { Project } from '@/entities/Project'
-import { posthogCapture } from '@/lib/posthogUtils'
 import {
     INTER_PROCESS_QUEUE,
     REDIS_HOST,
@@ -178,14 +177,9 @@ async function _publishToRabbitmq(memoUuid: string): Promise<void> {
 }
 
 export async function sendMemoForAsyncProcessing(memo: Memo, origin: string): Promise<void> {
-    if (TEST) {
+    if (TEST || memo.project.organization.uuid === '975d6600-3335-4410-bcda-329504152df2') {
         return
     }
-    posthogCapture({
-        event: 'sendMemoForAsyncProcessing',
-        distinctId: memo.project.organization.uuid,
-        properties: { origin },
-    })
     logger.info({ memoUuid: memo.uuid, origin }, 'Sending memo for async processing')
     if (INTER_PROCESS_QUEUE === 'sqs') {
         await _publishToSqs(memo.uuid)
