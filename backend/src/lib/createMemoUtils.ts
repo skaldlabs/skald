@@ -177,7 +177,7 @@ async function _publishToRabbitmq(memoUuid: string): Promise<void> {
 }
 
 export async function sendMemoForAsyncProcessing(memo: Memo, origin: string): Promise<void> {
-    if (TEST || memo.project.organization.uuid === '975d6600-3335-4410-bcda-329504152df2') {
+    if (TEST) {
         return
     }
     logger.info({ memoUuid: memo.uuid, origin }, 'Sending memo for async processing')

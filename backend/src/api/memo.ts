@@ -290,20 +290,23 @@ export const updateMemo = async (req: Request, res: Response) => {
         await em.begin()
 
         let contentUpdated = false
-        let oldContent = null
+        let oldContent: string | null = null
         for (const field of Object.keys(validatedData.data) as (keyof typeof validatedData.data)[]) {
             if (field === 'content') {
+                const newContent = validatedData.data['content'] as string
+                const memoContent = await DI.memoContents.findOne({ memo })
+                oldContent = memoContent?.content ?? null
+                if (oldContent === newContent) {
+                    continue
+                }
                 contentUpdated = true
-                DI.memoContents.findOne({ memo })
                 const [memoSummary, memoTags, memoChunks] = await Promise.all([
                     DI.memoSummaries.findOne({ memo }),
                     DI.memoTags.find({ memo }),
                     DI.memoChunks.find({ memo }),
                 ])
-                const memoContent = await DI.memoContents.findOne({ memo })
                 if (memoContent) {
-                    oldContent = memoContent.content
-                    memoContent.content = validatedData.data['content'] as string
+                    memoContent.content = newContent
                     em.persist(memoContent)
                 }
                 if (memoSummary) {
