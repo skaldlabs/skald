@@ -18,7 +18,7 @@ export default defineConfig({
         // [...] It can result in problems with stale connections [...]
         // It is recommended to set min: 0 so all idle connections can be terminated."
         min: 0,
-        max: 20,
+        max: 40,
     },
     // debug: ['query', 'query-params'],
     migrations: {

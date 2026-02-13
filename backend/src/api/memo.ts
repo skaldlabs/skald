@@ -202,7 +202,7 @@ const createPlaintextMemo = async (req: Request, res: Response) => {
 
     const writeOperationsUsed = calculateMemoWritesUsage(validatedData.data.content)
 
-    await new UsageTrackingService(DI.em).incrementMemoOperations(
+    await new UsageTrackingService(DI.em.fork()).incrementMemoOperations(
         { uuid: project.organization.uuid } as Organization,
         writeOperationsUsed
     )
@@ -335,7 +335,7 @@ export const updateMemo = async (req: Request, res: Response) => {
             // document memos have usage tracked in processMemo after extraction
             if (memo.type !== 'document') {
                 const writeOperationsUsed = calculateMemoWritesUsage(validatedData.data.content as string)
-                await new UsageTrackingService(DI.em).incrementMemoOperations(
+                await new UsageTrackingService(em).incrementMemoOperations(
                     { uuid: project.organization.uuid } as Organization,
                     writeOperationsUsed
                 )

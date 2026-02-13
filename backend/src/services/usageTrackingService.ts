@@ -3,7 +3,6 @@
  * Handles increment and retrieval of usage metrics.
  */
 
-import { DI } from '@/di'
 import { Organization } from '@/entities/Organization'
 import { UsageRecord } from '@/entities/UsageRecord'
 import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
@@ -32,7 +31,7 @@ class UsageTrackingService {
     private em: EntityManager
 
     constructor(em: EntityManager) {
-        this.em = em.fork()
+        this.em = em
     }
 
     /**
@@ -58,7 +57,7 @@ class UsageTrackingService {
         }
 
         // Check and send usage alerts if needed
-        await this.checkAndSendUsageAlerts(organization, 'memo_operations')
+        await this.checkAndSendUsageAlerts(organization, 'memo_operations', usageRecord)
 
         await this.em.flush()
     }
@@ -86,7 +85,7 @@ class UsageTrackingService {
         }
 
         // Check and send usage alerts if needed
-        await this.checkAndSendUsageAlerts(organization, 'chat_queries')
+        await this.checkAndSendUsageAlerts(organization, 'chat_queries', usageRecord)
 
         // Only flush if we created our own entity manager
         await this.em.flush()
@@ -227,9 +226,9 @@ class UsageTrackingService {
      */
     private async checkAndSendUsageAlerts(
         organization: Organization,
-        limitType: 'memo_operations' | 'chat_queries' | 'projects'
+        limitType: 'memo_operations' | 'chat_queries' | 'projects',
+        usageRecord: UsageRecord
     ): Promise<void> {
-        const usageRecord = await this.getOrCreateCurrentUsage(organization)
         await this.em.refresh(usageRecord)
 
         const subscription = await this.em.findOne(
@@ -304,7 +303,7 @@ class UsageTrackingService {
             const { sendUsageAlertEmail } = await import('@/lib/usageAlertEmail')
 
             // Get subscription for billing period info
-            const subscription = await DI.em.findOne(
+            const subscription = await this.em.findOne(
                 OrganizationSubscription,
                 { organization: organization.uuid },
                 { populate: ['plan'] }

@@ -357,7 +357,7 @@ const usage = async (req: Request, res: Response) => {
     try {
         const organization = await getOrganizationWithAccess(req)
 
-        const service = new UsageTrackingService(DI.em)
+        const service = new UsageTrackingService(DI.em.fork())
         const usageData = await service.getCurrentUsage(organization)
 
         res.status(200).json(usageData)
