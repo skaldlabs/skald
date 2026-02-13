@@ -176,10 +176,11 @@ async function _publishToRabbitmq(memoUuid: string): Promise<void> {
     await connection.close()
 }
 
-export async function sendMemoForAsyncProcessing(memo: Memo): Promise<void> {
+export async function sendMemoForAsyncProcessing(memo: Memo, origin: string): Promise<void> {
     if (TEST) {
         return
     }
+    logger.info({ memoUuid: memo.uuid, origin }, 'Sending memo for async processing')
     if (INTER_PROCESS_QUEUE === 'sqs') {
         await _publishToSqs(memo.uuid)
     } else if (INTER_PROCESS_QUEUE === 'redis') {
@@ -193,7 +194,7 @@ export async function sendMemoForAsyncProcessing(memo: Memo): Promise<void> {
 
 export async function createNewMemo(memoData: MemoData, project: Project): Promise<Memo> {
     const memo = await _createMemoObject(memoData, project)
-    await sendMemoForAsyncProcessing(memo)
+    await sendMemoForAsyncProcessing(memo, 'create_new_memo')
     return memo
 }
 
@@ -212,6 +213,6 @@ export const createNewDocumentMemo = async (
         'original-filename': sanitizedFilename,
     })
 
-    await sendMemoForAsyncProcessing(memo)
+    await sendMemoForAsyncProcessing(memo, 'create_new_document_memo')
     return memo
 }

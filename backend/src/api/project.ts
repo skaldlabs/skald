@@ -163,7 +163,7 @@ const create = async (req: Request, res: Response) => {
     }
 
     if (IS_CLOUD) {
-        const service = new UsageTrackingService(DI.em)
+        const service = new UsageTrackingService(DI.em.fork())
         const { withinLimit, limit } = await service.checkLimit(organization, 'projects')
 
         if (!withinLimit) {

@@ -28,6 +28,7 @@ import { UsageTrackingService } from '@/services/usageTrackingService'
 import { calculateMemoWritesUsage } from '@/lib/usageTrackingUtils'
 import { CachedQueries } from '@/queries/cachedQueries'
 import { sanitizeFilenameForTitle, truncateFilename } from '@/lib/filenameUtils'
+import { posthogCapture } from '@/lib/posthogUtils'
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.pptx']
 
@@ -201,7 +202,7 @@ const createPlaintextMemo = async (req: Request, res: Response) => {
 
     const writeOperationsUsed = calculateMemoWritesUsage(validatedData.data.content)
 
-    await new UsageTrackingService(DI.em).incrementMemoOperations(
+    await new UsageTrackingService(DI.em.fork()).incrementMemoOperations(
         { uuid: project.organization.uuid } as Organization,
         writeOperationsUsed
     )
@@ -289,18 +290,23 @@ export const updateMemo = async (req: Request, res: Response) => {
         await em.begin()
 
         let contentUpdated = false
+        let oldContent: string | null = null
         for (const field of Object.keys(validatedData.data) as (keyof typeof validatedData.data)[]) {
             if (field === 'content') {
+                const newContent = validatedData.data['content'] as string
+                const memoContent = await DI.memoContents.findOne({ memo })
+                oldContent = memoContent?.content ?? null
+                if (oldContent === newContent) {
+                    continue
+                }
                 contentUpdated = true
-                DI.memoContents.findOne({ memo })
                 const [memoSummary, memoTags, memoChunks] = await Promise.all([
                     DI.memoSummaries.findOne({ memo }),
                     DI.memoTags.find({ memo }),
                     DI.memoChunks.find({ memo }),
                 ])
-                const memoContent = await DI.memoContents.findOne({ memo })
                 if (memoContent) {
-                    memoContent.content = validatedData.data['content'] as string
+                    memoContent.content = newContent
                     em.persist(memoContent)
                 }
                 if (memoSummary) {
@@ -318,7 +324,25 @@ export const updateMemo = async (req: Request, res: Response) => {
         }
 
         if (contentUpdated) {
-            await sendMemoForAsyncProcessing(memo)
+            if (Math.random() < 0.1) {
+                // log 10% of memo updates for sampling analysis
+                posthogCapture({
+                    event: 'memo_updated',
+                    distinctId: project.organization.uuid,
+                    properties: { memoUuid: memo.uuid, oldContent: oldContent, newContent: validatedData.data.content },
+                })
+            }
+
+            await sendMemoForAsyncProcessing(memo, 'memo_updated')
+
+            // document memos have usage tracked in processMemo after extraction
+            if (memo.type !== 'document') {
+                const writeOperationsUsed = calculateMemoWritesUsage(validatedData.data.content as string)
+                await new UsageTrackingService(em).incrementMemoOperations(
+                    { uuid: project.organization.uuid } as Organization,
+                    writeOperationsUsed
+                )
+            }
         }
 
         await em.persistAndFlush(memo)

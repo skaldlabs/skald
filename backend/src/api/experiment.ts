@@ -383,7 +383,7 @@ const run = async (req: Request, res: Response) => {
             created_at: new Date(),
         })
 
-        await new UsageTrackingService(DI.em).incrementChatQueries(project.organization)
+        await new UsageTrackingService(DI.em.fork()).incrementChatQueries(project.organization)
 
         await DI.em.persistAndFlush(experimentResult)
 

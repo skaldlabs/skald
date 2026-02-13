@@ -35,7 +35,7 @@ export function trackChatUsage() {
                 return
             }
 
-            const service = new UsageTrackingService(DI.em)
+            const service = new UsageTrackingService(DI.em.fork())
             await service.incrementChatQueries(organization)
         }
 
