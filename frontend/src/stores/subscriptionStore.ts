@@ -13,6 +13,8 @@ export interface Plan {
     projects_limit: number | null
     features: Record<string, unknown>
     is_default: boolean
+    memo_operation_overage_price: string | null
+    chat_query_overage_price: string | null
 }
 
 export interface Subscription {
@@ -27,6 +29,15 @@ export interface Subscription {
     cancel_at_period_end: boolean
     scheduled_plan: Plan | null
     scheduled_change_date: string | null
+    billing_limit: string | null
+}
+
+export interface OverageData {
+    memo_operations_overage_count: number
+    chat_queries_overage_count: number
+    estimated_overage_cost: number
+    billing_limit: number | null
+    billing_limit_exceeded: boolean
 }
 
 export interface UsageData {
@@ -49,6 +60,7 @@ export interface UsageData {
             percentage: number
         }
     }
+    overage?: OverageData
 }
 
 interface SubscriptionState {
@@ -68,6 +80,7 @@ interface SubscriptionState {
     changePlan: (planSlug: string) => Promise<void>
     cancelScheduledChange: () => Promise<void>
     openCustomerPortal: () => Promise<void>
+    setBillingLimit: (limit: number | null) => Promise<void>
     refreshAll: () => Promise<void>
 }
 
@@ -351,6 +364,28 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 error: String(error),
             })
             toast.error('Failed to open billing portal')
+        }
+    },
+
+    setBillingLimit: async (limit: number | null) => {
+        try {
+            const orgPath = getOrgPath()
+            const response = await api.put<{ billing_limit: number | null; overage_cost: number; exceeded: boolean }>(
+                `${orgPath}/subscription/billing-limit`,
+                { billing_limit: limit }
+            )
+
+            if (response.error || !response.data) {
+                toast.error(response.error || 'Failed to update billing limit')
+                return
+            }
+
+            toast.success(limit !== null ? 'Billing limit updated' : 'Billing limit removed')
+
+            // Refresh subscription and usage to reflect changes
+            await Promise.all([get().fetchSubscription(), get().fetchUsage()])
+        } catch {
+            toast.error('Failed to update billing limit')
         }
     },
 

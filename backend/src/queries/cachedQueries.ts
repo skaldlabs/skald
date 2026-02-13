@@ -3,6 +3,7 @@ import { UsageRecord } from '@/entities/UsageRecord'
 import { redisDel, redisGet, redisIncrBy, redisSet } from '@/lib/redisClient'
 import { EntityManager } from '@mikro-orm/core'
 import { logger } from '@/lib/logger'
+import { BillingLimitService } from '@/services/billingLimitService'
 
 const REDIS_TRUE_VALUE = 'true'
 const REDIS_FALSE_VALUE = 'false'
@@ -85,10 +86,37 @@ export class CachedQueries {
         await redisIncrBy(cacheKey, incrementBy)
     }
 
+    static async isBillingLimitExceeded(em: EntityManager, organizationUuid: string): Promise<boolean> {
+        const cacheKey = `billingLimitExceeded:${organizationUuid}`
+        const cachedValue = await redisGet(cacheKey)
+        if (cachedValue !== null) {
+            logger.debug('Cache hit (isBillingLimitExceeded). Key:', cacheKey, 'Value:', cachedValue)
+            return cachedValue === REDIS_TRUE_VALUE
+        }
+
+        logger.debug('Cache miss (isBillingLimitExceeded). Key:', cacheKey)
+        const status = await BillingLimitService.check(em, organizationUuid)
+        // Await cache write so next request sees correct value. Essential when exceeded=true
+        // since we block and never increment
+        await redisSet(cacheKey, status.exceeded ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
+        return status.exceeded
+    }
+
+    static async refreshBillingLimitCache(em: EntityManager, organizationUuid: string): Promise<void> {
+        const status = await BillingLimitService.check(em, organizationUuid)
+        const cacheKey = `billingLimitExceeded:${organizationUuid}`
+        await redisSet(cacheKey, status.exceeded ? REDIS_TRUE_VALUE : REDIS_FALSE_VALUE)
+    }
+
+    static async clearBillingLimitCache(organizationUuid: string): Promise<void> {
+        await redisDel(`billingLimitExceeded:${organizationUuid}`)
+    }
+
     static async clearOrganizationUsageCache(organizationUuid: string): Promise<void> {
         await redisDel(`isOrganizationOnFreePlan:${organizationUuid}`)
         await redisDel(`organizationUsageLimitReached:${organizationUuid}`)
         await redisDel(`organizationMemoWrites:${organizationUuid}`)
         await redisDel(`organizationChatQueries:${organizationUuid}`)
+        await redisDel(`billingLimitExceeded:${organizationUuid}`)
     }
 }

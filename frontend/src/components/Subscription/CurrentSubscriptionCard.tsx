@@ -7,6 +7,8 @@ import { formatDate } from '@/components/utils/dateUtils'
 interface Plan {
     name: string
     monthly_price: string
+    memo_operation_overage_price?: string | null
+    chat_query_overage_price?: string | null
 }
 
 interface CurrentSubscription {
@@ -69,18 +71,30 @@ export const CurrentSubscriptionCard = ({ subscription, onManageBilling, loading
                     </div>
                 </div>
 
-                {subscription.plan.name.toLowerCase() !== 'free' && (
-                    <>
-                        <Separator />
-                        <div>
-                            <p className="text-sm font-semibold mb-2">Over-Limit Usage Pricing</p>
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                                <p>• USD 0.002 per memo operation</p>
-                                <p>• USD 0.03 per chat query</p>
+                {subscription.plan.name.toLowerCase() !== 'free' &&
+                    (subscription.plan.memo_operation_overage_price || subscription.plan.chat_query_overage_price) && (
+                        <>
+                            <Separator />
+                            <div>
+                                <p className="text-sm font-semibold mb-2">Over-Limit Usage Pricing</p>
+                                <div className="space-y-1 text-sm text-muted-foreground">
+                                    {subscription.plan.memo_operation_overage_price && (
+                                        <p>
+                                            • USD{' '}
+                                            {parseFloat(subscription.plan.memo_operation_overage_price).toFixed(4)} per
+                                            memo operation
+                                        </p>
+                                    )}
+                                    {subscription.plan.chat_query_overage_price && (
+                                        <p>
+                                            • USD {parseFloat(subscription.plan.chat_query_overage_price).toFixed(4)}{' '}
+                                            per chat query
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </>
-                )}
+                        </>
+                    )}
 
                 {subscription.stripe_customer_id && (
                     <>

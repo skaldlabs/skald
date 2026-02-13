@@ -95,4 +95,7 @@ export class OrganizationSubscription {
         unique: 'skald_organizationsubscription_stripe_schedule_id_key',
     })
     stripe_schedule_id?: string
+
+    @Property({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+    billing_limit?: string
 }

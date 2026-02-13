@@ -36,13 +36,19 @@ export const UsageTracker = () => {
 
     const isNearLimit = highestUsage >= 80
     const isAtLimit = highestUsage >= 100
+    const billingLimitExceeded = usage.overage?.billing_limit_exceeded ?? false
 
     return (
         <div className="p-3 border rounded-lg bg-muted/50 space-y-3">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-muted-foreground">USAGE</span>
-                {isAtLimit && <span className="text-xs text-destructive font-semibold">LIMIT REACHED</span>}
-                {!isAtLimit && isNearLimit && <span className="text-xs text-yellow-600 font-semibold">NEAR LIMIT</span>}
+                {billingLimitExceeded && <span className="text-xs text-destructive font-semibold">SERVICE PAUSED</span>}
+                {!billingLimitExceeded && isAtLimit && (
+                    <span className="text-xs text-destructive font-semibold">LIMIT REACHED</span>
+                )}
+                {!billingLimitExceeded && !isAtLimit && isNearLimit && (
+                    <span className="text-xs text-yellow-600 font-semibold">NEAR LIMIT</span>
+                )}
             </div>
 
             <div className="space-y-2">
@@ -71,24 +77,37 @@ export const UsageTracker = () => {
                     )
                 })}
             </div>
-            {isAtLimit && (
+
+            {billingLimitExceeded && (
+                <p className="text-xs text-destructive font-medium">
+                    Billing limit reached. Increase your limit in settings to resume service.
+                </p>
+            )}
+            {!billingLimitExceeded && isAtLimit && (
                 <p className="text-xs text-muted-foreground">
                     Extra usage will be charged at the end of the month separately.
                 </p>
             )}
-            {(isNearLimit || isAtLimit) && (
+            {usage.overage && usage.overage.estimated_overage_cost > 0 && (
+                <p className="text-xs text-muted-foreground">
+                    Overage: ${usage.overage.estimated_overage_cost.toFixed(2)}
+                    {usage.overage.billing_limit !== null && ` / $${usage.overage.billing_limit.toFixed(2)}`}
+                </p>
+            )}
+
+            {(billingLimitExceeded || isNearLimit || isAtLimit) && (
                 <Button
                     onClick={() => navigate('/organization/subscription')}
                     size="sm"
                     className="w-full"
-                    variant={isAtLimit ? 'destructive' : 'default'}
+                    variant={billingLimitExceeded || isAtLimit ? 'destructive' : 'default'}
                 >
                     <TrendingUp className="h-3 w-3 mr-1" />
-                    Upgrade Plan
+                    {billingLimitExceeded ? 'Manage Billing Limit' : 'Upgrade Plan'}
                 </Button>
             )}
 
-            {!isNearLimit && !isAtLimit && (
+            {!billingLimitExceeded && !isNearLimit && !isAtLimit && (
                 <Button
                     onClick={() => navigate('/organization/subscription')}
                     size="sm"

@@ -262,6 +262,29 @@ export const getMemo = async (req: Request, res: Response) => {
 }
 export const updateMemo = async (req: Request, res: Response) => {
     const project = req.context?.requestUser?.project as Project
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    if (IS_CLOUD) {
+        const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(DI.em, project.organization.uuid)
+        if (isOrgOnFreePlan) {
+            const usage = await CachedQueries.getOrganizationUsage(DI.em, project.organization.uuid)
+            if (usage.memoWrites >= 1000) {
+                return res.status(403).json({
+                    error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue updating memos.",
+                })
+            }
+        } else {
+            const exceeded = await CachedQueries.isBillingLimitExceeded(DI.em, project.organization.uuid)
+            if (exceeded) {
+                return res.status(403).json({
+                    error: "You've reached your billing limit. Increase your billing limit in settings to continue.",
+                })
+            }
+        }
+    }
+
     const { id } = req.params
     const idType = (req.query.id_type as string) || 'memo_uuid'
 
@@ -502,8 +525,6 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
         if (IS_CLOUD) {
             const isOrgOnFreePlan = await CachedQueries.isOrganizationOnFreePlan(DI.em, project.organization.uuid)
             logger.debug('isOrgOnFreePlan', isOrgOnFreePlan)
-            // we only check usage for free plan users because we need to check if the limit has been reached to stop
-            // the service. those on non-free plans can continue using us and will pay for the usage.
             if (isOrgOnFreePlan) {
                 const usage = await CachedQueries.getOrganizationUsage(DI.em, project.organization.uuid)
                 if (usage.memoWrites >= 1000) {
@@ -514,6 +535,13 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
 
                 if (req.file && req.file.size > 5 * 1024 * 1024) {
                     return res.status(403).json({ error: 'Maximum file upload size on the free plan is 5MB' })
+                }
+            } else {
+                const exceeded = await CachedQueries.isBillingLimitExceeded(DI.em, project.organization.uuid)
+                if (exceeded) {
+                    return res.status(403).json({
+                        error: "You've reached your billing limit. Increase your billing limit in settings to continue.",
+                    })
                 }
             }
         }
