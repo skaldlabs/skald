@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useSubscriptionStore } from '@/stores/subscriptionStore'
 import { UsageDashboard } from './UsageDashboard'
+import { BillingLimitCard } from './BillingLimitCard'
 import { ScheduledPlanChangeAlert } from '@/components/Subscription/ScheduledPlanChangeAlert'
 import { CurrentSubscriptionCard } from '@/components/Subscription/CurrentSubscriptionCard'
 import { AvailablePlansSection } from '@/components/Subscription/AvailablePlansSection'
@@ -92,6 +93,10 @@ export const SubscriptionDashboard = () => {
                     <UsageDashboard usage={usage} loading={loading} />
                 </div>
             </div>
+
+            {currentSubscription && currentSubscription.plan.slug !== 'free' && (
+                <BillingLimitCard billingLimit={currentSubscription.billing_limit} overage={usage?.overage} />
+            )}
 
             <AvailablePlansSection
                 plans={plans}

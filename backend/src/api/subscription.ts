@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express'
 import { DI } from '@/di'
 import { SubscriptionService } from '@/services/subscriptionService'
 import { UsageTrackingService } from '@/services/usageTrackingService'
+import { BillingLimitService } from '@/services/billingLimitService'
+import { CachedQueries } from '@/queries/cachedQueries'
 import { OrganizationMembershipRole } from '@/entities/OrganizationMembership'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
@@ -61,7 +63,10 @@ const serializeSubscriptionDetail = async (subscription: any) => {
             projects_limit: subscription.plan.projects_limit,
             features: subscription.plan.features,
             is_default: subscription.plan.isDefault,
+            memo_operation_overage_price: subscription.plan.memo_operation_overage_price || null,
+            chat_query_overage_price: subscription.plan.chat_query_overage_price || null,
         },
+        billing_limit: subscription.billing_limit || null,
         stripe_customer_id: subscription.stripe_customer_id || null,
         stripe_subscription_id: subscription.stripe_subscription_id || null,
         status: subscription.status,
@@ -416,6 +421,90 @@ const usageHistory = async (req: Request, res: Response) => {
     }
 }
 
+/**
+ * GET /api/organization/:organization_uuid/subscription/billing-limit
+ * Get billing limit and current overage cost
+ */
+const getBillingLimit = async (req: Request, res: Response) => {
+    try {
+        const organization = await getOrganizationWithAccess(req)
+        const status = await BillingLimitService.check(DI.em, organization.uuid)
+
+        res.status(200).json({
+            billing_limit: status.billing_limit,
+            overage_cost: status.overage_cost,
+            exceeded: status.exceeded,
+            memo_overage_count: status.memo_overage_count,
+            chat_overage_count: status.chat_overage_count,
+        })
+    } catch (error: any) {
+        if (error.message === 'Unauthorized') {
+            return res.status(401).json({ error: error.message })
+        }
+        if (error.message === 'You are not a member of this organization') {
+            return res.status(403).json({ error: error.message })
+        }
+        logger.error({ err: error }, 'Error getting billing limit')
+        res.status(500).json({ error: 'Internal server error' })
+    }
+}
+
+/**
+ * PUT /api/organization/:organization_uuid/subscription/billing-limit
+ * Set or remove billing limit (owner only)
+ */
+const setBillingLimit = async (req: Request, res: Response) => {
+    try {
+        const organization = await getOrganizationWithAccess(req, OrganizationMembershipRole.OWNER)
+
+        const { billing_limit } = req.body
+
+        if (billing_limit !== null && billing_limit !== undefined) {
+            const limit = parseFloat(billing_limit)
+            if (isNaN(limit) || limit < 0) {
+                return res.status(400).json({ error: 'billing_limit must be a non-negative number or null' })
+            }
+        }
+
+        const subscription = await DI.organizationSubscriptions.findOne(
+            { organization: organization.uuid },
+            { populate: ['plan'] }
+        )
+
+        if (!subscription) {
+            return res.status(404).json({ error: 'Subscription not found' })
+        }
+
+        if (subscription.plan.slug === 'free') {
+            return res.status(400).json({ error: 'Billing limits are only available for paid plans' })
+        }
+
+        subscription.billing_limit =
+            billing_limit !== null && billing_limit !== undefined ? String(billing_limit) : undefined
+        subscription.updated_at = new Date()
+        await DI.em.persistAndFlush(subscription)
+
+        await CachedQueries.clearBillingLimitCache(organization.uuid)
+
+        const status = await BillingLimitService.check(DI.em, organization.uuid)
+
+        res.status(200).json({
+            billing_limit: status.billing_limit,
+            overage_cost: status.overage_cost,
+            exceeded: status.exceeded,
+        })
+    } catch (error: any) {
+        if (error.message === 'Unauthorized') {
+            return res.status(401).json({ error: error.message })
+        }
+        if (error.message === 'You do not have permission to perform this action') {
+            return res.status(403).json({ error: error.message })
+        }
+        logger.error({ err: error }, 'Error setting billing limit')
+        res.status(500).json({ error: 'Internal server error' })
+    }
+}
+
 // Register routes
 subscriptionRouter.get('/', getSubscription)
 subscriptionRouter.post('/checkout', checkout)
@@ -425,3 +514,5 @@ subscriptionRouter.post('/change_plan', changePlan)
 subscriptionRouter.post('/cancel_scheduled_change', cancelScheduledChange)
 subscriptionRouter.get('/usage', usage)
 subscriptionRouter.get('/usage_history', usageHistory)
+subscriptionRouter.get('/billing-limit', getBillingLimit)
+subscriptionRouter.put('/billing-limit', setBillingLimit)

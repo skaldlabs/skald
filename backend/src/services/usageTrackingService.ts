@@ -10,7 +10,16 @@ import { OrganizationSubscription } from '@/entities/OrganizationSubscription'
 import { EntityManager } from '@mikro-orm/core'
 import { logger } from '@/lib/logger'
 import { CachedQueries } from '@/queries/cachedQueries'
+import { BillingLimitService } from '@/services/billingLimitService'
 import { IS_SELF_HOSTED_DEPLOY } from '@/settings'
+
+interface OverageData {
+    memo_operations_overage_count: number
+    chat_queries_overage_count: number
+    estimated_overage_cost: number
+    billing_limit: number | null
+    billing_limit_exceeded: boolean
+}
 
 interface UsageData {
     billing_period_start: string
@@ -20,6 +29,7 @@ interface UsageData {
         chat_queries: UsageMetric
         projects: UsageMetric
     }
+    overage?: OverageData
 }
 
 interface UsageMetric {
@@ -55,6 +65,8 @@ class UsageTrackingService {
             // we only cache free plan usage because we need to check if the limit has been reached to stop
             // the service. those on non-free plans can continue using us and will pay for the usage.
             await CachedQueries.incrementMemoWritesCache(organization.uuid, incrementBy)
+        } else {
+            await CachedQueries.refreshBillingLimitCache(this.em, organization.uuid)
         }
 
         // Check and send usage alerts if needed
@@ -83,6 +95,8 @@ class UsageTrackingService {
             // we only cache free plan usage because we need to check if the limit has been reached to stop
             // the service. those on non-free plans can continue using us and will pay for the usage.
             await CachedQueries.incrementChatQueriesCache(organization.uuid, 1)
+        } else {
+            await CachedQueries.refreshBillingLimitCache(this.em, organization.uuid)
         }
 
         // Check and send usage alerts if needed
@@ -124,7 +138,7 @@ class UsageTrackingService {
             }
         }
 
-        return {
+        const result: UsageData = {
             billing_period_start: subscription.current_period_start.toISOString().split('T')[0],
             billing_period_end: subscription.current_period_end.toISOString().split('T')[0],
             usage: {
@@ -133,6 +147,20 @@ class UsageTrackingService {
                 projects: calcUsage(projectsCount, plan.projects_limit ?? null),
             },
         }
+
+        // Add overage info for paid plans
+        if (plan.slug !== 'free' && (plan.memo_operation_overage_price || plan.chat_query_overage_price)) {
+            const billingStatus = await BillingLimitService.check(this.em, organization.uuid)
+            result.overage = {
+                memo_operations_overage_count: billingStatus.memo_overage_count,
+                chat_queries_overage_count: billingStatus.chat_overage_count,
+                estimated_overage_cost: billingStatus.overage_cost,
+                billing_limit: billingStatus.billing_limit,
+                billing_limit_exceeded: billingStatus.exceeded,
+            }
+        }
+
+        return result
     }
 
     /**

@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { UsageData } from '@/stores/subscriptionStore'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Separator } from '@/components/ui/separator'
 
 interface UsageDashboardProps {
     usage: UsageData | null
@@ -123,6 +124,22 @@ export const UsageDashboard = ({ usage, loading }: UsageDashboardProps) => {
                     limit={usage.usage.projects.limit}
                     percentage={usage.usage.projects.percentage}
                 />
+
+                {usage.overage && usage.overage.estimated_overage_cost > 0 && (
+                    <>
+                        <Separator />
+                        <div className="space-y-1">
+                            <p className="text-sm font-semibold">Overage Summary</p>
+                            <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                                <p>Memo overages: {usage.overage.memo_operations_overage_count.toLocaleString()}</p>
+                                <p>Chat overages: {usage.overage.chat_queries_overage_count.toLocaleString()}</p>
+                            </div>
+                            <p className="text-sm font-semibold">
+                                Estimated overage cost: ${usage.overage.estimated_overage_cost.toFixed(2)}
+                            </p>
+                        </div>
+                    </>
+                )}
             </CardContent>
         </Card>
     )

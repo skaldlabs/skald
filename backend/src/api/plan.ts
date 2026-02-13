@@ -15,6 +15,8 @@ interface PlanResponse {
     projects_limit: number | undefined
     features: Record<string, unknown>
     is_default: boolean
+    memo_operation_overage_price: string | null
+    chat_query_overage_price: string | null
 }
 
 const list = async (req: Request, res: Response) => {
@@ -38,6 +40,8 @@ const list = async (req: Request, res: Response) => {
         projects_limit: plan.projects_limit,
         features: plan.features,
         is_default: plan.isDefault,
+        memo_operation_overage_price: plan.memo_operation_overage_price || null,
+        chat_query_overage_price: plan.chat_query_overage_price || null,
     }))
 
     res.status(200).json(planResponses)

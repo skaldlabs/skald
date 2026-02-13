@@ -36,6 +36,12 @@ export class Plan {
     @Property({ nullable: true })
     chat_queries_limit?: number
 
+    @Property({ type: 'decimal', precision: 10, scale: 4, nullable: true })
+    memo_operation_overage_price?: string
+
+    @Property({ type: 'decimal', precision: 10, scale: 4, nullable: true })
+    chat_query_overage_price?: string
+
     @Property({ nullable: true })
     projects_limit?: number
 

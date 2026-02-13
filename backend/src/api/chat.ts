@@ -55,6 +55,13 @@ export const chat = async (req: Request, res: Response) => {
                     error: "You've reached your plan limit of 1000 memo writes. Upgrade your plan to continue chat.",
                 })
             }
+        } else {
+            const exceeded = await CachedQueries.isBillingLimitExceeded(DI.em, project.organization.uuid)
+            if (exceeded) {
+                return res.status(403).json({
+                    error: "You've reached your billing limit. Increase your billing limit in settings to continue.",
+                })
+            }
         }
     }
 
