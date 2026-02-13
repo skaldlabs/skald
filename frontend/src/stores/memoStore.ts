@@ -428,29 +428,32 @@ export const useMemoStore = create<MemoState>((set, get) => ({
                 return
             }
 
-            const pollMemo = async () => {
+            const pollMemo = async (pollCount: number) => {
                 const statusResponse = await get().getMemoStatus(memo.uuid)
                 if (statusResponse && statusResponse.status !== 'processing') {
                     // Status changed, update the memo
                     get().updateMemoStatus(memo.uuid, statusResponse.status)
                     // Stop polling this memo
                     get().stopPollingMemo(memo.uuid)
+                    return
                 }
+
+                // if still processing add a exponential delay
+                const nextPollCount = pollCount + 1
+                const newDelay = Math.min(nextPollCount * 3000, 9000)
+                const timeoutId = setTimeout(() => pollMemo(nextPollCount), newDelay)
+                get().pollingIntervals.set(memo.uuid, timeoutId)
             }
 
             // Poll immediately once
-            pollMemo()
-
-            // Then poll every 3 seconds
-            const intervalId = setInterval(pollMemo, 3000)
-            get().pollingIntervals.set(memo.uuid, intervalId)
+            pollMemo(0)
         })
     },
 
     stopPollingMemo: (memoUuid: string) => {
-        const intervalId = get().pollingIntervals.get(memoUuid)
-        if (intervalId) {
-            clearInterval(intervalId)
+        const timeoutId = get().pollingIntervals.get(memoUuid)
+        if (timeoutId) {
+            clearTimeout(timeoutId)
             const newIntervals = new Map(get().pollingIntervals)
             newIntervals.delete(memoUuid)
             set({ pollingIntervals: newIntervals })
@@ -458,8 +461,8 @@ export const useMemoStore = create<MemoState>((set, get) => ({
     },
 
     stopAllPolling: () => {
-        get().pollingIntervals.forEach((intervalId) => {
-            clearInterval(intervalId)
+        get().pollingIntervals.forEach((timeoutId) => {
+            clearTimeout(timeoutId)
         })
         set({ pollingIntervals: new Map() })
     },
