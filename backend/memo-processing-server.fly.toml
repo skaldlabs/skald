@@ -15,6 +15,7 @@ primary_region = 'dfw'
   LANGSMITH_TRACING = 'true'
   INTER_PROCESS_QUEUE = 'sqs'
   IS_CLOUD = 'true'
+  SQS_POLL_INTERVAL = '1500'
 
 [deploy]
   strategy = "immediate"

@@ -1,10 +1,12 @@
 import { Message } from '@aws-sdk/client-sqs'
 import { processMemo } from '@/memoProcessingServer/processMemo'
-import { SQS_DLQ_QUEUE_URL } from '@/settings'
+import { SQS_DLQ_QUEUE_URL, SQS_POLL_INTERVAL } from '@/settings'
 import { MikroORM } from '@mikro-orm/core'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/node'
 import { deleteMessage, receiveMessages, publishMessage } from '@/lib/sqsClient'
+
+const _sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 interface MemoMessage {
     memo_uuid: string
@@ -55,6 +57,10 @@ async function pollMessages(orm: MikroORM): Promise<void> {
 
             // Process all messages concurrently
             await Promise.allSettled(response.Messages.map((message: Message) => processMessage(orm, message)))
+
+            if (SQS_POLL_INTERVAL > 0) {
+                await _sleep(SQS_POLL_INTERVAL)
+            }
             logger.info({ messageCount: response.Messages.length }, 'Successfully processed and deleted messages')
         } else {
             logger.debug('No messages received, continuing to poll...')
