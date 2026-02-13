@@ -10,7 +10,7 @@ import { AWS_REGION, SQS_QUEUE_URL } from '@/settings'
 
 const MAX_MESSAGES = 10
 const WAIT_TIME_SECONDS = 1
-const VISIBILITY_TIMEOUT = 60
+const VISIBILITY_TIMEOUT = 660
 
 let sqsClient: SQSClient | null = null
 
