@@ -4,8 +4,16 @@ export const SUPPORTED_LLM_MODELS = {
         'gpt-5-nano': { slug: 'gpt-5-nano', name: 'GPT-5 Nano' },
     },
     anthropic: {
-        'claude-haiku-4-5-20251001': { slug: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5' },
-        'claude-sonnet-4-5-20250929': { slug: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5' },
+        'claude-haiku-4-5-20251001': {
+            slug: 'claude-haiku-4-5-20251001',
+            bedrockSlug: 'anthropic.claude-haiku-4-5-20251001-v1:0',
+            name: 'Claude Haiku 4.5',
+        },
+        'claude-sonnet-4-5-20250929': {
+            slug: 'claude-sonnet-4-5-20250929',
+            bedrockSlug: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
+            name: 'Claude Sonnet 4.5',
+        },
     },
     gemini: {
         'gemini-2.5-flash': { slug: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
