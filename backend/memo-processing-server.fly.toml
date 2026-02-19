@@ -16,8 +16,6 @@ primary_region = 'dfw'
   INTER_PROCESS_QUEUE = 'sqs'
   IS_CLOUD = 'true'
   SQS_POLL_INTERVAL = '1500'
-  BEDROCK_ENABLED = 'true'
-
 
 [deploy]
   strategy = "immediate"

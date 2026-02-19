@@ -109,12 +109,6 @@ export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
 export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929'
 
-// Anthropic Bedrock
-export const BEDROCK_ENABLED = strToBool(process.env.BEDROCK_ENABLED) || false
-export const BEDROCK_AWS_REGION = process.env.BEDROCK_AWS_REGION || 'us-east-1' // us-east-1 has the fastest inference for bedrock
-export const BEDROCK_AWS_ACCESS_KEY_ID = process.env.BEDROCK_AWS_ACCESS_KEY_ID || AWS_ACCESS_KEY_ID
-export const BEDROCK_AWS_SECRET_ACCESS_KEY = process.env.BEDROCK_AWS_SECRET_ACCESS_KEY || AWS_SECRET_ACCESS_KEY
-
 // Local LLM
 export const LOCAL_LLM_MODEL = process.env.LOCAL_LLM_MODEL || 'llama-3.1-8b-instruct'
 export const LOCAL_LLM_BASE_URL = process.env.LOCAL_LLM_BASE_URL

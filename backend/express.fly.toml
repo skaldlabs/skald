@@ -20,7 +20,6 @@ primary_region = 'dfw'
   FRONTEND_URL = 'https://platform.useskald.com'
   INTER_PROCESS_QUEUE = 'sqs'
   IS_CLOUD = 'true'
-  BEDROCK_ENABLED = 'true'
 
 
 [http_service]

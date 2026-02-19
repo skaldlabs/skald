@@ -6,8 +6,6 @@ import {
     LOCAL_LLM_BASE_URL,
     LOCAL_LLM_MODEL,
     GEMINI_API_KEY,
-    BEDROCK_AWS_ACCESS_KEY_ID,
-    BEDROCK_ENABLED,
 } from '@/settings'
 import { DEFAULT_LLM_MODELS } from '@/llmModels'
 
@@ -25,7 +23,7 @@ if (OPENAI_API_KEY) {
         model: DEFAULT_LLM_MODELS.openai.defaultChatModel.name,
     })
 }
-if (ANTHROPIC_API_KEY || (BEDROCK_ENABLED && BEDROCK_AWS_ACCESS_KEY_ID)) {
+if (ANTHROPIC_API_KEY) {
     AVAILABLE_LLM_PROVIDERS.push({
         provider: 'anthropic',
         label: 'Anthropic',

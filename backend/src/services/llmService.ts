@@ -1,7 +1,6 @@
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { ChatOpenAI } from '@langchain/openai'
 import { ChatAnthropic } from '@langchain/anthropic'
-import { ChatBedrockConverse } from '@langchain/aws'
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
 import {
     LLM_PROVIDER,
@@ -12,10 +11,6 @@ import {
     LOCAL_LLM_API_KEY,
     GROQ_API_KEY,
     GEMINI_API_KEY,
-    BEDROCK_AWS_REGION,
-    BEDROCK_AWS_ACCESS_KEY_ID,
-    BEDROCK_AWS_SECRET_ACCESS_KEY,
-    BEDROCK_ENABLED,
 } from '../settings'
 import { DEFAULT_LLM_MODELS } from '@/llmModels'
 
@@ -57,28 +52,14 @@ export class LLMService {
                 temperature,
             })
         } else if (provider === 'anthropic') {
-            const modelConfig =
-                purpose === 'chat'
-                    ? DEFAULT_LLM_MODELS.anthropic.defaultChatModel
-                    : DEFAULT_LLM_MODELS.anthropic.defaultClassificationModel
-
-            if (BEDROCK_ENABLED && BEDROCK_AWS_ACCESS_KEY_ID && BEDROCK_AWS_SECRET_ACCESS_KEY) {
-                return new ChatBedrockConverse({
-                    model: modelConfig.bedrockSlug,
-                    region: BEDROCK_AWS_REGION,
-                    credentials: {
-                        accessKeyId: BEDROCK_AWS_ACCESS_KEY_ID,
-                        secretAccessKey: BEDROCK_AWS_SECRET_ACCESS_KEY,
-                    },
-                    temperature,
-                })
-            }
-
             if (!ANTHROPIC_API_KEY) {
                 throw new Error('Anthropic provider is not configured. Please set ANTHROPIC_API_KEY.')
             }
             return new ChatAnthropic({
-                model: modelConfig.slug,
+                model:
+                    purpose === 'chat'
+                        ? DEFAULT_LLM_MODELS.anthropic.defaultChatModel.slug
+                        : DEFAULT_LLM_MODELS.anthropic.defaultClassificationModel.slug,
                 apiKey: ANTHROPIC_API_KEY,
                 temperature,
             })
