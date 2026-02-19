@@ -21,6 +21,7 @@ primary_region = 'dfw'
   INTER_PROCESS_QUEUE = 'sqs'
   IS_CLOUD = 'true'
   BEDROCK_ENABLED = 'true'
+  BEDROCK_AWS_REGION = 'us-east-2'
 
 
 [http_service]
