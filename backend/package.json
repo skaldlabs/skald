@@ -31,6 +31,7 @@
         "@aws-sdk/s3-request-presigner": "^3.925.0",
         "@chonkiejs/core": "^0.0.5",
         "@langchain/anthropic": "^0.3.0",
+        "@langchain/aws": "^0.1.15",
         "@langchain/core": "^0.3.78",
         "@langchain/google-genai": "^1.0.3",
         "@langchain/langgraph": "^0.4.9",
