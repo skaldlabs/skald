@@ -3,8 +3,17 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ChevronLeft, Download, Edit2, Save, X } from 'lucide-react'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import { ChevronLeft, Download, Edit2, Plus, Save, Trash2, X } from 'lucide-react'
 import { api, getProjectPath } from '@/lib/api'
+import { toast } from 'sonner'
 
 interface Question {
     uuid: string
@@ -34,6 +43,16 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
     const [editedQuestion, setEditedQuestion] = useState('')
     const [editedAnswer, setEditedAnswer] = useState('')
     const [isSaving, setIsSaving] = useState(false)
+
+    // Add question state
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+    const [newQuestion, setNewQuestion] = useState('')
+    const [newAnswer, setNewAnswer] = useState('')
+    const [isAdding, setIsAdding] = useState(false)
+
+    // Delete confirmation state
+    const [deleteQuestionUuid, setDeleteQuestionUuid] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         const fetchDataset = async () => {
@@ -128,6 +147,65 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
         }
     }
 
+    const handleAddQuestion = async () => {
+        if (!dataset || !newQuestion.trim() || !newAnswer.trim()) return
+
+        setIsAdding(true)
+        try {
+            const projectPath = getProjectPath()
+            const response = await api.post<Question>(`${projectPath}/evaluation-datasets/${datasetUuid}/questions`, {
+                question: newQuestion,
+                answer: newAnswer,
+            })
+
+            if (response.data) {
+                setDataset({
+                    ...dataset,
+                    questions: [...dataset.questions, response.data],
+                })
+                setIsAddDialogOpen(false)
+                setNewQuestion('')
+                setNewAnswer('')
+                toast.success('Question added successfully')
+            } else if (response.error) {
+                toast.error(`Failed to add question: ${response.error}`)
+            }
+        } catch (err) {
+            console.error('Failed to add question:', err)
+            toast.error('Failed to add question. Please try again.')
+        } finally {
+            setIsAdding(false)
+        }
+    }
+
+    const handleDeleteQuestion = async () => {
+        if (!dataset || !deleteQuestionUuid) return
+
+        setIsDeleting(true)
+        try {
+            const projectPath = getProjectPath()
+            const response = await api.delete(
+                `${projectPath}/evaluation-datasets/${datasetUuid}/questions/${deleteQuestionUuid}`
+            )
+
+            if (!response.error) {
+                setDataset({
+                    ...dataset,
+                    questions: dataset.questions.filter((q) => q.uuid !== deleteQuestionUuid),
+                })
+                setDeleteQuestionUuid(null)
+                toast.success('Question deleted successfully')
+            } else {
+                toast.error(`Failed to delete question: ${response.error}`)
+            }
+        } catch (err) {
+            console.error('Failed to delete question:', err)
+            toast.error('Failed to delete question. Please try again.')
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="p-4">
@@ -167,10 +245,16 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
                             {dataset.questions.length} question{dataset.questions.length !== 1 ? 's' : ''}
                         </p>
                     </div>
-                    <Button variant="outline" onClick={handleExport}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Export JSON
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Question
+                        </Button>
+                        <Button variant="outline" onClick={handleExport}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Export JSON
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -216,9 +300,23 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
                                                 </Button>
                                             </>
                                         ) : (
-                                            <Button size="sm" variant="ghost" onClick={() => handleEditClick(question)}>
-                                                <Edit2 className="h-4 w-4" />
-                                            </Button>
+                                            <>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => handleEditClick(question)}
+                                                >
+                                                    <Edit2 className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => setDeleteQuestionUuid(question.uuid)}
+                                                    className="text-destructive hover:text-destructive"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -242,6 +340,66 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
                     )
                 })}
             </div>
+
+            {/* Add Question Dialog */}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Question</DialogTitle>
+                        <DialogDescription>Add a new question and answer to the dataset.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Question</label>
+                            <Input
+                                value={newQuestion}
+                                onChange={(e) => setNewQuestion(e.target.value)}
+                                placeholder="Enter question"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Answer</label>
+                            <Textarea
+                                value={newAnswer}
+                                onChange={(e) => setNewAnswer(e.target.value)}
+                                placeholder="Enter answer"
+                                className="min-h-[100px]"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isAdding}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleAddQuestion}
+                            disabled={isAdding || !newQuestion.trim() || !newAnswer.trim()}
+                        >
+                            {isAdding ? 'Adding...' : 'Add Question'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={!!deleteQuestionUuid} onOpenChange={(open) => !open && setDeleteQuestionUuid(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Question</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this question? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteQuestionUuid(null)} disabled={isDeleting}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteQuestion} disabled={isDeleting}>
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
