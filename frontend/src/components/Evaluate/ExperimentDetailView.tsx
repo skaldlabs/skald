@@ -11,10 +11,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
-import { ChevronLeft, ChevronDown, Play, ChevronRight, InfoIcon } from 'lucide-react'
-import { useEvaluateExperimentsStore, type ExperimentResult } from '@/stores/evaluateExperimentsStore'
+import { ChevronLeft, ChevronDown, Play, ChevronRight, InfoIcon, Trash2, Copy } from 'lucide-react'
+import { useEvaluateExperimentsStore, type ExperimentResult, type Experiment } from '@/stores/evaluateExperimentsStore'
 import { useEvaluateDatasetsStore } from '@/stores/evaluateDatasetsStore'
 import { ExperimentResultModal } from './ExperimentResultModal'
+import { CreateExperimentDialog } from './CreateExperimentDialog'
 
 interface ExperimentDetailViewProps {
     experimentUuid: string
@@ -22,8 +23,16 @@ interface ExperimentDetailViewProps {
 }
 
 export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetailViewProps) => {
-    const { currentExperiment, results, loading, fetchExperiment, fetchExperimentResults, runExperiment } =
-        useEvaluateExperimentsStore()
+    const {
+        currentExperiment,
+        results,
+        loading,
+        fetchExperiment,
+        fetchExperimentResults,
+        runExperiment,
+        deleteExperiment,
+        fetchExperiments,
+    } = useEvaluateExperimentsStore()
     const { currentDataset, fetchDataset } = useEvaluateDatasetsStore()
     const [isRunning, setIsRunning] = useState(false)
     const [progress, setProgress] = useState({ completed: 0, total: 0 })
@@ -32,6 +41,10 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
     const [selectedResult, setSelectedResult] = useState<ExperimentResult | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false)
+    const [duplicateExperiment, setDuplicateExperiment] = useState<Experiment | null>(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -59,6 +72,30 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
     const handleConfirmRun = async () => {
         setIsConfirmDialogOpen(false)
         await handleRunExperiment()
+    }
+
+    const handleDelete = async () => {
+        setIsDeleting(true)
+        const success = await deleteExperiment(experimentUuid)
+        setIsDeleting(false)
+        if (success) {
+            setIsDeleteDialogOpen(false)
+            onBack()
+        }
+    }
+
+    const handleDuplicate = () => {
+        if (currentExperiment) {
+            setDuplicateExperiment(currentExperiment)
+            setIsDuplicateDialogOpen(true)
+        }
+    }
+
+    const handleDuplicateCreated = () => {
+        setIsDuplicateDialogOpen(false)
+        setDuplicateExperiment(null)
+        fetchExperiments()
+        onBack()
     }
 
     const handleRunExperiment = async () => {
@@ -144,13 +181,23 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
                             <span>{questions.length} questions</span>
                         </div>
                     </div>
-                    <Button
-                        onClick={handleRunExperimentClick}
-                        disabled={isRunning || questions.length === 0 || results.length > 0}
-                    >
-                        <Play className="h-4 w-4 mr-2" />
-                        {results.length > 0 ? 'Experiment Complete' : isRunning ? 'Running...' : 'Run Experiment'}
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={handleRunExperimentClick}
+                            disabled={isRunning || questions.length === 0 || results.length > 0}
+                        >
+                            <Play className="h-4 w-4 mr-2" />
+                            {results.length > 0 ? 'Experiment Complete' : isRunning ? 'Running...' : 'Run Experiment'}
+                        </Button>
+                        <Button variant="outline" onClick={handleDuplicate}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                        </Button>
+                        <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                        </Button>
+                    </div>
                 </div>
 
                 {isRunning && (
@@ -396,6 +443,42 @@ export const ExperimentDetailView = ({ experimentUuid, onBack }: ExperimentDetai
             </Dialog>
 
             <ExperimentResultModal result={selectedResult} open={isModalOpen} onOpenChange={setIsModalOpen} />
+
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Experiment</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete <b>"{currentExperiment.title}"</b>?
+                            <br />
+                            <br />
+                            <span className="text-destructive font-medium">
+                                This will also delete all results from this experiment. This action cannot be undone.
+                            </span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                            {isDeleting ? 'Deleting...' : 'Delete Experiment'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {duplicateExperiment && (
+                <CreateExperimentDialog
+                    open={isDuplicateDialogOpen}
+                    onOpenChange={(open) => {
+                        setIsDuplicateDialogOpen(open)
+                        if (!open) setDuplicateExperiment(null)
+                    }}
+                    onExperimentCreated={handleDuplicateCreated}
+                    initialExperiment={duplicateExperiment}
+                />
+            )}
         </div>
     )
 }
