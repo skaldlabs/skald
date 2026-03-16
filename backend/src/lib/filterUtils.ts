@@ -130,8 +130,22 @@ export function buildFilterConditions(filters?: MemoFilter[]): { whereConditions
             fieldPath = `skald_memo.scopes->>?`
             params.push(filter.field)
         }
-        whereConditions.push(filterByOperator[filter.operator].getWhereClause(fieldPath))
-        params.push(filterByOperator[filter.operator].getFormattedValue(filter.value))
+
+        // For in/not_in on JSON fields (custom_metadata/scope), inline the array as a typed
+        // literal to avoid PostgreSQL failing to resolve the type of a parameterized array
+        // against a text value extracted via ->>.
+        if (
+            (filter.filter_type === 'custom_metadata' || filter.filter_type === 'scope') &&
+            (filter.operator === 'in' || filter.operator === 'not_in')
+        ) {
+            const escapedValues = (filter.value as any[]).map((v) => `'${String(v).replace(/'/g, "''")}'`).join(', ')
+            const arrayLiteral = `ARRAY[${escapedValues}]::text[]`
+            const op = filter.operator === 'in' ? '= ANY' : '!= ALL'
+            whereConditions.push(`${fieldPath} ${op}(${arrayLiteral})`)
+        } else {
+            whereConditions.push(filterByOperator[filter.operator].getWhereClause(fieldPath))
+            params.push(filterByOperator[filter.operator].getFormattedValue(filter.value))
+        }
     }
 
     return { whereConditions, params }
