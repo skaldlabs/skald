@@ -1330,6 +1330,278 @@ describe('Memo API Tests', () => {
         })
     })
 
+    describe('POST /api/memos/statuses - Batch Memo Status', () => {
+        it('should return statuses for multiple memos in a single request', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const memo1 = await createTestMemo(orm, project, { title: 'Memo 1', content: 'Content 1' })
+            const memo2 = await createTestMemo(orm, project, { title: 'Memo 2', content: 'Content 2' })
+            const memo3 = await createTestMemo(orm, project, { title: 'Memo 3', content: 'Content 3' })
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                    memo_ids: [memo1.uuid, memo2.uuid, memo3.uuid],
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.body.statuses).toHaveLength(3)
+            expect(response.body.not_found).toEqual([])
+            const uuids = response.body.statuses.map((s: { memo_uuid: string }) => s.memo_uuid).sort()
+            expect(uuids).toEqual([memo1.uuid, memo2.uuid, memo3.uuid].sort())
+            response.body.statuses.forEach((s: { status: string }) => {
+                expect(s.status).toBe('processing')
+            })
+        })
+
+        it('should normalize received status to processing in batch', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const memo = await createTestMemo(orm, project, { title: 'Memo', content: 'Content' })
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                    memo_ids: [memo.uuid],
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.body.statuses[0].status).toBe('processing')
+        })
+
+        it('should return terminal statuses with timestamps and error reason', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const processedMemo = await createTestMemo(orm, project, { title: 'Processed', content: 'C1' })
+            const errorMemo = await createTestMemo(orm, project, { title: 'Error', content: 'C2' })
+
+            const em = orm.em.fork()
+            const processed = await em.findOne(Memo, { uuid: processedMemo.uuid })
+            if (processed) {
+                processed.processing_status = 'processed'
+                processed.processing_started_at = new Date()
+                processed.processing_completed_at = new Date()
+                await em.persistAndFlush(processed)
+            }
+            const errored = await em.findOne(Memo, { uuid: errorMemo.uuid })
+            if (errored) {
+                errored.processing_status = 'error'
+                errored.processing_started_at = new Date()
+                errored.processing_completed_at = new Date()
+                errored.processing_error = 'Embedding failed'
+                await em.persistAndFlush(errored)
+            }
+
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                    memo_ids: [processedMemo.uuid, errorMemo.uuid],
+                })
+
+            expect(response.status).toBe(200)
+            const byUuid = Object.fromEntries(
+                response.body.statuses.map((s: { memo_uuid: string }) => [s.memo_uuid, s])
+            )
+            expect(byUuid[processedMemo.uuid].status).toBe('processed')
+            expect(byUuid[processedMemo.uuid].processing_completed_at).toBeDefined()
+            expect(byUuid[processedMemo.uuid].error_reason).toBeNull()
+            expect(byUuid[errorMemo.uuid].status).toBe('error')
+            expect(byUuid[errorMemo.uuid].error_reason).toBe('Embedding failed')
+        })
+
+        it('should support id_type reference_id', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            await createTestMemo(orm, project, {
+                title: 'Memo 1',
+                content: 'Content 1',
+                client_reference_id: 'ref-1',
+            })
+            await createTestMemo(orm, project, {
+                title: 'Memo 2',
+                content: 'Content 2',
+                client_reference_id: 'ref-2',
+            })
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                    memo_ids: ['ref-1', 'ref-2'],
+                    id_type: 'reference_id',
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.body.statuses).toHaveLength(2)
+            const refs = response.body.statuses
+                .map((s: { client_reference_id: string }) => s.client_reference_id)
+                .sort()
+            expect(refs).toEqual(['ref-1', 'ref-2'])
+        })
+
+        it('should report missing ids in not_found', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const memo = await createTestMemo(orm, project, { title: 'Real', content: 'Content' })
+            const token = generateAccessToken('test@example.com')
+
+            const fakeUuid = '00000000-0000-0000-0000-000000000000'
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                    memo_ids: [memo.uuid, fakeUuid],
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.body.statuses).toHaveLength(1)
+            expect(response.body.statuses[0].memo_uuid).toBe(memo.uuid)
+            expect(response.body.not_found).toEqual([fakeUuid])
+        })
+
+        it('should reject an empty memo_ids array', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                    memo_ids: [],
+                })
+
+            expect(response.status).toBe(400)
+            expect(response.body.error).toContain('memo_ids')
+        })
+
+        it('should reject more than 100 memo_ids', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const tooMany = Array.from({ length: 101 }, (_, i) => `id-${i}`)
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                    memo_ids: tooMany,
+                })
+
+            expect(response.status).toBe(400)
+            expect(response.body.error).toContain('100')
+        })
+
+        it('should reject missing memo_ids field', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                })
+
+            expect(response.status).toBe(400)
+        })
+
+        it('should set cache-control to no-cache', async () => {
+            const user = await createTestUser(orm, 'test@example.com', 'password123')
+            const org = await createTestOrganization(orm, 'Test Org', user)
+            await createTestOrganizationMembership(orm, user, org)
+            const project = await createTestProject(orm, 'Test Project', org, user)
+            const memo = await createTestMemo(orm, project, { title: 'Memo', content: 'Content' })
+            const token = generateAccessToken('test@example.com')
+
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${token}`])
+                .send({
+                    project_id: project.uuid,
+                    memo_ids: [memo.uuid],
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.headers['cache-control']).toBe('no-cache')
+        })
+
+        it('should not leak memos from another project (IDOR check)', async () => {
+            const user1 = await createTestUser(orm, 'user1@example.com', 'password123')
+            const user2 = await createTestUser(orm, 'user2@example.com', 'password123')
+
+            const org1 = await createTestOrganization(orm, 'Org 1', user1)
+            const org2 = await createTestOrganization(orm, 'Org 2', user2)
+
+            await createTestOrganizationMembership(orm, user1, org1)
+            await createTestOrganizationMembership(orm, user2, org2)
+
+            const project1 = await createTestProject(orm, 'Project 1', org1, user1)
+            const project2 = await createTestProject(orm, 'Project 2', org2, user2)
+
+            const memo1 = await createTestMemo(orm, project1, { title: 'User1 Memo', content: 'C1' })
+            const memo2 = await createTestMemo(orm, project2, { title: 'User2 Memo', content: 'C2' })
+
+            const user1Token = generateAccessToken('user1@example.com')
+
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .set('Cookie', [`accessToken=${user1Token}`])
+                .send({
+                    project_id: project1.uuid,
+                    memo_ids: [memo1.uuid, memo2.uuid],
+                })
+
+            expect(response.status).toBe(200)
+            expect(response.body.statuses).toHaveLength(1)
+            expect(response.body.statuses[0].memo_uuid).toBe(memo1.uuid)
+            expect(response.body.not_found).toEqual([memo2.uuid])
+        })
+
+        it('should require authentication', async () => {
+            const response = await request(app)
+                .post('/api/memos/statuses')
+                .send({
+                    project_id: '00000000-0000-0000-0000-000000000000',
+                    memo_ids: ['any-id'],
+                })
+
+            expect(response.status).toBe(403)
+        })
+    })
+
     describe('Usage Tracking for Memo Creation', () => {
         it('should count memo with < 3000 chars as 1 write towards usage record', async () => {
             const user = await createTestUser(orm, 'test@example.com', 'password123')

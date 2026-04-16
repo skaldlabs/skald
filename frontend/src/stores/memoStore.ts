@@ -4,6 +4,11 @@ import { toast } from 'sonner'
 import type { Memo, DetailedMemo, SearchResult, SearchMethod } from '@/lib/types'
 import { useProjectStore } from './projectStore'
 
+const INITIAL_POLL_MS = 3000
+const MAX_POLL_MS = 30000
+const BACKOFF_MULTIPLIER = 1.5
+const MAX_BATCH_SIZE = 100
+
 interface PaginatedResponse<T> {
     count: number
     next: string | null
@@ -52,6 +57,11 @@ interface MemoStatusResponse {
     error_reason: string | null
 }
 
+interface BatchMemoStatusesResponse {
+    statuses: MemoStatusResponse[]
+    not_found: string[]
+}
+
 interface MemoState {
     memos: Memo[]
     loading: boolean
@@ -62,7 +72,9 @@ interface MemoState {
     totalCount: number
     currentPage: number
     pageSize: number
-    pollingIntervals: Map<string, NodeJS.Timeout>
+    pollingTimeoutId: ReturnType<typeof setTimeout> | null
+    pollingBackoffMs: number
+    pollingActive: boolean
     fetchMemos: (page?: number, pageSize?: number) => Promise<void>
     searchMemos: (query: string, method: SearchMethod) => Promise<void>
     createMemo: (payload: CreateMemoPayload) => Promise<boolean>
@@ -71,9 +83,10 @@ interface MemoState {
     getMemoDetails: (memoUuid: string) => Promise<DetailedMemo | null>
     updateMemo: (memoUuid: string, payload: UpdateMemoPayload) => Promise<boolean>
     getMemoStatus: (memoUuid: string) => Promise<MemoStatusResponse | null>
+    getBatchMemoStatuses: (memoUuids: string[]) => Promise<MemoStatusResponse[]>
     updateMemoStatus: (memoUuid: string, status: 'processing' | 'processed' | 'error') => void
+    refreshProcessedMemo: (memoUuid: string) => Promise<void>
     startPollingProcessingMemos: () => void
-    stopPollingMemo: (memoUuid: string) => void
     stopAllPolling: () => void
     setSearchQuery: (query: string) => void
     clearSearch: () => void
@@ -89,7 +102,9 @@ export const useMemoStore = create<MemoState>((set, get) => ({
     totalCount: 0,
     currentPage: 1,
     pageSize: 20,
-    pollingIntervals: new Map(),
+    pollingTimeoutId: null,
+    pollingBackoffMs: INITIAL_POLL_MS,
+    pollingActive: false,
 
     fetchMemos: async (page = 1, pageSize = 50) => {
         set({ loading: true, error: null, isSearchMode: false })
@@ -378,35 +393,67 @@ export const useMemoStore = create<MemoState>((set, get) => ({
             }
 
             if (response.data.status === 'processed') {
-                const memoDetails = await get().getMemoDetails(memoUuid)
-                if (memoDetails) {
-                    const currentMemos = get().memos
-                    const memoIndex = currentMemos.findIndex((m) => m.uuid === memoUuid)
-
-                    const updatedMemo: Memo = {
-                        uuid: memoDetails.uuid,
-                        created_at: memoDetails.created_at,
-                        updated_at: memoDetails.updated_at,
-                        title: memoDetails.title,
-                        summary: memoDetails.summary || '',
-                        metadata: memoDetails.metadata,
-                        client_reference_id: memoDetails.client_reference_id,
-                        processing_status: memoDetails.processing_status,
-                    }
-
-                    if (memoIndex !== -1) {
-                        const updatedMemos = [...currentMemos]
-                        updatedMemos[memoIndex] = updatedMemo
-                        set({ memos: updatedMemos })
-                    } else {
-                        set({ memos: [...currentMemos, updatedMemo] })
-                    }
-                }
+                await get().refreshProcessedMemo(memoUuid)
             }
 
             return response.data
         } catch {
             return null
+        }
+    },
+
+    getBatchMemoStatuses: async (memoUuids: string[]) => {
+        const currentProject = useProjectStore.getState().currentProject
+        if (!currentProject) {
+            throw new Error('No project selected')
+        }
+
+        if (memoUuids.length === 0) {
+            return []
+        }
+
+        try {
+            const response = await api.post<BatchMemoStatusesResponse>('/v1/memo/statuses', {
+                project_id: currentProject.uuid,
+                memo_ids: memoUuids.slice(0, MAX_BATCH_SIZE),
+            })
+
+            if (response.error || !response.data) {
+                return []
+            }
+
+            return response.data.statuses
+        } catch {
+            return []
+        }
+    },
+
+    refreshProcessedMemo: async (memoUuid: string) => {
+        const memoDetails = await get().getMemoDetails(memoUuid)
+        if (!memoDetails) {
+            return
+        }
+
+        const currentMemos = get().memos
+        const memoIndex = currentMemos.findIndex((m) => m.uuid === memoUuid)
+
+        const updatedMemo: Memo = {
+            uuid: memoDetails.uuid,
+            created_at: memoDetails.created_at,
+            updated_at: memoDetails.updated_at,
+            title: memoDetails.title,
+            summary: memoDetails.summary || '',
+            metadata: memoDetails.metadata,
+            client_reference_id: memoDetails.client_reference_id,
+            processing_status: memoDetails.processing_status,
+        }
+
+        if (memoIndex !== -1) {
+            const updatedMemos = [...currentMemos]
+            updatedMemos[memoIndex] = updatedMemo
+            set({ memos: updatedMemos })
+        } else {
+            set({ memos: [...currentMemos, updatedMemo] })
         }
     },
 
@@ -419,48 +466,64 @@ export const useMemoStore = create<MemoState>((set, get) => ({
     },
 
     startPollingProcessingMemos: () => {
-        const currentMemos = get().memos
-        const processingMemos = currentMemos.filter((memo) => memo.processing_status === 'processing')
+        if (get().pollingActive) {
+            return
+        }
 
-        processingMemos.forEach((memo) => {
-            // Don't start polling if already polling this memo
-            if (get().pollingIntervals.has(memo.uuid)) {
+        set({ pollingActive: true, pollingBackoffMs: INITIAL_POLL_MS })
+
+        const tick = async () => {
+            if (!get().pollingActive) {
                 return
             }
 
-            const pollMemo = async () => {
-                const statusResponse = await get().getMemoStatus(memo.uuid)
-                if (statusResponse && statusResponse.status !== 'processing') {
-                    // Status changed, update the memo
-                    get().updateMemoStatus(memo.uuid, statusResponse.status)
-                    // Stop polling this memo
-                    get().stopPollingMemo(memo.uuid)
+            const processingUuids = get()
+                .memos.filter((memo) => memo.processing_status === 'processing')
+                .map((memo) => memo.uuid)
+
+            if (processingUuids.length === 0) {
+                get().stopAllPolling()
+                return
+            }
+
+            const statuses = await get().getBatchMemoStatuses(processingUuids)
+
+            let anyChanged = false
+            for (const status of statuses) {
+                if (status.status === 'processing') {
+                    continue
+                }
+                anyChanged = true
+                get().updateMemoStatus(status.memo_uuid, status.status)
+                if (status.status === 'processed') {
+                    await get().refreshProcessedMemo(status.memo_uuid)
                 }
             }
 
-            // Poll immediately once
-            pollMemo()
+            if (!get().pollingActive) {
+                return
+            }
 
-            // Then poll every 3 seconds
-            const intervalId = setInterval(pollMemo, 3000)
-            get().pollingIntervals.set(memo.uuid, intervalId)
-        })
-    },
+            const nextBackoff = anyChanged
+                ? INITIAL_POLL_MS
+                : Math.min(MAX_POLL_MS, Math.round(get().pollingBackoffMs * BACKOFF_MULTIPLIER))
 
-    stopPollingMemo: (memoUuid: string) => {
-        const intervalId = get().pollingIntervals.get(memoUuid)
-        if (intervalId) {
-            clearInterval(intervalId)
-            const newIntervals = new Map(get().pollingIntervals)
-            newIntervals.delete(memoUuid)
-            set({ pollingIntervals: newIntervals })
+            const timeoutId = setTimeout(tick, nextBackoff)
+            set({ pollingBackoffMs: nextBackoff, pollingTimeoutId: timeoutId })
         }
+
+        tick()
     },
 
     stopAllPolling: () => {
-        get().pollingIntervals.forEach((intervalId) => {
-            clearInterval(intervalId)
+        const timeoutId = get().pollingTimeoutId
+        if (timeoutId) {
+            clearTimeout(timeoutId)
+        }
+        set({
+            pollingActive: false,
+            pollingTimeoutId: null,
+            pollingBackoffMs: INITIAL_POLL_MS,
         })
-        set({ pollingIntervals: new Map() })
     },
 }))
