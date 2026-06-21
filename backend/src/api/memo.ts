@@ -78,6 +78,14 @@ const UpdateMemoRequest = z.object({
     scopes: z.record(z.string(), z.string()).optional(),
 })
 
+const BatchMemoStatusRequest = z.object({
+    memo_ids: z
+        .array(z.string().min(1, 'memo_ids entries cannot be empty'))
+        .min(1, 'memo_ids must contain at least one id')
+        .max(100, 'memo_ids cannot exceed 100 ids per request'),
+    id_type: z.enum(['memo_uuid', 'reference_id']).optional().default('memo_uuid'),
+})
+
 const validateMemoOperationRequestMiddleware = () => {
     return async (req: Request, res: Response, next: NextFunction) => {
         const project = req.context?.requestUser?.project
@@ -511,6 +519,56 @@ export const getMemoStatus = async (req: Request, res: Response) => {
     })
 }
 
+export const getBatchMemoStatuses = async (req: Request, res: Response) => {
+    const project = req.context?.requestUser?.project as Project
+
+    const validatedData = BatchMemoStatusRequest.safeParse(req.body)
+    if (!validatedData.success) {
+        const errorMessages = validatedData.error.errors.map((err) => err.message)
+        return res.status(400).json({ error: errorMessages.join(', ') })
+    }
+
+    const { memo_ids, id_type } = validatedData.data
+    const lookupField = id_type === 'memo_uuid' ? 'uuid' : 'client_reference_id'
+
+    const memos = await DI.memos.find(
+        { [lookupField]: { $in: memo_ids }, project },
+        {
+            fields: [
+                'uuid',
+                'client_reference_id',
+                'processing_status',
+                'processing_started_at',
+                'processing_completed_at',
+                'processing_error',
+            ],
+        }
+    )
+
+    const statuses = memos.map((memo) => ({
+        memo_uuid: memo.uuid,
+        client_reference_id: memo.client_reference_id || null,
+        status: memo.processing_status === 'received' ? 'processing' : memo.processing_status,
+        processing_started_at: memo.processing_started_at || null,
+        processing_completed_at: memo.processing_completed_at || null,
+        error_reason: memo.processing_error || null,
+    }))
+
+    const foundIds = new Set(
+        memos
+            .map((memo) => (id_type === 'memo_uuid' ? memo.uuid : memo.client_reference_id))
+            .filter(Boolean) as string[]
+    )
+    const notFound = memo_ids.filter((id) => !foundIds.has(id))
+
+    res.set('Cache-Control', 'no-cache')
+
+    return res.status(200).json({
+        statuses,
+        not_found: notFound,
+    })
+}
+
 export const memoRouter = express.Router({ mergeParams: true })
 memoRouter.use(requireProjectAccess())
 memoRouter.get('/', listMemos)
@@ -571,6 +629,7 @@ memoRouter.post('/', upload.single('file'), handleMulterError, (req: Request, re
         return await createPlaintextMemo(req, res)
     })
 )
+memoRouter.post('/statuses', getBatchMemoStatuses)
 memoRouter.get('/:id/status', [validateMemoOperationRequestMiddleware()], getMemoStatus)
 memoRouter.get('/:id', [validateMemoOperationRequestMiddleware()], getMemo)
 memoRouter.patch('/:id', [validateMemoOperationRequestMiddleware()], updateMemo)
