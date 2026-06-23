@@ -3,8 +3,17 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ChevronLeft, Download, Edit2, Save, X } from 'lucide-react'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import { ChevronLeft, Download, Edit2, Save, Trash2, X } from 'lucide-react'
 import { api, getProjectPath } from '@/lib/api'
+import { useEvaluateDatasetsStore } from '@/stores/evaluateDatasetsStore'
 
 interface Question {
     uuid: string
@@ -27,6 +36,7 @@ interface DatasetDetailViewProps {
 }
 
 export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProps) => {
+    const { deleteDataset } = useEvaluateDatasetsStore()
     const [dataset, setDataset] = useState<DatasetDetail | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -34,6 +44,8 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
     const [editedQuestion, setEditedQuestion] = useState('')
     const [editedAnswer, setEditedAnswer] = useState('')
     const [isSaving, setIsSaving] = useState(false)
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         const fetchDataset = async () => {
@@ -128,6 +140,16 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
         }
     }
 
+    const handleDelete = async () => {
+        setIsDeleting(true)
+        const success = await deleteDataset(datasetUuid)
+        setIsDeleting(false)
+        if (success) {
+            setIsDeleteDialogOpen(false)
+            onBack()
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="p-4">
@@ -167,10 +189,16 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
                             {dataset.questions.length} question{dataset.questions.length !== 1 ? 's' : ''}
                         </p>
                     </div>
-                    <Button variant="outline" onClick={handleExport}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Export JSON
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={handleExport}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Export JSON
+                        </Button>
+                        <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -242,6 +270,31 @@ export const DatasetDetailView = ({ datasetUuid, onBack }: DatasetDetailViewProp
                     )
                 })}
             </div>
+
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Dataset</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete <b>"{dataset.name}"</b>?
+                            <br />
+                            <br />
+                            <span className="text-destructive font-medium">
+                                This will also delete all experiments that use this dataset. This action cannot be
+                                undone.
+                            </span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                            {isDeleting ? 'Deleting...' : 'Delete Dataset'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

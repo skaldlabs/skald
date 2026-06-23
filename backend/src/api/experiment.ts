@@ -452,8 +452,51 @@ const getResults = async (req: Request, res: Response) => {
     res.status(200).json(response)
 }
 
+const deleteExperiment = async (req: Request, res: Response) => {
+    const user = req.context?.requestUser?.userInstance
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const projectUuid = req.params.uuid
+    const experimentUuid = req.params.experimentUuid
+
+    if (!projectUuid || !experimentUuid) {
+        return res.status(400).json({ error: 'Project UUID and Experiment UUID are required' })
+    }
+
+    const project = await DI.projects.findOne({ uuid: projectUuid })
+    if (!project) {
+        return res.status(404).json({ error: 'Project not found' })
+    }
+
+    const membership = await DI.organizationMemberships.findOne({
+        user: user,
+        organization: project.organization,
+    })
+    if (!membership) {
+        return res.status(403).json({ error: 'You do not have access to this project' })
+    }
+
+    const experiment = await DI.experiments.findOne({ uuid: experimentUuid, project: project })
+    if (!experiment) {
+        return res.status(404).json({ error: 'Experiment not found' })
+    }
+
+    await DI.em.transactional(async (em) => {
+        // Delete all experiment results first
+        await em.nativeDelete(ExperimentResult, { experiment })
+
+        // Delete the experiment itself
+        await em.nativeDelete(Experiment, { uuid: experimentUuid })
+    })
+
+    res.status(204).send()
+}
+
 experimentRouter.get('/', list)
 experimentRouter.get('/:experimentUuid', getExperiment)
 experimentRouter.get('/:experimentUuid/results', getResults)
 experimentRouter.post('/', create)
 experimentRouter.post('/:experimentUuid/run', run)
+experimentRouter.delete('/:experimentUuid', deleteExperiment)

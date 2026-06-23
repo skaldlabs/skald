@@ -16,13 +16,26 @@ interface EvaluationDataset {
     description: string
 }
 
+interface InitialExperiment {
+    title: string
+    description: string
+    evaluation_dataset_uuid: string
+    properties: Record<string, any>
+}
+
 interface CreateExperimentDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onExperimentCreated: () => void
+    initialExperiment?: InitialExperiment
 }
 
-export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated }: CreateExperimentDialogProps) => {
+export const CreateExperimentDialog = ({
+    open,
+    onOpenChange,
+    onExperimentCreated,
+    initialExperiment,
+}: CreateExperimentDialogProps) => {
     const { availableProviders, fetchProviders } = useLLMConfigStore()
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
@@ -53,6 +66,29 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
             setLlmProvider(availableProviders[0].provider)
         }
     }, [availableProviders, llmProvider])
+
+    // Pre-populate form when duplicating an experiment
+    useEffect(() => {
+        if (initialExperiment && open) {
+            setTitle(`${initialExperiment.title} (copy)`)
+            setDescription(initialExperiment.description)
+            setSelectedDatasetUuid(initialExperiment.evaluation_dataset_uuid)
+
+            const props = initialExperiment.properties || {}
+            setSystemPrompt(props.client_system_prompt || '')
+
+            const ragCfg = props.rag_config || {}
+            setLlmProvider(ragCfg.llm_provider || availableProviders[0]?.provider || '')
+            setRagConfig({
+                queryRewriteEnabled: ragCfg.query_rewrite?.enabled ?? false,
+                rerankingEnabled: ragCfg.reranking?.enabled ?? true,
+                vectorSearchTopK: ragCfg.vector_search?.top_k ?? 50,
+                similarityThreshold: ragCfg.vector_search?.similarity_threshold ?? 0.8,
+                rerankingTopK: ragCfg.reranking?.top_k ?? 25,
+                referencesEnabled: ragCfg.references?.enabled ?? false,
+            })
+        }
+    }, [initialExperiment, open, availableProviders])
 
     const fetchDatasets = async () => {
         try {
@@ -137,9 +173,11 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create New Experiment</DialogTitle>
+                    <DialogTitle>{initialExperiment ? 'Duplicate Experiment' : 'Create New Experiment'}</DialogTitle>
                     <DialogDescription>
-                        Create a new experiment to test your model with an evaluation dataset.
+                        {initialExperiment
+                            ? 'Create a copy of this experiment with the same configuration.'
+                            : 'Create a new experiment to test your model with an evaluation dataset.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -234,7 +272,11 @@ export const CreateExperimentDialog = ({ open, onOpenChange, onExperimentCreated
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isLoading}>
-                            {isLoading ? 'Creating...' : 'Create Experiment'}
+                            {isLoading
+                                ? 'Creating...'
+                                : initialExperiment
+                                  ? 'Duplicate Experiment'
+                                  : 'Create Experiment'}
                         </Button>
                     </div>
                 </form>
